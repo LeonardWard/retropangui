@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 
 # =======================================================
-# Retro Pangui Core Handler (retropangui_core.sh)
-#
+# Retro Pangui Core Handler
+# 파일명: retropangui_core.sh
 # 설명: Retro Pangui의 환경을 정의하고, 권한을 확인하며, whiptail 메뉴를 표시합니다.
 # 모든 복잡한 설치 로직은 'scriptmodules' 파일로 분리되었습니다.
 # =======================================================
