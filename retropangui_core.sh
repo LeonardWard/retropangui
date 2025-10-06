@@ -47,16 +47,15 @@ TITLE="Retro Pangui Configuration Manager (v$__version)"
 MENU_TITLE="$TITLE [Share: $(basename $USER_SHARE_PATH)]"
 MENU_PROMPT="메뉴를 선택하세요.\n(Share 경로 전체: $USER_SHARE_PATH)"
 
-# ----------------- 헬퍼 함수 -----------------
-
-# 핵심 의존성(dependency) 패키지 설치를 확인하고 진행하는 함수
+# ----------------- 초기화 함수 (Initialization Function) -----------------
+# 핵심 의존성(dependency) 패키지 설치 및 모듈 다운로드를 확인하고 진행하는 함수
 install_core_dependencies() {
     # 로그 디렉토리 생성 (최초 실행 시)
     sudo mkdir -p "$LOG_DIR"
     log_msg INFO "로그 파일 경로 설정 완료: $LOG_FILE"
-    
-    # whiptail, git, wget 등 스크립트 실행에 필요한 기본 유틸리티 목록
-    local CORE_DEPS=("whiptail" "dialog" "git" "wget" "curl" "unzip")
+
+    # whiptail, git, svn 등 스크립트 실행에 필요한 기본 유틸리티 목록
+    local CORE_DEPS=("whiptail" "dialog" "git" "wget" "curl" "unzip" "subversion")
     local MISSING_DEPS=()
 
     log_msg INFO "필수 유틸리티 누락 여부 확인 중..."
@@ -70,10 +69,10 @@ install_core_dependencies() {
     if [ ${#MISSING_DEPS[@]} -gt 0 ]; then
         log_msg WARN "다음 필수 유틸리티가 누락되었습니다: ${MISSING_DEPS[*]}"
         log_msg INFO "설치 패키지 목록을 업데이트하고 설치를 진행합니다."
-        
+
         sudo apt update
         sudo apt install -y "${MISSING_DEPS[@]}"
-        
+
         if [ $? -ne 0 ]; then
             log_msg ERROR "필수 유틸리티 설치에 실패했습니다. 네트워크 상태를 확인하십시오."
             exit 1
@@ -82,9 +81,43 @@ install_core_dependencies() {
     else
         log_msg INFO "모든 필수 유틸리티가 시스템에 존재합니다."
     fi
+
+    # --- RetroPie 스크립트 모듈 다운로드 로직 ---
+    log_msg INFO "RetroPie 스크립트 모듈 다운로드 확인..."
+
+    local EMULATORS_DIR="$MODULES_DIR/emulators"
+    local LIBRETROCORES_DIR="$MODULES_DIR/libretrocores"
+    local RETROPIE_EMULATORS_URL="https://github.com/RetroPie/RetroPie-Setup/trunk/scriptmodules/emulators"
+    local RETROPIE_LIBRETRO_URL="https://github.com/RetroPie/RetroPie-Setup/trunk/scriptmodules/libretrocores"
+
+    # emulators 디렉토리 다운로드
+    if [ ! -d "$EMULATORS_DIR" ]; then
+        log_msg INFO "'emulators' 스크립트 모듈을 다운로드합니다..."
+        if sudo svn export --force "$RETROPIE_EMULATORS_URL" "$EMULATORS_DIR"; then
+            sudo chown -R "$__user:$__user" "$EMULATORS_DIR"
+            log_msg INFO "'emulators' 모듈 다운로드 완료."
+        else
+            log_msg ERROR "'emulators' 모듈 다운로드에 실패했습니다."
+        fi
+    else
+        log_msg INFO "'emulators' 스크립트 모듈이 이미 존재합니다."
+    fi
+
+    # libretrocores 디렉토리 다운로드
+    if [ ! -d "$LIBRETROCORES_DIR" ]; then
+        log_msg INFO "'libretrocores' 스크립트 모듈을 다운로드합니다..."
+        if sudo svn export --force "$RETROPIE_LIBRETRO_URL" "$LIBRETROCORES_DIR"; then
+            sudo chown -R "$__user:$__user" "$LIBRETROCORES_DIR"
+            log_msg INFO "'libretrocores' 모듈 다운로드 완료."
+        else
+            log_msg ERROR "'libretrocores' 모듈 다운로드에 실패했습니다."
+        fi
+    else
+        log_msg INFO "'libretrocores' 스크립트 모듈이 이미 존재합니다."
+    fi
 }
 
-# ----------------- 모듈 호출 및 관리 함수 -----------------
+# ----------------- 메인 메뉴 기능 함수 (Main Menu Functions) -----------------
 
 # [1] Base System 설치 (모듈 호출)
 run_base_system_install() {
