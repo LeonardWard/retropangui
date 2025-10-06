@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# 파일명: install_base_3_in_5_emustation.sh
+# 파일명: install_base_3_in_5_es.sh
 # Retro Pangui Module: EmulationStation Installation (Base 3/5)
 # 
 # 이 스크립트는 EmulationStation을 Git에서 클론하여 빌드하고 설치하는 
