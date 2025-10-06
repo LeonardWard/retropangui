@@ -7,7 +7,7 @@
 # ===============================================
 
 # --- [0] 버전 및 기본 경로 설정 ---
-# 스크립트 버전
+# Retro Pangui 스크립트 버전
 __version="0.2"
 
 # sudo로 실행해도 항상 원래 사용자 경로를 사용하도록
@@ -16,15 +16,16 @@ if [[ -n "$SUDO_USER" ]]; then
 else
     USER_HOME="$USER_HOME"
 fi
-INSTALL_BUILD_DIR="$USER_HOME/scripts/retropangui"
 
 # 에뮬레이터 바이너리가 설치될 루트 디렉토리 (Recalbox/RetroPie의 /opt/retropie-emulators 와 유사)
 INSTALL_ROOT_DIR="/opt/retropangui"
-INSTALL_BUILD_DIR="$USER_HOME/scripts/retropangui" # 소스 코드 빌드가 이루어질 기본 경로
 
 # 임시 파일 경로
 TEMP_DIR_BASE="/tmp/retropangui"
 TEMP_DIR="${TEMP_DIR_BASE}_$$"
+
+# 빌드용 임시 디렉토리 (스크립트 실행 시마다 새로 생성)
+INSTALL_BUILD_DIR="$TEMP_DIR"
 
 # 로그 파일 경로 정의
 LOG_DIR="$INSTALL_ROOT_DIR/logs"
