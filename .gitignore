@@ -1,0 +1,9 @@
+EmulationStation
+RetroArch
+scriptmodules/emulators
+scriptmodules/libretrocores
+scriptmodules/ports
+scriptmodules/*.bak
+test_retropangui_1st
+test_retropangui_2nd
+handover-retropangui-251003.md
