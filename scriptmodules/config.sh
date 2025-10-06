@@ -22,10 +22,10 @@ INSTALL_ROOT_DIR="/opt/retropangui"
 
 # 임시 파일 경로
 TEMP_DIR_BASE="/tmp/retropangui"
-TEMP_DIR="${TEMP_DIR_BASE}_$$"
+# TEMP_DIR="${TEMP_DIR_BASE}_$$"
 
-# 빌드용 임시 디렉토리 (스크립트 실행 시마다 새로 생성)
-INSTALL_BUILD_DIR="$TEMP_DIR"
+# 빌드용 디렉토리
+INSTALL_BUILD_DIR="$TEMP_DIR_BASE"
 
 # 로그 파일 경로 정의
 LOG_DIR="$INSTALL_ROOT_DIR/logs"
@@ -62,8 +62,9 @@ RA_CONFIG_DIR="$USER_HOME/.config/retroarch" # RetroArch 설정
 ES_CONFIG_DIR="$USER_HOME/.emulationstation" # EmulationStation 설정
 
 # --- [3] Git 및 기타 설정 ---
-# Recalbox Git URL (패치 및 설정 파일 참조용)
+# 패치 및 설정 파일 참조용
 RECALBOX_GIT_URL="https://gitlab.com/recalbox/recalbox.git"
+RETROPIE_SETUP_GIT_URL="https://github.com/RetroPie/RetroPie-Setup.git"
 
 # 소스 코드 저장소
 RA_GIT_URL="https://github.com/libretro/RetroArch.git"

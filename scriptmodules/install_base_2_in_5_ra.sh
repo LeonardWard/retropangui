@@ -11,33 +11,23 @@ SCRIPT_DIR="$(cd "$SCRIPT_DIR" && pwd)"
 echo "ℹ️빌드 스크립트 디렉토리: $SCRIPT_DIR"
 source "$SCRIPT_DIR/config.sh"
 source "$SCRIPT_DIR/helpers.sh"
+source "$SCRIPT_DIR/func.sh"
 
-# 저장소 URL에서 프로젝트(폴더)명 추출 함수
-get_git_project_dir_name() {
-    local url="$1"
-    local name="$(basename "$url")"
-    # .git 확장자 제거
-    name="${name%.git}"
-    echo "$name"
-}
+# gitPullOrClone 함수는 반드시 helpers.sh 또는 공용 함수 모듈에 아래처럼 작성되어 있어야 합니다.
+# 인자: 저장소 URL, 디렉토리
+# 필요 시 옵션 추가 제공 방식도 좋습니다.
 
+# install_retroarch 함수 내부 변경:
 install_retroarch() {
     log_msg STEP "RetroArch 소스 빌드 및 설치 시작..."
-    
-    # 프로젝트 이름 추출 및 디렉터리 결정
-    RA_PROJECT_NAME="$(get_git_project_dir_name "$RA_GIT_URL")"
-    echo "ℹ️RetroArch 프로젝트 이름: $RA_PROJECT_NAME"
-    RA_BUILD_DIR="$INSTALL_BUILD_DIR/$RA_PROJECT_NAME"
-    echo "ℹ️RetroArch 빌드 디렉토리: $RA_BUILD_DIR"
 
-    log_msg INFO "RetroArch 저장소($RA_GIT_URL) 클론 중..."
-    cd "$INSTALL_BUILD_DIR" || return 1
+    EXT_FOLDER="$(get_Git_Project_Dir_Name "$RA_GIT_URL")"
+    RA_BUILD_DIR="$INSTALL_BUILD_DIR/$EXT_FOLDER"
+    echo "ℹ️ RetroArch 프로젝트 이름: $EXT_FOLDER"
+    echo "ℹ️ RetroArch 빌드 디렉토리: $RA_BUILD_DIR"
 
-    if [ -d "$RA_BUILD_DIR" ] && [ "$(ls -A "$RA_BUILD_DIR")" ]; then
-        log_msg INFO "RetroArch 빌드 디렉터리가 이미 존재하며, 클론을 건너뜁니다."
-    else
-        git clone "$RA_GIT_URL" "$RA_BUILD_DIR" || { log_msg ERROR "RetroArch 클론 실패."; return 1; }
-    fi
+    log_msg INFO "RetroArch 저장소($RA_GIT_URL) 클론 또는 pull 중..."
+    git_Pull_Or_Clone "$RA_GIT_URL" "$RA_BUILD_DIR"
 
     cd "$RA_BUILD_DIR" || return 1
     
@@ -63,6 +53,7 @@ install_retroarch() {
     log_msg SUCCESS "RetroArch 빌드 및 설치 완료."
     return 0
 }
+
 
 # 스크립트가 호출될 때 자동 실행
 install_retroarch

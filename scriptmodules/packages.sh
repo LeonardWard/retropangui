@@ -23,18 +23,18 @@ depends_on() {
     done
 }
 
-# gitPullOrClone: 소스 디렉터리 없으면 clone, 있으면 pull
-gitPullOrClone() {
-    local repo="$1"
-    local dir="$2"
-    if [ -d "$dir" ]; then
-        echo "[INFO] $dir 이미 존재. git pull 진행."
-        git -C "$dir" pull
-    else
-        echo "[INFO] $dir 없음. git clone 진행."
-        git clone "$repo" "$dir"
-    fi
-}
+# # gitPullOrClone: 소스 디렉터리 없으면 clone, 있으면 pull
+# gitPullOrClone() {
+#     local repo="$1"
+#     local dir="$2"
+#     if [ -d "$dir" ]; then
+#         echo "[INFO] $dir 이미 존재. git pull 진행."
+#         git -C "$dir" pull
+#     else
+#         echo "[INFO] $dir 없음. git clone 진행."
+#         git clone "$repo" "$dir"
+#     fi
+# }
 
 # rpSwap: 빌드 스왑 공간(필요시)
 rpSwap() {

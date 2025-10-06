@@ -16,7 +16,7 @@ source "$SCRIPT_DIR/config.sh"
 source "$SCRIPT_DIR/helpers.sh"
 source "$SCRIPT_DIR/inifuncs.sh"
 source "$SCRIPT_DIR/packages.sh"
-source "$SCRIPT_DIR/retropie_func_ext.sh"
+source "$SCRIPT_DIR/func_ext_retropie.sh"
 setup_env
 
 # 자동 설치할 베이스 코어 리스트 (RetroPie 모듈명 기준)

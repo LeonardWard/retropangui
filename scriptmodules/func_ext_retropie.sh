@@ -34,7 +34,6 @@ setup_env() {
     export MAKEFLAGS="$__default_makeflags"
 }
 
-# 정확한 저장소 정보 파싱 및 git clone 동작
 gitPullOrClone() {
     # 인자 대신 모두 전역 변수로 처리!
     local repo="${rp_module_repo}"

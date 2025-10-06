@@ -21,9 +21,10 @@ SCRIPT_DIR="$(cd "$SCRIPT_DIR" && pwd)"
 MODULES_DIR="$SCRIPT_DIR/scriptmodules"
 
 # ------------------------------------------------------------------
-# 💡 핵심: 모든 전역 변수를 config.sh에서 불러옵니다.
+# 💡 핵심: 변수와 모듈을 불러옵니다.
 # ------------------------------------------------------------------
 source "$MODULES_DIR/config.sh" 
+source "$MODULES_DIR/func.sh"
 
 # --- [1] 경로 정의 (config.sh 변수 기반으로 정의) ---
 # config.sh가 로드된 후, __user 변수를 사용하여 동적 경로를 완성합니다.
@@ -54,8 +55,8 @@ install_core_dependencies() {
     sudo mkdir -p "$LOG_DIR"
     log_msg INFO "로그 파일 경로 설정 완료: $LOG_FILE"
 
-    # whiptail, git, svn 등 스크립트 실행에 필요한 기본 유틸리티 목록
-    local CORE_DEPS=("whiptail" "dialog" "git" "wget" "curl" "unzip" "subversion")
+    # whiptail, git 등 스크립트 실행에 필요한 기본 유틸리티 목록
+    local CORE_DEPS=("whiptail" "dialog" "git" "wget" "curl" "unzip")
     local MISSING_DEPS=()
 
     log_msg INFO "필수 유틸리티 누락 여부 확인 중..."
@@ -85,36 +86,13 @@ install_core_dependencies() {
     # --- RetroPie 스크립트 모듈 다운로드 로직 ---
     log_msg INFO "RetroPie 스크립트 모듈 다운로드 확인..."
 
-    local EMULATORS_DIR="$MODULES_DIR/emulators"
-    local LIBRETROCORES_DIR="$MODULES_DIR/libretrocores"
-    local RETROPIE_EMULATORS_URL="https://github.com/RetroPie/RetroPie-Setup/trunk/scriptmodules/emulators"
-    local RETROPIE_LIBRETRO_URL="https://github.com/RetroPie/RetroPie-Setup/trunk/scriptmodules/libretrocores"
+    EXT_FOLDER="$(get_Git_Project_Dir_Name "$RETROPIE_SETUP_GIT_URL")"
 
-    # emulators 디렉토리 다운로드
-    if [ ! -d "$EMULATORS_DIR" ]; then
-        log_msg INFO "'emulators' 스크립트 모듈을 다운로드합니다..."
-        if sudo svn export --force "$RETROPIE_EMULATORS_URL" "$EMULATORS_DIR"; then
-            sudo chown -R "$__user:$__user" "$EMULATORS_DIR"
-            log_msg INFO "'emulators' 모듈 다운로드 완료."
-        else
-            log_msg ERROR "'emulators' 모듈 다운로드에 실패했습니다."
-        fi
-    else
-        log_msg INFO "'emulators' 스크립트 모듈이 이미 존재합니다."
-    fi
+    git_Pull_Or_Clone "$RETROPIE_SETUP_GIT_URL" "$TEMP_DIR_BASE/$EXT_FOLDER" --depth=1
 
-    # libretrocores 디렉토리 다운로드
-    if [ ! -d "$LIBRETROCORES_DIR" ]; then
-        log_msg INFO "'libretrocores' 스크립트 모듈을 다운로드합니다..."
-        if sudo svn export --force "$RETROPIE_LIBRETRO_URL" "$LIBRETROCORES_DIR"; then
-            sudo chown -R "$__user:$__user" "$LIBRETROCORES_DIR"
-            log_msg INFO "'libretrocores' 모듈 다운로드 완료."
-        else
-            log_msg ERROR "'libretrocores' 모듈 다운로드에 실패했습니다."
-        fi
-    else
-        log_msg INFO "'libretrocores' 스크립트 모듈이 이미 존재합니다."
-    fi
+    cp -r "$TEMP_DIR_BASE/$EXT_FOLDER/scriptmodules/emulators" "$MODULES_DIR/"
+    cp -r "$TEMP_DIR_BASE/$EXT_FOLDER/scriptmodules/libretrocores" "$MODULES_DIR/"
+    cp -r "$TEMP_DIR_BASE/$EXT_FOLDER/scriptmodules/ports" "$MODULES_DIR/"
 }
 
 # ----------------- 메인 메뉴 기능 함수 (Main Menu Functions) -----------------
