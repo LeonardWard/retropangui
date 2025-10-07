@@ -1,4 +1,5 @@
 retropie_setup
+log
 scriptmodules/*.bak
 test_retropangui_1st
 test_retropangui_2nd

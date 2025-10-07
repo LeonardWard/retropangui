@@ -8,15 +8,12 @@
 #!/usr/bin/env bash
 # Retro Pangui: Libretro Base Core Auto Installer
 
-SCRIPT_DIR="$(dirname "$0")"
-SCRIPT_DIR="$(cd "$SCRIPT_DIR" && pwd)"
-
 # 환경변수/공통 툴 소스
-source "$SCRIPT_DIR/config.sh"
-source "$SCRIPT_DIR/helpers.sh"
-#source "$SCRIPT_DIR/inifuncs.sh"
-#source "$SCRIPT_DIR/packages.sh"
-source "$SCRIPT_DIR/func_ext_retropie.sh"
+source "$MODULES_DIR/config.sh"
+source "$MODULES_DIR/helpers.sh"
+#source "$MODULES_DIR/inifuncs.sh"
+#source "$MODULES_DIR/packages.sh"
+source "$MODULES_DIR/func_ext_retropie.sh"
 setup_env
 
 # 자동 설치할 베이스 코어 리스트 (RetroPie 모듈명 기준)
@@ -42,14 +39,14 @@ install_base_cores() {
         export rp_module_repo="${CORE_REPOS[$CORE]}"
         export md_build="/tmp/build"
 
+        log_msg INFO "scriptdir='$SCRIPT_DIR' MODULES_DIR='$MODULES_DIR'"
+
         # 소스 경로를 retropie_setup/libretrocores/로 수정
         source "$SCRIPT_DIR/retropie_setup/libretrocores/$CORE.sh" || {
             echo "[ERROR] $CORE 모듈 스크립트 로드 실패"
             SUCCESS=0
             continue
         }
-
-        sources_$CORE
 
         # 반드시 cd로 현재 작업 디렉터리 확정
         cd "$md_build/${CORE}-libretro" || {
@@ -59,9 +56,7 @@ install_base_cores() {
         }
         echo "[INFO] 현재 dir: $(pwd)" # 디버그 확인
 
-        build_$CORE
         installLibretroCore
-        install_$CORE
         configure_$CORE
     done
 

@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/usr/bin/env source
 set -e
 
 # file: system_install.sh
@@ -6,32 +6,29 @@ set -e
 # RetroPangui Base System 설치 스크립트 모음 실행기 (안정적 에러 체크 방식)
 # ==========================================================
 
-SCRIPT_DIR="$(dirname "$0")"
-SCRIPT_DIR="$(cd "$SCRIPT_DIR" && pwd)"
-
 SUCCESS=1
 
 # # 1. Dependency 설치
-# bash "$SCRIPT_DIR/install_base_1_in_5_deps.sh" "$@" || SUCCESS=0
+# source "$MODULES_DIR/install_base_1_in_5_deps.sh" "$@" || SUCCESS=0
 
 # # 2. RetroArch 설치/설정
 # if [ "$SUCCESS" -eq 1 ]; then
-#     bash "$SCRIPT_DIR/install_base_2_in_5_ra.sh" "$@" || SUCCESS=0
+#     source "$MODULES_DIR/install_base_2_in_5_ra.sh" "$@" || SUCCESS=0
 # fi
 
 # # 3. EmulationStation 설치/설정
 # if [ "$SUCCESS" -eq 1 ]; then
-#     bash "$SCRIPT_DIR/install_base_3_in_5_es.sh" "$@" || SUCCESS=0
+#     source "$MODULES_DIR/install_base_3_in_5_es.sh" "$@" || SUCCESS=0
 # fi
 
 #4. 코어 설치/설정
 if [ "$SUCCESS" -eq 1 ]; then
-    bash "$SCRIPT_DIR/install_base_4_in_5_cores.sh" "$@" || SUCCESS=0
+    source "$MODULES_DIR/install_base_4_in_5_cores.sh" "$@" || SUCCESS=0
 fi
 
 # 5. 환경설정, 최종 초기화 (필요시)
 # if [ "$SUCCESS" -eq 1 ]; then
-#     bash "$SCRIPT_DIR/install_base_5_in_5_setup_env.sh" "$@" || SUCCESS=0
+#     source "$MODULES_DIR/install_base_5_in_5_setup_env.sh" "$@" || SUCCESS=0
 # fi
 
 # (2) 설치 결과 안내

@@ -17,11 +17,10 @@ if [[ -z "$__user" ]]; then
 fi
 user="$__user"
 
-# 스크립트 경로 설정
-SCRIPT_DIR="$(dirname "$0")"
-SCRIPT_DIR="$(cd "$SCRIPT_DIR" && pwd)"
-MODULES_DIR="$SCRIPT_DIR/scriptmodules"
 RETROPIE_SETUP_DIR="$MODULES_DIR/retropie_setup"
+log_msg INFO "$SCRIPTS_DIR"
+log_msg INFO "$MODULES_DIR"
+log_msg INFO "$RETROPIE_SETUP_DIR"
 
 # ------------------------------------------------------------------
 # 💡 핵심: 변수와 모듈을 불러옵니다.
@@ -95,6 +94,7 @@ install_core_dependencies() {
 
     cp -r "$TEMP_DIR_BASE/$EXT_FOLDER/scriptmodules" "$RETROPIE_SETUP_DIR"
     cp -r "$TEMP_DIR_BASE/$EXT_FOLDER/retropie_packages.sh" "$RETROPIE_SETUP_DIR"
+    cp -r "$TEMP_DIR_BASE/$EXT_FOLDER/retropie_setup.sh" "$RETROPIE_SETUP_DIR"
 }
 
 # ----------------- 메인 메뉴 기능 함수 (Main Menu Functions) -----------------
@@ -112,7 +112,7 @@ run_base_system_install() {
         echo "========================================================"
         
         # 💡 인수 전달: 모든 핵심 경로와 Git URL을 system_install.sh 모듈에 전달
-        bash "$MODULES_DIR/system_install.sh"        
+        source "$MODULES_DIR/system_install.sh"        
         INSTALL_STATUS=$?
         
         echo -e "\n========================================================"

@@ -2,10 +2,9 @@
 # 파일명: retropie_func_ext.sh
 # RetroPie/Retro Pangui 설치 환경 확장 함수 모듈
 
-SCRIPT_DIR="$(dirname "$0")"
-SCRIPT_DIR="$(cd "$SCRIPT_DIR" && pwd)"
-MODULES_DIR="$SCRIPT_DIR"  # scriptmodules 디렉토리 자체가 SCRIPT_DIR
 RETROPIE_SETUP_DIR="$MODULES_DIR/retropie_setup"
+export scriptdir="$RETROPIE_SETUP_DIR"
+export __scriptdir="$RETROPIE_SETUP_DIR"
 source "$RETROPIE_SETUP_DIR/retropie_packages.sh"
 
 # 설치 환경 초기화 (필수 패키지 + 변수 + 플랫폼 정보)
