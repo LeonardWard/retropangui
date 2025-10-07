@@ -124,7 +124,6 @@ installLibretroCore() {
 }
 
 
-
 mkRomDir() {
     local sys="$1"
     local romdir="${USER_ROMS_PATH:-$HOME/roms}/$sys"
