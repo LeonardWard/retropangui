@@ -14,8 +14,8 @@ SCRIPT_DIR="$(cd "$SCRIPT_DIR" && pwd)"
 # 환경변수/공통 툴 소스
 source "$SCRIPT_DIR/config.sh"
 source "$SCRIPT_DIR/helpers.sh"
-source "$SCRIPT_DIR/inifuncs.sh"
-source "$SCRIPT_DIR/packages.sh"
+#source "$SCRIPT_DIR/inifuncs.sh"
+#source "$SCRIPT_DIR/packages.sh"
 source "$SCRIPT_DIR/func_ext_retropie.sh"
 setup_env
 
@@ -36,14 +36,15 @@ BASE_CORE_MODULES=(
 install_base_cores() {
     local SUCCESS=1
 
-    log_msg STEP "기본 코어 자동 설치를 시작합니다..."
+    echo "[STEP] 기본 코어 자동 설치를 시작합니다..."
 
     for CORE in "${BASE_CORE_MODULES[@]}"; do
         export rp_module_repo="${CORE_REPOS[$CORE]}"
         export md_build="/tmp/build"
 
-        source "$SCRIPT_DIR/libretrocores/$CORE.sh" || {
-            log_msg ERROR "$CORE 모듈 스크립트 로드 실패"
+        # 소스 경로를 retropie_setup/libretrocores/로 수정
+        source "$SCRIPT_DIR/retropie_setup/libretrocores/$CORE.sh" || {
+            echo "[ERROR] $CORE 모듈 스크립트 로드 실패"
             SUCCESS=0
             continue
         }
@@ -52,7 +53,7 @@ install_base_cores() {
 
         # 반드시 cd로 현재 작업 디렉터리 확정
         cd "$md_build/${CORE}-libretro" || {
-            log_msg ERROR "코어 빌드 폴더 진입 실패: $md_build/${CORE}-libretro"
+            echo "[ERROR] 코어 빌드 폴더 진입 실패: $md_build/${CORE}-libretro"
             SUCCESS=0
             continue
         }
@@ -64,6 +65,7 @@ install_base_cores() {
         configure_$CORE
     done
 
+    return $SUCCESS
 }
 
 # 반드시 함수 호출!

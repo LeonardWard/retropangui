@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 set -e
 
+# file: system_install.sh
 # ==========================================================
 # RetroPangui Base System 설치 스크립트 모음 실행기 (안정적 에러 체크 방식)
 # ==========================================================
@@ -18,10 +19,10 @@ SUCCESS=1
 #     bash "$SCRIPT_DIR/install_base_2_in_5_ra.sh" "$@" || SUCCESS=0
 # fi
 
-# 3. EmulationStation 설치/설정
-if [ "$SUCCESS" -eq 1 ]; then
-    bash "$SCRIPT_DIR/install_base_3_in_5_es.sh" "$@" || SUCCESS=0
-fi
+# # 3. EmulationStation 설치/설정
+# if [ "$SUCCESS" -eq 1 ]; then
+#     bash "$SCRIPT_DIR/install_base_3_in_5_es.sh" "$@" || SUCCESS=0
+# fi
 
 #4. 코어 설치/설정
 if [ "$SUCCESS" -eq 1 ]; then

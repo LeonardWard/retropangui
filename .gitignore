@@ -1,8 +1,4 @@
-EmulationStation
-RetroArch
-scriptmodules/emulators
-scriptmodules/libretrocores
-scriptmodules/ports
+retropie_setup
 scriptmodules/*.bak
 test_retropangui_1st
 test_retropangui_2nd

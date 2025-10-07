@@ -10,12 +10,12 @@
 # Retro Pangui 스크립트 버전
 __version="0.2"
 
-# sudo로 실행해도 항상 원래 사용자 경로를 사용하도록
-if [[ -n "$SUDO_USER" ]]; then
-    USER_HOME=$(eval echo ~$SUDO_USER)
-else
-    USER_HOME="$USER_HOME"
-fi
+# # sudo로 실행해도 항상 원래 사용자 경로를 사용하도록
+# if [[ -n "$SUDO_USER" ]]; then
+#     USER_HOME=$(eval echo ~$SUDO_USER)
+# else
+#     USER_HOME="$USER_HOME"
+# fi
 
 # 에뮬레이터 바이너리가 설치될 루트 디렉토리 (Recalbox/RetroPie의 /opt/retropie-emulators 와 유사)
 INSTALL_ROOT_DIR="/opt/retropangui"

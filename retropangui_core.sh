@@ -7,6 +7,8 @@
 # 모든 복잡한 설치 로직은 'scriptmodules' 파일로 분리되었습니다.
 # =======================================================
 
+[[ "$__debug" -eq 1 ]] && set -x
+
 # --- [0] 사용자 및 그룹 권한 설정 (최상단) ---
 # 이 블록은 config.sh를 로드하기 전에, 권한 관련 로직을 처리해야 하므로 여기에 유지합니다.
 if [[ -z "$__user" ]]; then
@@ -19,6 +21,7 @@ user="$__user"
 SCRIPT_DIR="$(dirname "$0")"
 SCRIPT_DIR="$(cd "$SCRIPT_DIR" && pwd)"
 MODULES_DIR="$SCRIPT_DIR/scriptmodules"
+RETROPIE_SETUP_DIR="$MODULES_DIR/retropie_setup"
 
 # ------------------------------------------------------------------
 # 💡 핵심: 변수와 모듈을 불러옵니다.
@@ -90,9 +93,8 @@ install_core_dependencies() {
 
     git_Pull_Or_Clone "$RETROPIE_SETUP_GIT_URL" "$TEMP_DIR_BASE/$EXT_FOLDER" --depth=1
 
-    cp -r "$TEMP_DIR_BASE/$EXT_FOLDER/scriptmodules/emulators" "$MODULES_DIR/"
-    cp -r "$TEMP_DIR_BASE/$EXT_FOLDER/scriptmodules/libretrocores" "$MODULES_DIR/"
-    cp -r "$TEMP_DIR_BASE/$EXT_FOLDER/scriptmodules/ports" "$MODULES_DIR/"
+    cp -r "$TEMP_DIR_BASE/$EXT_FOLDER/scriptmodules" "$RETROPIE_SETUP_DIR"
+    cp -r "$TEMP_DIR_BASE/$EXT_FOLDER/retropie_packages.sh" "$RETROPIE_SETUP_DIR"
 }
 
 # ----------------- 메인 메뉴 기능 함수 (Main Menu Functions) -----------------
