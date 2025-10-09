@@ -1,21 +1,162 @@
 #!/usr/bin/env bash
-# 파일명: retropie_func_ext.sh
-# RetroPie/Retro Pangui 설치 환경 확장 함수 모듈
+# 파일명: func_ext_retropie.sh
+# RetroPangui 커스텀 헬퍼 함수 모음
+# RetroPie의 헬퍼 함수를 사용하는 대신, 우리 환경에 맞게 직접 구현합니다.
 
-RETROPIE_SETUP_DIR="$MODULES_DIR/retropie_setup"
-export scriptdir="$RETROPIE_SETUP_DIR"
-export __scriptdir="$RETROPIE_SETUP_DIR"
-source "$RETROPIE_SETUP_DIR/retropie_packages.sh"
+# 1. 우리 프로젝트의 고유 헬퍼 함수들 (재정의된 RetroPie 호환 함수 포함)
 
-# 설치 환경 초기화 (필수 패키지 + 변수 + 플랫폼 정보)
-setup_env() {
+function mkRomDir() {
+    local system="$1"
+    local path="$USER_ROMS_PATH/$system"
+    if [[ ! -d "$path" ]]; then
+        log_msg INFO "Creating rom directory for '$system' at '$path'"
+        mkdir -p "$path"
+        chown "$__user":"$__user" "$path"
+    fi
+}
+
+function addEmulator() {
+    local is_default="$1"
+    local emu="$2"
+    local system="$3"
+    local command="$4"
+    local config_file="$USER_HOME/share/system/configs/$system/emulators.cfg"
+
+    log_msg INFO "Adding emulator '$emu' for system '$system' to '$config_file'"
+    mkdir -p "$(dirname "$config_file")"
+    
+    echo "$emu = \"$command\"" >> "$config_file"
+
+    if [[ "$is_default" -eq 1 ]]; then
+        # 기존 default 라인을 지우고 새로 추가
+        sed -i '/^default = /d' "$config_file"
+        echo "default = \"$emu\"" >> "$config_file"
+    fi
+    chown "$__user":"$__user" "$config_file"
+}
+
+function addSystem() {
+    return 0
+}
+
+function defaultRAConfig() {
+
+    local system="
+"
+
+    local dest_config="$USER_CONFIG_PATH/$system/retroarch.cfg"
+
+    local src_config="/opt/retropangui/etc/retroarch.cfg"
+
+
+
+    if [[ -f "$src_config" ]]; then
+
+        log_msg INFO "Copying default retroarch.cfg to '$dest_config'"
+
+        mkdir -p "$(dirname "$dest_config")"
+
+        if [[ ! -f "$dest_config" ]]; then
+
+            cp "$src_config" "$dest_config"
+
+            chown "$__user":"$__user" "$dest_config"
+
+        fi
+
+    else
+
+        log_msg WARN "Default retroarch.cfg not found at '$src_config'"
+
+    fi
+
+}
+
+
+
+function rp_isInstalled() {
+
+    return 1 # 1 indicates 'not installed'
+
+}
+
+
+
+function iniConfig() {
+
+    _ini_file="
+"
+
+    mkdir -p "$(dirname "$_ini_file")"
+
+    if [[ ! -f "$_ini_file" ]]; then
+
+        touch "$_ini_file"
+
+        chown "$__user":"$__user" "$_ini_file"
+
+    fi
+
+}
+
+
+
+function iniGet() {
+
+    local key="
+"
+
+    local file="${2:-$_ini_file}"
+
+    local value=$(grep -E "^${key}(\s+)?=" "$file" | head -n 1 | cut -d'=' -f2 | sed 's/"//g' | sed 's/^[ ]*//;s/[ ]*$//')
+
+    echo "$value"
+
+}
+
+
+
+function iniSet() {
+
+    local key="
+"
+
+    local value="$2"
+
+    local file="${3:-$_ini_file}"
+
+    if [[ -n "$file" && -f "$file" ]]; then
+
+        # sed 명령어에서 특수문자(특히 /) 문제를 피하기 위해 value를 이스케이프 처리합니다.
+
+        local escaped_value=$(printf '%s' "$value" | sed 's/[\/&]/\\&/g')
+
+        if grep -q -E "^${key}(\s+)?=" "$file"; then
+
+            sed -i "s/^\(${key}\s*=\s*\).* /\1\"${escaped_value}\"" "$file"
+
+        else
+
+            echo "$key = \"$escaped_value\"" >> "$file"
+
+        fi
+
+        chown "$__user":"$__user" "$file"
+
+    fi
+
+}
+
+# 2. 우리 프로젝트의 고유 헬퍼 함수들 (기존 코드 복원)
+
+function setup_env() {
     __ERRMSGS=()
     __INFMSGS=()
 
     REQUIRED_PKGS=(git build-essential gcc g++ make dialog unzip lsb-release)
     for pkg in "${REQUIRED_PKGS[@]}"; do
         if ! dpkg -s "$pkg" &>/dev/null; then
-            echo "[INFO] $pkg 설치 중..."
+            log_msg INFO "Installing prerequisite: $pkg ..."
             sudo apt-get install -y "$pkg"
         fi
     done
@@ -39,95 +180,58 @@ setup_env() {
     export MAKEFLAGS="$__default_makeflags"
 }
 
-# gitPullOrClone() {
-#     # 인자 대신 모두 전역 변수로 처리!
-#     local repo="${rp_module_repo}"
-#     local dest="${md_build}/${rp_module_id}-libretro"
+function gitPullOrClone() {
+    log_msg INFO "gitPullOrClone wrapper executed..."
 
-#     echo "[DEBUG] 함수 진입: repo='$repo' dest='$dest'"
+    local repo_info="$rp_module_repo"
+    local dest_dir="${md_build}/${rp_module_id}"
 
-#     local type url branch
-#     read -r type url branch <<< "$repo"
-#     echo "[DEBUG] PARSE: type='$type' url='$url' branch='$branch'"
+    local type url branch
+    read -r type url branch <<< "$repo_info"
 
-#     if [[ "$type" != "git" ]] || [[ -z "$url" ]] || [[ -z "$branch" ]]; then
-#         echo "[ERROR] 저장소 URL/브랜치 정보가 올바르지 않습니다: $repo"
-#         return 1
-#     fi
+    if [[ "$type" != "git" ]] || [[ -z "$url" ]]; then
+        log_msg ERROR "Invalid repository URL: $repo_info"
+        return 1
+    fi
+    
+    if [[ -n "$branch" ]]; then
+        git_Pull_Or_Clone "$url" "$dest_dir" --branch "$branch" --depth=1
+    else
+        git_Pull_Or_Clone "$url" "$dest_dir" --depth=1
+    fi
+}
 
-#     if [ -d "$dest" ]; then
-#         echo "[INFO] $dest 존재. git pull"
-#         git -C "$dest" pull
-#     else
-#         echo "[INFO] git clone --branch $branch $url $dest"
-#         git clone --branch "$branch" "$url" "$dest"
-#     fi
-# }
+function installLibretroCore() {
+    log_msg INFO "Installing compiled core files from $(pwd)..."
+    
+    # 현재 디렉토리에서 *_libretro.so 파일을 찾습니다.
+    local so_file=$(find . -maxdepth 1 -name "*_libretro.so" -print -quit)
 
-# prepLibretroCoreBuild() {
-#     # 반드시 코어 빌드 함수 실행 전에 호출!
-#     local coredir="$md_build/${rp_module_id}-libretro"
-#     if [ -d "$coredir" ]; then
-#         cd "$coredir" || {
-#             echo "[ERROR] 코어 빌드 폴더 진입 실패: $coredir"
-#             return 1
-#         }
-#         echo "[INFO] 현재 dir: $(pwd)"
-#     else
-#         echo "[ERROR] 코어 빌드 폴더 없음: $coredir"
-#         return 1
-#     fi
-# }
-
-# printLibretroBuildDir() {
-#     local builddir="$md_build/${rp_module_id}-libretro"
-#     local workdir=""
-
-#     # 1) libretro/Makefile, 2) ROOT Makefile 순서로 폴더 안내
-#     if [ -f "$builddir/libretro/Makefile" ]; then
-#         workdir="$builddir/libretro"
-#     elif [ -f "$builddir/Makefile" ]; then
-#         workdir="$builddir"
-#     else
-#         echo "[ERROR] Makefile 위치를 찾을 수 없습니다: $builddir"
-#         ls -l "$builddir"
-#         return 1
-#     fi
-
-#     echo "[INFO] 코어 빌드 디렉토리: $workdir"
-#     return 0
-# }
-
-installLibretroCore() {
-    # .so 우선 복사 방식 유지
-    local sofile=""
-    if [[ -n "$rp_module_id" ]] && [[ -f "${rp_module_id}_libretro.so" ]]; then
-        sofile="${rp_module_id}_libretro.so"
-        cp -v "$sofile" "$md_inst/"
-        echo "[INFO] 코어 so 파일 설치 완료: $md_inst/$(basename "$sofile")"
-    elif [[ -n "$md_ret_require" ]] && [[ -f "$md_ret_require" ]]; then
-        cp -v "$md_ret_require" "$md_inst/"
-        echo "[INFO] 코어 so 파일 설치 완료: $md_inst/$(basename "$md_ret_require")"
+    if [[ -n "$so_file" ]]; then
+        log_msg INFO "Found core file: $so_file"
+        cp -v "$so_file" "$md_inst/"
+        log_msg SUCCESS "Core file installed to $md_inst"
+    else
+        log_msg ERROR "Could not find a compiled .so file in the build directory."
     fi
 
     # 코어 설치 모듈 내 md_ret_files 배열 전체 복사 지원
     if [[ -n "${md_ret_files[*]}" ]]; then
         for _file in "${md_ret_files[@]}"; do
+            # .so 파일은 이미 위에서 복사했으므로 건너뜁니다.
+            if [[ "$_file" == *.so ]]; then continue; fi
+
             if [[ -e "$_file" ]]; then
                 if [[ -d "$_file" ]]; then
                     cp -arv "$_file" "$md_inst/"
-                    echo "[INFO] 디렉터리 설치: $md_inst/$(basename "$_file")"
+                    log_msg INFO "Directory installed: $md_inst/$(basename "$_file")"
                 else
                     cp -v "$_file" "$md_inst/"
-                    echo "[INFO] 파일 설치: $md_inst/$(basename "$_file")"
+                    log_msg INFO "File installed: $md_inst/$(basename "$_file")"
                 fi
             else
-                echo "[WARN] 설치 대상 파일/디렉터리 없음: $_file"
+                log_msg WARN "File/directory to install not found: $_file"
             fi
         done
     fi
 }
-
-# 사용 예시:
-# source /경로/retropie_func_ext.sh
-# setup_env

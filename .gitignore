@@ -1,5 +1,6 @@
 retropie_setup
 log
+handover*
 scriptmodules/*.bak
 test_retropangui_1st
 test_retropangui_2nd
