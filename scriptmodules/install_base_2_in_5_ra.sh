@@ -29,26 +29,31 @@ install_retroarch() {
     log_msg INFO "RetroArch 저장소($RA_GIT_URL) 클론 또는 pull 중..."
     git_Pull_Or_Clone "$RA_GIT_URL" "$RA_BUILD_DIR"
 
-    cd "$RA_BUILD_DIR" || return 1
+    cd "$RA_BUILD_DIR" 
+    || return 1
     
     log_msg INFO "RetroArch 빌드 환경 설정 중..."
     ./configure \
         --prefix="$INSTALL_ROOT_DIR" \
         --disable-x11 \
         --disable-wayland \
+        --disable-cg \
         --enable-opengles \
         --enable-udev \
         --enable-alsa \
         --enable-threads \
         --enable-ffmpeg \
         --enable-7zip \
-        --enable-sdl2 || { log_msg ERROR "RetroArch configure 실패."; return 1; }
+        --enable-sdl2 
+        || { log_msg ERROR "RetroArch configure 실패."; return 1; }
 
     log_msg INFO "RetroArch 빌드 시작 (make -j$(nproc))..."
-    make -j$(nproc) || { log_msg ERROR "RetroArch 빌드 실패."; return 1; }
+    make -j$(nproc) 
+    || { log_msg ERROR "RetroArch 빌드 실패."; return 1; }
     
     log_msg INFO "RetroArch 설치 중..."
-    sudo make install || { log_msg ERROR "RetroArch 설치 실패."; return 1; }
+    sudo make install 
+    || { log_msg ERROR "RetroArch 설치 실패."; return 1; }
     
     log_msg SUCCESS "RetroArch 빌드 및 설치 완료."
     return 0
