@@ -12,8 +12,8 @@ install_emulationstation() {
 
     ES_PROJECT_NAME="$(get_Git_Project_Dir_Name "$ES_GIT_URL")"
     ES_BUILD_DIR="$INSTALL_BUILD_DIR/$ES_PROJECT_NAME"
-    echo "ℹ️ EmulationStation 프로젝트 이름: $ES_PROJECT_NAME"
-    echo "ℹ️ EmulationStation 빌드 디렉토리: $ES_BUILD_DIR"
+    log_msg INFO "ℹ️ EmulationStation 프로젝트 이름: $ES_PROJECT_NAME"
+    log_msg INFO "ℹ️ EmulationStation 빌드 디렉토리: $ES_BUILD_DIR"
 
     log_msg INFO "EmulationStation 저장소($ES_GIT_URL) 클론 또는 pull 중..."
     git_Pull_Or_Clone "$ES_GIT_URL" "$ES_BUILD_DIR"
@@ -33,7 +33,7 @@ install_emulationstation() {
     USER_HOME_PATH="/home/$(get_effective_user)"
     cp -r $ES_BUILD_DIR/resources "$USER_HOME_PATH/.emulationstation" || { log_msg ERROR "EmulationStation 리소스 복사 실패."; return 1; }
 
-    log_msg SUCCESS "EmulationStation 빌드 및 설치 완료."
+    log_msg SUCCESS "EmulationStation 빌드 및 설치 완료. 설치 경로: "$INSTALL_ROOT_DIR""
     return 0
 }
 

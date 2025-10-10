@@ -69,16 +69,16 @@ function run_base_system_install() {
         
         log_msg INFO "Base System 설치 모듈(system_install.sh)을 실행합니다."
         
-        echo -e "\n========================================================"
-        echo "   🚀 Retro Pangui Base System 설치를 시작합니다..."
-        echo "   (자세한 빌드 과정이 이어서 출력됩니다.)"
-        echo "========================================================"
+        log_msg INFO "========================================================"
+        log_msg INFO "   🚀 Retro Pangui Base System 설치를 시작합니다..."
+        log_msg INFO "   (자세한 빌드 과정이 이어서 출력됩니다.)"
+        log_msg INFO "========================================================"
         
         # system_install.sh 모듈을 source하여 실행
         source "$MODULES_DIR/system_install.sh"
         local INSTALL_STATUS=$?
         
-        echo -e "\n========================================================"
+        log_msg INFO "\n========================================================"
         
         if [ $INSTALL_STATUS -eq 0 ]; then
             whiptail --title "✅ 설치 성공" --msgbox "Base System 설치 및 환경 패치가 완료되었습니다." 10 60

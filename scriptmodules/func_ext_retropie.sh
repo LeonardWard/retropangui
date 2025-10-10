@@ -40,111 +40,160 @@ function addSystem() {
 }
 
 function defaultRAConfig() {
-
-    local system="
-"
-
+    local system="$1"
     local dest_config="$USER_CONFIG_PATH/$system/retroarch.cfg"
-
-    local src_config="/opt/retropangui/etc/retroarch.cfg"
-
-
+    local src_config="$INSTALL_ROOT_DIR/etc/retroarch.cfg"
 
     if [[ -f "$src_config" ]]; then
-
         log_msg INFO "Copying default retroarch.cfg to '$dest_config'"
-
         mkdir -p "$(dirname "$dest_config")"
 
         if [[ ! -f "$dest_config" ]]; then
-
             cp "$src_config" "$dest_config"
-
             chown "$__user":"$__user" "$dest_config"
-
         fi
-
     else
-
         log_msg WARN "Default retroarch.cfg not found at '$src_config'"
-
     fi
-
 }
-
-
 
 function rp_isInstalled() {
-
     return 1 # 1 indicates 'not installed'
-
 }
 
+# =================================================
+# INI File Functions
+# Based on original RetroPie-Setup inifuncs.sh
+# =================================================
 
-
+# @fn iniConfig()
+# @param delim ini file delimiter eg. ' = '
+# @param quote ini file quoting character eg. '"'
+# @param config ini file to edit
+# @brief Configure an ini file for getting/setting values with `iniGet` and `iniSet`
 function iniConfig() {
+    __ini_cfg_delim="$1"
+    __ini_cfg_quote="$2"
+    __ini_cfg_file="$3"
+}
 
-    _ini_file="
-"
+# @fn iniProcess()
+# @param command `set`, `unset` or `del`
+# @param key ini key to operate on
+# @param value to set
+# @param file optional file to use another file than the one configured with iniConfig
+# @brief The main function for setting and deleting from ini files - usually
+# not called directly but via iniSet iniUnset and iniDel
+function iniProcess() {
+    local cmd="$1"
+    local key="$2"
+    local value="$3"
+    local file="$4"
+    [[ -z "$file" ]] && file="$__ini_cfg_file"
+    local delim="$__ini_cfg_delim"
+    local quote="$__ini_cfg_quote"
 
-    mkdir -p "$(dirname "$_ini_file")"
+    [[ -z "$file" ]] && fatalError "No file provided for ini/config change"
+    [[ -z "$key" ]] && fatalError "No key provided for ini/config change on $file"
 
-    if [[ ! -f "$_ini_file" ]]; then
+    # we strip the delimiter of spaces, so we can "fussy" match existing entries that have the wrong spacing
+    local delim_strip=${delim// /}
+    # if the stripped delimiter is empty - such as in the case of a space, just use the delimiter instead
+    [[ -z "$delim_strip" ]] && delim_strip="$delim"
+    local match_re="^[[:space:]#]*$key[[:space:]]*$delim_strip.*$"
 
-        touch "$_ini_file"
-
-        chown "$__user":"$__user" "$_ini_file"
-
+    local match
+    if [[ -f "$file" ]]; then
+        match=$(grep -i "$match_re" "$file" | tail -1)
+    else
+        touch "$file"
     fi
 
+    if [[ "$cmd" == "del" ]]; then
+        [[ -n "$match" ]] && sed -i --follow-symlinks "\|$(sedQuote "$match")|d" "$file"
+        return 0
+    fi
+
+    [[ "$cmd" == "unset" ]] && key="# $key"
+
+    local replace="$key$delim$quote$value$quote"
+    if [[ -z "$match" ]]; then
+        # make sure there is a newline then add the key-value pair
+        sed -i --follow-symlinks '$a\'
+        echo "$replace" >> "$file"
+    else
+        # replace existing key-value pair
+        sed -i --follow-symlinks "s|$(sedQuote "$match")|$(sedQuote "$replace")|g" "$file"
+    fi
+
+    return 0
 }
 
-
-
-function iniGet() {
-
-    local key="
-"
-
-    local file="${2:-$_ini_file}"
-
-    local value=$(grep -E "^${key}(\s+)?=" "$file" | head -n 1 | cut -d'=' -f2 | sed 's/"//g' | sed 's/^[ ]*//;s/[ ]*$//')
-
-    echo "$value"
-
+# @fn iniUnset()
+# @param key ini key to operate on
+# @param value to Unset (key will be commented out, but the value can be changed also)
+# @param file optional file to use another file than the one configured with iniConfig
+# @brief Unset (comment out) a key / value pair in an ini file.
+function iniUnset() {
+    iniProcess "unset" "$1" "$2" "$3"
 }
 
-
-
+# @fn iniSet()
+# @param key ini key to operate on
+# @param value to set
+# @param file optional file to use another file than the one configured with iniConfig
+# @brief Set a key / value pair in an ini file.
 function iniSet() {
+    iniProcess "set" "$1" "$2" "$3"
+}
 
-    local key="
-"
+# @fn iniDel()
+# @param key ini key to operate on
+# @param file optional file to use another file than the one configured with iniConfig
+# @brief Delete a key / value pair in an ini file.
+function iniDel() {
+    iniProcess "del" "$1" "" "$2"
+}
 
-    local value="$2"
-
-    local file="${3:-$_ini_file}"
-
-    if [[ -n "$file" && -f "$file" ]]; then
-
-        # sed 명령어에서 특수문자(특히 /) 문제를 피하기 위해 value를 이스케이프 처리합니다.
-
-        local escaped_value=$(printf '%s' "$value" | sed 's/[\/&]/\\&/g')
-
-        if grep -q -E "^${key}(\s+)?=" "$file"; then
-
-            sed -i "s/^\(${key}\s*=\s*\).* /\1\"${escaped_value}\"" "$file"
-
-        else
-
-            echo "$key = \"$escaped_value\"" >> "$file"
-
-        fi
-
-        chown "$__user":"$__user" "$file"
-
+# @fn iniGet()
+# @param key ini key to get the value of
+# @param file optional file to use another file than the one configured with iniConfig
+# @brief Get the value of a key from an ini file.
+function iniGet() {
+    local key="$1"
+    local file="$2"
+    [[ -z "$file" ]] && file="$__ini_cfg_file"
+    if [[ ! -f "$file" ]]; then
+        ini_value=""
+        return 1
     fi
 
+    local delim="$__ini_cfg_delim"
+    local quote="$__ini_cfg_quote"
+    # we strip the delimiter of spaces, so we can "fussy" match existing entries that have the wrong spacing
+    local delim_strip=${delim// /}
+    # if the stripped delimiter is empty - such as in the case of a space, just use the delimiter instead
+    [[ -z "$delim_strip" ]] && delim_strip="$delim"
+
+    # create a regexp to match the value based on whether we are looking for quotes or not
+    local value_m
+    if [[ -n "$quote" ]]; then
+        value_m="$quote*\([^$quote|\r]*\)$quote*"
+    else
+        value_m="\([\r]*\)"
+    fi
+
+    ini_value="$(sed -n "s#^[ |\t]*$key[ |\t]*$delim_strip[ |\t]*$value_m.*#\1#p" "$file" | tail -1)"
+}
+
+# escape special characters for sed
+function sedQuote() {
+    local string="$1"
+    string="${string//\\/\\\\}"
+    string="${string//|/\|}"
+    string="${string//[/\[}"
+    string="${string//]/\]}"
+    echo "$string"
 }
 
 # 2. 고유 헬퍼 함수들 (기존 코드 복원)
@@ -168,8 +217,8 @@ function setup_env() {
     export __jobs=$(nproc)
     export __default_makeflags="-j${__jobs}"
 
-    export md_build="/tmp/build"
-    export md_inst="/opt/retropangui/libretro/cores"
+    export md_build="$INSTALL_BUILD_DIR/core_build"
+    export md_inst="$LIBRETRO_CORE_PATH"
     mkdir -p "$md_build" "$md_inst"
 
     export __platform="$(uname -m)"
@@ -202,36 +251,75 @@ function gitPullOrClone() {
 }
 
 function installLibretroCore() {
-    log_msg INFO "Installing compiled core files from $(pwd)..."
-    
-    # 현재 디렉토리에서 *_libretro.so 파일을 찾습니다.
-    local so_file=$(find . -maxdepth 1 -name "*_libretro.so" -print -quit)
+    local build_dir="$1"
+    local module_id="$2" # 새로 추가된 인자: 코어 ID
 
-    if [[ -n "$so_file" ]]; then
-        log_msg INFO "Found core file: $so_file"
-        cp -v "$so_file" "$md_inst/"
-        log_msg SUCCESS "Core file installed to $md_inst"
-    else
-        log_msg ERROR "Could not find a compiled .so file in the build directory."
+    if [[ -z "$build_dir" || ! -d "$build_dir" ]]; then
+        log_msg ERROR "installLibretroCore: Invalid build directory provided."
+        return 1
+    fi
+    if [[ -z "$module_id" ]]; then
+        log_msg ERROR "installLibretroCore: Module ID not provided."
+        return 1
     fi
 
-    # 코어 설치 모듈 내 md_ret_files 배열 전체 복사 지원
+    log_msg INFO "Installing files for $module_id from $build_dir..."
+
     if [[ -n "${md_ret_files[*]}" ]]; then
         for _file in "${md_ret_files[@]}"; do
-            # .so 파일은 이미 위에서 복사했으므로 건너뜁니다.
-            if [[ "$_file" == *.so ]]; then continue; fi
+            local src_path="$build_dir/$_file"
+            local dest_dir=""
+            local file_extension="${_file##*.}" # 파일 확장자 추출
+            local file_basename="${_file##*/}" # 파일 이름 추출
 
-            if [[ -e "$_file" ]]; then
-                if [[ -d "$_file" ]]; then
-                    cp -arv "$_file" "$md_inst/"
-                    log_msg INFO "Directory installed: $md_inst/$(basename "$_file")"
-                else
-                    cp -v "$_file" "$md_inst/"
-                    log_msg INFO "File installed: $md_inst/$(basename "$_file")"
-                fi
-            else
-                log_msg WARN "File/directory to install not found: $_file"
+            if [[ ! -e "$src_path" ]]; then
+                log_msg WARN "File/directory to install not found: $src_path"
+                continue
             fi
+
+            # 파일 종류에 따라 목적지 결정
+            case "$file_extension" in
+                so) # Libretro 코어 파일
+                    dest_dir="$md_inst"
+                    ;;
+                md|txt|chm|html) # 문서 파일
+                    dest_dir="$INSTALL_ROOT_DIR/docs/$module_id"
+                    ;;
+                *) # 그 외 파일 (폴더 포함)
+                    if [[ -d "$src_path" ]]; then
+                        # 'metadata', 'dats', 'Databases', 'Machines' 같은 폴더
+                        dest_dir="$biosdir/$module_id"
+                    else
+                        # 기본값: 코어 설치 폴더
+                        dest_dir="$md_inst"
+                    fi
+                    ;;
+            esac
+
+            # 목적지 디렉터리 생성 (mkUserDir 함수 사용)
+            mkUserDir "$dest_dir"
+
+            log_msg INFO "Copying $src_path to $dest_dir"
+            cp -Rvf "$src_path" "$dest_dir"
         done
+        log_msg SUCCESS "All files for $module_id installed to their respective locations."
+    else
+        log_msg INFO "No files listed in md_ret_files for $module_id. Nothing to install."
     fi
+}
+
+function mkUserDir() {
+    mkdir -p "$1"
+    chown "$__user":"$__group" "$1"
+}
+
+function setRetroArchCoreOption() {
+    local option="$1"
+    local value="$2"
+    iniConfig " = " "\"" "$configdir/all/retroarch-core-options.cfg"
+    iniGet "$option"
+    if [[ -z "$ini_value" ]]; then
+        iniSet "$option" "$value"
+    fi
+    chown "$__user":"$__group" "$configdir/all/retroarch-core-options.cfg"
 }

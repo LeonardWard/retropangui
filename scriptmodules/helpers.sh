@@ -30,7 +30,18 @@ log_msg() {
     fi
 }
 
-# 명령어 존재여부 확인
-command_exists() {
-    command -v "$1" >/dev/null 2>&1
+# 명령어 존재여부 확인 및 에러 로그 출력
+run_command() {
+    local CMD="$1"
+    if ! command_exists "$CMD"; then
+        log_msg ERROR "'$CMD' 명령어를 찾을 수 없습니다."
+        return 127
+    fi
+    "$CMD"
+    local STATUS="$?"
+    if [ "$STATUS" -ne 0 ]; then
+        log_msg ERROR "'$CMD' 명령 실행 중 오류 발생 (코드: $STATUS)"
+        return "$STATUS"
+    fi
+    return 0
 }

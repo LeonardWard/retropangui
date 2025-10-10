@@ -12,8 +12,8 @@ install_retroarch() {
 
     EXT_FOLDER="$(get_Git_Project_Dir_Name "$RA_GIT_URL")"
     RA_BUILD_DIR="$INSTALL_BUILD_DIR/$EXT_FOLDER"
-    echo "ℹ️ RetroArch 프로젝트 이름: $EXT_FOLDER"
-    echo "ℹ️ RetroArch 빌드 디렉토리: $RA_BUILD_DIR"
+    log_msg INFO "ℹ️ RetroArch 프로젝트 이름: $EXT_FOLDER"
+    log_msg INFO "ℹ️ RetroArch 빌드 디렉토리: $RA_BUILD_DIR"
 
     log_msg INFO "RetroArch 저장소($RA_GIT_URL) 클론 또는 pull 중..."
     git_Pull_Or_Clone "$RA_GIT_URL" "$RA_BUILD_DIR"
@@ -43,7 +43,7 @@ install_retroarch() {
     sudo make install \
         || { log_msg ERROR "RetroArch 설치 실패."; return 1; }
     
-    log_msg SUCCESS "RetroArch 빌드 및 설치 완료."
+    log_msg SUCCESS "RetroArch 빌드 및 설치 완료. 설치 경로: "$INSTALL_ROOT_DIR""
     return 0
 }
 

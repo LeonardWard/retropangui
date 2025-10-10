@@ -5,3 +5,4 @@ scriptmodules/*.bak
 test_retropangui_1st
 test_retropangui_2nd
 handover-retropangui-251003.md
+deburg_init_script.sh
