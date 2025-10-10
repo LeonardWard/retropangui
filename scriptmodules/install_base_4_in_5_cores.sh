@@ -42,12 +42,11 @@ install_base_cores() {
 
         # 2. 소스 다운로드
         log_msg DEBUG "sources_${core_id} 실행 시작"
-        set -x # 디버깅 시작
         if declare -f "sources_$core_id" > /dev/null; then
             log_msg INFO "$core_id 소스 다운로드를 시작합니다..."
             local sources_output
             local sources_status=0
-            sources_output=$("sources_$core_id" 2>&1)
+            sources_$core_id
             sources_status=$?
 
             if [[ $sources_status -ne 0 ]]; then
@@ -57,7 +56,6 @@ install_base_cores() {
                 true
             fi
         fi
-        set +x # 디버깅 종료
         log_msg DEBUG "sources_${core_id} 실행 완료"
 
         # 3. 빌드
@@ -67,11 +65,10 @@ install_base_cores() {
             cd "$build_dir"
             log_msg INFO "$core_id 빌드를 시작합니다... (in $(pwd))"
             log_msg DEBUG "build_${core_id} 실행 시작"
-            set -x # 디버깅 시작
             if declare -f "build_$core_id" > /dev/null; then
                 local build_output
                 local build_status=0
-                build_output=$("build_$core_id" 2>&1)
+                build_$core_id
                 build_status=$?
 
                 if [[ $build_status -ne 0 ]]; then
@@ -81,7 +78,6 @@ install_base_cores() {
                     true
                 fi
             fi
-            set +x # 디버깅 종료
             log_msg DEBUG "build_${core_id} 실행 완료"
             # [추가] 빌드 직후 결과 확인을 위한 디버깅 코드
             log_msg INFO "빌드 완료. 파일 목록 출력 $(pwd):"
@@ -90,17 +86,13 @@ install_base_cores() {
             # 4. 설치
             log_msg INFO "$core_id 설치를 시작합니다..."
             log_msg DEBUG "install_${core_id} 실행 시작"
-            set -x # 디버깅 시작
             if declare -f "install_$core_id" > /dev/null; then
                 "install_$core_id"
             fi
-            set +x # 디버깅 종료
             log_msg DEBUG "install_${core_id} 실행 완료"
             # 이제 채워진 md_ret_files 배열을 사용하여 파일을 복사합니다.
             log_msg DEBUG "installLibretroCore 실행 시작"
-            set -x # 디버깅 시작
             installLibretroCore "$build_dir" "$rp_module_id"
-            set +x # 디버깅 종료
             log_msg DEBUG "installLibretroCore 실행 완료"
 
             cd - >/dev/null
@@ -114,13 +106,12 @@ install_base_cores() {
         export md_id="$core_id"
         log_msg DEBUG "Calling configure for $core_id. Current rp_module_id is: '$rp_module_id'"
         log_msg DEBUG "configure_${core_id} 실행 시작"
-        set -x # 디버깅 시작
         if declare -f "configure_$core_id" > /dev/null; then
             log_msg INFO "$core_id 설정을 시작합니다..."
             local configure_output
             local configure_status=0
             # configure 함수의 stdout/stderr를 캡처
-            configure_output=$("configure_$core_id" 2>&1)
+            configure_$core_id
             configure_status=$? # configure_$core_id의 종료 코드 저장
 
             if [[ $configure_status -ne 0 ]]; then
@@ -130,7 +121,6 @@ install_base_cores() {
                 true # $?를 0으로 설정하여 다음 if [[ $? -eq 0 ]]에서 성공으로 판단하도록 함
             fi
         fi
-        set +x # 디버깅 종료
         log_msg DEBUG "configure_${core_id} 실행 완료"
 
         if [[ $? -eq 0 ]]; then

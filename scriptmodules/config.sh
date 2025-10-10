@@ -72,6 +72,7 @@ RETROPIE_SETUP_GIT_URL="https://github.com/RetroPie/RetroPie-Setup.git"
 
 # 소스 코드 저장소
 RA_GIT_URL="https://github.com/libretro/RetroArch.git"
+RA_ASSETS_GIT_URL="https://github.com/libretro/retroarch-assets.git"
 ES_GIT_URL="https://github.com/RetroPie/EmulationStation.git"
 
 # Whiptail 메뉴 설정 상수
@@ -123,6 +124,7 @@ export ES_CONFIG_DIR
 export RECALBOX_GIT_URL
 export RETROPIE_SETUP_GIT_URL
 export RA_GIT_URL
+export RA_ASSETS_GIT_URL
 export ES_GIT_URL
 export HEIGHT
 export WIDTH
