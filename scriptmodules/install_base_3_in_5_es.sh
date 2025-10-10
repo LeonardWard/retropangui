@@ -1,17 +1,11 @@
 #!/usr/bin/env bash
-#
+
 # 파일명: install_base_3_in_5_es.sh
 # Retro Pangui Module: EmulationStation Installation (Base 3/5)
 # 
 # 이 스크립트는 EmulationStation을 Git에서 클론하여 빌드하고 설치하는 
 # install_emulationstation 함수를 정의합니다.
-
-SCRIPT_DIR="$(dirname "$0")"
-SCRIPT_DIR="$(cd "$SCRIPT_DIR" && pwd)"
-echo "ℹ️빌드 스크립트 디렉토리: $SCRIPT_DIR"
-source "$SCRIPT_DIR/config.sh"
-source "$SCRIPT_DIR/helpers.sh"
-source "$SCRIPT_DIR/func.sh"
+# ===============================================
 
 install_emulationstation() {
     log_msg STEP "EmulationStation 소스 빌드 및 설치 시작..."

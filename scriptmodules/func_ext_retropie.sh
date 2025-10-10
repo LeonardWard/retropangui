@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 # 파일명: func_ext_retropie.sh
 # RetroPangui 커스텀 헬퍼 함수 모음
-# RetroPie의 헬퍼 함수를 사용하는 대신, 우리 환경에 맞게 직접 구현합니다.
+# RetroPie의 헬퍼 함수를 사용하는 대신, Retro Pang-ui에 맞게 직접 구현합니다.
 
-# 1. 우리 프로젝트의 고유 헬퍼 함수들 (재정의된 RetroPie 호환 함수 포함)
+# 1. 고유 헬퍼 함수들 (재정의된 RetroPie 호환 함수 포함)
 
 function mkRomDir() {
     local system="$1"
@@ -147,7 +147,7 @@ function iniSet() {
 
 }
 
-# 2. 우리 프로젝트의 고유 헬퍼 함수들 (기존 코드 복원)
+# 2. 고유 헬퍼 함수들 (기존 코드 복원)
 
 function setup_env() {
     __ERRMSGS=()

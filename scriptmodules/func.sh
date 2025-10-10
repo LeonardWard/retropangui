@@ -1,8 +1,10 @@
 #!/usr/bin/env bash
-# 공용 기능 함수 모음 (func.sh)
-
-# 사용자 정보 가져오기 함수
+#
+# 파일명: func.sh
+# 공용 기능 함수 모음, 사용자 정보 가져오기 함수
 # 우선순위: $__user (core.sh에서 설정) > SUDO_USER > 현재 사용자
+# ===============================================
+
 get_effective_user() {
     if [[ -n "$__user" && "$__user" != "root" ]]; then
         echo "$__user"

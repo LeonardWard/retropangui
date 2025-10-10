@@ -1,12 +1,24 @@
 #!/usr/bin/env bash
 #
 # 파일명: install_base_4_in_5_cores.sh
-# 설명: 정의된 리스트에 따라 개별 코어 스크립트를 source하여 코어를 빌드/설치합니다.
+# Retro Pangui Module: libretro Core Installation (Base 4/5)
+# 
+# install_base_cores 함수를 정의합니다.
+# 부연설명: 정의된 리스트에 따라 개별 코어 스크립트를 source하여 코어를 빌드/설치합니다.
 # ===============================================
 
 # 설치 대상 코어 목록
 BASE_CORE_MODULES=(
-    "lr-bluemsx"
+    # "lr-nestopia"        # NES
+    # "lr-snes9x"          # SNES
+    # "lr-pcsx-rearmed"    # PSX
+    # "lr-dosbox-pure"     # DOS (dosbox-pure)
+    # "lr-fbneo"           # FBNeo
+    # "lr-genesis-plus-gx" # MegaDrive/Genesis
+    # "lr-beetle-pce"      # PC엔진/TurboGrafx-16
+    # "lr-quasi88"         # PC-88
+    # "lr-np2kai"          # PC-98
+    "lr-bluemsx"         # MSX 시리즈
 )
 
 install_base_cores() {

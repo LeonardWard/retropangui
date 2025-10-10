@@ -5,9 +5,7 @@
 # 
 # 이 스크립트는 최종 환경 설정, Recalbox 설정 적용, 권한 설정을 처리하는 
 # setup_environment 함수를 정의합니다.
-SCRIPT_DIR="$(dirname "$0")"
-SCRIPT_DIR="$(cd "$SCRIPT_DIR" && pwd)"
-source "$SCRIPT_DIR/config.sh"
+# ===============================================
 
 setup_environment() {
     log_msg STEP "Retro Pangui 환경 설정 및 Recalbox 설정 적용 시작..."

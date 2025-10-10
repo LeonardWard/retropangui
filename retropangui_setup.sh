@@ -10,13 +10,19 @@
 # =======================================================
 
 # --- [1] 환경 설정 및 모듈 로드 ---
-# env.sh를 source하여 모든 경로와 설정 변수를 로드합니다.
-# env.sh는 이 스크립트의 위치를 기준으로 ROOT_DIR을 올바르게 설정합니다.
-source "$(dirname "$0")/scriptmodules/env.sh"
+# config.sh를 source하여 모든 경로와 설정 변수를 로드합니다.
+# config.sh는 이 스크립트의 위치를 기준으로 ROOT_DIR을 올바르게 설정합니다.
+source "$(dirname "$0")/scriptmodules/config.sh"
+
+# 로그 파일 경로 정의 (helpers.sh가 사용하기 전에 정의)
+# 로그 디렉토리는 env.sh를 통해 이미 설정되어 있습니다.
+LOG_FILE="$LOG_DIR/retropangui_$(date +%Y%m%d_%H%M%S).log"
 
 # 기능 라이브러리를 로드합니다.
 source "$MODULES_DIR/helpers.sh"
 source "$MODULES_DIR/ui.sh"
+
+log_msg "DEBUG" "retropangui_setup.sh: ROOT_DIR=${ROOT_DIR}, MODULES_DIR=${MODULES_DIR}"
 
 # --- [2] 메인 실행 함수 ---
 function main() {
@@ -25,10 +31,6 @@ function main() {
         echo "❌ 오류: 스크립트는 반드시 'sudo'로 실행되어야 합니다. 예: 'sudo $0'"
         exit 1
     fi
-
-    # 로그 파일 경로 재정의 (helpers.sh의 기본값을 덮어쓰기)
-    # 로그 디렉토리는 install_core_dependencies에서 생성되므로 여기서는 경로만 정의
-    LOG_FILE="$LOG_DIR/retropangui_$(date +%Y%m%d_%H%M%S).log"
 
     # 스크립트 실행 권한 부여
     log_msg INFO "자신과 하위 스크립트의 실행 권한 확인 및 부여"

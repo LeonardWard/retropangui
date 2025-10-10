@@ -64,6 +64,7 @@ function install_core_dependencies() {
 
 # [1] Base System 설치 (모듈 호출)
 function run_base_system_install() {
+    log_msg "DEBUG" "ui.sh: run_base_system_install 함수 진입."
     if (whiptail --title "Base System 설치" --yesno "RetroArch/EmulationStation 설치 및 Recalbox 환경 구축/패치를 진행하시겠습니까?\n\n(참고: 설치 진행 상황은 터미널에 직접 출력됩니다.)" 12 60); then
         
         log_msg INFO "Base System 설치 모듈(system_install.sh)을 실행합니다."
@@ -202,6 +203,7 @@ function reboot_system() {
 
 # ----------------- 메인 실행 로직 -----------------
 function main_ui() {
+    log_msg "DEBUG" "ui.sh: Entered main_ui function."
     # 함수 호출 시점에 필요한 변수들을 로컬로 선언
     local TITLE="Retro Pangui Configuration Manager (v$__version)"
     local MENU_TITLE="$TITLE [Share: $(basename $USER_SHARE_PATH)]"
