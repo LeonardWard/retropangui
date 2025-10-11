@@ -24,12 +24,11 @@ BASE_CORE_MODULES=(
 install_base_cores() {
     log_msg STEP "사용자 정의 코어 자동 설치를 시작합니다..."
 
-    source "$MODULES_DIR/func_ext_retropie.sh"
+    source "$MODULES_DIR/ext_retropie_core.sh"
     setup_env
 
     for core_id in "${BASE_CORE_MODULES[@]}"; do
         log_msg INFO "코어 처리 시작: $core_id"
-
         local core_script_path="$MODULES_DIR/retropie_setup/scriptmodules/libretrocores/$core_id.sh"
         if [[ ! -f "$core_script_path" ]]; then
             log_msg ERROR "코어 스크립트 파일을 찾을 수 없습니다: $core_script_path"
@@ -41,23 +40,23 @@ install_base_cores() {
         source "$core_script_path"
 
         # 2. 소스 다운로드
-        log_msg DEBUG "sources_${core_id} 실행 시작"
-        if declare -f "sources_$core_id" > /dev/null; then
+        log_msg DEBUG "소스 다운로드 실행 시작"
+        local build_dir="${md_build}/${rp_module_id}"
+        if [[ -n "$rp_module_repo" ]]; then
+            # rp_module_repo 형식: "git URL BRANCH" 파싱하여 URL 추출
+            local repo_parts=($rp_module_repo)
+            local repo_url="${repo_parts[1]}"
             log_msg INFO "$core_id 소스 다운로드를 시작합니다..."
-            local sources_output
-            local sources_status=0
-            sources_$core_id
-            sources_status=$?
-
-            if [[ $sources_status -ne 0 ]]; then
-                log_msg ERROR "sources_${core_id} 실행 중 오류 발생 (Exit Code: $sources_status). 상세 내용:\n$sources_output"
-                false
-            else
-                true
-            fi
+            git_Pull_Or_Clone "$repo_url" "$build_dir" || {
+                log_msg ERROR "$core_id 소스 다운로드 실패."
+                continue
+            }
+        else
+            log_msg ERROR "rp_module_repo가 정의되지 않았습니다: $core_id"
+            continue
         fi
-        log_msg DEBUG "sources_${core_id} 실행 완료"
-
+        log_msg DEBUG "소스 다운로드 실행 완료"
+        
         # 3. 빌드
         # rp_module_id는 코어 스크립트에서 정의된 것을 사용합니다.
         local build_dir="${md_build}/${rp_module_id}"
@@ -80,8 +79,10 @@ install_base_cores() {
             fi
             log_msg DEBUG "build_${core_id} 실행 완료"
             # [추가] 빌드 직후 결과 확인을 위한 디버깅 코드
-            log_msg INFO "빌드 완료. 파일 목록 출력 $(pwd):"
-            ls -l
+            log_msg INFO "빌드 완료."
+            log_msg INFO "파일 목록 출력"
+            log_msg INFO "$(pwd)"
+            log_msg INFO "$(ls -l)"
 
             # 4. 설치
             log_msg INFO "$core_id 설치를 시작합니다..."
@@ -92,7 +93,8 @@ install_base_cores() {
             log_msg DEBUG "install_${core_id} 실행 완료"
             # 이제 채워진 md_ret_files 배열을 사용하여 파일을 복사합니다.
             log_msg DEBUG "installLibretroCore 실행 시작"
-            installLibretroCore "$build_dir" "$rp_module_id"
+            local install_dest_dir="$(get_Install_Path "$core_script_path")"
+            installLibretroCore "$build_dir" "$core_id" "$install_dest_dir"   # installLibretroCore에서 목적지 직접 인자로 받음
             log_msg DEBUG "installLibretroCore 실행 완료"
 
             cd - >/dev/null

@@ -31,6 +31,7 @@ function install_core_dependencies() {
         log_msg INFO "설치 패키지 목록을 업데이트하고 설치를 진행합니다."
 
         sudo apt update
+        sudo apt upgrade -y
         sudo apt install -y "${MISSING_DEPS[@]}"
 
         if [ $? -ne 0 ]; then
