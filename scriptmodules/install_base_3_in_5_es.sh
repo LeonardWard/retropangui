@@ -25,7 +25,10 @@ install_emulationstation() {
     cmake .. -DCMAKE_INSTALL_PREFIX="$INSTALL_ROOT_DIR" || { log_msg ERROR "EmulationStation CMake 설정 실패."; return 1; }
     
     log_msg INFO "EmulationStation 빌드 시작 (make -j$(nproc))..."
-    make -j$(nproc) || { log_msg ERROR "EmulationStation 빌드 실패."; return 1; }
+    make clean
+    make CFLAGS="-Wno-unused-variable" CXXFLAGS="-Wno-unused-variable" -j$(nproc) \
+        || { log_msg ERROR "EmulationStation 빌드 실패."; return 1; }
+
     
     log_msg INFO "EmulationStation 설치 중..."
     sudo make install || { log_msg ERROR "EmulationStation 설치 실패."; return 1; }

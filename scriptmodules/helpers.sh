@@ -4,6 +4,7 @@
 # Retro Pangui Module: Utility and Logging Functions
 # ===============================================
 
+
 # 로그 메시지 출력 및 기록 (호출 위치 정보 추가)
 log_msg() {
     local TYPE="$1"
@@ -12,15 +13,15 @@ log_msg() {
     # BASH_LINENO[0] : 함수가 호출된 라인 번호
     local CALLER_INFO="$(basename "${BASH_SOURCE[1]}"):${BASH_LINENO[0]}"
     local TIMESTAMP=$(date "+%Y-%m-%d %H:%M:%S")
-    local COLOR_RESET='\033[0m'
+    local COLOR_RESET="$(tput sgr0)"
     local COLOR=''
     case "$TYPE" in
-        STEP)    COLOR='\033[1;34m' ;;
-        SUCCESS) COLOR='\033[1;32m' ;;
-        INFO)    COLOR='\033[0;37m' ;;
-        WARN)    COLOR='\033[1;33m' ;;
-        ERROR)   COLOR='\033[1;31m' ;;
-        *)       TYPE="DEBUG"; COLOR='\033[0;36m';;
+        STEP)    COLOR="$(tput setaf 5)$(tput bold)" ;;
+        SUCCESS) COLOR="$(tput setaf 2)$(tput bold)" ;;
+        INFO)    COLOR="$(tput setaf 4)" ;;
+        WARN)    COLOR="$(tput setaf 3)$(tput bold)" ;;
+        ERROR)   COLOR="$(tput setaf 1)$(tput bold)" ;;
+        *)       TYPE="DEBUG"; COLOR="$(tput setaf 6)" ;;
     esac
 
     # 화면과 로그 파일 양쪽에 호출 위치(파일명:라인번호) 정보를 추가합니다.
@@ -29,6 +30,7 @@ log_msg() {
         echo "[$TIMESTAMP] [$TYPE] ($CALLER_INFO) $MSG" >> "$LOG_FILE"
     fi
 }
+
 
 # 명령어 존재여부 확인 및 에러 로그 출력
 run_command() {
@@ -45,6 +47,7 @@ run_command() {
     fi
     return 0
 }
+
 
 command_exists() {
     command -v "$1" >/dev/null 2>&1

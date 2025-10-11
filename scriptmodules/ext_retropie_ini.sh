@@ -48,6 +48,7 @@ function iniProcess() {
     if [[ -f "$file" ]]; then
         match=$(grep -i "$match_re" "$file" | tail -1)
     else
+        mkdir -p "$(dirname "$file")" # Create parent directory if it doesn't exist
         touch "$file"
     fi
 

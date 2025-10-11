@@ -85,12 +85,14 @@ BUILD_DEPS=(
     build-essential cmake pkg-config samba
     # RetroArch/Libretro
     libssl-dev libx11-dev libgl1-mesa-dev libegl1-mesa-dev libsdl2-dev
-    libasound-dev libudev-dev libxkbcommon-dev libgbm-dev
+    libasound2-dev libudev-dev libxkbcommon-dev libgbm-dev
     libavcodec-dev libavformat-dev libavutil-dev libswscale-dev
     # EmulationStation
     libboost-all-dev libfreeimage-dev libcurl4-openssl-dev
     libxml2-dev libfontconfig1-dev libsdl2-image-dev libsdl2-ttf-dev libexpat1-dev
     libvlc-dev rapidjson-dev libpugixml-dev
+    # 그 외 게임에 필요한 패키지
+    gamemode
 )
 
 # --- [8] 모든 변수 export ---

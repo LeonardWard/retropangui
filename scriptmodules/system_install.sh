@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
-set -e
-
-log_msg "DEBUG" "system_install.sh: Sourced. MODULES_DIR=${MODULES_DIR}"
-
+#
 # file: system_install.sh
 # ==========================================================
 # RetroPangui Base System 설치 스크립트 모음 실행기 (안정적 에러 체크 방식)
 # ==========================================================
+
+set -e
+log_msg "DEBUG" "system_install.sh: Sourced. MODULES_DIR=${MODULES_DIR}"
 
 SUCCESS=1
 
@@ -23,7 +23,7 @@ if [ "$SUCCESS" -eq 1 ]; then
     source "$MODULES_DIR/install_base_3_in_5_es.sh" "$@" || SUCCESS=0
 fi
 
-#4. 코어 설치/설정
+# 4. 코어 설치/설정
 if [ "$SUCCESS" -eq 1 ]; then
     source "$MODULES_DIR/install_base_4_in_5_cores.sh" "$@" || SUCCESS=0
 fi
@@ -33,7 +33,7 @@ fi
 #     source "$MODULES_DIR/install_base_5_in_5_setup_env.sh" "$@" || SUCCESS=0
 # fi
 
-# (2) 설치 결과 안내
+# 설치 결과 안내
 if command -v whiptail >/dev/null 2>&1; then
     if [ "$SUCCESS" -eq 1 ]; then
         whiptail --title "✅ 설치 완료" --msgbox "Base System의 모든 설치 단계가 정상적으로 완료되었습니다." 10 60

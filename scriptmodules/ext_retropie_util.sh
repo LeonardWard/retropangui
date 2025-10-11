@@ -62,3 +62,27 @@ function sedQuote() {
     string="${string//]/\]}"
     echo "$string"
 }
+
+function isPlatform() {
+    local flag="$1"
+    case "$__platform" in
+        armv6l)
+            [[ "$flag" == "armv6" || "$flag" == "arm" ]] && return 0
+            ;;
+        armv7l)
+            [[ "$flag" == "armv7" || "$flag" == "arm" ]] && return 0
+            ;;
+        aarch64)
+            [[ "$flag" == "armv8" || "$flag" == "arm" ]] && return 0
+            ;;
+        x86_64)
+            [[ "$flag" == "x86" ]] && return 0
+            ;;
+        *)
+            # Default to true for unknown platforms if 'arm' is requested,
+            # or if a specific platform is requested and it matches uname -m
+            [[ "$flag" == "$__platform" || "$flag" == "arm" && "$__platform" == "arm"* ]] && return 0
+            ;;
+    esac
+    return 1
+}

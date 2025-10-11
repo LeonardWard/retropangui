@@ -7,3 +7,5 @@
 # ===============================================
 
 export __swapdir="/tmp/swap"
+export biosdir="/home/pangui/share/system/bios"
+export md_conf_root="/home/pangui/share/system/configs"

@@ -60,16 +60,28 @@ function installLibretroCore() {
                 so) # Libretro 코어 파일
                     dest_dir="$md_inst"
                     ;;
-                md|txt|chm|html) # 문서 파일
+                md|txt|chm|html|df) # 문서 파일
                     dest_dir="$INSTALL_ROOT_DIR/docs/$module_id"
                     ;;
                 *) # 그 외 파일 (폴더 포함)
                     if [[ -d "$src_path" ]]; then
-                        # 'metadata', 'dats', 'Databases', 'Machines' 같은 폴더
-                        dest_dir="$biosdir/$module_id"
+                        if [[ "$_file" == "docs" ]]; then # Explicitly handle 'docs' directory
+                            dest_dir="$INSTALL_ROOT_DIR/docs/$module_id"
+                        else
+                            # 'metadata', 'dats', 'Databases', 'Machines' 같은 폴더
+                            dest_dir="$biosdir/$module_id"
+                        fi
                     else
-                        # 기본값: 코어 설치 폴더
-                        dest_dir="$md_inst"
+                        # Check for common documentation files without extension
+                        case "$file_basename" in
+                            AUTHORS|COPYING|NEWS|LICENSE)
+                                dest_dir="$INSTALL_ROOT_DIR/docs/$module_id"
+                                ;;
+                            *)
+                                # 기본값: 코어 설치 폴더
+                                dest_dir="$md_inst"
+                                ;;
+                        esac
                     fi
                     ;;
             esac
