@@ -11,11 +11,11 @@ install_build_dependencies() {
     log_msg STEP "빌드 의존성 패키지 설치 시작..."
     
     log_msg INFO "시스템 패키지 업데이트 중..."
-    sudo apt update \
+    sudo apt-get update \
         || { log_msg ERROR "apt update 실패."; return 1; }
 
     log_msg INFO "필수 빌드 의존성 설치 중..."
-    sudo apt install -y "${BUILD_DEPS[@]}" \
+    sudo apt-get install -y "${BUILD_DEPS[@]}" \
         || { log_msg ERROR "빌드 의존성 설치 실패."; return 1; }
 
     log_msg SUCCESS "빌드 의존성 설치 완료."

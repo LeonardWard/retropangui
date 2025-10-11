@@ -8,23 +8,36 @@
 # ===============================================
 
 function addEmulator() {
-    local is_default="$1"
-    local emu="$2"
+    local default="$1"
+    local id="$2"
     local system="$3"
-    local command="$4"
-    local config_file="$USER_HOME/share/system/configs/$system/emulators.cfg"
+    local cmd="$4"
 
-    log_msg INFO "Adding emulator '$emu' for system '$system' to '$config_file'"
-    mkdir -p "$(dirname "$config_file")"
-    
-    echo "$emu = \"$command\"" >> "$config_file"
-
-    if [[ "$is_default" -eq 1 ]]; then
-        # 기존 default 라인을 지우고 새로 추가
-        sed -i '/^default = /d' "$config_file"
-        echo "default = \"$emu\"" >> "$config_file"
+    # check if we are removing the system
+    if [[ "$md_mode" == "remove" ]]; then
+        delEmulator "$id" "$system"
+        return
     fi
-    chown "$__user":"$__user" "$config_file"
+
+    # automatically add parameters for libretro modules
+    if [[ "$id" == lr-* && "$cmd" =~ ^"$md_inst"[^[:space:]]*\.so ]]; then
+        cmd="$emudir/retroarch/bin/retroarch -L $cmd --config $md_conf_root/$system/retroarch.cfg %ROM%"
+    fi
+
+    # create a config folder for the system / port
+    mkUserDir "$md_conf_root/$system"
+
+    # add the emulator to the $conf_dir/emulators.cfg if a commandline exists (not used for some ports)
+    if [[ -n "$cmd" ]]; then
+        iniConfig " = " '"' "$md_conf_root/$system/emulators.cfg"
+        iniSet "$id" "$cmd"
+        # set a default unless there is one already set
+        iniGet "default"
+        if [[ -z "$ini_value" && "$default" -eq 1 ]]; then
+            iniSet "default" "$id"
+        fi
+        chown "$__user":"$__group" "$md_conf_root/$system/emulators.cfg"
+    fi
 }
 
 function addSystem() {

@@ -10,10 +10,6 @@
 # ----------------- 초기화 함수 (Initialization Function) -----------------
 # 핵심 의존성(dependency) 패키지 설치 및 모듈 다운로드를 확인하고 진행하는 함수
 function install_core_dependencies() {
-    # 로그 디렉토리 생성 (최초 실행 시)
-    sudo mkdir -p "$LOG_DIR"
-    log_msg INFO "로그 파일 경로 설정 완료: $LOG_FILE"
-
     # whiptail, git 등 스크립트 실행에 필요한 기본 유틸리티 목록
     local CORE_DEPS=("whiptail" "dialog" "git" "wget" "curl" "unzip")
     local MISSING_DEPS=()
@@ -30,9 +26,9 @@ function install_core_dependencies() {
         log_msg WARN "다음 필수 유틸리티가 누락되었습니다: ${MISSING_DEPS[*]}"
         log_msg INFO "설치 패키지 목록을 업데이트하고 설치를 진행합니다."
 
-        sudo apt update
-        sudo apt upgrade -y
-        sudo apt install -y "${MISSING_DEPS[@]}"
+        sudo apt-get update
+        sudo apt-get upgrade -y
+        sudo apt-get install -y "${MISSING_DEPS[@]}"
 
         if [ $? -ne 0 ]; then
             log_msg ERROR "필수 유틸리티 설치에 실패했습니다. 네트워크 상태를 확인하십시오."

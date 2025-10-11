@@ -9,17 +9,16 @@
 
 # 설치 대상 코어 목록
 BASE_CORE_MODULES=(
-    # "lr-nestopia"        # NES
-    # "lr-snes9x"          # SNES
-    # "lr-pcsx-rearmed"    # PSX
-    # "lr-dosbox-pure"     # DOS (dosbox-pure)
-    # "lr-genesis-plus-gx" # MegaDrive/Genesis
-    # "lr-quasi88"         # PC-88
     "lr-bluemsx"         # MSX 시리즈
-    # "lr-fbneo"           # FBNeo
-    # "lr-beetle-pce"      # PC엔진/TurboGrafx-16    
+    "lr-nestopia"        # NES
+    "lr-snes9x"          # SNES
+    "lr-pcsx-rearmed"    # PSX
+    "lr-dosbox-pure"     # DOS (dosbox-pure)
+    "lr-genesis-plus-gx" # MegaDrive/Genesis
+    "lr-quasi88"         # PC-88
     # "lr-np2kai"          # PC-98
-
+    # "lr-fbneo"           # FBNeo
+    # "lr-beetle-pce"      # PC엔진/TurboGrafx-16
 )
 
 install_base_cores() {
@@ -29,6 +28,8 @@ install_base_cores() {
     setup_env
 
     for core_id in "${BASE_CORE_MODULES[@]}"; do
+        export md_build="$INSTALL_BUILD_DIR/core_build"
+        export md_inst="$LIBRETRO_CORE_PATH"
         log_msg INFO "코어 처리 시작: $core_id"
         local core_script_path="$MODULES_DIR/retropie_setup/scriptmodules/libretrocores/$core_id.sh"
         if [[ ! -f "$core_script_path" ]]; then

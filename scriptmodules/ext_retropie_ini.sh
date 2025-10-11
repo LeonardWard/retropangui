@@ -48,7 +48,6 @@ function iniProcess() {
     if [[ -f "$file" ]]; then
         match=$(grep -i "$match_re" "$file" | tail -1)
     else
-        mkdir -p "$(dirname "$file")" # Create parent directory if it doesn't exist
         touch "$file"
     fi
 
@@ -62,13 +61,14 @@ function iniProcess() {
     local replace="$key$delim$quote$value$quote"
     if [[ -z "$match" ]]; then
         # make sure there is a newline then add the key-value pair
-        sed -i --follow-symlinks '$a\'
+        sed -i --follow-symlinks '$a\' "$file"
         echo "$replace" >> "$file"
     else
         # replace existing key-value pair
         sed -i --follow-symlinks "s|$(sedQuote "$match")|$(sedQuote "$replace")|g" "$file"
     fi
 
+    [[ "$file" =~ retroarch\.cfg$ ]] && retroarchIncludeToEnd "$file"
     return 0
 }
 

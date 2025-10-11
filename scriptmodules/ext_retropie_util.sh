@@ -29,6 +29,8 @@ function setup_env() {
     export md_build="$INSTALL_BUILD_DIR/core_build"
     export md_inst="$LIBRETRO_CORE_PATH"
     mkdir -p "$md_build" "$md_inst"
+    mkUserDir "$biosdir"
+    mkUserDir "$md_conf_root"
 
     export __platform="$(uname -m)"
     export __os_id="$(lsb_release -si 2>/dev/null || echo "Unknown")"

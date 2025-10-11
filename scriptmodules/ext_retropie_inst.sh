@@ -69,7 +69,7 @@ function installLibretroCore() {
                             dest_dir="$INSTALL_ROOT_DIR/docs/$module_id"
                         else
                             # 'metadata', 'dats', 'Databases', 'Machines' 같은 폴더
-                            dest_dir="$biosdir/$module_id"
+                            dest_dir="$md_inst"
                         fi
                     else
                         # Check for common documentation files without extension
