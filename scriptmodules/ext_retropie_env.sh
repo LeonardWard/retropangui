@@ -8,4 +8,4 @@
 
 export __swapdir="$INSTALL_BUILD_DIR/swap"
 export biosdir="$USER_BIOS_PATH"
-export md_conf_root="$USER_CONFIG_PATH"
+export md_conf_root="$USER_CONFIG_PATH/cores"

@@ -28,10 +28,10 @@ if [ "$SUCCESS" -eq 1 ]; then
     source "$MODULES_DIR/install_base_4_in_5_cores.sh" "$@" || SUCCESS=0
 fi
 
-# 5. 환경설정, 최종 초기화 (필요시)
-# if [ "$SUCCESS" -eq 1 ]; then
-#     source "$MODULES_DIR/install_base_5_in_5_setup_env.sh" "$@" || SUCCESS=0
-# fi
+# 5. 환경설정, 최종 초기화
+if [ "$SUCCESS" -eq 1 ]; then
+    source "$MODULES_DIR/install_base_5_in_5_setup_env.sh" "$@" || SUCCESS=0
+fi
 
 # 설치 결과 안내
 if command -v whiptail >/dev/null 2>&1; then

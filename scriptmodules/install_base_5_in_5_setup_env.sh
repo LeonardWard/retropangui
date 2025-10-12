@@ -40,28 +40,28 @@ setup_environment() {
     # # Share 폴더의 모든 콘텐츠는 사용자 소유여야 합니다.
     # sudo chown -R $__user:$__user "$USER_SHARE_PATH" || return 1
     
-    # log_msg INFO "Recalbox 설정 Git 저장소($RECALBOX_GIT_URL) 클론 중..."
-
-    # # 프로젝트 이름 추출 및 디렉터리 결정
-    # RECALBOX_NAME="$(get_git_project_dir_name "$RECALBOX_GIT_URL")"
-    # echo "ℹ️ Recalbox 프로젝트 이름: $RECALBOX_NAME"
-    # RECALBOX_GIT_DIR="$INSTALL_BUILD_DIR/$RECALBOX_NAME"
-    # echo "ℹ️ Recalbox 디렉토리: $RECALBOX_GIT_DIR"
-    # git clone "$RECALBOX_GIT_URL" "$RECALBOX_GIT_DIR" || { log_msg ERROR "Recalbox 설정 클론 실패."; return 1; }
-    
     # Recalbox의 테마 복사 (선택 사항, 기본 테마가 없는 경우를 대비)
-    if [ -d "$ES_THEMES_SRC" ]; then
-        log_msg INFO "Recalbox 테마 파일 복사 중..."
-        cp -R "$ES_THEMES_SRC" "$ES_CONFIG_DIR/" || { log_msg ERROR "ES 테마 파일 복사 실패."; return 1; }
-        log_msg INFO "Recalbox 테마 복사 완료."
-    else
-        log_msg WARN "Recalbox 테마 템플릿을 찾을 수 없습니다. (경로: $ES_THEMES_SRC)"
-    fi
+
+    log_msg STEP "테마 소스 클론 시작..."
+    local GIT_NAME="$(get_Git_Project_Dir_Name "$RECALBOX_THEMES_GIT_URL")"
+    local CLONE_PATH="$INSTALL_BUILD_DIR/$GIT_NAME"
+    log_msg INFO "ℹ️ 프로젝트 이름: $GIT_NAME"
+    log_msg INFO "ℹ️ 빌드 디렉토리: $CLONE_PATH"
+
+    log_msg INFO "저장소($RECALBOX_THEMES_GIT_URL) 클론 또는 pull 중..."
+    git_Pull_Or_Clone "$RECALBOX_THEMES_GIT_URL" "$CLONE_PATH"
+    
+    log_msg INFO "테마($CLONE_PATH/recalbox-themes/themes/recalbox-next) 복사 중..."
+    cp -r "$CLONE_PATH/themes/recalbox-next" "$USER_THEMES_PATH"
+    log_msg INFO "테마($USER_THEMES_PATH/recalbox-next) 복사 완료.."
 
     # # 임시 디렉토리 정리 (선택 사항 - 빌드가 완료된 후)
     # log_msg INFO "임시 빌드 디렉토리($TEMP_DIR) 정리 중..."
     # rm -rf "$TEMP_DIR" || log_msg WARN "임시 디렉토리 정리 실패."
     
+    log_msg INFO "사용자($__user:$__user)권한 처리($USER_SHARE_PATH)중..."
+    chown -R $__user:$__user "$USER_SHARE_PATH" || return 1
+    log_msg INFO "사용자 권한 처리 완료."
     log_msg SUCCESS "환경 설정 및 패치 완료."
     return 0
 }

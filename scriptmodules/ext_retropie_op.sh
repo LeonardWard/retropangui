@@ -21,7 +21,7 @@ function addEmulator() {
 
     # automatically add parameters for libretro modules
     if [[ "$id" == lr-* && "$cmd" =~ ^"$md_inst"[^[:space:]]*\.so ]]; then
-        cmd="$emudir/retroarch/bin/retroarch -L $cmd --config $md_conf_root/$system/retroarch.cfg %ROM%"
+        cmd="$INSTALL_ROOT_DIR/bin/retroarch -L $cmd --config $md_conf_root/$system/retroarch.cfg %ROM%"
     fi
 
     # create a config folder for the system / port
@@ -46,11 +46,11 @@ function addSystem() {
 
 function defaultRAConfig() {
     local system="$1"
-    local dest_config="$USER_CONFIG_PATH/$system/retroarch.cfg"
+    local dest_config="$md_conf_root/$system/retroarch.cfg"
     local src_config="$INSTALL_ROOT_DIR/etc/retroarch.cfg"
 
     if [[ -f "$src_config" ]]; then
-        log_msg INFO "Copying default retroarch.cfg to '$dest_config'"
+        log_msg INFO "기본 retroarch.cfg to '$dest_config'"
         mkdir -p "$(dirname "$dest_config")"
 
         if [[ ! -f "$dest_config" ]]; then

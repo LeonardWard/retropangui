@@ -68,6 +68,7 @@ export ES_CONFIG_DIR="$USER_HOME/.emulationstation"
 # 패치 및 설정 파일 참조용
 export RECALBOX_GIT_URL="https://gitlab.com/recalbox/recalbox.git"
 export RETROPIE_SETUP_GIT_URL="https://github.com/RetroPie/RetroPie-Setup.git"
+export RECALBOX_THEMES_GIT_URL="https://gitlab.com/recalbox/recalbox-themes.git"
 
 # 소스 코드 저장소
 export RA_GIT_URL="https://github.com/libretro/RetroArch.git"
