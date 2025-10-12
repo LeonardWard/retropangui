@@ -9,9 +9,8 @@
 
 install_emulationstation() {
     log_msg STEP "EmulationStation 소스 빌드 및 설치 시작..."
-
-    ES_PROJECT_NAME="$(get_Git_Project_Dir_Name "$ES_GIT_URL")"
-    ES_BUILD_DIR="$INSTALL_BUILD_DIR/$ES_PROJECT_NAME"
+    local ES_PROJECT_NAME="$(get_Git_Project_Dir_Name "$ES_GIT_URL")"
+    local ES_BUILD_DIR="$INSTALL_BUILD_DIR/$ES_PROJECT_NAME"
     log_msg INFO "ℹ️ EmulationStation 프로젝트 이름: $ES_PROJECT_NAME"
     log_msg INFO "ℹ️ EmulationStation 빌드 디렉토리: $ES_BUILD_DIR"
 
@@ -33,8 +32,13 @@ install_emulationstation() {
     log_msg INFO "EmulationStation 설치 중..."
     sudo make install || { log_msg ERROR "EmulationStation 설치 실패."; return 1; }
 
-    USER_HOME_PATH="/home/$(get_effective_user)"
-    cp -r $ES_BUILD_DIR/resources "$USER_HOME_PATH/.emulationstation" || { log_msg ERROR "EmulationStation 리소스 복사 실패."; return 1; }
+    # EmulationStation 설정
+    log_msg INFO "EmulationStation 설정 디렉토리 생성 및 Recalbox 설정 적용 중..."
+    cp -r "$ES_BUILD_DIR/resources" "$USER_CONFIG_PATH/emulationstation" || { log_msg ERROR "EmulationStation 리소스 복사 실패."; return 1; }
+    sudo rm -rf "$USER_HOME/.emulationstation"
+    ln -s "$USER_CONFIG_PATH/emulationstation" $USER_HOME/.emulationstation  || { log_msg ERROR "EmulationStation 심볼릭 링크 생성 실패."; return 1; }
+
+    chown -R $__user:$__user "$ES_CONFIG_DIR" || return 1
 
     log_msg SUCCESS "EmulationStation 빌드 및 설치 완료. 설치 경로: "$INSTALL_ROOT_DIR""
     return 0

@@ -43,7 +43,6 @@ export LOG_DIR="$ROOT_DIR/log"
 export LIBRETRO_CORE_PATH="$INSTALL_ROOT_DIR/libretro/cores"
 
 # --- [5] 사용자별 경로 설정 (USER_HOME 기반) ---
-# Recalbox의 Share와 유사한 사용자 데이터 폴더
 export USER_SHARE_PATH="$USER_HOME/share"
 export USER_ROMS_PATH="$USER_SHARE_PATH/roms"
 export USER_BIOS_PATH="$USER_SHARE_PATH/bios"

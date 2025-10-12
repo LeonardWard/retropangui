@@ -52,8 +52,8 @@ function install_core_dependencies() {
 
     # 원본 파일들을 복사하여 덮어쓰기
     cp -r "$TEMP_DIR_BASE/$EXT_FOLDER/scriptmodules" "$RETROPIE_SETUP_DIR"
-    cp -r "$TEMP_DIR_BASE/$EXT_FOLDER/retropie_packages.sh" "$RETROPIE_SETUP_DIR"
-    cp -r "$TEMP_DIR_BASE/$EXT_FOLDER/retropie_setup.sh" "$RETROPIE_SETUP_DIR"
+    # cp -r "$TEMP_DIR_BASE/$EXT_FOLDER/retropie_packages.sh" "$RETROPIE_SETUP_DIR"
+    # cp -r "$TEMP_DIR_BASE/$EXT_FOLDER/retropie_setup.sh" "$RETROPIE_SETUP_DIR"
     log_msg SUCCESS "RetroPie 스크립트 모듈을 성공적으로 복사/업데이트했습니다."
 }
 

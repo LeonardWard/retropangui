@@ -8,8 +8,8 @@
 # ===============================================
 
 install_retroarch() {
+    # RetroArch 본체 설치
     log_msg STEP "RetroArch 소스 빌드 및 설치 시작..."
-
     EXT_FOLDER="$(get_Git_Project_Dir_Name "$RA_GIT_URL")"
     RA_BUILD_DIR="$INSTALL_BUILD_DIR/$EXT_FOLDER"
     log_msg INFO "ℹ️ RetroArch 프로젝트 이름: $EXT_FOLDER"
@@ -36,6 +36,7 @@ install_retroarch() {
             || { log_msg ERROR "RetroArch configure 실패."; return 1; }
 
     log_msg INFO "RetroArch 빌드 시작 (make -j$(nproc))..."
+    make clean
     make -j$(nproc) \
         || { log_msg ERROR "RetroArch 빌드 실패."; return 1; }
     
@@ -43,11 +44,25 @@ install_retroarch() {
     sudo make install \
         || { log_msg ERROR "RetroArch 설치 실패."; return 1; }
     
-    # # RetroArch Assets 설치 추가
+    # RetroArch 설정
+    log_msg INFO "RetroArch 설정 파일 복사 및 패치 중..."
+    ln -s "$USER_CONFIG_PATH" "$RA_CONFIG_DIR"|| return 1
+    chown -R $__user:$__user "$RA_CONFIG_DIR" || return 1
+
+    local CONFIG_RA_SKELETON="$INSTALL_ROOT_DIR/etc/retroarch.cfg"
+    if [ -f "$CONFIG_RA_SKELETON" ]; then
+        cp "$CONFIG_RA_SKELETON" "$USER_CONFIG_PATH/retroarch.cfg" || { log_msg ERROR "RetroArch 설정 파일 복사 실패."; return 1; }
+        chown -R $__user:$__user "$USER_CONFIG_PATH/retroarch.cfg" || return 1
+        log_msg INFO "기본 retroarch.cfg 복사 완료."
+    else
+        log_msg WARN "Recalbox retroarch.cfg 템플릿을 찾을 수 없습니다. (경로: $CONFIG_RA_SKELETON)"
+    fi
+    
+    # # RetroArch Assets 설치
     # log_msg STEP "RetroArch Assets 소스 클론 및 설치 시작..."
     
-    # EXT_FOLDER_ASSETS="$(get_Git_Project_Dir_Name "$RA_ASSETS_GIT_URL")"
-    # RA_ASSETS_BUILD_DIR="$INSTALL_BUILD_DIR/$EXT_FOLDER_ASSETS"
+    # local EXT_FOLDER_ASSETS="$(get_Git_Project_Dir_Name "$RA_ASSETS_GIT_URL")"
+    # local RA_ASSETS_BUILD_DIR="$INSTALL_BUILD_DIR/$EXT_FOLDER_ASSETS"
     # log_msg INFO "ℹ️ RetroArch Assets 프로젝트 이름: $EXT_FOLDER_ASSETS"
     # log_msg INFO "ℹ️ RetroArch Assets 빌드 디렉토리: $RA_ASSETS_BUILD_DIR"
 
@@ -57,13 +72,13 @@ install_retroarch() {
     # cd "$RA_ASSETS_BUILD_DIR" \
     #     || return 1
 
-    # log_msg INFO "RetroArch Assets 설치 중 (PREFIX: $INSTALL_ROOT_DIR)..."
-    # sudo make PREFIX="$INSTALL_ROOT_DIR" install \
+    # local RA_ASSETS_DIR="$USER_HOME/.config/retroarch"
+    # log_msg INFO "RetroArch Assets 설치 중 (PREFIX: $RA_ASSETS_DIR)..."
+    # sudo make PREFIX="$RA_ASSETS_DIR" install \
     #     || { log_msg ERROR "RetroArch Assets 설치 실패."; return 1; }
     
-    # log_msg SUCCESS "RetroArch Assets 설치 완료. 설치 경로: $INSTALL_ROOT_DIR"
-    
-    log_msg SUCCESS "RetroArch 빌드 및 설치 완료. 설치 경로: $INSTALL_ROOT_DIR"
+    # log_msg SUCCESS "RetroArch Assets 설치 완료: $RA_ASSETS_DIR"
+    log_msg SUCCESS "RetroArch 빌드 및 설치 완료: $INSTALL_ROOT_DIR"
     return 0
 }
 
