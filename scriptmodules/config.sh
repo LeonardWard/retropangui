@@ -25,7 +25,7 @@ export USER_HOME="$(eval echo ~$__user)"
 
 # --- [4] 버전 및 핵심 경로 설정 ---
 # Retro Pangui 스크립트 버전
-export __version="0.9"
+export __version="0.9.1"
 
 # 에뮬레이터 바이너리가 설치될 루트 디렉토리
 export INSTALL_ROOT_DIR="/opt/retropangui"
@@ -39,7 +39,8 @@ export INSTALL_BUILD_DIR="$TEMP_DIR_BASE"
 # 로그 파일 경로 정의 (사용자 요청에 따라 수정)
 export LOG_DIR="$ROOT_DIR/log"
 
-# 레트로파이 코어 디렉토리 경로
+# 레트로아크 코어 디렉토리 경로
+export RETROARCH_BIN_PATH="$INSTALL_ROOT_DIR/bin/retroarch"
 export LIBRETRO_CORE_PATH="$INSTALL_ROOT_DIR/libretro/cores"
 
 # --- [5] 사용자별 경로 설정 (USER_HOME 기반) ---
@@ -59,6 +60,7 @@ export USER_SYSTEM_PATH="$USER_SHARE_PATH/system"
 export USER_CONFIG_PATH="$USER_SYSTEM_PATH/configs"
 export USER_LOGS_PATH="$USER_SYSTEM_PATH/logs"
 export USER_SCRIPTS_PATH="$USER_SYSTEM_PATH/scripts"
+export CORE_CONFIG_PATH="$USER_CONFIG_PATH/cores"
 
 # RetroArch 및 EmulationStation 설정 파일 경로
 export RA_CONFIG_DIR="$USER_HOME/.config/retroarch"
@@ -74,6 +76,9 @@ export RECALBOX_THEMES_GIT_URL="https://gitlab.com/recalbox/recalbox-themes.git"
 export RA_GIT_URL="https://github.com/libretro/RetroArch.git"
 export RA_ASSETS_GIT_URL="https://github.com/libretro/retroarch-assets.git"
 export ES_GIT_URL="https://github.com/RetroPie/EmulationStation.git"
+
+# es_systems.cfg 생성을 위한 CSV 데이터베이스 경로
+export SYSTEMLIST_CSV_PATH="$MODULES_DIR/systemlist.csv"
 
 # Whiptail 메뉴 설정 상수
 export HEIGHT=20

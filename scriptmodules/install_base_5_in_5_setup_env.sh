@@ -55,6 +55,9 @@ setup_environment() {
     cp -r "$CLONE_PATH/themes/recalbox-next" "$USER_THEMES_PATH"
     log_msg INFO "테마($USER_THEMES_PATH/recalbox-next) 복사 완료.."
 
+    # runcommand.sh 스크립트 생성
+    create_runcommand_script
+
     # # 임시 디렉토리 정리 (선택 사항 - 빌드가 완료된 후)
     # log_msg INFO "임시 빌드 디렉토리($TEMP_DIR) 정리 중..."
     # rm -rf "$TEMP_DIR" || log_msg WARN "임시 디렉토리 정리 실패."

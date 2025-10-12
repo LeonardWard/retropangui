@@ -34,11 +34,16 @@ install_emulationstation() {
 
     # EmulationStation 설정
     log_msg INFO "EmulationStation 설정 디렉토리 생성 및 Recalbox 설정 적용 중..."
-    cp -r "$ES_BUILD_DIR/resources" "$USER_CONFIG_PATH/emulationstation" || { log_msg ERROR "EmulationStation 리소스 복사 실패."; return 1; }
+    mkdir -p "$USER_CONFIG_PATH/emulationstation"
+    cp -r "$ES_BUILD_DIR/resources" "$USER_CONFIG_PATH/emulationstation/resources" || { log_msg ERROR "EmulationStation 리소스 복사 실패."; return 1; }
     sudo rm -rf "$USER_HOME/.emulationstation"
     ln -s "$USER_CONFIG_PATH/emulationstation" $USER_HOME/.emulationstation  || { log_msg ERROR "EmulationStation 심볼릭 링크 생성 실패."; return 1; }
 
     chown -R $__user:$__user "$ES_CONFIG_DIR" || return 1
+
+    # systemlist.csv를 기반으로 es_systems.cfg 생성
+    log_msg INFO "es_systems.cfg 파일을 생성합니다..."
+    generate_es_systems_cfg_from_csv "$SYSTEMLIST_CSV_PATH" "$ES_CONFIG_DIR/es_systems.cfg"
 
     log_msg SUCCESS "EmulationStation 빌드 및 설치 완료. 설치 경로: "$INSTALL_ROOT_DIR""
     return 0

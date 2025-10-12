@@ -1,5 +1,6 @@
 retropie_setup
 recalbox
+resources
 log
 handover*
 scriptmodules/*.bak
