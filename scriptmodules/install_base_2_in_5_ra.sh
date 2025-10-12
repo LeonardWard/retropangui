@@ -72,12 +72,18 @@ install_retroarch() {
     cd "$RA_ASSETS_BUILD_DIR" \
         || return 1
 
-    local RA_ASSETS_DIR="$USER_HOME/.config/retroarch"
-    log_msg INFO "RetroArch Assets 설치 중 (PREFIX: $RA_ASSETS_DIR)..."
-    sudo make PREFIX="$RA_ASSETS_DIR" install \
-        || { log_msg ERROR "RetroArch Assets 설치 실패."; return 1; }
-    
+    mkdir -p "$USER_CONFIG_PATH/retroarch/assets"
+    ln -s "$USER_CONFIG_PATH/retroarch/assets" "$USER_HOME/.config/retroarch/assets"
+
+    local RA_ASSETS_DIR="$USER_HOME/.config/retroarch/assets"
+    log_msg INFO "RetroArch Assets 설치 중 (INSTALLDIR: $RA_ASSETS_DIR)..."
+    sudo make PREFIX="$USER_HOME" INSTALLDIR="$RA_ASSETS_DIR" install \
+        || { log_msg ERROR "RetroArch Assets 설치 실패."; return 1; }    
     log_msg SUCCESS "RetroArch Assets 설치 완료: $RA_ASSETS_DIR"
+
+    cp "$INSTALL_ROOT_DIR/etc/retroarch.cfg" "$INSTALL_ROOT_DIR/etc/retroarch.cfg.origin"
+    cp "$MODULES_DIR/retroarch.init.cfg" "$INSTALL_ROOT_DIR/etc/retroarch.cfg"
+
     log_msg SUCCESS "RetroArch 빌드 및 설치 완료: $INSTALL_ROOT_DIR"
     return 0
 }
