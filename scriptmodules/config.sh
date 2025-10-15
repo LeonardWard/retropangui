@@ -75,6 +75,11 @@ export RECALBOX_THEMES_GIT_URL="https://gitlab.com/recalbox/recalbox-themes.git"
 # 소스 코드 저장소
 export RA_GIT_URL="https://github.com/libretro/RetroArch.git"
 export RA_ASSETS_GIT_URL="https://github.com/libretro/retroarch-assets.git"
+export RA_JOYPAD_AUTOCONFIG_GIT_URL="https://github.com/libretro/retroarch-joypad-autoconfig.git"
+export RA_CORE_INFO_GIT_URL="https://github.com/libretro/libretro-core-info.git"
+export RA_CHEATS_GIT_URL="https://github.com/libretro/libretro-database.git"
+export RA_OVERLAYS_GIT_URL="https://github.com/libretro/common-overlays.git"
+export RA_SHADERS_GIT_URL="https://github.com/libretro/glsl-shaders.git"
 export ES_GIT_URL="https://github.com/RetroPie/EmulationStation.git"
 
 # es_systems.cfg 생성을 위한 CSV 데이터베이스 경로

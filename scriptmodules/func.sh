@@ -55,9 +55,9 @@ config_set() {
 
     # 파일에 키가 존재하는지 확인하고 값을 변경
     if grep -q "^${key}=" "$file"; then
-        sudo sed -i "s/^${key}=.*/${key}=\"${escaped_value}\"/" "$file"
+        sudo sed -i "s/^${key}=.*/${key}=\"${escaped_value}\"" "$file"
     elif grep -q "^#${key}=" "$file"; then
-        sudo sed -i "s/^#${key}=.*/${key}=\"${escaped_value}\"/" "$file"
+        sudo sed -i "s/^#${key}=.*/${key}=\"${escaped_value}\"" "$file"
     else
         echo "${key}=\"${escaped_value}\"" | sudo tee -a "$file" > /dev/null
     fi
@@ -201,7 +201,7 @@ if [[ -z "$DEFAULT_EMU_ID" ]]; then
     exit 1
 fi
 
-LAUNCH_COMMAND=$(grep "^$DEFAULT_EMU_ID\s*=" "$EMULATORS_CFG_PATH" | sed -n 's/^[^=]*=\s*"\([^"]*\)".*/\1/p')
+LAUNCH_COMMAND=$(grep "^$DEFAULT_EMU_ID\s*=" "$EMULATORS_CFG_PATH" | sed -n 's/^[^=]*=\s*\"\([^\"]*\)\".*/\1/p')
 log "추출된 실행 명령어: $LAUNCH_COMMAND"
 
 if [[ -z "$LAUNCH_COMMAND" ]]; then
@@ -221,4 +221,40 @@ EOF
     sudo chown "$__user":"$__user" "$script_path"
     sudo chmod +x "$script_path"
     log_msg SUCCESS "runcommand.sh 생성 및 실행 권한 설정 완료."
+}
+
+# RetroArch 구성요소(에셋, 설정 등)를 Git에서 클론/설치하는 함수
+# 사용법: install_ra_component "component_name" "git_url" "target_dir"
+install_ra_component() {
+    local component_name="$1"
+    local git_url="$2"
+    local target_dir="$3"
+
+    log_msg STEP "RetroArch $component_name 소스 클론 및 설치 시작..."
+
+    if [[ -z "$git_url" || -z "$target_dir" ]]; then
+        log_msg ERROR "$component_name 설치 실패: URL 또는 대상 디렉터리가 비어있습니다."
+        return 1
+    fi
+
+    local ext_folder="$(get_Git_Project_Dir_Name "$git_url")"
+    local build_dir="$INSTALL_BUILD_DIR/$ext_folder"
+    log_msg INFO "ℹ️ $component_name 프로젝트 이름: $ext_folder"
+    log_msg INFO "ℹ️ $component_name 빌드 디렉토리: $build_dir"
+
+    log_msg INFO "$component_name 저장소($git_url) 클론 또는 pull 중..."
+    git_Pull_Or_Clone "$git_url" "$build_dir" || return 1
+
+    log_msg INFO "$component_name 설치 중 (대상: $target_dir)..."
+    sudo mkdir -p "$target_dir"
+    # rsync를 사용하여 원본의 내용을 대상 디렉터리로 복사합니다.
+    # --delete 옵션은 원본에 없는 파일은 대상에서 삭제합니다.
+    sudo rsync -a --delete "$build_dir/" "$target_dir/" || {
+        log_msg ERROR "$component_name 설치 실패 (rsync 오류)."
+        return 1
+    }
+
+    sudo chown -R "$__user":"$__user" "$target_dir"
+    log_msg SUCCESS "RetroArch $component_name 설치 완료: $target_dir"
+    return 0
 }

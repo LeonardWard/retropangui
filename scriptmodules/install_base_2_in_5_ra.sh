@@ -58,28 +58,41 @@ install_retroarch() {
         log_msg WARN "Recalbox retroarch.cfg 템플릿을 찾을 수 없습니다. (경로: $CONFIG_RA_SKELETON)"
     fi
     
-    # RetroArch Assets 설치
-    log_msg STEP "RetroArch Assets 소스 클론 및 설치 시작..."
-    
-    local EXT_FOLDER_ASSETS="$(get_Git_Project_Dir_Name "$RA_ASSETS_GIT_URL")"
-    local RA_ASSETS_BUILD_DIR="$INSTALL_BUILD_DIR/$EXT_FOLDER_ASSETS"
-    log_msg INFO "ℹ️ RetroArch Assets 프로젝트 이름: $EXT_FOLDER_ASSETS"
-    log_msg INFO "ℹ️ RetroArch Assets 빌드 디렉토리: $RA_ASSETS_BUILD_DIR"
+    # RetroArch 구성요소 설치 (Assets, Joypads, 등)
+    log_msg STEP "RetroArch 추가 구성요소 설치 시작..."
 
-    log_msg INFO "RetroArch Assets 저장소($RA_ASSETS_GIT_URL) 클론 또는 pull 중..."
-    git_Pull_Or_Clone "$RA_ASSETS_GIT_URL" "$RA_ASSETS_BUILD_DIR"
+    # RA_CONFIG_DIR이 없으면 생성
+    sudo mkdir -p "$RA_CONFIG_DIR"
+    sudo chown -R "$__user":"$__user" "$RA_CONFIG_DIR"
 
-    cd "$RA_ASSETS_BUILD_DIR" \
-        || return 1
+    # 설치할 구성요소 목록 (이름:설치될하위디렉토리:Git주소)
+    local ra_components
+    ra_components=(
+        "Assets:assets:$RA_ASSETS_GIT_URL"
+        "Joypad Autoconfigs:joypads:$RA_JOYPAD_AUTOCONFIG_GIT_URL"
+        "Core Info:info:$RA_CORE_INFO_GIT_URL"
+        "Cheats:cheats:$RA_CHEATS_GIT_URL"
+        "Overlays:overlays:$RA_OVERLAYS_GIT_URL"
+        "Shaders:shaders:$RA_SHADERS_GIT_URL"
+    )
 
-    mkdir -p "$USER_CONFIG_PATH/retroarch/assets"
-    ln -s "$USER_CONFIG_PATH/retroarch/assets" "$USER_HOME/.config/retroarch/assets"
+    for component_data in "${ra_components[@]}"; do
+        IFS=':' read -r name subdir url <<< "$component_data"
+        
+        local target_path="$USER_CONFIG_PATH/retroarch/$subdir"
+        local link_path="$RA_CONFIG_DIR/$subdir"
 
-    local RA_ASSETS_DIR="$USER_HOME/.config/retroarch/assets"
-    log_msg INFO "RetroArch Assets 설치 중 (INSTALLDIR: $RA_ASSETS_DIR)..."
-    sudo make PREFIX="$USER_HOME" INSTALLDIR="$RA_ASSETS_DIR" install \
-        || { log_msg ERROR "RetroArch Assets 설치 실패."; return 1; }    
-    log_msg SUCCESS "RetroArch Assets 설치 완료: $RA_ASSETS_DIR"
+        # 실제 데이터가 저장될 디렉터리 생성
+        sudo mkdir -p "$target_path"
+
+        # 심볼릭 링크 설정 (.config -> share)
+        if [ ! -L "$link_path" ]; then
+            sudo ln -s "$target_path" "$link_path"
+        fi
+
+        # 새로운 공용 함수를 사용하여 구성요소 설치
+        install_ra_component "$name" "$url" "$target_path" || return 1
+    done
 
     cp "$INSTALL_ROOT_DIR/etc/retroarch.cfg" "$INSTALL_ROOT_DIR/etc/retroarch.cfg.origin"
     cp "$MODULES_DIR/retroarch.init.cfg" "$INSTALL_ROOT_DIR/etc/retroarch.cfg"

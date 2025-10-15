@@ -51,11 +51,24 @@ function defaultRAConfig() {
 
     if [[ -f "$src_config" ]]; then
         log_msg INFO "기본 retroarch.cfg to '$dest_config'"
-        mkdir -p "$(dirname "$dest_config")"
+        sudo mkdir -p "$(dirname "$dest_config")"
 
         if [[ ! -f "$dest_config" ]]; then
-            cp "$src_config" "$dest_config"
-            chown "$__user":"$__user" "$dest_config"
+            sudo cp "$src_config" "$dest_config"
+            
+            # Append system-specific save directories
+            log_msg INFO "Appending system-specific save paths for '$system'"
+            local system_saves_path="$USER_SAVES_PATH/$system"
+            sudo mkdir -p "$system_saves_path"
+            
+            # Use sudo with tee to append lines as root
+            echo "" | sudo tee -a "$dest_config" > /dev/null
+            echo "# System-specific save paths (appended by retropangui)" | sudo tee -a "$dest_config" > /dev/null
+            echo "savefile_directory = \"$system_saves_path\"" | sudo tee -a "$dest_config" > /dev/null
+            echo "savestate_directory = \"$system_saves_path\"" | sudo tee -a "$dest_config" > /dev/null
+
+            sudo chown "$__user":"$__user" "$dest_config"
+            sudo chown -R "$__user":"$__user" "$system_saves_path"
         fi
     else
         log_msg WARN "Default retroarch.cfg not found at '$src_config'"
