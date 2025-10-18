@@ -175,7 +175,7 @@ SYSTEM_NAME="$3"
 ROM_PATH="$4"
 
 # 로그 파일 준비
-RUN_LOG="$LOG_DIR/runcommand.log"
+RUN_LOG="$USER_LOGS_PATH/runcommand.log"
 
 log() {
     echo "$(date +'%Y-%m-%d %H:%M:%S') - $1" >> "$RUN_LOG"
@@ -229,6 +229,7 @@ install_ra_component() {
     local component_name="$1"
     local git_url="$2"
     local target_dir="$3"
+    local subdir="$(basename "$target_dir")"
 
     log_msg STEP "RetroArch $component_name 소스 클론 및 설치 시작..."
 
@@ -240,21 +241,32 @@ install_ra_component() {
     local ext_folder="$(get_Git_Project_Dir_Name "$git_url")"
     local build_dir="$INSTALL_BUILD_DIR/$ext_folder"
     log_msg INFO "ℹ️ $component_name 프로젝트 이름: $ext_folder"
-    log_msg INFO "ℹ️ $component_name 빌드 디렉토리: $build_dir"
+    log_msg INFO "ℹ️ $component_name 빌드 디렉터리: $build_dir"
 
     log_msg INFO "$component_name 저장소($git_url) 클론 또는 pull 중..."
     git_Pull_Or_Clone "$git_url" "$build_dir" || return 1
 
-    log_msg INFO "$component_name 설치 중 (대상: $target_dir)..."
+    log_msg INFO "$component_name 빌드 및 설치 중 (대상: $target_dir)..."
+    cd "$build_dir" || { log_msg ERROR "$component_name 설치 실패: 빌드 디렉터리로 이동할 수 없습니다."; return 1; }
+
+    # If target_dir exists and is not empty, back it up
+    if [ -d "$target_dir" ] && [ -n "$(ls -A "$target_dir")" ]; then
+        sudo mv "$target_dir" "${target_dir}.backup_$(date +%Y%m%d_%H%M%S)"
+    fi
+
+    # Create target_dir if it doesn't exist
     sudo mkdir -p "$target_dir"
-    # rsync를 사용하여 원본의 내용을 대상 디렉터리로 복사합니다.
-    # --delete 옵션은 원본에 없는 파일은 대상에서 삭제합니다.
-    sudo rsync -a --delete "$build_dir/" "$target_dir/" || {
-        log_msg ERROR "$component_name 설치 실패 (rsync 오류)."
+
+    log_msg INFO "$component_name: make install 실행 중 (대상: $target_dir)..."
+    sudo make PREFIX="$USER_HOME" INSTALLDIR="$target_dir" install || {
+        log_msg ERROR "$component_name 설치 실패 (make install 오류)."
         return 1
     }
 
+    # 임시 설치 디렉터리 설정
+
+
     sudo chown -R "$__user":"$__user" "$target_dir"
-    log_msg SUCCESS "RetroArch $component_name 설치 완료: $target_dir"
+    log_msg SUCCESS "RetroArch $component_name 설치 완료: $target_dir (/database/cht, /database/rdb 구조)"
     return 0
 }

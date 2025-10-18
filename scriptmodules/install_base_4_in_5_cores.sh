@@ -11,6 +11,7 @@
 BASE_CORE_MODULES=(
     "lr-bluemsx"         # MSX 시리즈
     "lr-nestopia"        # NES
+    "lr-fceumm"          # FDS
     "lr-snes9x"          # SNES
     "lr-pcsx-rearmed"    # PSX
     "lr-dosbox-pure"     # DOS (dosbox-pure)

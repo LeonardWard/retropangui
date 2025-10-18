@@ -12,7 +12,7 @@
 # --- [1] 환경 설정 및 모듈 로드 ---
 # config.sh를 source하여 모든 경로와 설정 변수를 로드합니다.
 # config.sh는 이 스크립트의 위치를 기준으로 ROOT_DIR을 올바르게 설정합니다.
-source "$(dirname "$0")/scriptmodules/config.sh"
+source "$(dirname "${BASH_SOURCE[0]}")/scriptmodules/config.sh"
 source "$MODULES_DIR/helpers.sh"
 source "$MODULES_DIR/ui.sh"
 
@@ -50,4 +50,6 @@ function main() {
 }
 
 # --- [3] 스크립트 실행 ---
-main "$@"
+if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
+    main "$@"
+fi

@@ -48,12 +48,12 @@ setup_environment() {
     log_msg INFO "ℹ️ 프로젝트 이름: $GIT_NAME"
     log_msg INFO "ℹ️ 빌드 디렉토리: $CLONE_PATH"
 
-    log_msg INFO "저장소($RECALBOX_THEMES_GIT_URL) 클론 또는 pull 중..."
-    git_Pull_Or_Clone "$RECALBOX_THEMES_GIT_URL" "$CLONE_PATH"
+    # log_msg INFO "저장소($RECALBOX_THEMES_GIT_URL) 클론 또는 pull 중..."
+    # git_Pull_Or_Clone "$RECALBOX_THEMES_GIT_URL" "$CLONE_PATH"
     
-    log_msg INFO "테마($CLONE_PATH/recalbox-themes/themes/recalbox-next) 복사 중..."
-    cp -r "$CLONE_PATH/themes/recalbox-next" "$USER_THEMES_PATH"
-    log_msg INFO "테마($USER_THEMES_PATH/recalbox-next) 복사 완료.."
+    # log_msg INFO "테마($CLONE_PATH/recalbox-themes/themes/recalbox-next) 복사 중..."
+    # cp -r "$CLONE_PATH/themes/recalbox-next" "$USER_THEMES_PATH"
+    # log_msg INFO "테마($USER_THEMES_PATH/recalbox-next) 복사 완료.."
 
     # runcommand.sh 스크립트 생성
     create_runcommand_script

@@ -42,9 +42,9 @@ install_emulationstation() {
     chown -R $__user:$__user "$ES_CONFIG_DIR" || return 1
 
     # systemlist.csv를 기반으로 es_systems.cfg 생성
-    log_msg INFO "es_systems.cfg 파일을 생성합니다..."
+    log_msg INFO "es_systems.cfg 파일을 생성합니다($ES_CONFIG_DIR/es_systems.cfg)."
     generate_es_systems_cfg_from_csv "$SYSTEMLIST_CSV_PATH" "$ES_CONFIG_DIR/es_systems.cfg"
-
+    cp "$RESOURCES_DIR/es-recalbox/es_input.cfg" "$USER_CONFIG_PATH/emulationstation"
     log_msg SUCCESS "EmulationStation 빌드 및 설치 완료. 설치 경로: "$INSTALL_ROOT_DIR""
     return 0
 }

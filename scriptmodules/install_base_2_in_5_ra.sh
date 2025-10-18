@@ -17,6 +17,7 @@ install_retroarch() {
 
     log_msg INFO "RetroArch 저장소($RA_GIT_URL) 클론 또는 pull 중..."
     git_Pull_Or_Clone "$RA_GIT_URL" "$RA_BUILD_DIR"
+    # chown -R $__user:$__user "$RA_BUILD_DIR" || return 1
 
     cd "$RA_BUILD_DIR" \
         || return 1
@@ -45,15 +46,15 @@ install_retroarch() {
         || { log_msg ERROR "RetroArch 설치 실패."; return 1; }
     
     # RetroArch 설정
-    log_msg INFO "RetroArch 설정 파일 복사 및 패치 중..."
-    ln -s "$USER_CONFIG_PATH" "$RA_CONFIG_DIR"|| return 1
+    log_msg INFO "RetroArch 설정 파일 복사 및 패치 (ln -s "$RA_CONFIG_PATH" "$RA_CONFIG_DIR") 중..."
+    ln -s "$RA_CONFIG_PATH" "$RA_CONFIG_DIR"|| return 1
     # chown -R $__user:$__user "$RA_CONFIG_DIR" || return 1
 
     local CONFIG_RA_SKELETON="$INSTALL_ROOT_DIR/etc/retroarch.cfg"
     if [ -f "$CONFIG_RA_SKELETON" ]; then
         cp "$CONFIG_RA_SKELETON" "$USER_CONFIG_PATH/retroarch.cfg" || { log_msg ERROR "RetroArch 설정 파일 복사 실패."; return 1; }
         # chown -R $__user:$__user "$USER_CONFIG_PATH/retroarch.cfg" || return 1
-        log_msg INFO "기본 retroarch.cfg 복사 완료."
+        log_msg INFO "기본 ($USER_CONFIG_PATH/retroarch.cfg) 복사 완료."
     else
         log_msg WARN "Recalbox retroarch.cfg 템플릿을 찾을 수 없습니다. (경로: $CONFIG_RA_SKELETON)"
     fi
@@ -70,8 +71,8 @@ install_retroarch() {
     ra_components=(
         "Assets:assets:$RA_ASSETS_GIT_URL"
         "Joypad Autoconfigs:joypads:$RA_JOYPAD_AUTOCONFIG_GIT_URL"
-        "Core Info:info:$RA_CORE_INFO_GIT_URL"
-        "Cheats:cheats:$RA_CHEATS_GIT_URL"
+        "Info:info:$RA_CORE_INFO_GIT_URL"
+        "Database:database:$RA_DATABASE_GIT_URL"
         "Overlays:overlays:$RA_OVERLAYS_GIT_URL"
         "Shaders:shaders:$RA_SHADERS_GIT_URL"
     )
@@ -85,17 +86,14 @@ install_retroarch() {
         # 실제 데이터가 저장될 디렉터리 생성
         sudo mkdir -p "$target_path"
 
-        # 심볼릭 링크 설정 (.config -> share)
-        if [ ! -L "$link_path" ]; then
-            sudo ln -s "$target_path" "$link_path"
-        fi
-
         # 새로운 공용 함수를 사용하여 구성요소 설치
         install_ra_component "$name" "$url" "$target_path" || return 1
     done
 
     cp "$INSTALL_ROOT_DIR/etc/retroarch.cfg" "$INSTALL_ROOT_DIR/etc/retroarch.cfg.origin"
-    cp "$MODULES_DIR/retroarch.init.cfg" "$INSTALL_ROOT_DIR/etc/retroarch.cfg"
+    log_msg INFO "복사 완료: $INSTALL_ROOT_DIR/etc/retroarch.cfg.origin"
+    cp "$RESOURCES_DIR/retroarch.init.cfg" "$INSTALL_ROOT_DIR/etc/retroarch.cfg"
+    log_msg INFO "복사 완료: $INSTALL_ROOT_DIR/etc/retroarch.cfg"
 
     log_msg SUCCESS "RetroArch 빌드 및 설치 완료: $INSTALL_ROOT_DIR"
     return 0

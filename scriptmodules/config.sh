@@ -13,6 +13,7 @@
 # BASH_SOURCE[0]는 이 파일(config.sh)의 경로를 나타냅니다.
 export ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 export MODULES_DIR="$ROOT_DIR/scriptmodules"
+export RESOURCES_DIR="$ROOT_DIR/resources"
 
 # --- [2] 공용 함수 로드 ---
 # 사용자 정보를 가져오는 등의 함수를 사용하기 위해 먼저 로드합니다.
@@ -61,6 +62,7 @@ export USER_CONFIG_PATH="$USER_SYSTEM_PATH/configs"
 export USER_LOGS_PATH="$USER_SYSTEM_PATH/logs"
 export USER_SCRIPTS_PATH="$USER_SYSTEM_PATH/scripts"
 export CORE_CONFIG_PATH="$USER_CONFIG_PATH/cores"
+export RA_CONFIG_PATH="$USER_CONFIG_PATH/retroarch"
 
 # RetroArch 및 EmulationStation 설정 파일 경로
 export RA_CONFIG_DIR="$USER_HOME/.config/retroarch"
@@ -77,7 +79,7 @@ export RA_GIT_URL="https://github.com/libretro/RetroArch.git"
 export RA_ASSETS_GIT_URL="https://github.com/libretro/retroarch-assets.git"
 export RA_JOYPAD_AUTOCONFIG_GIT_URL="https://github.com/libretro/retroarch-joypad-autoconfig.git"
 export RA_CORE_INFO_GIT_URL="https://github.com/libretro/libretro-core-info.git"
-export RA_CHEATS_GIT_URL="https://github.com/libretro/libretro-database.git"
+export RA_DATABASE_GIT_URL="https://github.com/libretro/libretro-database.git"
 export RA_OVERLAYS_GIT_URL="https://github.com/libretro/common-overlays.git"
 export RA_SHADERS_GIT_URL="https://github.com/libretro/glsl-shaders.git"
 export ES_GIT_URL="https://github.com/RetroPie/EmulationStation.git"
