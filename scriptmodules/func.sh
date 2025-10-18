@@ -264,8 +264,6 @@ install_ra_component() {
     }
 
     # 임시 설치 디렉터리 설정
-
-
     sudo chown -R "$__user":"$__user" "$target_dir"
     log_msg SUCCESS "RetroArch $component_name 설치 완료: $target_dir (/database/cht, /database/rdb 구조)"
     return 0
