@@ -70,7 +70,7 @@ install_retroarch() {
     local ra_components
     ra_components=(
         "Assets:assets:$RA_ASSETS_GIT_URL"
-        "Joypad Autoconfigs:joypads:$RA_JOYPAD_AUTOCONFIG_GIT_URL"
+        "Joypad Autoconfigs:autoconfig:$RA_JOYPAD_AUTOCONFIG_GIT_URL"
         "Info:info:$RA_CORE_INFO_GIT_URL"
         "Database:database:$RA_DATABASE_GIT_URL"
         "Overlays:overlays:$RA_OVERLAYS_GIT_URL"
