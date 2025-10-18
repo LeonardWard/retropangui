@@ -10,35 +10,8 @@
 setup_environment() {
     log_msg STEP "Retro Pangui 환경 설정 시작..."
 
-    # # 복사 직전 기존 파일 백업
-    # backup_if_exists "$RA_CONFIG_DIR/retroarch.cfg"
-    # backup_if_exists "$ES_CONFIG_DIR/es_systems.cfg"
-
-    # # 실패 시 안내 (에러 로그 경로 안내)
-    # if [ $? -ne 0 ]; then
-    #     log_msg ERROR "에러 발생: 자세한 내용은 $LOG_DIR 또는 $USER_LOGS_PATH 를 확인하세요."
-    #     exit 1
-    # fi
-
-    # # TEMP_DIR, USER_SHARE_PATH, INSTALL_DIR, RA_CONFIG_DIR, ES_CONFIG_DIR, RECALBOX_GIT_URL 
-    # # 등은 config.sh에서 정의됨
-    # local CONFIG_CLONE_DIR="$TEMP_DIR/recalbox-config"
-    
     # # 설치 명령을 실행한 사용자의 UID를 가져와 소유권 설정에 사용합니다.
-    # local __user=$(stat -c '%U' "$TEMP_DIR")
-    
-    # # 핵심 디렉토리 생성 및 권한 설정
-    # log_msg INFO "핵심 설치 디렉토리($INSTALL_ROOT_DIR, $LOG_DIR) 생성 및 권한 설정 중..."
-    # sudo mkdir -p "$INSTALL_ROOT_DIR" "$LOG_DIR" || return 1
-    
-    # log_msg INFO "사용자 공유 경로($USER_SHARE_PATH) 생성 및 권한 설정 중..."
-    # # 이 공유 경로는 ES의 롬 경로로 사용됩니다.
-    # sudo mkdir -p "$USER_SHARE_PATH" || return 1
-    
-    # # 설치된 바이너리 및 사용자 공유 폴더의 소유자를 원래의 사용자로 변경
-    # log_msg INFO "설치 경로 소유자를 사용자($__user)로 변경..."
-    # # Share 폴더의 모든 콘텐츠는 사용자 소유여야 합니다.
-    # sudo chown -R $__user:$__user "$USER_SHARE_PATH" || return 1
+    local __user=$(stat -c '%U' "$TEMP_DIR")
     
     # Recalbox의 테마 복사 (선택 사항, 기본 테마가 없는 경우를 대비)
 
@@ -59,14 +32,97 @@ setup_environment() {
     create_runcommand_script
 
     cp "$ROOT_DIR/resources/es/es_input.cfg" "$ES_CONFIG_DIR"
-    # # 임시 디렉토리 정리 (선택 사항 - 빌드가 완료된 후)
-    # log_msg INFO "임시 빌드 디렉토리($TEMP_DIR) 정리 중..."
-    # rm -rf "$TEMP_DIR" || log_msg WARN "임시 디렉토리 정리 실패."
     
+    # Samba 서버 설치 및 설정
+    log_msg STEP "Samba 서버 설치 및 설정 시작..."
+    if ! dpkg -l | grep -q "samba"; then
+        log_msg INFO "Samba 패키지 설치 중..."
+        sudo apt-get update && sudo apt-get install -y samba
+    else
+        log_msg INFO "Samba가 이미 설치되어 있습니다."
+    fi
+
+    log_msg INFO "기존 Samba 설정 파일 백업 중 (/etc/samba/smb.conf.rp.bak)..."
+    sudo cp /etc/samba/smb.conf /etc/samba/smb.conf.rp.bak
+
+    log_msg INFO "새로운 Samba 설정 파일 생성 중... (인증 필요)"
+    local smb_conf="/etc/samba/smb.conf"
+    local roms_path="$USER_SHARE_PATH/roms"
+    local bios_path="$USER_SHARE_PATH/bios"
+    local saves_path="$USER_SHARE_PATH/saves"
+
+    # 공유 디렉토리 생성
+    sudo mkdir -p "$roms_path" "$bios_path" "$saves_path"
+    sudo chown -R $__user:$__user "$USER_SHARE_PATH"
+    sudo chmod -R 0775 "$USER_SHARE_PATH"
+
+    sudo bash -c "cat > $smb_conf" << EOF
+[global]
+   workgroup = WORKGROUP
+   server string = RetroPangui
+   netbios name = retropangui
+   security = user
+   dns proxy = no
+   wins support = yes
+
+[share]
+   path = $USER_SHARE_PATH
+   comment = RetroPangui Share
+   browsable = yes
+   writable = yes
+   read only = no
+   create mask = 0775
+   directory mask = 0775
+   force user = $__user
+
+[roms]
+   path = $roms_path
+   comment = RetroPangui ROMs
+   browsable = yes
+   writable = yes
+   read only = no
+   create mask = 0775
+   directory mask = 0775
+   force user = $__user
+
+[bios]
+   path = $bios_path
+   comment = RetroPangui BIOS
+   browsable = yes
+   writable = yes
+   read only = no
+   create mask = 0775
+   directory mask = 0775
+   force user = $__user
+
+[saves]
+   path = $saves_path
+   comment = RetroPangui Saves
+   browsable = yes
+   writable = yes
+   read only = no
+   create mask = 0775
+   directory mask = 0775
+   force user = $__user
+EOF
+
+    log_msg INFO "Samba 서비스 재시작 중..."
+    sudo systemctl restart smbd
+    sudo systemctl restart nmbd
+    log_msg SUCCESS "Samba 서버 설정 완료."
+    log_msg WARN "Samba 공유 폴더에 접근하려면 사용자 계정을 생성해야 합니다."
+    log_msg WARN "터미널에서 'sudo smbpasswd -a <사용자이름>' 명령을 실행하여 Samba 사용자 계정을 생성하고 비밀번호를 설정하세요."
+    log_msg WARN "Windows에서 공유 폴더에 접근할 때 이 사용자 이름과 비밀번호를 사용해야 합니다."
+
     log_msg INFO "사용자($__user:$__user)권한 처리($USER_SHARE_PATH)중..."
     chown -R $__user:$__user "$USER_SHARE_PATH" || return 1
     log_msg INFO "사용자 권한 처리 완료."
     log_msg SUCCESS "환경 설정 및 패치 완료."
+
+    # # 임시 디렉토리($TEMP_DIR) 정리
+    # log_msg INFO "임시 빌드 디렉토리($TEMP_DIR) 정리 중..."
+    # rm -rf "$TEMP_DIR" || log_msg WARN "임시 디렉토리($TEMP_DIR) 정리 실패."
+
     return 0
 }
 

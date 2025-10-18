@@ -68,7 +68,6 @@ function run_base_system_install() {
         
         log_msg INFO "========================================================"
         log_msg INFO "   🚀 Retro Pangui Base System 설치를 시작합니다..."
-        log_msg INFO "   (자세한 빌드 과정이 이어서 출력됩니다.)"
         log_msg INFO "========================================================"
         
         # system_install.sh 모듈을 source하여 실행

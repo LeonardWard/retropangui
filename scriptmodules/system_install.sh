@@ -10,22 +10,23 @@ log_msg "DEBUG" "system_install.sh: Sourced. MODULES_DIR=${MODULES_DIR}"
 
 SUCCESS=1
 
-# 1. Dependency 설치
-source "$MODULES_DIR/install_base_1_in_5_deps.sh" "$@" || SUCCESS=0
+# # 1. Dependency 설치
+# source "$MODULES_DIR/install_base_1_in_5_deps.sh" "$@" || SUCCESS=0
 
-# 2. RetroArch 설치/설정
-if [ "$SUCCESS" -eq 1 ]; then
-    source "$MODULES_DIR/install_base_2_in_5_ra.sh" "$@" || SUCCESS=0
-fi
+# # 2. RetroArch 설치/설정
+# if [ "$SUCCESS" -eq 1 ]; then
+#     source "$MODULES_DIR/install_base_2_in_5_ra.sh" "$@" || SUCCESS=0
+# fi
 
-# 3. EmulationStation 설치/설정
-if [ "$SUCCESS" -eq 1 ]; then
-    source "$MODULES_DIR/install_base_3_in_5_es.sh" "$@" || SUCCESS=0
-fi
+# # 3. EmulationStation 설치/설정
+# if [ "$SUCCESS" -eq 1 ]; then
+#     source "$MODULES_DIR/install_base_3_in_5_es.sh" "$@" || SUCCESS=0
+# fi
 
 # 4. 코어 설치/설정
 if [ "$SUCCESS" -eq 1 ]; then
-    source "$MODULES_DIR/install_base_4_in_5_cores.sh" "$@" || SUCCESS=0
+    source "$MODULES_DIR/install_base_4_in_5_cores.sh"
+    install_base_cores "$@" || SUCCESS=0
 fi
 
 # 5. 환경설정, 최종 초기화

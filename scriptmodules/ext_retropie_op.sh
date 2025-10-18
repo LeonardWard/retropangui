@@ -78,12 +78,13 @@ function defaultRAConfig() {
 function setRetroArchCoreOption() {
     local option="$1"
     local value="$2"
-    iniConfig " = " "\"" "$configdir/all/retroarch-core-options.cfg"
+    sudo mkdir -p "$(dirname "$md_conf_root/all/retroarch-core-options.cfg")"
+    iniConfig " = " "\"" "$md_conf_root/all/retroarch-core-options.cfg"
     iniGet "$option"
     if [[ -z "$ini_value" ]]; then
         iniSet "$option" "$value"
     fi
-    chown "$__user":"$__group" "$configdir/all/retroarch-core-options.cfg"
+    chown "$__user":"$__group" "$md_conf_root/all/retroarch-core-options.cfg"
 }
 
 function rp_isInstalled() {
