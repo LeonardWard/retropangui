@@ -15,35 +15,35 @@ install_retroarch() {
     log_msg INFO "ℹ️ RetroArch 프로젝트 이름: $EXT_FOLDER"
     log_msg INFO "ℹ️ RetroArch 빌드 디렉토리: $RA_BUILD_DIR"
 
-    # log_msg INFO "RetroArch 저장소($RA_GIT_URL) 클론 또는 pull 중..."
-    # git_Pull_Or_Clone "$RA_GIT_URL" "$RA_BUILD_DIR"
-    # # chown -R $__user:$__user "$RA_BUILD_DIR" || return 1
+    log_msg INFO "RetroArch 저장소($RA_GIT_URL) 클론 또는 pull 중..."
+    git_Pull_Or_Clone "$RA_GIT_URL" "$RA_BUILD_DIR"
+    # chown -R $__user:$__user "$RA_BUILD_DIR" || return 1
 
-    # cd "$RA_BUILD_DIR" \
-    #     || return 1
+    cd "$RA_BUILD_DIR" \
+        || return 1
     
-    # log_msg INFO "RetroArch 빌드 환경 설정 중..."
-    # ./configure \
-    #     --prefix="$INSTALL_ROOT_DIR" \
-    #     --disable-x11 \
-    #     --disable-wayland \
-    #     --enable-opengles \
-    #     --enable-udev \
-    #     --enable-alsa \
-    #     --enable-threads \
-    #     --enable-ffmpeg \
-    #     --enable-7zip \
-    #     --enable-sdl2 \
-    #         || { log_msg ERROR "RetroArch configure 실패."; return 1; }
+    log_msg INFO "RetroArch 빌드 환경 설정 중..."
+    ./configure \
+        --prefix="$INSTALL_ROOT_DIR" \
+        --disable-x11 \
+        --disable-wayland \
+        --enable-opengles \
+        --enable-udev \
+        --enable-alsa \
+        --enable-threads \
+        --enable-ffmpeg \
+        --enable-7zip \
+        --enable-sdl2 \
+            || { log_msg ERROR "RetroArch configure 실패."; return 1; }
 
-    # log_msg INFO "RetroArch 빌드 시작 (make -j$(nproc))..."
-    # make clean
-    # make -j$(nproc) \
-    #     || { log_msg ERROR "RetroArch 빌드 실패."; return 1; }
+    log_msg INFO "RetroArch 빌드 시작 (make -j$(nproc))..."
+    make clean
+    make -j$(nproc) \
+        || { log_msg ERROR "RetroArch 빌드 실패."; return 1; }
     
-    # log_msg INFO "RetroArch 설치 중..."
-    # sudo make install \
-    #     || { log_msg ERROR "RetroArch 설치 실패."; return 1; }
+    log_msg INFO "RetroArch 설치 중..."
+    sudo make install \
+        || { log_msg ERROR "RetroArch 설치 실패."; return 1; }
     
     # 기존 링크 또는 디렉토리가 있다면 제거하여 올바른 심볼릭 링크 생성을 보장
     sudo rm -rf "$RA_CONFIG_DIR"
