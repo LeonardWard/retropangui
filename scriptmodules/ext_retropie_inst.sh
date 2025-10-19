@@ -126,3 +126,27 @@ function rpSwap() {
             ;;
     esac
 }
+
+function hasPackage() {
+    dpkg -l "$1" &>/dev/null
+}
+
+function aptInstall() {
+    apt-get install -y "$@"
+}
+
+function getDepends() {
+    local pkgs=("$@")
+    local missing_pkgs=()
+    for pkg in "${pkgs[@]}"; do
+        if ! hasPackage "$pkg"; then
+            missing_pkgs+=("$pkg")
+        fi
+    done
+
+    if [[ "${#missing_pkgs[@]}" -gt 0 ]]; then
+        log_msg INFO "Installing missing dependencies: ${missing_pkgs[*]}"
+        apt-get update
+        aptInstall "${missing_pkgs[@]}"
+    fi
+}

@@ -11,10 +11,17 @@ setup_environment() {
     log_msg STEP "Retro Pangui 환경 설정 시작..."
 
     # # 설치 명령을 실행한 사용자의 UID를 가져와 소유권 설정에 사용합니다.
-    local __user=$(stat -c '%U' "$TEMP_DIR")
+    # 기존의 불안정한 stat 명령 대신, func.sh의 get_effective_user를 사용합니다.
+    local __user="$(get_effective_user)"
     
-    # Recalbox의 테마 복사 (선택 사항, 기본 테마가 없는 경우를 대비)
+    if [[ -z "$__user" ]]; then
+        log_msg ERROR "유효 사용자 이름(pangui)을 결정할 수 없습니다. Samba 설정 및 권한 처리가 불가능합니다."
+        return 1
+    fi
 
+    log_msg INFO "ℹ️ 유효 사용자 이름: $__user"
+
+    # Recalbox의 테마 복사 (선택 사항, 기본 테마가 없는 경우를 대비)
     log_msg STEP "테마 소스 클론 시작..."
     local GIT_NAME="$(get_Git_Project_Dir_Name "$RECALBOX_THEMES_GIT_URL")"
     local CLONE_PATH="$INSTALL_BUILD_DIR/$GIT_NAME"
@@ -28,10 +35,14 @@ setup_environment() {
     # cp -r "$CLONE_PATH/themes/recalbox-next" "$USER_THEMES_PATH"
     # log_msg INFO "테마($USER_THEMES_PATH/recalbox-next) 복사 완료.."
 
+    # runcommand_config.sh 스크립트 생성
+    create_runcommand_config_script "$ROOT_DIR"
+
     # runcommand.sh 스크립트 생성
     create_runcommand_script
-
-    cp "$ROOT_DIR/resources/es/es_input.cfg" "$ES_CONFIG_DIR"
+    
+    # $ES_CONFIG_DIR의 상위 디렉터리(configs)가 root 소유일 수 있으므로, 안전하게 sudo cp 사용
+    sudo cp "$ROOT_DIR/resources/es-recalbox/es_input.cfg" "$ES_CONFIG_DIR"
     
     # Samba 서버 설치 및 설정
     log_msg STEP "Samba 서버 설치 및 설정 시작..."
@@ -51,59 +62,60 @@ setup_environment() {
     local bios_path="$USER_SHARE_PATH/bios"
     local saves_path="$USER_SHARE_PATH/saves"
 
-    # 공유 디렉토리 생성
+    # 공유 디렉토리 생성 
     sudo mkdir -p "$roms_path" "$bios_path" "$saves_path"
-    sudo chown -R $__user:$__user "$USER_SHARE_PATH"
-    sudo chmod -R 0775 "$USER_SHARE_PATH"
+    
+    # 권한 설정 (chown은 이미 위에서 chown_dir_to_effective_user로 처리)
+    sudo chmod -R 0775 "$USER_SHARE_PATH" 
 
     sudo bash -c "cat > $smb_conf" << EOF
 [global]
-   workgroup = WORKGROUP
-   server string = RetroPangui
-   netbios name = retropangui
-   security = user
-   dns proxy = no
-   wins support = yes
+    workgroup = WORKGROUP
+    server string = RetroPangui
+    netbios name = retropangui
+    security = user
+    dns proxy = no
+    wins support = yes
 
 [share]
-   path = $USER_SHARE_PATH
-   comment = RetroPangui Share
-   browsable = yes
-   writable = yes
-   read only = no
-   create mask = 0775
-   directory mask = 0775
-   force user = $__user
+    path = $USER_SHARE_PATH
+    comment = RetroPangui Share
+    browsable = yes
+    writable = yes
+    read only = no
+    create mask = 0775
+    directory mask = 0775
+    force user = $__user
 
 [roms]
-   path = $roms_path
-   comment = RetroPangui ROMs
-   browsable = yes
-   writable = yes
-   read only = no
-   create mask = 0775
-   directory mask = 0775
-   force user = $__user
+    path = $roms_path
+    comment = RetroPangui ROMs
+    browsable = yes
+    writable = yes
+    read only = no
+    create mask = 0775
+    directory mask = 0775
+    force user = $__user
 
 [bios]
-   path = $bios_path
-   comment = RetroPangui BIOS
-   browsable = yes
-   writable = yes
-   read only = no
-   create mask = 0775
-   directory mask = 0775
-   force user = $__user
+    path = $bios_path
+    comment = RetroPangui BIOS
+    browsable = yes
+    writable = yes
+    read only = no
+    create mask = 0775
+    directory mask = 0775
+    force user = $__user
 
 [saves]
-   path = $saves_path
-   comment = RetroPangui Saves
-   browsable = yes
-   writable = yes
-   read only = no
-   create mask = 0775
-   directory mask = 0775
-   force user = $__user
+    path = $saves_path
+    comment = RetroPangui Saves
+    browsable = yes
+    writable = yes
+    read only = no
+    create mask = 0775
+    directory mask = 0775
+    force user = $__user
 EOF
 
     log_msg INFO "Samba 서비스 재시작 중..."
@@ -114,8 +126,14 @@ EOF
     log_msg WARN "터미널에서 'sudo smbpasswd -a <사용자이름>' 명령을 실행하여 Samba 사용자 계정을 생성하고 비밀번호를 설정하세요."
     log_msg WARN "Windows에서 공유 폴더에 접근할 때 이 사용자 이름과 비밀번호를 사용해야 합니다."
 
-    log_msg INFO "사용자($__user:$__user)권한 처리($USER_SHARE_PATH)중..."
-    chown -R $__user:$__user "$USER_SHARE_PATH" || return 1
+    
+    # 소유권을 변경합니다.
+    set_dir_ownership_and_permissions "$USER_SYSTEM_PATH" 
+    
+    # USER_SYSTEM_PATH의 소유권을 $__user로 재귀적으로 강제 변경합니다.
+    log_msg INFO "‼️ /share/system 경로의 소유권($__user:$__user)을 재귀적으로 강제 적용 중..."
+    sudo chown -R "$__user":"$__user" "$USER_SYSTEM_PATH"
+
     log_msg INFO "사용자 권한 처리 완료."
     log_msg SUCCESS "환경 설정 및 패치 완료."
 

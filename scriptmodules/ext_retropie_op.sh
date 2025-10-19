@@ -90,3 +90,19 @@ function setRetroArchCoreOption() {
 function rp_isInstalled() {
     return 1 # 1 indicates 'not installed'
 }
+
+function applyPatch() {
+    local patch_file="$1"
+    local patch_applied_file="${patch_file##*/}.applied"
+
+    if [[ ! -f "$patch_applied_file" ]]; then
+        if patch -p1 < "$patch_file"; then
+            touch "$patch_applied_file"
+            log_msg INFO "Successfully applied patch: $patch_file"
+        else
+            log_msg ERROR "Failed to apply patch: $patch_file"
+            return 1
+        fi
+    fi
+    return 0
+}

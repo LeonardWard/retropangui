@@ -14,7 +14,9 @@
 # config.sh는 이 스크립트의 위치를 기준으로 ROOT_DIR을 올바르게 설정합니다.
 source "$(dirname "${BASH_SOURCE[0]}")/scriptmodules/config.sh"
 source "$MODULES_DIR/helpers.sh"
+source "$MODULES_DIR/inifuncs.sh"
 source "$MODULES_DIR/ui.sh"
+source "$MODULES_DIR/ext_retropie_core.sh"
 
 # 로그 파일 경로 정의 (helpers.sh가 사용하기 전에 정의)
 # 로그 디렉토리는 env.sh를 통해 이미 설정되어 있습니다.

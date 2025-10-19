@@ -17,5 +17,3 @@ resources/es-recalbox/es_input.backup
 resources/es-recalbox/es_settings.cfg
 resources/es-recalbox/systemlist.xml
 resources/es-recalbox/es_bios.xsd
-
-resources/patches/es_swap_ab.patch

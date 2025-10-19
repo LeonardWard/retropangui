@@ -9,3 +9,15 @@
 export __swapdir="$INSTALL_BUILD_DIR/swap"
 export biosdir="$USER_BIOS_PATH"
 export md_conf_root="$USER_CONFIG_PATH/cores"
+
+function hasFlag() {
+    local string="$1"
+    local flag="$2"
+    [[ -z "$string" || -z "$flag" ]] && return 1
+
+    if [[ "$string" =~ (^| )$flag($| ) ]]; then
+        return 0
+    else
+        return 1
+    fi
+}

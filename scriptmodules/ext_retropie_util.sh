@@ -88,3 +88,24 @@ function isPlatform() {
     esac
     return 1
 }
+
+function diffFiles() {
+    diff -q "$1" "$2" >/dev/null
+    return $?
+}
+
+function copyDefaultConfig() {
+    local from="$1"
+    local to="$2"
+    if [[ -f "$to" ]]; then
+        if ! diffFiles "$from" "$to"; then
+            to+=".rp-dist"
+            log_msg INFO "Copying new default configuration to $to"
+            cp "$from" "$to"
+        fi
+    else
+        log_msg INFO "Copying default configuration to $to"
+        cp "$from" "$to"
+    fi
+    chown "$__user":"$__group" "$to"
+}

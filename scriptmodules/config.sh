@@ -106,3 +106,23 @@ export BUILD_DEPS=(
     # 그 외 게임에 필요한 패키지
     gamemode
 )
+
+# --- [8] 플랫폼 탐지 ---
+__platform_flags=()
+__platform_arch=$(uname -m)
+export __platform="$__platform_arch"
+
+case "$__platform_arch" in
+    x86_64)
+        __platform_flags+=("x86_64" "64bit" "x86")
+        ;;
+    aarch64)
+        __platform_flags+=("aarch64" "64bit" "arm")
+        ;;
+    armv7l)
+        __platform_flags+=("armv7l" "32bit" "arm" "armv7")
+        ;;
+    *)
+        __platform_flags+=("$__platform_arch")
+        ;;
+esac

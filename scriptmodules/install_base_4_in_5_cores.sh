@@ -9,20 +9,19 @@
 
 # 설치 대상 코어 목록
 BASE_CORE_MODULES=(
-    # "lr-bluemsx"                # MSX 시리즈
-    # "lr-nestopia"               # NES
-    # "lr-fceumm"                 # FDS
-    # "lr-snes9x"                 # SNES
-    # "lr-pcsx-rearmed"           # PSX
-    # "lr-dosbox-pure"            # DOS (dosbox-pure)
-    # "lr-genesis-plus-gx"        # MegaDrive/Genesis
-    # "lr-quasi88"                # PC-88
-    # "lr-beetle-pce-fast"        # PC엔진/TurboGrafx-16
-    # "lr-beetle-supergrafx"      # PCE
-    # "lr-fbneo"                  # FBNeo
-    # "lr-beetle-pce-fast"        # PSX-beetle
-    "lr-mupen64plus"            # NINTENDO 64
-    "lr-np2kai"                 # PC-98
+    "lr-bluemsx"                # MSX 시리즈
+    "lr-nestopia"               # NES
+    "lr-fceumm"                 # FDS
+    "lr-snes9x"                 # SNES
+    "lr-pcsx-rearmed"           # PSX
+    "lr-dosbox-pure"            # DOS (dosbox-pure)
+    "lr-genesis-plus-gx"        # MegaDrive/Genesis
+    "lr-quasi88"                # PC-88
+    "lr-beetle-pce-fast"        # PC엔진/TurboGrafx-16
+    "lr-beetle-supergrafx"      # PCE
+    "lr-fbneo"                  # FBNeo
+    # "lr-mupen64plus"            # NINTENDO 64
+    # "lr-np2kai"                 # PC-98
 )
 
 # 환경 설정 함수
@@ -165,6 +164,10 @@ process_single_core() {
     if ! load_core_script "$core_id"; then
         log_msg ERROR "$core_id 코어 스크립트 로드 실패로 진행 중단."
         return 1
+    fi
+
+    if declare -f "depends_$core_id" > /dev/null; then
+        depends_$core_id
     fi
 
     log_msg DEBUG "소스 다운로드 실행 시작"

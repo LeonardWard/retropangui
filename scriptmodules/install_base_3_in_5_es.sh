@@ -17,6 +17,9 @@ install_emulationstation() {
     log_msg INFO "EmulationStation 저장소($ES_GIT_URL) 클론 또는 pull 중..."
     git_Pull_Or_Clone "$ES_GIT_URL" "$ES_BUILD_DIR"
 
+    log_msg INFO "EmulationStation A/B 버튼 스왑 패치 적용 중..."
+    patch -p1 -d "$ES_BUILD_DIR" < "$RESOURCES_DIR/patches/es_swap_ab.patch" || { log_msg ERROR "EmulationStation A/B 버튼 스왑 패치 적용 실패."; return 1; }
+
     mkdir -p "$ES_BUILD_DIR/build" || return 1
     cd "$ES_BUILD_DIR/build" || return 1
     

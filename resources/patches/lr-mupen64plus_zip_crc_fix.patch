@@ -1,0 +1,11 @@
+--- a/mupen64plus-core/src/main/zip/zip.c
++++ b/mupen64plus-core/src/main/zip/zip.c
+@@ -1246,7 +1246,7 @@
+     zi->ci.stream.total_in = 0;
+     zi->ci.stream.total_out = 0;
+ 
+-    zi->ci.pcrc_32_tab = get_crc_table();
++    zi->ci.pcrc_32_tab = (const long unsigned int *)get_crc_table();
+     zi->ci.crc32 = 0;
+ 
+     if (zi->ci.level > 0)

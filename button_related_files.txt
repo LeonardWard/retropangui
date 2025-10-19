@@ -1,0 +1,15 @@
+/emulationstation/es-app/src/views/gamelist/ISimpleGameListView.cpp
+/emulationstation/es-app/src/views/SystemView.cpp
+/emulationstation/es-app/src/views/gamelist/BasicGameListView.cpp
+/emulationstation/es-app/src/views/gamelist/GridGameListView.cpp
+/emulationstation/es-core/src/components/ComponentList.h
+/emulationstation/es-app/src/guis/GuiMenu.cpp
+/emulationstation/es-core/src/InputManager.cpp
+/emulationstation/es-app/src/views/UIModeController.cpp
+/emulationstation/es-app/src/guis/GuiCollectionSystemsOptions.cpp
+/emulationstation/es-app/src/guis/GuiGamelistOptions.cpp
+/emulationstation/es-app/src/guis/GuiGameScraper.cpp
+/emulationstation/es-app/src/guis/GuiScraperStart.cpp
+/emulationstation/es-app/src/guis/GuiScreensaverOptions.cpp
+/emulationstation/es-app/src/guis/GuiSettings.cpp
+/emulationstation/es-app/src/guis/GuiRandomCollectionOptions.cpp
