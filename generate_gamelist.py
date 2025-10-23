@@ -60,8 +60,24 @@ def parse_m3u_targets(m3u_path):
         pass
     return targets
 
-def filter_multi_disc_roms(roms):
-    rom_paths = [r['path'] for r in roms]
+def parse_cue_targets(cue_path):
+    targets = set()
+    try:
+        with open(cue_path, encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                if line.upper().startswith("FILE"):
+                    parts = line.split('"')
+                    if len(parts) > 1:
+                        fname = parts[1]
+                        base = os.path.splitext(os.path.basename(fname))[0].lower()
+                        targets.add(base)
+    except Exception:
+        pass
+    return targets
+
+def filter_multi_disc_roms(roms, allowed_exts):
+    # m3u 참조 파일 수집
     m3u_in_dir = {}
     for rom in roms:
         if rom["path"].lower().endswith(".m3u"):
@@ -74,24 +90,47 @@ def filter_multi_disc_roms(roms):
             targets |= parse_m3u_targets(m3u_file)
         dir_m3u_targets[directory] = targets
 
+    # cue 참조 파일 수집
+    cue_in_dir = {}
+    for rom in roms:
+        if rom["path"].lower().endswith(".cue"):
+            directory = os.path.dirname(rom["path"])
+            cue_in_dir.setdefault(directory, []).append(rom["path"])
+    dir_cue_targets = {}
+    for directory, cue_list in cue_in_dir.items():
+        targets = set()
+        for cue_file in cue_list:
+            targets |= parse_cue_targets(cue_file)
+        dir_cue_targets[directory] = targets
+
     filtered = []
     for rom in roms:
-        path_lower = rom["path"].lower()
         directory = os.path.dirname(rom["path"])
         base = os.path.splitext(os.path.basename(rom["path"]))[0].lower()
         ext = os.path.splitext(rom["path"])[1].lower()
+        # m3u는 무조건 등록
         if ext == ".m3u":
             filtered.append(rom)
             continue
+        # m3u가 있는 폴더라면 m3u가 참조하는 basename과 일치하면 제외
         if directory in dir_m3u_targets:
             if base in dir_m3u_targets[directory]:
                 continue
-        if ext in (".cue", ".ccd", ".toc", ".mds", ".chd", ".iso"):
+        # cue는 무조건 등록
+        if ext == ".cue":
+            filtered.append(rom)
+            continue
+        # cue가 있는 폴더라면 cue가 참조하는 basename과 일치하면 제외
+        if directory in dir_cue_targets:
+            if base in dir_cue_targets[directory]:
+                continue
+        # 나머지는 allowed_exts 확인
+        if ext in allowed_exts:
             filtered.append(rom)
     return filtered
 
-def dedupe_prefer_one_descriptor(roms):
-    preferred_exts = [".m3u", ".cue", ".ccd", ".toc", ".mds", ".chd", ".iso"]
+def dedupe_prefer_one_descriptor(roms, allowed_exts):
+    preferred_exts = [".m3u", ".cue"] + allowed_exts
     folder_games = {}
     for rom in roms:
         path = rom["path"]
@@ -194,8 +233,16 @@ def get_systems_from_cfg(es_systems_cfg_content):
         name = system.find('name').text.strip() if system.find('name') is not None else None
         path = system.find('path').text.strip() if system.find('path') is not None else None
         extensions = system.find('extension').text.strip() if system.find('extension') is not None else None
+        ext_list = []
+        if extensions:
+            for ext in extensions.replace(';', ' ').replace(',', ' ').split():
+                ext = ext.strip().lower()
+                if ext and not ext.startswith('files:'):
+                    if not ext.startswith('.'):
+                        ext = '.' + ext
+                    ext_list.append(ext)
         if name and path:
-            result.append({'name': name, 'path': os.path.abspath(os.path.expanduser(path)), 'extensions': extensions})
+            result.append({'name': name, 'path': os.path.abspath(os.path.expanduser(path)), 'extensions': ext_list})
     return result
 
 if __name__ == "__main__":
@@ -213,7 +260,6 @@ if __name__ == "__main__":
     parser.add_argument("--merge", action="store_true", help="기존 gamelist.xml이 있을 경우 병합")
     args = parser.parse_args()
 
-    # 인수 없이 실행 시 사용법 출력
     if (len(sys.argv) == 1):
         parser.print_help()
         sys.exit(0)
@@ -229,8 +275,8 @@ if __name__ == "__main__":
         print(f"사용되는 확장자: {', '.join(extensions)}")
         found_roms = scan_roms_directory(system_path, extensions)
         if any(sys in system_name.lower() for sys in MULTI_DISC_SYSTEMS):
-            found_roms = filter_multi_disc_roms(found_roms)
-            found_roms = dedupe_prefer_one_descriptor(found_roms)
+            found_roms = filter_multi_disc_roms(found_roms, extensions)
+            found_roms = dedupe_prefer_one_descriptor(found_roms, extensions)
         if found_roms:
             output_file = os.path.join(system_path, "gamelist.xml")
             generate_gamelist_xml(found_roms, output_file, merge=args.merge)
@@ -239,7 +285,6 @@ if __name__ == "__main__":
     else:
         all_systems = get_systems_from_cfg(es_cfg_content)
         selected = args.system
-        # all 또는 생략일 때 모두 처리
         if "all" in [sys.lower() for sys in selected]:
             system_targets = all_systems
         else:
@@ -250,13 +295,13 @@ if __name__ == "__main__":
         for sysinfo in system_targets:
             system_path = sysinfo['path']
             system_name = sysinfo['name']
+            extensions = sysinfo['extensions']
             print(f"\n[시스템] {system_name} gamelist.xml 생성 중...")
-            extensions = get_rom_extensions_from_es_config(es_cfg_content, system_path)
             print(f"  사용되는 확장자: {', '.join(extensions)}")
             found_roms = scan_roms_directory(system_path, extensions)
             if any(s in system_name.lower() for s in MULTI_DISC_SYSTEMS):
-                found_roms = filter_multi_disc_roms(found_roms)
-                found_roms = dedupe_prefer_one_descriptor(found_roms)
+                found_roms = filter_multi_disc_roms(found_roms, extensions)
+                found_roms = dedupe_prefer_one_descriptor(found_roms, extensions)
             if not found_roms:
                 print("  ROM 파일이 없습니다.")
                 continue
