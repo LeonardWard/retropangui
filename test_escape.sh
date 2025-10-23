@@ -1,1 +1,0 @@
-test_var=\$TEST_VAR

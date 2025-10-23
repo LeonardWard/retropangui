@@ -1,0 +1,176 @@
+--- EmulationStation/es-core/src/InputConfig.h	2025-10-23 14:10:32.158339151 +0900
++++ EmulationStation_modified/es-core/src/InputConfig.h	2025-10-23 14:13:14.834342272 +0900
+@@ -115,6 +115,15 @@
+ 	bool isMappedTo(const std::string& name, Input input);
+ 	bool isMappedLike(const std::string& name, Input input);
+ 
++	// 논리 버튼 매핑 (물리 버튼과 논리 동작 분리)
++	bool isMappedToAction(const std::string& action, Input input);
++
++	// 버튼 레이아웃 관리
++	static void setButtonLayout(const std::string& layout);
++	static std::string getButtonLayout();
++	static std::string getActionButton(const std::string& action);
++	static void initActionMapping();
++
+ 	//Returns a list of names this input is mapped to.
+ 	std::vector<std::string> getMappedTo(Input input);
+ 
+@@ -129,6 +138,11 @@
+ 
+ private:
+ 	std::map<std::string, Input> mNameMap;
++
++	// 논리 매핑 테이블 (accept, back 등)
++	static std::map<std::string, std::string> sActionMapping;
++	static std::string sButtonLayout;
++
+ 	const int mDeviceId;
+ 	const std::string mDeviceName;
+ 	const std::string mDeviceGUID;
+--- EmulationStation/es-core/src/InputConfig.cpp	2025-10-23 14:10:32.158339151 +0900
++++ EmulationStation_modified/es-core/src/InputConfig.cpp	2025-10-23 14:21:25.442351683 +0900
+@@ -1,9 +1,14 @@
+ #include "InputConfig.h"
+ 
+ #include "Log.h"
++#include "Settings.h"
+ #include "utils/StringUtil.h"
+ #include <pugixml.hpp>
+ 
++// 정적 멤버 변수 초기화
++std::map<std::string, std::string> InputConfig::sActionMapping;
++std::string InputConfig::sButtonLayout = "";
++
+ //some util functions
+ std::string inputTypeToString(InputType type)
+ {
+@@ -103,6 +108,89 @@
+ 	return false;
+ }
+ 
++// 논리 매핑 초기화
++void InputConfig::initActionMapping()
++{
++	sActionMapping.clear();
++
++	// Settings에서 버튼 레이아웃 읽기 (기본값: nintendo)
++	std::string layout = Settings::getInstance()->getString("ButtonLayout");
++	if (layout.empty())
++		layout = "nintendo";
++
++	if (layout == "nintendo")
++	{
++		// 닌텐도 스타일: B=확인, A=취소
++		sActionMapping["accept"] = "b";
++		sActionMapping["back"] = "a";
++	}
++	else if (layout == "sony" || layout == "xbox")
++	{
++		// 소니/Xbox 스타일: A=확인, B=취소
++		sActionMapping["accept"] = "a";
++		sActionMapping["back"] = "b";
++	}
++	else
++	{
++		// 알 수 없는 레이아웃: 닌텐도 기본값
++		LOG(LogWarning) << "Unknown ButtonLayout: " << layout << ", using nintendo style";
++		sActionMapping["accept"] = "b";
++		sActionMapping["back"] = "a";
++	}
++
++	sButtonLayout = layout;
++	LOG(LogInfo) << "Button Layout: " << layout
++	             << " (Accept=" << sActionMapping["accept"]
++	             << ", Back=" << sActionMapping["back"] << ")";
++}
++
++// 논리 동작 체크
++bool InputConfig::isMappedToAction(const std::string& action, Input input)
++{
++	// 매핑이 초기화되지 않았으면 초기화
++	if (sActionMapping.empty() || sButtonLayout.empty())
++	{
++		initActionMapping();
++	}
++
++	// 논리 동작을 물리 버튼으로 변환
++	auto it = sActionMapping.find(action);
++	if (it != sActionMapping.end())
++	{
++		return isMappedTo(it->second, input);
++	}
++
++	// 매핑이 없는 경우: 직접 체크 (하위 호환성)
++	return isMappedTo(action, input);
++}
++
++// 버튼 레이아웃 설정
++void InputConfig::setButtonLayout(const std::string& layout)
++{
++	Settings::getInstance()->setString("ButtonLayout", layout);
++	Settings::getInstance()->saveFile();
++	initActionMapping();
++}
++
++// 현재 버튼 레이아웃 조회
++std::string InputConfig::getButtonLayout()
++{
++	if (sButtonLayout.empty())
++		initActionMapping();
++
++	return sButtonLayout;
++}
++
++// 논리 동작에 매핑된 물리 버튼 이름 조회 (Help Prompt용)
++std::string InputConfig::getActionButton(const std::string& action)
++{
++	if (sActionMapping.empty())
++		initActionMapping();
++
++	auto it = sActionMapping.find(action);
++	return (it != sActionMapping.end()) ? it->second : action;
++}
++
+ bool InputConfig::isMappedLike(const std::string& name, Input input)
+ {
+ 	if(name == "left")
+--- EmulationStation/es-core/src/Settings.cpp	2025-10-23 14:10:32.158339151 +0900
++++ EmulationStation_modified/es-core/src/Settings.cpp	2025-10-23 14:21:54.170352234 +0900
+@@ -168,6 +168,10 @@
+ 	mStringMap["AudioCard"] = "default";
+ 	mStringMap["UIMode"] = "Full";
+ 	mStringMap["UIMode_passkey"] = "uuddlrlrba";
++
++	// 버튼 레이아웃 기본값: 닌텐도 스타일 (B=확인, A=취소)
++	mStringMap["ButtonLayout"] = "nintendo";
++
+ 	mBoolMap["ForceKiosk"] = false;
+ 	mBoolMap["ForceKid"] = false;
+ 	mBoolMap["ForceDisableFilters"] = false;
+--- EmulationStation/es-app/src/guis/GuiMenu.cpp	2025-10-23 14:10:32.158339151 +0900
++++ EmulationStation_modified/es-app/src/guis/GuiMenu.cpp	2025-10-23 14:22:23.178352790 +0900
+@@ -224,6 +224,23 @@
+ 		}
+ 	});
+ 
++	// 버튼 레이아웃 선택
++	auto button_layout = std::make_shared<OptionListComponent<std::string>>(mWindow, "BUTTON LAYOUT", false);
++	std::string currentLayout = Settings::getInstance()->getString("ButtonLayout");
++	if (currentLayout.empty())
++		currentLayout = "nintendo";
++
++	button_layout->add("NINTENDO (B=OK, A=BACK)", "nintendo", currentLayout == "nintendo");
++	button_layout->add("SONY/XBOX (A=OK, B=BACK)", "sony", currentLayout == "sony");
++
++	s->addWithLabel("BUTTON LAYOUT", button_layout);
++	s->addSaveFunc([button_layout] {
++		std::string selected = button_layout->getSelected();
++		Settings::getInstance()->setString("ButtonLayout", selected);
++		InputConfig::setButtonLayout(selected);
++		LOG(LogInfo) << "Button layout changed to: " << selected;
++	});
++
+ 	// screensaver
+ 	ComponentListRow screensaver_row;
+ 	screensaver_row.elements.clear();

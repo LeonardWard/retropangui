@@ -41,8 +41,8 @@ check_dev_dependencies() {
     
     if [ ${#missing_packages[@]} -gt 0 ]; then
         log_msg INFO "필요한 패키지 설치 중: ${missing_packages[*]}"
-        apt-get update || { log_msg ERROR "apt-get update 실패"; return 1; }
-        apt-get install -y "${missing_packages[@]}" || { log_msg ERROR "패키지 설치 실패"; return 1; }
+        sudo apt-get update || { log_msg ERROR "apt-get update 실패"; return 1; }
+        sudo apt-get install -y "${missing_packages[@]}" || { log_msg ERROR "패키지 설치 실패"; return 1; }
     else
         log_msg SUCCESS "모든 의존성 패키지가 이미 설치되어 있습니다."
     fi
@@ -157,7 +157,7 @@ EOF
 
 # 개발용 ES 실행 함수 (테스트용)
 run_dev_emulationstation() {
-    local binary="$DEV_ES_BUILD_DIR/build/emulationstation"
+    local binary="$DEV_ES_BUILD_DIR/emulationstation"
     
     if [ ! -f "$binary" ]; then
         log_msg ERROR "빌드된 EmulationStation을 찾을 수 없습니다."
@@ -194,7 +194,8 @@ clean_dev_emulationstation() {
 # 직접 실행 시 도움말 표시
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
     echo "이 스크립트는 직접 실행할 수 없습니다."
-    echo "retropangui_setup.sh에서 소싱하여 사용하세요."
+    echo "retropangui_setup.sh를 이 파일과 함께 소싱해서 사용하세요."
+    echo "사용예: source ./retropangui_setup.sh && source ./develop_custom_es.sh && clean_dev_emulationstation"
     echo ""
     echo "사용 가능한 함수:"
     echo "  - develop_emulationstation       : 개발 환경 빌드"

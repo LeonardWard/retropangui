@@ -1,0 +1,485 @@
+--- EmulationStation/es-core/src/InputConfig.h	2025-10-23 14:10:32.158339151 +0900
++++ EmulationStation_modified/es-core/src/InputConfig.h	2025-10-23 14:13:14.834342272 +0900
+@@ -115,6 +115,15 @@
+ 	bool isMappedTo(const std::string& name, Input input);
+ 	bool isMappedLike(const std::string& name, Input input);
+ 
++	// 논리 버튼 매핑 (물리 버튼과 논리 동작 분리)
++	bool isMappedToAction(const std::string& action, Input input);
++
++	// 버튼 레이아웃 관리
++	static void setButtonLayout(const std::string& layout);
++	static std::string getButtonLayout();
++	static std::string getActionButton(const std::string& action);
++	static void initActionMapping();
++
+ 	//Returns a list of names this input is mapped to.
+ 	std::vector<std::string> getMappedTo(Input input);
+ 
+@@ -129,6 +138,11 @@
+ 
+ private:
+ 	std::map<std::string, Input> mNameMap;
++
++	// 논리 매핑 테이블 (accept, back 등)
++	static std::map<std::string, std::string> sActionMapping;
++	static std::string sButtonLayout;
++
+ 	const int mDeviceId;
+ 	const std::string mDeviceName;
+ 	const std::string mDeviceGUID;
+--- EmulationStation/es-core/src/InputConfig.cpp	2025-10-23 14:10:32.158339151 +0900
++++ EmulationStation_modified/es-core/src/InputConfig.cpp	2025-10-23 14:21:25.442351683 +0900
+@@ -1,9 +1,14 @@
+ #include "InputConfig.h"
+ 
+ #include "Log.h"
++#include "Settings.h"
+ #include "utils/StringUtil.h"
+ #include <pugixml.hpp>
+ 
++// 정적 멤버 변수 초기화
++std::map<std::string, std::string> InputConfig::sActionMapping;
++std::string InputConfig::sButtonLayout = "";
++
+ //some util functions
+ std::string inputTypeToString(InputType type)
+ {
+@@ -103,6 +108,89 @@
+ 	return false;
+ }
+ 
++// 논리 매핑 초기화
++void InputConfig::initActionMapping()
++{
++	sActionMapping.clear();
++
++	// Settings에서 버튼 레이아웃 읽기 (기본값: nintendo)
++	std::string layout = Settings::getInstance()->getString("ButtonLayout");
++	if (layout.empty())
++		layout = "nintendo";
++
++	if (layout == "nintendo")
++	{
++		// 닌텐도 스타일: B=확인, A=취소
++		sActionMapping["accept"] = "b";
++		sActionMapping["back"] = "a";
++	}
++	else if (layout == "sony" || layout == "xbox")
++	{
++		// 소니/Xbox 스타일: A=확인, B=취소
++		sActionMapping["accept"] = "a";
++		sActionMapping["back"] = "b";
++	}
++	else
++	{
++		// 알 수 없는 레이아웃: 닌텐도 기본값
++		LOG(LogWarning) << "Unknown ButtonLayout: " << layout << ", using nintendo style";
++		sActionMapping["accept"] = "b";
++		sActionMapping["back"] = "a";
++	}
++
++	sButtonLayout = layout;
++	LOG(LogInfo) << "Button Layout: " << layout
++	             << " (Accept=" << sActionMapping["accept"]
++	             << ", Back=" << sActionMapping["back"] << ")";
++}
++
++// 논리 동작 체크
++bool InputConfig::isMappedToAction(const std::string& action, Input input)
++{
++	// 매핑이 초기화되지 않았으면 초기화
++	if (sActionMapping.empty() || sButtonLayout.empty())
++	{
++		initActionMapping();
++	}
++
++	// 논리 동작을 물리 버튼으로 변환
++	auto it = sActionMapping.find(action);
++	if (it != sActionMapping.end())
++	{
++		return isMappedTo(it->second, input);
++	}
++
++	// 매핑이 없는 경우: 직접 체크 (하위 호환성)
++	return isMappedTo(action, input);
++}
++
++// 버튼 레이아웃 설정
++void InputConfig::setButtonLayout(const std::string& layout)
++{
++	Settings::getInstance()->setString("ButtonLayout", layout);
++	Settings::getInstance()->saveFile();
++	initActionMapping();
++}
++
++// 현재 버튼 레이아웃 조회
++std::string InputConfig::getButtonLayout()
++{
++	if (sButtonLayout.empty())
++		initActionMapping();
++
++	return sButtonLayout;
++}
++
++// 논리 동작에 매핑된 물리 버튼 이름 조회 (Help Prompt용)
++std::string InputConfig::getActionButton(const std::string& action)
++{
++	if (sActionMapping.empty())
++		initActionMapping();
++
++	auto it = sActionMapping.find(action);
++	return (it != sActionMapping.end()) ? it->second : action;
++}
++
+ bool InputConfig::isMappedLike(const std::string& name, Input input)
+ {
+ 	if(name == "left")
+--- EmulationStation/es-core/src/Settings.cpp	2025-10-23 14:10:32.158339151 +0900
++++ EmulationStation_modified/es-core/src/Settings.cpp	2025-10-23 14:21:54.170352234 +0900
+@@ -168,6 +168,10 @@
+ 	mStringMap["AudioCard"] = "default";
+ 	mStringMap["UIMode"] = "Full";
+ 	mStringMap["UIMode_passkey"] = "uuddlrlrba";
++
++	// 버튼 레이아웃 기본값: 닌텐도 스타일 (B=확인, A=취소)
++	mStringMap["ButtonLayout"] = "nintendo";
++
+ 	mBoolMap["ForceKiosk"] = false;
+ 	mBoolMap["ForceKid"] = false;
+ 	mBoolMap["ForceDisableFilters"] = false;
+--- EmulationStation/es-app/src/guis/GuiMenu.cpp	2025-10-23 14:10:32.158339151 +0900
++++ EmulationStation_modified/es-app/src/guis/GuiMenu.cpp	2025-10-23 14:22:23.178352790 +0900
+@@ -224,6 +224,23 @@
+ 		}
+ 	});
+ 
++	// 버튼 레이아웃 선택
++	auto button_layout = std::make_shared<OptionListComponent<std::string>>(mWindow, "BUTTON LAYOUT", false);
++	std::string currentLayout = Settings::getInstance()->getString("ButtonLayout");
++	if (currentLayout.empty())
++		currentLayout = "nintendo";
++
++	button_layout->add("NINTENDO (B=OK, A=BACK)", "nintendo", currentLayout == "nintendo");
++	button_layout->add("SONY/XBOX (A=OK, B=BACK)", "sony", currentLayout == "sony");
++
++	s->addWithLabel("BUTTON LAYOUT", button_layout);
++	s->addSaveFunc([button_layout] {
++		std::string selected = button_layout->getSelected();
++		Settings::getInstance()->setString("ButtonLayout", selected);
++		InputConfig::setButtonLayout(selected);
++		LOG(LogInfo) << "Button layout changed to: " << selected;
++	});
++
+ 	// screensaver
+ 	ComponentListRow screensaver_row;
+ 	screensaver_row.elements.clear();
+--- EmulationStation/es-core/src/components/TextEditComponent.cpp	2025-10-23 14:10:32.162339151 +0900
++++ EmulationStation_modified/es-core/src/components/TextEditComponent.cpp	2025-10-23 15:02:40.782399166 +0900
+@@ -102,7 +102,7 @@
+ 		return false;
+ 	}
+ 
+-	if((config->isMappedTo("a", input) || (config->getDeviceId() == DEVICE_KEYBOARD && input.id == SDLK_RETURN)) && mFocused && !mEditing)
++	if((config->isMappedToAction("accept", input) || (config->getDeviceId() == DEVICE_KEYBOARD && input.id == SDLK_RETURN)) && mFocused && !mEditing)
+ 	{
+ 		startEditing();
+ 		return true;
+@@ -122,7 +122,7 @@
+ 			return true;
+ 		}
+ 
+-		if((config->getDeviceId() == DEVICE_KEYBOARD && input.id == SDLK_ESCAPE) || (config->getDeviceId() != DEVICE_KEYBOARD && config->isMappedTo("b", input)))
++		if((config->getDeviceId() == DEVICE_KEYBOARD && input.id == SDLK_ESCAPE) || (config->getDeviceId() != DEVICE_KEYBOARD && config->isMappedToAction("back", input)))
+ 		{
+ 			stopEditing();
+ 			return true;
+--- EmulationStation/es-core/src/components/SwitchComponent.cpp	2025-10-23 14:10:32.162339151 +0900
++++ EmulationStation_modified/es-core/src/components/SwitchComponent.cpp	2025-10-23 15:02:40.182399154 +0900
+@@ -16,7 +16,7 @@
+ 
+ bool SwitchComponent::input(InputConfig* config, Input input)
+ {
+-	if(config->isMappedTo("a", input) && input.value)
++	if(config->isMappedToAction("accept", input) && input.value)
+ 	{
+ 		mState = !mState;
+ 		onStateChanged();
+--- EmulationStation/es-core/src/components/OptionListComponent.h	2025-10-23 14:10:32.162339151 +0900
++++ EmulationStation_modified/es-core/src/components/OptionListComponent.h	2025-10-23 15:02:40.774399166 +0900
+@@ -116,7 +116,7 @@
+ 
+ 		bool input(InputConfig* config, Input input) override
+ 		{
+-			if(config->isMappedTo("b", input) && input.value != 0)
++			if(config->isMappedToAction("back", input) && input.value != 0)
+ 			{
+ 				delete this;
+ 				return true;
+@@ -183,7 +183,7 @@
+ 	{
+ 		if(input.value != 0)
+ 		{
+-			if(config->isMappedTo("a", input))
++			if(config->isMappedToAction("accept", input))
+ 			{
+ 				open();
+ 				return true;
+--- EmulationStation/es-core/src/components/DateTimeEditComponent.cpp	2025-10-23 14:10:32.162339151 +0900
++++ EmulationStation_modified/es-core/src/components/DateTimeEditComponent.cpp	2025-10-23 15:02:40.770399165 +0900
+@@ -22,7 +22,7 @@
+ 	if(input.value == 0)
+ 		return false;
+ 
+-	if(config->isMappedTo("a", input))
++	if(config->isMappedToAction("accept", input))
+ 	{
+ 		if(mDisplayMode != DISP_RELATIVE_TO_NOW) //don't allow editing for relative times
+ 			mEditing = !mEditing;
+@@ -45,7 +45,7 @@
+ 
+ 	if(mEditing)
+ 	{
+-		if(config->isMappedTo("b", input))
++		if(config->isMappedToAction("back", input))
+ 		{
+ 			mEditing = false;
+ 			mTime = mTimeBeforeEdit;
+--- EmulationStation/es-core/src/components/ComponentList.h	2025-10-23 14:10:32.162339151 +0900
++++ EmulationStation_modified/es-core/src/components/ComponentList.h	2025-10-23 15:02:40.246399155 +0900
+@@ -33,7 +33,7 @@
+ 	inline void makeAcceptInputHandler(const std::function<void()>& func)
+ 	{
+ 		input_handler = [func](InputConfig* config, Input input) -> bool {
+-			if(config->isMappedTo("a", input) && input.value != 0)
++			if(config->isMappedToAction("accept", input) && input.value != 0)
+ 			{
+ 				func();
+ 				return true;
+--- EmulationStation/es-core/src/components/ButtonComponent.cpp	2025-10-23 14:10:32.162339151 +0900
++++ EmulationStation_modified/es-core/src/components/ButtonComponent.cpp	2025-10-23 15:02:40.258399156 +0900
+@@ -27,7 +27,7 @@
+ 
+ bool ButtonComponent::input(InputConfig* config, Input input)
+ {
+-	if(config->isMappedTo("a", input) && input.value != 0)
++	if(config->isMappedToAction("accept", input) && input.value != 0)
+ 	{
+ 		if(mPressedFunc && mEnabled)
+ 			mPressedFunc();
+--- EmulationStation/es-core/src/guis/GuiTextEditPopup.cpp	2025-10-23 14:10:32.162339151 +0900
++++ EmulationStation_modified/es-core/src/guis/GuiTextEditPopup.cpp	2025-10-23 15:02:40.750399165 +0900
+@@ -56,7 +56,7 @@
+ 		return true;
+ 
+ 	// pressing back when not text editing closes us
+-	if(config->isMappedTo("b", input) && input.value)
++	if(config->isMappedToAction("back", input) && input.value)
+ 	{
+ 		delete this;
+ 		return true;
+--- EmulationStation/es-core/src/guis/GuiMsgBox.cpp	2025-10-23 14:10:32.162339151 +0900
++++ EmulationStation_modified/es-core/src/guis/GuiMsgBox.cpp	2025-10-23 15:02:40.754399165 +0900
+@@ -73,7 +73,7 @@
+ 		return true;
+ 	}
+ 
+-	if(mAcceleratorFunc && config->isMappedTo("b", input) && input.value != 0)
++	if(mAcceleratorFunc && config->isMappedToAction("back", input) && input.value != 0)
+ 	{
+ 		mAcceleratorFunc();
+ 		return true;
+--- EmulationStation/es-app/src/views/gamelist/ISimpleGameListView.cpp	2025-10-23 14:10:32.158339151 +0900
++++ EmulationStation_modified/es-app/src/views/gamelist/ISimpleGameListView.cpp	2025-10-23 15:02:40.950399169 +0900
+@@ -81,7 +81,7 @@
+ {
+ 	if(input.value != 0)
+ 	{
+-		if(config->isMappedTo("a", input))
++		if(config->isMappedToAction("accept", input))
+ 		{
+ 			FileData* cursor = getCursor();
+ 			if(cursor->getType() == GAME)
+@@ -100,7 +100,7 @@
+ 			}
+ 
+ 			return true;
+-		}else if(config->isMappedTo("b", input))
++		}else if(config->isMappedToAction("back", input))
+ 		{
+ 			if(mCursorStack.size())
+ 			{
+--- EmulationStation/es-app/src/views/SystemView.cpp	2025-10-23 14:10:32.158339151 +0900
++++ EmulationStation_modified/es-app/src/views/SystemView.cpp	2025-10-23 15:02:40.410399159 +0900
+@@ -177,7 +177,7 @@
+ 			break;
+ 		}
+ 
+-		if(config->isMappedTo("a", input))
++		if(config->isMappedToAction("accept", input))
+ 		{
+ 			stopScrolling();
+ 			ViewController::get()->goToGameList(getSelected());
+--- EmulationStation/es-app/src/guis/GuiGamelistOptions.cpp	2025-10-23 14:10:32.158339151 +0900
++++ EmulationStation_modified/es-app/src/guis/GuiGamelistOptions.cpp	2025-10-23 15:02:41.006399170 +0900
+@@ -63,7 +63,7 @@
+ 			row.addElement(std::make_shared<TextComponent>(mWindow, "JUMP TO ...", Font::get(FONT_SIZE_MEDIUM), 0x777777FF), true);
+ 			row.addElement(mJumpToLetterList, false);
+ 			row.input_handler = [&](InputConfig* config, Input input) {
+-				if(config->isMappedTo("a", input) && input.value)
++				if(config->isMappedToAction("accept", input) && input.value)
+ 				{
+ 					jumpToLetter();
+ 					return true;
+@@ -314,7 +314,7 @@
+ 
+ bool GuiGamelistOptions::input(InputConfig* config, Input input)
+ {
+-	if((config->isMappedTo("b", input) || config->isMappedTo("select", input)) && input.value)
++	if((config->isMappedToAction("back", input) || config->isMappedTo("select", input)) && input.value)
+ 	{
+ 		delete this;
+ 		return true;
+--- EmulationStation/es-app/src/guis/GuiMenu.cpp	2025-10-23 14:29:55.602361469 +0900
++++ EmulationStation_modified/es-app/src/guis/GuiMenu.cpp	2025-10-23 15:02:41.010399170 +0900
+@@ -665,7 +665,7 @@
+ 	if(GuiComponent::input(config, input))
+ 		return true;
+ 
+-	if((config->isMappedTo("b", input) || config->isMappedTo("start", input)) && input.value != 0)
++	if((config->isMappedToAction("back", input) || config->isMappedTo("start", input)) && input.value != 0)
+ 	{
+ 		delete this;
+ 		return true;
+--- EmulationStation/es-app/src/guis/GuiSettings.cpp	2025-10-23 14:10:32.158339151 +0900
++++ EmulationStation_modified/es-app/src/guis/GuiSettings.cpp	2025-10-23 15:02:41.026399170 +0900
+@@ -33,7 +33,7 @@
+ 
+ bool GuiSettings::input(InputConfig* config, Input input)
+ {
+-	if(config->isMappedTo("b", input) && input.value != 0)
++	if(config->isMappedToAction("back", input) && input.value != 0)
+ 	{
+ 		delete this;
+ 		return true;
+--- EmulationStation/es-app/src/guis/GuiScreensaverOptions.cpp	2025-10-23 14:10:32.158339151 +0900
++++ EmulationStation_modified/es-app/src/guis/GuiScreensaverOptions.cpp	2025-10-23 15:02:41.030399170 +0900
+@@ -34,7 +34,7 @@
+ 
+ bool GuiScreensaverOptions::input(InputConfig* config, Input input)
+ {
+-	if(config->isMappedTo("b", input) && input.value != 0)
++	if(config->isMappedToAction("back", input) && input.value != 0)
+ 	{
+ 		delete this;
+ 		return true;
+--- EmulationStation/es-app/src/guis/GuiScraperStart.cpp	2025-10-23 14:10:32.158339151 +0900
++++ EmulationStation_modified/es-app/src/guis/GuiScraperStart.cpp	2025-10-23 15:02:41.038399171 +0900
+@@ -101,7 +101,7 @@
+ 	if(consumed)
+ 		return true;
+ 
+-	if(input.value != 0 && config->isMappedTo("b", input))
++	if(input.value != 0 && config->isMappedToAction("back", input))
+ 	{
+ 		delete this;
+ 		return true;
+--- EmulationStation/es-app/src/guis/GuiRandomCollectionOptions.cpp	2025-10-23 14:10:32.158339151 +0900
++++ EmulationStation_modified/es-app/src/guis/GuiRandomCollectionOptions.cpp	2025-10-23 15:02:41.046399171 +0900
+@@ -214,7 +214,7 @@
+ 	if(consumed)
+ 		return true;
+ 
+-	if(config->isMappedTo("b", input) && input.value != 0)
++	if(config->isMappedToAction("back", input) && input.value != 0)
+ 		saveSettings();
+ 
+ 	return false;
+--- EmulationStation/es-app/src/guis/GuiMetaDataEd.cpp	2025-10-23 14:10:32.158339151 +0900
++++ EmulationStation_modified/es-app/src/guis/GuiMetaDataEd.cpp	2025-10-23 15:02:41.050399171 +0900
+@@ -318,7 +318,7 @@
+ 		return true;
+ 
+ 	const bool isStart = config->isMappedTo("start", input);
+-	if(input.value != 0 && (config->isMappedTo("b", input) || isStart))
++	if(input.value != 0 && (config->isMappedToAction("back", input) || isStart))
+ 	{
+ 		close(isStart);
+ 		return true;
+--- EmulationStation/es-app/src/guis/GuiGamelistFilter.cpp	2025-10-23 14:10:32.154339151 +0900
++++ EmulationStation_modified/es-app/src/guis/GuiGamelistFilter.cpp	2025-10-23 15:02:41.074399171 +0900
+@@ -100,7 +100,7 @@
+ 	if(consumed)
+ 		return true;
+ 
+-	if(config->isMappedTo("b", input) && input.value != 0)
++	if(config->isMappedToAction("back", input) && input.value != 0)
+ 	{
+ 		applyFilters();
+ 	}
+--- EmulationStation/es-app/src/guis/GuiGameScraper.cpp	2025-10-23 14:10:32.154339151 +0900
++++ EmulationStation_modified/es-app/src/guis/GuiGameScraper.cpp	2025-10-23 15:02:41.078399171 +0900
+@@ -94,7 +94,7 @@
+ 
+ bool GuiGameScraper::input(InputConfig* config, Input input)
+ {
+-	if(config->isMappedTo("b", input) && input.value)
++	if(config->isMappedToAction("back", input) && input.value)
+ 	{
+ 		PowerSaver::resume();
+ 		delete this;
+--- EmulationStation/es-app/src/guis/GuiCollectionSystemsOptions.cpp	2025-10-23 14:10:32.154339151 +0900
++++ EmulationStation_modified/es-app/src/guis/GuiCollectionSystemsOptions.cpp	2025-10-23 15:02:41.086399172 +0900
+@@ -277,7 +277,7 @@
+ 	if(consumed)
+ 		return true;
+ 
+-	if(config->isMappedTo("b", input) && input.value != 0)
++	if(config->isMappedToAction("back", input) && input.value != 0)
+ 	{
+ 		applySettings();
+ 	}
+--- EmulationStation/es-app/src/components/ScraperSearchComponent.cpp	2025-10-23 14:10:32.154339151 +0900
++++ EmulationStation_modified/es-app/src/components/ScraperSearchComponent.cpp	2025-10-23 15:02:40.554399161 +0900
+@@ -341,7 +341,7 @@
+ 
+ bool ScraperSearchComponent::input(InputConfig* config, Input input)
+ {
+-	if(config->isMappedTo("a", input) && input.value != 0)
++	if(config->isMappedToAction("accept", input) && input.value != 0)
+ 	{
+ 		if(mBlockAccept)
+ 			return true;
+--- EmulationStation/es-app/src/components/RatingComponent.cpp	2025-10-23 14:10:32.154339151 +0900
++++ EmulationStation_modified/es-app/src/components/RatingComponent.cpp	2025-10-23 15:02:40.562399161 +0900
+@@ -121,7 +121,7 @@
+ 
+ bool RatingComponent::input(InputConfig* config, Input input)
+ {
+-	if(config->isMappedTo("a", input) && input.value != 0)
++	if(config->isMappedToAction("accept", input) && input.value != 0)
+ 	{
+ 		mValue += 1.f / NUM_RATING_STARS;
+ 		if(mValue > 1.0f)
+--- EmulationStation/es-app/src/components/AsyncReqComponent.cpp	2025-10-23 14:10:32.154339151 +0900
++++ EmulationStation_modified/es-app/src/components/AsyncReqComponent.cpp	2025-10-23 15:02:41.106399172 +0900
+@@ -12,7 +12,7 @@
+ 
+ bool AsyncReqComponent::input(InputConfig* config, Input input)
+ {
+-	if(input.value != 0 && config->isMappedTo("b", input))
++	if(input.value != 0 && config->isMappedToAction("back", input))
+ 	{
+ 		if(mCancelFunc)
+ 			mCancelFunc();
+--- EmulationStation/es-app/src/SystemScreenSaver.cpp	2025-10-23 14:10:32.154339151 +0900
++++ EmulationStation_modified/es-app/src/SystemScreenSaver.cpp	2025-10-23 15:02:40.594399162 +0900
+@@ -82,7 +82,7 @@
+ 		bool is_previous_input = config->isMappedLike("left", input);
+ 		bool is_favorite_input = config->isMappedLike("y", input);
+ 		bool is_start_input = config->isMappedTo("start", input);
+-		bool is_select_game_input =  config->isMappedTo("a", input);
++		bool is_select_game_input =  config->isMappedToAction("accept", input);
+ 		bool use_gamelistmedia = screensaver_type == "random video" || !Settings::getInstance()->getBool("SlideshowScreenSaverCustomMediaSource");
+ 
+ 		if (input.value != 0)

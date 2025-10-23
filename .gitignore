@@ -17,3 +17,9 @@ resources/es-recalbox/es_input.backup
 resources/es-recalbox/es_settings.cfg
 resources/es-recalbox/systemlist.xml
 resources/es-recalbox/es_bios.xsd
+
+/home/pangui/scripts/retropangui/develop_custom_es.sh
+/home/pangui/scripts/retropangui/debug_cores.sh
+/home/pangui/scripts/retropangui/init_folder_files.sh
+
+button_related_files.txt
