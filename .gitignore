@@ -2,11 +2,12 @@ retropie_setup
 recalbox
 recalbox-emulationstation
 log
+emulationstation-retropie-dev-original
+emulationstation-retropie-dev
 
 handover*
 scriptmodules/*.bak
-test_retropangui_1st
-test_retropangui_2nd
+
 handover-retropangui-251003.md
 deburg_init_script.sh
 emulationstation-retropie-dev
@@ -24,3 +25,4 @@ resources/es-recalbox/es_bios.xsd
 
 button_related_files.txt
 .claude
+

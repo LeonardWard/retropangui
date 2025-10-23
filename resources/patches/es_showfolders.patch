@@ -1,0 +1,95 @@
+diff --git a/es-app/src/FileData.cpp b/es-app/src/FileData.cpp
+index 1aa4f0f..f86f8ff 100644
+--- a/es-app/src/FileData.cpp
++++ b/es-app/src/FileData.cpp
+@@ -96,13 +96,47 @@ const std::string& FileData::getSortName()
+ const std::vector<FileData*>& FileData::getChildrenListToDisplay() {
+ 
+ 	FileFilterIndex* idx = CollectionSystemManager::get()->getSystemToView(mSystem)->getIndex();
+-	if (idx->isFiltered()) {
++	std::string showFoldersSetting = Settings::getInstance()->getString("ShowFolders");
++	bool needsFolderFiltering = (showFoldersSetting == "never" || showFoldersSetting == "having multiple games");
++
++	if (idx->isFiltered() || needsFolderFiltering) {
+ 		mFilteredChildren.clear();
+ 		for(auto it = mChildren.cbegin(); it != mChildren.cend(); it++)
+ 		{
+-			if (idx->showFile((*it))) {
+-				mFilteredChildren.push_back(*it);
++			FileData* child = *it;
++
++			// Apply regular filter first
++			if (idx->isFiltered() && !idx->showFile(child)) {
++				continue;
+ 			}
++
++			// Apply ShowFolders filter
++			if (needsFolderFiltering && child->getType() == FOLDER) {
++				size_t childCount = child->getChildrenByFilename().size();
++
++				// "never" - skip all folders, show their children instead
++				if (showFoldersSetting == "never") {
++					// Add folder's children directly
++					for(auto grandchild : child->getChildren()) {
++						if (!idx->isFiltered() || idx->showFile(grandchild)) {
++							mFilteredChildren.push_back(grandchild);
++						}
++					}
++					continue;
++				}
++				// "having multiple games" - skip folders with only one child
++				else if (showFoldersSetting == "having multiple games" && childCount == 1) {
++					// Add the single child instead of the folder
++					FileData* onlyChild = child->getChildren()[0];
++					if (!idx->isFiltered() || idx->showFile(onlyChild)) {
++						mFilteredChildren.push_back(onlyChild);
++					}
++					continue;
++				}
++			}
++
++			// If we reach here, add the item normally
++			mFilteredChildren.push_back(child);
+ 		}
+ 
+ 		return mFilteredChildren;
+diff --git a/es-app/src/guis/GuiMenu.cpp b/es-app/src/guis/GuiMenu.cpp
+index b3150db..46cdc59 100644
+--- a/es-app/src/guis/GuiMenu.cpp
++++ b/es-app/src/guis/GuiMenu.cpp
+@@ -353,6 +353,21 @@ void GuiMenu::openUISettings()
+ 		}
+ 	});
+ 
++	// show folders
++	auto show_folders = std::make_shared< OptionListComponent<std::string> >(mWindow, "SHOW FOLDERS", false);
++	std::vector<std::string> folderOptions;
++	folderOptions.push_back("always");
++	folderOptions.push_back("never");
++	folderOptions.push_back("having multiple games");
++	for(auto it = folderOptions.cbegin(); it != folderOptions.cend(); it++)
++		show_folders->add(*it, *it, Settings::getInstance()->getString("ShowFolders") == *it);
++	s->addWithLabel("SHOW FOLDERS", show_folders);
++	s->addSaveFunc([show_folders] {
++		Settings::getInstance()->setString("ShowFolders", show_folders->getSelected());
++		// Reload to apply folder visibility changes
++		ViewController::get()->reloadAll();
++	});
++
+ 	// lb/rb uses full screen size paging instead of -10/+10 steps
+ 	auto use_fullscreen_paging = std::make_shared<SwitchComponent>(mWindow);
+ 	use_fullscreen_paging->setState(Settings::getInstance()->getBool("UseFullscreenPaging"));
+diff --git a/es-core/src/Settings.cpp b/es-core/src/Settings.cpp
+index aeb1057..a2336ef 100644
+--- a/es-core/src/Settings.cpp
++++ b/es-core/src/Settings.cpp
+@@ -158,6 +158,9 @@ void Settings::setDefaults()
+ 
+ 	mBoolMap["LocalArt"] = false;
+ 
++	// Show Folders setting: "always", "never", "having multiple games"
++	mStringMap["ShowFolders"] = "always";
++
+ 	// Audio out device for volume control
+ 	#ifdef _RPI_
+ 		mStringMap["AudioDevice"] = "HDMI";

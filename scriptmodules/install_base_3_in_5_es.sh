@@ -23,14 +23,18 @@ install_emulationstation() {
     log_msg INFO "EmulationStation 논리 버튼 매핑 패치 적용 중..."
     patch -p1 -d "$ES_BUILD_DIR" < "$RESOURCES_DIR/patches/es_logical_button_mapping_complete.patch" || { log_msg ERROR "EmulationStation 논리 버튼 매핑 패치 적용 실패."; return 1; }
 
+    log_msg INFO "EmulationStation ShowFolders 기능 패치 적용 중..."
+    patch -p1 -d "$ES_BUILD_DIR" < "$RESOURCES_DIR/patches/es_showfolders.patch" || { log_msg ERROR "EmulationStation ShowFolders 패치 적용 실패."; return 1; }
+
+    log_msg INFO "EmulationStation 빌드 디렉토리 초기화 중..."
+    rm -rf "$ES_BUILD_DIR/build"
     mkdir -p "$ES_BUILD_DIR/build" || return 1
     cd "$ES_BUILD_DIR/build" || return 1
-    
+
     log_msg INFO "EmulationStation CMake 설정 중..."
     cmake .. -DCMAKE_INSTALL_PREFIX="$INSTALL_ROOT_DIR" || { log_msg ERROR "EmulationStation CMake 설정 실패."; return 1; }
-    
+
     log_msg INFO "EmulationStation 빌드 시작 (make -j$(nproc))..."
-    make clean
     make CFLAGS="-Wno-unused-variable" CXXFLAGS="-Wno-unused-variable" -j$(nproc) \
         || { log_msg ERROR "EmulationStation 빌드 실패."; return 1; }
 
