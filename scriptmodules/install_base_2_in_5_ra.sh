@@ -50,7 +50,7 @@ install_retroarch() {
 
     # RetroArch 설정
     log_msg INFO "RetroArch 설정 파일 복사 및 패치 (ln -s "$RA_CONFIG_PATH" "$RA_CONFIG_DIR") 중..."
-    ln -s "$RA_CONFIG_PATH" "$RA_CONFIG_DIR"|| return 1
+    ln -s "$RA_CONFIG_PATH" "$RA_CONFIG_DIR" || return 1
     sudo chown -R "$__user":"$__user" "$RA_CONFIG_DIR" || return 1
 
     local CONFIG_RA_SKELETON="$INSTALL_ROOT_DIR/etc/retroarch.cfg"

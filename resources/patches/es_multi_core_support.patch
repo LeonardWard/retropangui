@@ -1,0 +1,174 @@
+diff --git a/es-app/src/FileData.cpp b/es-app/src/FileData.cpp
+index 1aa4f0f..6d544e8 100644
+--- a/es-app/src/FileData.cpp
++++ b/es-app/src/FileData.cpp
+@@ -12,6 +12,7 @@
+ #include "MameNames.h"
+ #include "platform.h"
+ #include "Scripting.h"
++#include "Settings.h"
+ #include "SystemData.h"
+ #include "VolumeControl.h"
+ #include "Window.h"
+@@ -287,6 +288,22 @@ void FileData::launchGame(Window* window)
+ 
+ 	std::string command = mEnvData->mLaunchCommand;
+ 
++	// RetroPangui: If cores are defined and command is empty, build command from settings
++	if (!mEnvData->mCores.empty() && command.empty())
++	{
++		const CoreInfo& defaultCore = mEnvData->mCores[0]; // Already sorted by priority
++		std::string systemName = mSystem->getName();
++
++		std::string retroarchPath = Settings::getInstance()->getString("RetroArchPath");
++		std::string coresPath = Settings::getInstance()->getString("LibretroCoresPath");
++		std::string configPath = Settings::getInstance()->getString("CoreConfigPath");
++
++		command = retroarchPath + " -L " + coresPath + "/" + defaultCore.name + "_libretro.so " +
++		          "--config " + configPath + "/" + systemName + "/retroarch.cfg %ROM%";
++
++		LOG(LogInfo) << "Using core: " << defaultCore.name << " (priority: " << defaultCore.priority << ")";
++	}
++
+ 	const std::string rom      = Utils::FileSystem::getEscapedPath(getPath());
+ 	const std::string basename = Utils::FileSystem::getStem(getPath());
+ 	const std::string rom_raw  = Utils::FileSystem::getPreferredPath(getPath());
+diff --git a/es-app/src/SystemData.cpp b/es-app/src/SystemData.cpp
+index 49f58e1..fc764b4 100644
+--- a/es-app/src/SystemData.cpp
++++ b/es-app/src/SystemData.cpp
+@@ -194,6 +194,42 @@ SystemData* SystemData::loadSystem(pugi::xml_node system)
+ 
+ 	cmd = system.child("command").text().get();
+ 
++	// RetroPangui: Parse cores if available
++	std::vector<CoreInfo> cores;
++	pugi::xml_node coresNode = system.child("cores");
++	if (coresNode)
++	{
++		for (pugi::xml_node coreNode = coresNode.child("core"); coreNode; coreNode = coreNode.next_sibling("core"))
++		{
++			CoreInfo coreInfo;
++			coreInfo.name = coreNode.attribute("name").as_string();
++			coreInfo.priority = coreNode.attribute("priority").as_int(999);
++
++			// Parse core-specific extensions
++			std::string coreExtensions = coreNode.attribute("extensions").as_string();
++			if (!coreExtensions.empty())
++			{
++				std::vector<std::string> coreExtList = readList(coreExtensions.c_str());
++				for (auto& ext : coreExtList)
++				{
++					if (!ext.empty())
++						coreInfo.extensions.push_back(ext);
++				}
++			}
++
++			if (!coreInfo.name.empty())
++			{
++				cores.push_back(coreInfo);
++				LOG(LogInfo) << "  Core: " << coreInfo.name << " (priority: " << coreInfo.priority << ")";
++			}
++		}
++
++		// Sort cores by priority (lower number = higher priority)
++		std::sort(cores.begin(), cores.end(), [](const CoreInfo& a, const CoreInfo& b) {
++			return a.priority < b.priority;
++		});
++	}
++
+ 	// platform id list
+ 	const char* platformList = system.child("platform").text().get();
+ 	std::vector<std::string> platformStrs = readList(platformList);
+@@ -246,6 +282,7 @@ SystemData* SystemData::loadSystem(pugi::xml_node system)
+ 	envData->mSearchExtensions = extensions;
+ 	envData->mLaunchCommand = cmd;
+ 	envData->mPlatformIds = platformIds;
++	envData->mCores = cores; // RetroPangui: Store cores
+ 
+ 	SystemData* newSys = new SystemData(name, fullname, envData, themeFolder);
+ 	if (newSys->getRootFolder()->getChildren().size() == 0)
+@@ -270,7 +307,7 @@ bool SystemData::loadConfig(Window* window)
+ 
+ 	if (!Utils::FileSystem::exists(path))
+ 	{
+-		LOG(LogError) << "es_systems.cfg file does not exist!";
++		LOG(LogError) << "es_systems.xml file does not exist!";
+ 		writeExampleConfig(getConfigPath(true));
+ 		return false;
+ 	}
+@@ -280,7 +317,7 @@ bool SystemData::loadConfig(Window* window)
+ 
+ 	if(!res)
+ 	{
+-		LOG(LogError) << "Could not parse es_systems.cfg file!";
++		LOG(LogError) << "Could not parse es_systems.xml file!";
+ 		LOG(LogError) << res.description();
+ 		return false;
+ 	}
+@@ -290,7 +327,7 @@ bool SystemData::loadConfig(Window* window)
+ 
+ 	if(!systemList)
+ 	{
+-		LOG(LogError) << "es_systems.cfg is missing the <systemList> tag!";
++		LOG(LogError) << "es_systems.xml is missing the <systemList> tag!";
+ 		return false;
+ 	}
+ 
+@@ -447,11 +484,11 @@ void SystemData::deleteSystems()
+ 
+ std::string SystemData::getConfigPath(bool forWrite)
+ {
+-	std::string path = Utils::FileSystem::getHomePath() + "/.emulationstation/es_systems.cfg";
++	std::string path = Utils::FileSystem::getHomePath() + "/.emulationstation/es_systems.xml";
+ 	if(forWrite || Utils::FileSystem::exists(path))
+ 		return path;
+ 
+-	return "/etc/emulationstation/es_systems.cfg";
++	return "/etc/emulationstation/es_systems.xml";
+ }
+ 
+ bool SystemData::isVisible()
+diff --git a/es-app/src/SystemData.h b/es-app/src/SystemData.h
+index d440239..cb2ae6d 100644
+--- a/es-app/src/SystemData.h
++++ b/es-app/src/SystemData.h
+@@ -16,12 +16,22 @@ class FileFilterIndex;
+ class ThemeData;
+ class Window;
+ 
++// RetroPangui: Multi-core support
++struct CoreInfo
++{
++	std::string name;
++	int priority;
++	std::vector<std::string> extensions;
++};
++
+ struct SystemEnvironmentData
+ {
+ 	std::string mStartPath;
+ 	std::vector<std::string> mSearchExtensions;
+ 	std::string mLaunchCommand;
+ 	std::vector<PlatformIds::PlatformId> mPlatformIds;
++	// RetroPangui: Store multiple cores for this system
++	std::vector<CoreInfo> mCores;
+ };
+ 
+ class SystemData
+diff --git a/es-core/src/Settings.cpp b/es-core/src/Settings.cpp
+index aeb1057..93114b5 100644
+--- a/es-core/src/Settings.cpp
++++ b/es-core/src/Settings.cpp
+@@ -104,6 +104,11 @@ void Settings::setDefaults()
+ 	mStringMap["GamelistViewStyle"] = "automatic";
+ 	mStringMap["SaveGamelistsMode"] = "on exit";
+ 
++	// RetroPangui: Paths for multi-core support
++	mStringMap["RetroArchPath"] = "/opt/retropangui/bin/retroarch";
++	mStringMap["LibretroCoresPath"] = "/opt/retropangui/libretro/cores";
++	mStringMap["CoreConfigPath"] = "/home/pangui/share/system/configs/cores";
++
+ 	mBoolMap["ScreenSaverControls"] = true;
+ 	mStringMap["ScreenSaverGameInfo"] = "never";
+ 	mBoolMap["StretchVideoOnScreenSaver"] = false;

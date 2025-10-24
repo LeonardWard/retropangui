@@ -26,6 +26,9 @@ install_emulationstation() {
     log_msg INFO "EmulationStation ShowFolders 기능 패치 적용 중..."
     patch -p1 -d "$ES_BUILD_DIR" < "$RESOURCES_DIR/patches/es_showfolders.patch" || { log_msg ERROR "EmulationStation ShowFolders 패치 적용 실패."; return 1; }
 
+    log_msg INFO "EmulationStation Multi-Core 지원 패치 적용 중..."
+    patch -p1 -d "$ES_BUILD_DIR" < "$RESOURCES_DIR/patches/es_multi_core_support.patch" || { log_msg ERROR "EmulationStation Multi-Core 패치 적용 실패."; return 1; }
+
     log_msg INFO "EmulationStation 빌드 디렉토리 초기화 중..."
     rm -rf "$ES_BUILD_DIR/build"
     mkdir -p "$ES_BUILD_DIR/build" || return 1
@@ -51,9 +54,10 @@ install_emulationstation() {
 
     chown -R $__user:$__user "$ES_CONFIG_DIR" || return 1
 
-    # systemlist.csv를 기반으로 es_systems.cfg 생성
-    log_msg INFO "es_systems.cfg 파일을 생성합니다($ES_CONFIG_DIR/es_systems.cfg)."
-    generate_es_systems_cfg_from_csv "$SYSTEMLIST_CSV_PATH" "$ES_CONFIG_DIR/es_systems.cfg"
+    # systemlist.csv를 기반으로 es_systems.xml 생성 (Multi-core 방식)
+    log_msg INFO "es_systems.xml 파일을 생성합니다($ES_CONFIG_DIR/es_systems.xml)."
+    source "$MODULES_DIR/es_systems_generator.sh"
+    generate_es_systems_xml_multi_core "$SYSTEMLIST_CSV_PATH" "$ES_CONFIG_DIR/es_systems.xml"
     cp "$RESOURCES_DIR/es-recalbox/es_input.cfg" "$USER_CONFIG_PATH/emulationstation"
     log_msg SUCCESS "EmulationStation 빌드 및 설치 완료. 설치 경로: "$INSTALL_ROOT_DIR""
     return 0
