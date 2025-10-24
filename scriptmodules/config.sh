@@ -82,7 +82,7 @@ export RA_CORE_INFO_GIT_URL="https://github.com/libretro/libretro-core-info.git"
 export RA_DATABASE_GIT_URL="https://github.com/libretro/libretro-database.git"
 export RA_OVERLAYS_GIT_URL="https://github.com/libretro/common-overlays.git"
 export RA_SHADERS_GIT_URL="https://github.com/libretro/glsl-shaders.git"
-export ES_GIT_URL="https://github.com/RetroPie/EmulationStation.git"
+export ES_GIT_URL="https://github.com/LeonardWard/retropangui-emulationstation.git"
 
 # es_systems.cfg 생성을 위한 CSV 데이터베이스 경로
 export SYSTEMLIST_CSV_PATH="$MODULES_DIR/systemlist.csv"

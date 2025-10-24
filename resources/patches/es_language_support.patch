@@ -1,0 +1,150 @@
+diff --git a/es-app/src/guis/GuiMenu.cpp b/es-app/src/guis/GuiMenu.cpp
+index b3150db..cfd8820 100644
+--- a/es-app/src/guis/GuiMenu.cpp
++++ b/es-app/src/guis/GuiMenu.cpp
+@@ -13,6 +13,7 @@
+ #include "views/ViewController.h"
+ #include "CollectionSystemManager.h"
+ #include "EmulationStation.h"
++#include "LocaleES.h"
+ #include "Scripting.h"
+ #include "SystemData.h"
+ #include "VolumeControl.h"
+@@ -23,22 +24,20 @@
+ #include "views/gamelist/IGameListView.h"
+ #include "guis/GuiInfoPopup.h"
+ 
+-GuiMenu::GuiMenu(Window* window) : GuiComponent(window), mMenu(window, "MAIN MENU"), mVersion(window)
++GuiMenu::GuiMenu(Window* window) : GuiComponent(window), mMenu(window, _("MAIN MENU")), mVersion(window)
+ {
+ 	bool isFullUI = UIModeController::getInstance()->isUIModeFull();
+ 
++	// RetroPangui: Reorganized menu structure
+ 	if (isFullUI) {
+-		addEntry("SCRAPER", 0x777777FF, true, [this] { openScraperSettings(); });
+-		addEntry("SOUND SETTINGS", 0x777777FF, true, [this] { openSoundSettings(); });
+-		addEntry("UI SETTINGS", 0x777777FF, true, [this] { openUISettings(); });
+-		addEntry("GAME COLLECTION SETTINGS", 0x777777FF, true, [this] { openCollectionSystemSettings(); });
+-		addEntry("OTHER SETTINGS", 0x777777FF, true, [this] { openOtherSettings(); });
+-		addEntry("CONFIGURE INPUT", 0x777777FF, true, [this] { openConfigInput(); });
++		addEntry(_("GAME SETTINGS"), 0x777777FF, true, [this] { openGameSettings(); });
++		addEntry(_("UI SETTINGS"), 0x777777FF, true, [this] { openUISettings(); });
++		addEntry(_("SYSTEM SETTINGS"), 0x777777FF, true, [this] { openSystemSettings(); });
+ 	} else {
+-		addEntry("SOUND SETTINGS", 0x777777FF, true, [this] { openSoundSettings(); });
++		addEntry(_("SOUND SETTINGS"), 0x777777FF, true, [this] { openSoundSettings(); });
+ 	}
+ 
+-	addEntry("QUIT", 0x777777FF, true, [this] {openQuitMenu(); });
++	addEntry(_("QUIT"), 0x777777FF, true, [this] {openQuitMenu(); });
+ 
+ 	addChild(&mMenu);
+ 	addVersionInfo();
+@@ -196,7 +195,7 @@ void GuiMenu::openSoundSettings()
+ 
+ void GuiMenu::openUISettings()
+ {
+-	auto s = new GuiSettings(mWindow, "UI SETTINGS");
++	auto s = new GuiSettings(mWindow, _("UI SETTINGS"));
+ 
+ 	//UI mode
+ 	auto UImodeSelection = std::make_shared< OptionListComponent<std::string> >(mWindow, "UI MODE", false);
+@@ -273,6 +272,36 @@ void GuiMenu::openUISettings()
+ 		Settings::getInstance()->setString("TransitionStyle", transition_style->getSelected());
+ 	});
+ 
++	// RetroPangui: Language selection
++	auto language = std::make_shared< OptionListComponent<std::string> >(mWindow, _("LANGUAGE"), false);
++	std::vector<std::string> languages;
++	languages.push_back("en_US");
++	languages.push_back("ko_KR");
++	for(auto it = languages.cbegin(); it != languages.cend(); it++)
++	{
++		std::string displayName = *it;
++		if (*it == "en_US") displayName = "English";
++		else if (*it == "ko_KR") displayName = "한국어 (Korean)";
++		language->add(displayName, *it, Settings::getInstance()->getString("Language") == *it);
++	}
++	s->addWithLabel(_("LANGUAGE"), language);
++	Window* window2 = mWindow;
++	s->addSaveFunc([language, window2] {
++		std::string oldLang = Settings::getInstance()->getString("Language");
++		std::string newLang = language->getSelected();
++		if(oldLang != newLang)
++		{
++			Settings::getInstance()->setString("Language", newLang);
++			LOG(LogInfo) << "Language changed from " << oldLang << " to " << newLang;
++			// Reinitialize locale
++			LocaleES::init(newLang);
++			// Show restart message
++			window2->pushGui(new GuiMsgBox(window2,
++				"Language has been changed.\nPlease restart EmulationStation for full effect.",
++				"OK", nullptr));
++		}
++	});
++
+ 	// theme set
+ 	auto themeSets = ThemeData::getThemeSets();
+ 
+diff --git a/es-app/src/main.cpp b/es-app/src/main.cpp
+index eb0b92c..6c2a239 100644
+--- a/es-app/src/main.cpp
++++ b/es-app/src/main.cpp
+@@ -9,6 +9,7 @@
+ #include "CollectionSystemManager.h"
+ #include "EmulationStation.h"
+ #include "InputManager.h"
++#include "LocaleES.h"
+ #include "Log.h"
+ #include "MameNames.h"
+ #include "platform.h"
+@@ -346,6 +347,10 @@ int main(int argc, char* argv[])
+ 	//always close the log on exit
+ 	atexit(&onExit);
+ 
++	// RetroPangui: Initialize locale
++	std::string language = Settings::getInstance()->getString("Language");
++	LocaleES::init(language);
++
+ 	Window window;
+ 	SystemScreenSaver screensaver(&window);
+ 	PowerSaver::init();
+diff --git a/es-core/CMakeLists.txt b/es-core/CMakeLists.txt
+index c22459f..c1f245d 100644
+--- a/es-core/CMakeLists.txt
++++ b/es-core/CMakeLists.txt
+@@ -10,6 +10,7 @@ set(CORE_HEADERS
+ 	${CMAKE_CURRENT_SOURCE_DIR}/src/ImageIO.h
+ 	${CMAKE_CURRENT_SOURCE_DIR}/src/InputConfig.h
+ 	${CMAKE_CURRENT_SOURCE_DIR}/src/InputManager.h
++	${CMAKE_CURRENT_SOURCE_DIR}/src/LocaleES.h
+ 	${CMAKE_CURRENT_SOURCE_DIR}/src/Log.h
+ 	${CMAKE_CURRENT_SOURCE_DIR}/src/MameNames.h
+ 	${CMAKE_CURRENT_SOURCE_DIR}/src/platform.h
+@@ -90,6 +91,7 @@ set(CORE_SOURCES
+ 	${CMAKE_CURRENT_SOURCE_DIR}/src/ImageIO.cpp
+ 	${CMAKE_CURRENT_SOURCE_DIR}/src/InputConfig.cpp
+ 	${CMAKE_CURRENT_SOURCE_DIR}/src/InputManager.cpp
++	${CMAKE_CURRENT_SOURCE_DIR}/src/LocaleES.cpp
+ 	${CMAKE_CURRENT_SOURCE_DIR}/src/Log.cpp
+ 	${CMAKE_CURRENT_SOURCE_DIR}/src/MameNames.cpp
+ 	${CMAKE_CURRENT_SOURCE_DIR}/src/platform.cpp
+diff --git a/es-core/src/Settings.cpp b/es-core/src/Settings.cpp
+index aeb1057..ce749fb 100644
+--- a/es-core/src/Settings.cpp
++++ b/es-core/src/Settings.cpp
+@@ -104,6 +104,14 @@ void Settings::setDefaults()
+ 	mStringMap["GamelistViewStyle"] = "automatic";
+ 	mStringMap["SaveGamelistsMode"] = "on exit";
+ 
++	// RetroPangui: Paths for multi-core support
++	mStringMap["RetroArchPath"] = "/opt/retropangui/bin/retroarch";
++	mStringMap["LibretroCoresPath"] = "/opt/retropangui/libretro/cores";
++	mStringMap["CoreConfigPath"] = "/home/pangui/share/system/configs/cores";
++
++	// RetroPangui: Language support
++	mStringMap["Language"] = "en_US";
++
+ 	mBoolMap["ScreenSaverControls"] = true;
+ 	mStringMap["ScreenSaverGameInfo"] = "never";
+ 	mBoolMap["StretchVideoOnScreenSaver"] = false;

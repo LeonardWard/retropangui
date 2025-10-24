@@ -17,17 +17,8 @@ install_emulationstation() {
     log_msg INFO "EmulationStation 저장소($ES_GIT_URL) 클론 또는 pull 중..."
     git_Pull_Or_Clone "$ES_GIT_URL" "$ES_BUILD_DIR"
 
-    log_msg INFO "EmulationStation 소스 초기화 중 (이전 패치 제거)..."
-    cd "$ES_BUILD_DIR" && git reset --hard HEAD && git clean -fd
-
-    log_msg INFO "EmulationStation 논리 버튼 매핑 패치 적용 중..."
-    patch -p1 -d "$ES_BUILD_DIR" < "$RESOURCES_DIR/patches/es_logical_button_mapping_complete.patch" || { log_msg ERROR "EmulationStation 논리 버튼 매핑 패치 적용 실패."; return 1; }
-
-    log_msg INFO "EmulationStation ShowFolders 기능 패치 적용 중..."
-    patch -p1 -d "$ES_BUILD_DIR" < "$RESOURCES_DIR/patches/es_showfolders.patch" || { log_msg ERROR "EmulationStation ShowFolders 패치 적용 실패."; return 1; }
-
-    log_msg INFO "EmulationStation Multi-Core 지원 패치 적용 중..."
-    patch -p1 -d "$ES_BUILD_DIR" < "$RESOURCES_DIR/patches/es_multi_core_support.patch" || { log_msg ERROR "EmulationStation Multi-Core 패치 적용 실패."; return 1; }
+    log_msg INFO "EmulationStation main 브랜치로 전환 중..."
+    cd "$ES_BUILD_DIR" && git checkout main && git pull || { log_msg ERROR "EmulationStation main 브랜치 전환 실패."; return 1; }
 
     log_msg INFO "EmulationStation 빌드 디렉토리 초기화 중..."
     rm -rf "$ES_BUILD_DIR/build"
@@ -41,9 +32,13 @@ install_emulationstation() {
     make CFLAGS="-Wno-unused-variable" CXXFLAGS="-Wno-unused-variable" -j$(nproc) \
         || { log_msg ERROR "EmulationStation 빌드 실패."; return 1; }
 
-    
+
     log_msg INFO "EmulationStation 설치 중..."
     sudo make install || { log_msg ERROR "EmulationStation 설치 실패."; return 1; }
+
+    log_msg INFO "EmulationStation locale 파일 설치 중..."
+    sudo mkdir -p /opt/retropangui/share/locale/ko_KR/LC_MESSAGES
+    sudo cp "$ES_BUILD_DIR/locale/ko_KR/LC_MESSAGES/emulationstation.mo" /opt/retropangui/share/locale/ko_KR/LC_MESSAGES/ || { log_msg WARN "Locale 파일 설치 실패 (선택사항)."; }
 
     # EmulationStation 설정
     log_msg INFO "EmulationStation 설정 디렉토리 생성 및 Recalbox 설정 적용 중..."
