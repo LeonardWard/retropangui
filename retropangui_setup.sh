@@ -23,14 +23,8 @@ source "$MODULES_DIR/packages.sh"
 # 로그 디렉토리는 env.sh를 통해 이미 설정되어 있습니다.
 LOG_FILE="$LOG_DIR/retropangui_$(date +%Y%m%d_%H%M%S).log"
 export LOG_FILE
-# # Explicitly create the log file and set permissions
-# touch "$LOG_FILE" || echo "ERROR: Could not create log file '$LOG_FILE'" >&2
-# chmod 664 "$LOG_FILE" || echo "ERROR: Could not set permissions for log file '$LOG_FILE'" >&2
 
 exec > >(tee -a "$LOG_FILE") 2>&1
-
-
-#echo "[$TIMESTAMP] [DEBUG] (retropangui_setup.sh:28) retropangui_setup.sh: ROOT_DIR=${ROOT_DIR}, MODULES_DIR=${MODULES_DIR}" >> "$LOG_FILE"
 
 # --- [2] 메인 실행 함수 ---
 function main() {
@@ -45,14 +39,32 @@ function main() {
     find "$ROOT_DIR" -type f -name "*.sh" -exec chmod +x {} \;
     echo "[$TIMESTAMP] [SUCCESS] (retropangui_setup.sh:41) 모든 .sh 파일에 실행 권한이 부여되었습니다." >> "$LOG_FILE"
 
-    # 메인 UI 실행
-    echo "[$TIMESTAMP] [INFO] (retropangui_setup.sh:44) 🚀 Retro Pangui 설정 관리자를 시작합니다..." >> "$LOG_FILE"
-    main_ui "$@"
+    # UI를 실행할지 여부를 결정하는 플래그
+    local run_ui=true
+    local args=("$@") # 원본 인자를 복사
+    if [[ "${args[0]}" == "--no-ui" ]]; then
+        run_ui=false
+        args=("${args[@]:1}") # --no-ui 플래그 제거
+    fi
 
-    exit 0
+    if $run_ui; then
+        # 메인 UI 실행
+        echo "[$TIMESTAMP] [INFO] (retropangui_setup.sh:44) 🚀 Retro Pangui 설정 관리자를 시작합니다..." >> "$LOG_FILE"
+        main_ui "${args[@]}"
+        exit 0 # UI가 실행되었을 때만 스크립트를 종료
+    else
+        echo "[$TIMESTAMP] [INFO] (retropangui_setup.sh:XX) UI 없이 환경만 설정합니다." >> "$LOG_FILE"
+        # UI가 실행되지 않으면, install_module이 실행될 수 있도록 종료하지 않고 반환
+    fi
 }
 
 # --- [3] 스크립트 실행 ---
 if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
-    main "$@"
+    if [[ "$1" == "install_module" && -n "$2" && -n "$3" ]]; then
+        # 디버깅을 위한 install_module 직접 호출
+        main --no-ui # UI 없이 환경만 설정
+        install_module "$2" "$3"
+    else
+        main "$@"
+    fi
 fi

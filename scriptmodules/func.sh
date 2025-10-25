@@ -348,19 +348,54 @@ install_ra_component() {
 function is_module_installed() {
     local module_id="$1"
     local module_type="$2"
+    
+    log_msg DEBUG "is_module_installed 호출: module_id=$module_id, module_type=$module_type"
 
     case "$module_type" in
         libretrocores)
-            local core_name="${module_id#lr-}"
-            local so_path="$LIBRETRO_CORE_PATH/${core_name}_libretro.so"
-            if [[ -f "$so_path" ]]; then return 0; else return 1; fi
+            local module_dir="$LIBRETRO_CORE_PATH/$module_id"
+            local metadata_file="$module_dir/.installed_so_name"
+            log_msg DEBUG "  Libretrocore: metadata_file=$metadata_file"
+            if [[ -f "$metadata_file" ]]; then
+                log_msg DEBUG "  메타데이터 파일 존재."
+                local so_file_name=$(cat "$metadata_file")
+                local so_path="$module_dir/$so_file_name"
+                log_msg DEBUG "  메타데이터에서 so_file_name=$so_file_name, so_path=$so_path"
+                if [[ -f "$so_path" ]]; then
+                    log_msg DEBUG "  $so_path 파일 존재. 설치됨."
+                    return 0
+                else
+                    log_msg DEBUG "  $so_path 파일 없음. 설치 안됨."
+                    return 1
+                fi
+            else
+                log_msg DEBUG "  메타데이터 파일 없음. 폴백 로직 사용."
+                local core_name="${module_id#lr-}"
+                local so_path="$module_dir/${core_name}_libretro.so"
+                log_msg DEBUG "  폴백: core_name=$core_name, so_path=$so_path"
+                if [[ -f "$so_path" ]]; then
+                    log_msg DEBUG "  $so_path 파일 존재. 설치됨."
+                    return 0
+                else
+                    log_msg DEBUG "  $so_path 파일 없음. 설치 안됨."
+                    return 1
+                fi
+            fi
             ;;
         emulators|ports)
             local install_path="$INSTALL_ROOT_DIR/$module_type/$module_id"
-            if [[ -d "$install_path" ]]; then return 0; else return 1; fi
+            log_msg DEBUG "  Emulator/Port: install_path=$install_path"
+            if [[ -d "$install_path" ]]; then
+                log_msg DEBUG "  $install_path 디렉토리 존재. 설치됨."
+                return 0
+            else
+                log_msg DEBUG "  $install_path 디렉토리 없음. 설치 안됨."
+                return 1
+            fi
             ;;
         *)
-            return 1 # 알 수 없는 타입은 설치되지 않은 것으로 간주
+            log_msg DEBUG "  알 수 없는 타입. 설치 안됨."
+            return 1
             ;;
     esac
 }
@@ -409,7 +444,6 @@ function rp_checkModulePlatform() {
 # $1: 설명 텍스트 최대 너비 (선택적, 기본값 40)
 function get_all_packages() {
     local desc_max_width="${1:-40}"
-    # 전달받은 너비에서 10% 축소
     desc_max_width=$((desc_max_width * 90 / 100))
     [[ "$desc_max_width" -lt 20 ]] && desc_max_width=20
     
@@ -471,7 +505,6 @@ function get_all_packages() {
             status="ON"
         fi
 
-        # 설명 텍스트 자르기 (10% 축소된 너비 사용)
         local truncated_desc="$rp_module_desc"
         if [[ ${#truncated_desc} -gt "$desc_max_width" ]]; then
             truncated_desc="${truncated_desc:0:$((desc_max_width - 3))}..."

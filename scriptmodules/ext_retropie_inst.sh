@@ -11,7 +11,7 @@ function gitPullOrClone() {
     log_msg INFO "gitPullOrClone wrapper executed..."
 
     local repo_info="$rp_module_repo"
-    local dest_dir="${md_build}/${rp_module_id}"
+    local dest_dir="${md_build}"
 
     local type url branch
     read -r type url branch <<< "$repo_info"
@@ -132,7 +132,7 @@ function hasPackage() {
 }
 
 function aptInstall() {
-    apt-get install -y "$@"
+    sudo apt-get install -y "$@"
 }
 
 function getDepends() {
@@ -146,7 +146,7 @@ function getDepends() {
 
     if [[ "${#missing_pkgs[@]}" -gt 0 ]]; then
         log_msg INFO "Installing missing dependencies: ${missing_pkgs[*]}"
-        apt-get update
+        sudo apt-get update
         aptInstall "${missing_pkgs[@]}"
     fi
 }

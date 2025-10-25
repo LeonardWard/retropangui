@@ -2,15 +2,6 @@
 
 # Minimal packages.sh for Retro Pangui
 
-# isPlatform: 시스템 아키/플랫폼을 체크
-isPlatform() {
-    case "$1" in
-        "x86") [[ "$(uname -m)" =~ "x86_64|i686|i386" ]];;
-        "arm") [[ "$(uname -m)" =~ "arm"|"aarch64" ]];;
-        *) return 1;;
-    esac
-}
-
 # depends_on: 필요한 OS 패키지 설치 보장
 depends_on() {
     for pkg in "$@"; do
@@ -64,17 +55,15 @@ function install_module() {
         return 1
     fi
 
-    # --- 환경 설정 ---
     source "$MODULES_DIR/ext_retropie_core.sh"
     setup_env
 
     export md_id="$module_id"
     export md_build="$INSTALL_BUILD_DIR/$module_id"
 
-    # 모듈 타입에 따라 설치 경로(md_inst)를 다르게 설정
     case "$module_type" in
         libretrocores)
-            export md_inst="$LIBRETRO_CORE_PATH"
+            export md_inst="$LIBRETRO_CORE_PATH/$module_id"
             ;;
         emulators|ports)
             export md_inst="$INSTALL_ROOT_DIR/$module_type/$module_id"
@@ -87,44 +76,100 @@ function install_module() {
 
     log_msg STEP "$module_id ($module_type) 모듈 설치를 시작합니다..."
 
-    # --- 스크립트 로드 ---
     local script_path="$MODULES_DIR/retropie_setup/scriptmodules/$module_type/$module_id.sh"
     if [[ ! -f "$script_path" ]]; then
         log_msg ERROR "모듈 스크립트 파일을 찾을 수 없습니다: $script_path"
         return 1
     fi
+
+    export md_ret_files=()
+
     source "$script_path"
 
-    # --- 의존성, 소스, 빌드, 설치, 설정 함수들을 순차적으로 실행 ---
     local funcs=("depends" "sources" "build" "install" "configure")
     for func_name in "${funcs[@]}"; do
-        if declare -f "${func_name}_$module_id" > /dev/null; then
-            log_msg INFO "[$module_id] '${func_name}' 단계를 실행합니다..."
-            # 각 단계를 실행하기 전에 빌드 디렉토리로 이동 (필요한 경우)
-            if [[ "$func_name" == "build" || "$func_name" == "install" ]]; then
-                cd "$md_build" || return 1
-            fi
+        log_msg INFO "[$module_id] '${func_name}' 단계를 실행합니다..."
+        local status=0
 
-            "${func_name}_$module_id"
-            local status=$?
+        case "$func_name" in
+            depends)
+                # depends는 무조건 성공 처리 (공식 RetroPie-Setup 방식)
+                if declare -f "${func_name}_$module_id" > /dev/null; then
+                    "${func_name}_$module_id" || true
+                fi
+                ;;
+            sources)
+                if [[ -d "$md_build" ]]; then
+                    log_msg INFO "[$module_id] 빌드 디렉토리 '$md_build'를 정리합니다."
+                    sudo rm -rf "$md_build" || { log_msg ERROR "[$module_id] 빌드 디렉토리 정리 실패."; status=1; }
+                fi
+                if [[ $status -eq 0 ]]; then
+                    if declare -f "sources_$module_id" > /dev/null; then
+                        sources_"$module_id" || status=$?
+                    elif [[ -n "$rp_module_repo" ]]; then
+                        git_Pull_Or_Clone "$rp_module_repo" "$md_build" || status=$?
+                    else
+                        log_msg WARN "[$module_id] 'sources' 함수 또는 'rp_module_repo'가 정의되지 않았습니다. 소스 다운로드 단계를 건너뜁니다."
+                    fi
+                fi
+                ;;
+            build|install)
+                local actual_source_dir="$md_build"
+                if [[ -d "$actual_source_dir" ]]; then
+                    pushd "$actual_source_dir" >/dev/null || { log_msg ERROR "[$module_id] 디렉토리 '$actual_source_dir'로 이동 실패."; status=1; }
+                    if [[ $status -eq 0 ]]; then
+                        "${func_name}_$module_id" || status=$?
+                        popd >/dev/null
+                    fi
+                else
+                    log_msg ERROR "[$module_id] 소스 디렉토리 '$actual_source_dir'를 찾을 수 없습니다. '${func_name}' 단계 실패."
+                    status=1
+                fi
+                ;;
+            *)
+                if declare -f "${func_name}_$module_id" > /dev/null; then
+                    "${func_name}_$module_id" || status=$?
+                fi
+                ;;
+        esac
 
-            if [[ "$func_name" == "build" || "$func_name" == "install" ]]; then
-                cd - >/dev/null
-            fi
-
-            if [[ $status -ne 0 ]]; then
-                log_msg ERROR "[$module_id] '${func_name}' 단계 실행 중 오류가 발생했습니다 (Exit Code: $status)."
-                return 1
-            fi
+        if [[ $status -ne 0 ]]; then
+            log_msg ERROR "[$module_id] '${func_name}' 단계 실행 중 오류가 발생했습니다 (Exit Code: $status)."
+            return 1
         fi
     done
 
-    # Libretro 코어의 경우, 최종 .so 파일 복사 단계를 추가로 실행
     if [[ "$module_type" == "libretrocores" ]]; then
         log_msg INFO "[$module_id] 최종 코어 파일 복사를 실행합니다..."
-        installLibretroCore "$md_build" "$module_id" "$md_inst"
+        local actual_source_dir="$md_build"
+        if [[ ${#md_ret_files[@]} -eq 0 ]]; then
+            log_msg ERROR "[$module_id] 'install' 단계에서 'md_ret_files'가 설정되지 않았습니다. 설치할 파일이 없습니다."
+            return 1
+        fi
+        installLibretroCore "$actual_source_dir" "$module_id" "$md_inst" || return 1
+
+        local installed_so_file=""
+        for f in "${md_ret_files[@]}"; do
+            if [[ "$f" == *.so ]]; then
+                installed_so_file="$f"
+                break
+            fi
+        done
+        
+        if [[ -z "$installed_so_file" ]]; then
+            log_msg ERROR "[$module_id] md_ret_files에 .so 파일이 없습니다: ${md_ret_files[*]}"
+            return 1
+        fi
+        
+        # 파일명만 추출 (basename)
+        local so_filename="$(basename "$installed_so_file")"
+        
+        echo "$so_filename" | sudo tee "$md_inst/.installed_so_name" >/dev/null
+        sudo chown "$__user":"$__user" "$md_inst/.installed_so_name"
+        log_msg INFO "[$module_id] 설치된 코어 메타데이터 파일 생성: $md_inst/.installed_so_name -> $so_filename"
     fi
 
     log_msg SUCCESS "$module_id 모듈 설치 및 설정이 완료되었습니다."
     return 0
 }
+

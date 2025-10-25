@@ -7,39 +7,6 @@
 # 1. 환경 설정 및 기본 유틸
 # ===============================================
 
-function setup_env() {
-    __ERRMSGS=()
-    __INFMSGS=()
-
-    REQUIRED_PKGS=(git build-essential gcc g++ make dialog unzip lsb-release)
-    for pkg in "${REQUIRED_PKGS[@]}"; do
-        if ! dpkg -s "$pkg" &>/dev/null; then
-            log_msg INFO "Installing prerequisite: $pkg ..."
-            sudo apt-get install -y "$pkg"
-        fi
-    done
-
-    export __memory_total_kb=$(awk '/^MemTotal:/{print $2}' /proc/meminfo)
-    export __memory_total=$(( __memory_total_kb / 1024 ))
-    export __memory_avail_kb=$(awk '/^MemAvailable:/{print $2}' /proc/meminfo)
-    export __memory_avail=$(( __memory_avail_kb / 1024 ))
-    export __jobs=$(nproc)
-    export __default_makeflags="-j${__jobs}"
-
-    export md_build="$INSTALL_BUILD_DIR/core_build"
-    export md_inst="$LIBRETRO_CORE_PATH"
-    mkdir -p "$md_build" "$md_inst"
-    mkUserDir "$biosdir"
-    mkUserDir "$md_conf_root"
-
-    export __platform="$(uname -m)"
-    export __os_id="$(lsb_release -si 2>/dev/null || echo "Unknown")"
-    export __os_codename="$(lsb_release -sc 2>/dev/null || echo "Unknown")"
-
-    export CFLAGS="-O2"
-    export MAKEFLAGS="$__default_makeflags"
-}
-
 function mkUserDir() {
     mkdir -p "$1"
     chown "$__user":"$__group" "$1"
@@ -65,27 +32,23 @@ function sedQuote() {
     echo "$string"
 }
 
+function hasFlag() {
+    local string="$1"
+    local flag="$2"
+    [[ -z "$string" || -z "$flag" ]] && return 1
+
+    if [[ "$string" =~ (^| )$flag($| ) ]]; then
+        return 0
+    else
+        return 1
+    fi
+}
+
 function isPlatform() {
     local flag="$1"
-    case "$__platform" in
-        armv6l)
-            [[ "$flag" == "armv6" || "$flag" == "arm" ]] && return 0
-            ;;
-        armv7l)
-            [[ "$flag" == "armv7" || "$flag" == "arm" ]] && return 0
-            ;;
-        aarch64)
-            [[ "$flag" == "armv8" || "$flag" == "arm" ]] && return 0
-            ;;
-        x86_64)
-            [[ "$flag" == "x86" ]] && return 0
-            ;;
-        *)
-            # Default to true for unknown platforms if 'arm' is requested,
-            # or if a specific platform is requested and it matches uname -m
-            [[ "$flag" == "$__platform" || "$flag" == "arm" && "$__platform" == "arm"* ]] && return 0
-            ;;
-    esac
+    if hasFlag "${__platform_flags[*]}" "$flag"; then
+        return 0
+    fi
     return 1
 }
 

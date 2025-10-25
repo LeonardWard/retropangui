@@ -42,7 +42,7 @@ export LOG_DIR="$ROOT_DIR/log"
 
 # 레트로아크 코어 디렉토리 경로
 export RETROARCH_BIN_PATH="$INSTALL_ROOT_DIR/bin/retroarch"
-export LIBRETRO_CORE_PATH="$INSTALL_ROOT_DIR/libretro/cores"
+export LIBRETRO_CORE_PATH="$INSTALL_ROOT_DIR/libretrocores"
 
 # --- [5] 사용자별 경로 설정 (USER_HOME 기반) ---
 export USER_SHARE_PATH="$USER_HOME/share"
@@ -126,3 +126,10 @@ case "$__platform_arch" in
         __platform_flags+=("$__platform_arch")
         ;;
 esac
+
+# 플랫폼 플래그 export (추가)
+export __platform_flags
+
+# GCC 버전 설정 (추가)
+__gcc_version=$(gcc -dumpversion | cut -d. -f1 2>/dev/null || echo "0")
+export __gcc_version
