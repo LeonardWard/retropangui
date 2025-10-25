@@ -62,7 +62,8 @@ function install_core_dependencies() {
 # [1] Base System 설치 (모듈 호출)
 function run_base_system_install() {
     log_msg "DEBUG" "ui.sh: run_base_system_install 함수 진입."
-    if (whiptail --title "Base System 설치" --yesno "RetroArch/EmulationStation 설치 및 Recalbox 환경 구축/패치를 진행하시겠습니까?\n\n(참고: 설치 진행 상황은 터미널에 직접 출력됩니다.)" 12 60); then
+    if (whiptail --title "Base System 설치" --yesno "RetroArch/EmulationStation 설치 및 Recalbox 환경 구축/패치를 진행하시겠습니까?\n\n(참고: 설치 진행 상황은 터미널에 직접 출력됩니다.)" 12 60);
+ then
         
         log_msg INFO "Base System 설치 모듈(system_install.sh)을 실행합니다."
         
@@ -89,25 +90,122 @@ function run_base_system_install() {
 # [2] Base System 업데이트 (간단 로직)
 function run_base_system_update() {
     local UPDATE_STATUS="업데이트 가능 (v0.2)" 
-    if (whiptail --title "Base System 업데이트" --yesno "업데이트 상태: $UPDATE_STATUS\n업데이트를 진행하시겠습니까?" 10 60); then
+    if (whiptail --title "Base System 업데이트" --yesno "업데이트 상태: $UPDATE_STATUS\n업데이트를 진행하시겠습니까?" 10 60);
+ then
         log_msg INFO "Base System 업데이트 로직 실행 시작."
         whiptail --title "업데이트 진행" --msgbox "Base System 업데이트 로직이 실행되었습니다. (추가 로직 필요)" 8 60
     fi
 }
 
 # [3] 패키지 관리 메뉴 (서브 메뉴)
+
+# 카테고리별 패키지 관리 메뉴를 표시하는 함수
+function manage_packages_by_section() {
+    local section_title="$1"
+    local section_id="$2"
+
+    log_msg INFO "$section_title 관리 메뉴에 진입했습니다."
+
+    # 터미널 크기 동적 감지
+    local term_height=$(tput lines 2>/dev/null || echo 24)
+    local term_width=$(tput cols 2>/dev/null || echo 80)
+
+    # 박스 크기 계산
+    local box_width=$((term_width - 4))
+    [[ "$box_width" -gt 78 ]] && box_width=78
+    [[ "$box_width" -lt 60 ]] && box_width=60
+
+    local box_height=$((term_height - 4))
+    [[ "$box_height" -lt 10 ]] && box_height=10
+
+    local list_height=$((box_height - 8))
+    [[ "$list_height" -lt 1 ]] && list_height=1
+
+    # 설명 텍스트 최대 너비 계산 (보수적으로: box_width - 30)
+    local desc_width=$((box_width - 30))
+    [[ "$desc_width" -lt 20 ]] && desc_width=20
+
+    log_msg DEBUG "Terminal: ${term_height}x${term_width}, Box: ${box_height}x${box_width}, Desc: ${desc_width}"
+
+    local options=()
+    declare -A module_info
+
+    # get_all_packages 함수에 설명 너비 전달
+    while IFS= read -r -d '' id && IFS= read -r -d '' desc && IFS= read -r -d '' section && IFS= read -r -d '' type && IFS= read -r -d '' status; do
+        if [[ "$section" == "$section_id" ]]; then
+            options+=("$id" "$desc" "$status")
+            module_info["$id,type"]="$type"
+            module_info["$id,status"]="$status"
+        fi
+    done < <(get_all_packages "$desc_width")
+
+    if [ ${#options[@]} -eq 0 ]; then
+        whiptail --title "정보" --msgbox "이 섹션에는 현재 플랫폼에서 설치 가능한 패키지가 없습니다." 8 70
+        return
+    fi
+
+    local CHOICES
+    CHOICES=$(whiptail --title "$section_title" --checklist "설치할 패키지를 스페이스바로 선택하세요." "$box_height" "$box_width" "$list_height" "${options[@]}" 3>&1 1>&2 2>&3)
+
+    if [ $? -eq 0 ]; then
+        clear
+
+        for CHOICE in $CHOICES; do
+            local module_id=$(echo "$CHOICE" | tr -d '"')
+            local module_type=${module_info["$module_id,type"]}
+            local is_installed=${module_info["$module_id,status"]}
+
+            if [[ "$is_installed" == "ON" ]]; then
+                echo "SKIPPING: $module_id is already installed."
+                continue
+            fi
+
+            echo "===================================================="
+            echo "  INSTALLING: $module_id ($module_type)"
+            echo "===================================================="
+
+            install_module "$module_id" "$module_type"
+
+            echo "----------------------------------------------------"
+        done
+
+        echo ""
+        read -p "모든 패키지 작업이 완료되었습니다. 메뉴로 돌아가려면 [Enter]를 누르세요."
+    else
+        log_msg INFO "$section_title 관리가 취소되었습니다."
+    fi
+}
+
+# 새로운 패키지 관리 메인 메뉴
 function package_management_menu() {
-    log_msg INFO "패키지 관리 메뉴에 진입했습니다."
+    local choice
     while true; do
-        CHOICE=$(whiptail --title "패키지 관리" --menu "관리할 패키지 종류를 선택하세요." 18 80 10 \
-            "1" "Core (RetroArch/EmulationStation 관리)" \
-            "2" "Main (RetroArch 라이브러리 및 코어 관리)" \
-            "3" "Option (커스텀/기타 라이브러리 관리)" \
-            "4" "드라이버 (xpad, xdrv 등 관리)" \
-            "5" "뒤로"  3>&1 1>&2 2>&3)
-        
-        [ $? -eq 0 ] && [ "$CHOICE" == "5" ] && break || whiptail --title "알림" --msgbox "세부 관리 로직은 추가 구현이 필요합니다." 8 60
-        [ $? -ne 0 ] && break
+        choice=$(whiptail --title "패키지 관리" --menu "관리할 패키지 섹션을 선택하세요." 18 78 10 \
+            "core"     "코어 패키지" \
+            "main"     "메인 패키지" \
+            "opt"      "선택적 패키지" \
+            "exp"      "실험적 패키지" \
+            "driver"   "드라이버" \
+            "config"   "설정 작업" \
+            "depends"  "의존성" \
+            "back"     "뒤로" 3>&1 1>&2 2>&3)
+
+        local exitstatus=$?
+        if [ $exitstatus -ne 0 ]; then
+            break
+        fi
+
+        case "$choice" in
+            core|main|opt|exp|driver)
+                manage_packages_by_section "$choice 패키지" "$choice"
+                ;;
+            config|depends)
+                whiptail --title "알림" --msgbox "이 섹션의 관리는 아직 지원되지 않습니다." 8 78
+                ;;
+            back)
+                break
+                ;;
+        esac
     done
 }
 
@@ -163,7 +261,8 @@ function set_share_path() {
 # [5] 스크립트 업데이트 (간단 로직)
 function update_script() {
     local UPDATE_STATUS="업데이트 가능 (v$__version -> v0.2)"
-    if (whiptail --title "스크립트 업데이트" --yesno "현재 버전: v$__version\n업데이트 상태: $UPDATE_STATUS\n\n업데이트를 진행하시겠습니까?" 10 60); then
+    if (whiptail --title "스크립트 업데이트" --yesno "현재 버전: v$__version\n업데이트 상태: $UPDATE_STATUS\n\n업데이트를 진행하시겠습니까?" 10 60);
+ then
         log_msg INFO "retropangui 스크립트 업데이트 로직 실행 시작."
         whiptail --title "업데이트 진행" --msgbox "스크립트 업데이트 로직이 실행되었습니다. (추가 로직 필요)" 8 60
     fi
@@ -171,7 +270,8 @@ function update_script() {
 
 # [6] 전부 설치 제거 (소스 빌드 후 설정 파일 정리 로직)
 function uninstall_all() {
-    if (whiptail --title "설정 파일 정리" --yesno "Base System의 사용자 설정 파일만 모두 제거합니다. (Share 폴더 제외)\n소스 빌드된 바이너리 파일은 시스템에서 직접 제거해야 합니다.\n\n계속하시겠습니까?" 10 70); then
+    if (whiptail --title "설정 파일 정리" --yesno "Base System의 사용자 설정 파일만 모두 제거합니다. (Share 폴더 제외)\n소스 빌드된 바이너리 파일은 시스템에서 직접 제거해야 합니다.\n\n계속하시겠습니까?" 10 70);
+ then
         log_msg INFO "전부 설치 제거 (설정 파일 정리) 시작."
         (
             echo "30"; echo "### EmulationStation 설정 디렉토리 제거 중..."; 
@@ -189,7 +289,8 @@ function uninstall_all() {
 
 # [7] 시스템 재부팅
 function reboot_system() {
-    if (whiptail --title "시스템 재부팅" --yesno "시스템을 지금 바로 재부팅하시겠습니까?" 10 60); then
+    if (whiptail --title "시스템 재부팅" --yesno "시스템을 지금 바로 재부팅하시겠습니까?" 10 60);
+ then
         log_msg WARN "시스템 재부팅을 시작합니다."
         whiptail --title "재부팅" --msgbox "시스템을 3초 후 재부팅합니다." 8 60
         sleep 3

@@ -26,7 +26,7 @@ export USER_HOME="$(eval echo ~$__user)"
 
 # --- [4] 버전 및 핵심 경로 설정 ---
 # Retro Pangui 스크립트 버전
-export __version="0.9.1"
+export __version="0.9.2"
 
 # 에뮬레이터 바이너리가 설치될 루트 디렉토리
 export INSTALL_ROOT_DIR="/opt/retropangui"

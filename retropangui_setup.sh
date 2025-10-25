@@ -17,6 +17,7 @@ source "$MODULES_DIR/helpers.sh"
 source "$MODULES_DIR/inifuncs.sh"
 source "$MODULES_DIR/ui.sh"
 source "$MODULES_DIR/ext_retropie_core.sh"
+source "$MODULES_DIR/packages.sh"
 
 # 로그 파일 경로 정의 (helpers.sh가 사용하기 전에 정의)
 # 로그 디렉토리는 env.sh를 통해 이미 설정되어 있습니다.
