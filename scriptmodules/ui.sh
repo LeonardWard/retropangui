@@ -372,12 +372,12 @@ function main_ui() {
         # 메인 whiptail 메뉴
         CHOICE=$(whiptail --title "$MENU_TITLE" --menu "$MENU_PROMPT" $HEIGHT $WIDTH $CHOICE_HEIGHT \
             "1" "Base System 설치" \
-            "2" "패키지 관리 (Core/Main/Driver)" \
-            "3" "설정 / 기타 도구" \
-            "4" "스크립트 업데이트" \
-            "5" "전부 설치 제거 (Share 폴더 제외)" \
-            "6" "시스템 재부팅" \
-            "7" "종료" 3>&1 1>&2 2>&3)
+            "3" "패키지 관리 (Core/Main/Driver)" \
+            "4" "설정 / 기타 도구" \
+            "5" "스크립트 업데이트" \
+            "6" "전부 설치 제거 (Share 폴더 제외)" \
+            "7" "시스템 재부팅" \
+            "8" "종료" 3>&1 1>&2 2>&3)
 
         local exitstatus=$?
         if [ $exitstatus -eq 0 ]; then
