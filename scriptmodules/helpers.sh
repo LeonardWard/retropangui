@@ -23,7 +23,7 @@ log_msg() {
     local TIMESTAMP=$(date "+%Y-%m-%d %H:%M:%S")
 
     # 로그 레벨 매핑
-    local LEVEL=2
+    local LEVEL=1
     case "$TYPE" in
         DEBUG)   LEVEL=0 ;;
         INFO)    LEVEL=1 ;;

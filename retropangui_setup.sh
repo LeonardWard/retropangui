@@ -15,6 +15,7 @@
 source "$(dirname "${BASH_SOURCE[0]}")/scriptmodules/config.sh"
 source "$MODULES_DIR/helpers.sh"
 source "$MODULES_DIR/inifuncs.sh"
+source "$MODULES_DIR/version.sh"
 source "$MODULES_DIR/ui.sh"
 source "$MODULES_DIR/ext_retropie_core.sh"
 source "$MODULES_DIR/packages.sh"
@@ -28,6 +29,8 @@ exec > >(tee -a "$LOG_FILE") 2>&1
 
 # --- [2] 메인 실행 함수 ---
 function main() {
+    load_version_from_git
+
     # 필수 권한 확인
     if [[ "$(id -u)" -ne 0 ]]; then
         echo "❌ 오류: 스크립트는 반드시 'sudo'로 실행되어야 합니다. 예: 'sudo $0'"

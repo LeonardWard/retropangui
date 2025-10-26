@@ -34,7 +34,7 @@ def get_rom_extensions_from_es_config(es_systems_cfg_content, roms_dir):
                                         ext = '.' + ext
                                     unique_extensions.add(ext)
     except ET.ParseError as e:
-        print(f"es_systems.cfg 파싱 오류: {e}")
+        print(f"es_systems.xml 파싱 오류: {e}")
     return sorted(unique_extensions)
 
 def scan_roms_directory(roms_dir, rom_extensions):
@@ -222,7 +222,7 @@ def generate_gamelist_xml(games_data, output_file, merge=False):
 def ensure_es_systems_cfg(path: str) -> str:
     resolved = os.path.abspath(os.path.expanduser(path))
     if not os.path.isfile(resolved):
-        print(f"오류: es_systems.cfg 파일을 찾을 수 없습니다: {resolved}")
+        print(f"오류: es_systems.xml 파일을 찾을 수 없습니다: {resolved}")
         sys.exit(1)
     return resolved
 
@@ -246,17 +246,17 @@ def get_systems_from_cfg(es_systems_cfg_content):
     return result
 
 if __name__ == "__main__":
-    DEFAULT_ES_CFG_PATH = os.path.expanduser("~/.emulationstation/es_systems.cfg")
+    DEFAULT_ES_CFG_PATH = os.path.expanduser("~/.emulationstation/es_systems.xml")
 
     parser = argparse.ArgumentParser(
         description="EmulationStation용 시스템별 gamelist.xml 파일 자동 생성기",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter
     )
     parser.add_argument("--system", nargs="+", default=["all"],
-        help="처리할 시스템명들 (예: psx snes all). es_systems.cfg의 name 태그와 일치해야 함. 생략 또는 all이면 전체 처리.")
+        help="처리할 시스템명들 (예: psx snes all). es_systems.xml의 name 태그와 일치해야 함. 생략 또는 all이면 전체 처리.")
     parser.add_argument("--roms_dir", default=None,
         help="(선택) 직접 지정할 ROM 폴더 경로. 지정 시 --system 옵션 무시.")
-    parser.add_argument("--es_systems_cfg_path", default=DEFAULT_ES_CFG_PATH, help="es_systems.cfg 파일의 경로")
+    parser.add_argument("--es_systems_cfg_path", default=DEFAULT_ES_CFG_PATH, help="es_systems.xml 파일의 경로")
     parser.add_argument("--merge", action="store_true", help="기존 gamelist.xml이 있을 경우 병합")
     args = parser.parse_args()
 
@@ -290,7 +290,7 @@ if __name__ == "__main__":
         else:
             system_targets = [s for s in all_systems if s['name'].lower() in [sys.lower() for sys in selected]]
             if not system_targets:
-                print(f"지정한 시스템({', '.join(selected)})을 es_systems.cfg에서 찾을 수 없습니다.")
+                print(f"지정한 시스템({', '.join(selected)})을 es_systems.xml에서 찾을 수 없습니다.")
                 sys.exit(1)
         for sysinfo in system_targets:
             system_path = sysinfo['path']

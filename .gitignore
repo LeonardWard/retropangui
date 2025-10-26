@@ -5,8 +5,7 @@ recalbox-emulationstation/
 log/
 
 # 개발용 디렉토리 무시
-emulationstation-retropie-dev-original/
-emulationstation-retropie-dev/
+retorpangui-emulationstation-dev
 handover*
 scriptmodules/*.bak
 
@@ -29,6 +28,7 @@ resources/es-recalbox/es_bios.xsd
 
 # 특정 텍스트 파일 무시
 button_related_files.txt
+README.md
 
 # CLAude 구성 파일 무시
 .claude

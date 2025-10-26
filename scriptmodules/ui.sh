@@ -45,7 +45,7 @@ function install_core_dependencies() {
     local RETROPIE_SETUP_DIR="$MODULES_DIR/retropie_setup"
     local EXT_FOLDER="$(get_Git_Project_Dir_Name "$RETROPIE_SETUP_GIT_URL")"
 
-    git_Pull_Or_Clone "$RETROPIE_SETUP_GIT_URL" "$TEMP_DIR_BASE/$EXT_FOLDER" --depth=1
+    git_Pull_Or_Clone "$RETROPIE_SETUP_GIT_URL" "$TEMP_DIR_BASE/$EXT_FOLDER" --depth=1 --no-tags
 
     # retropie_setup 디렉토리가 없으면 생성
     mkdir -p "$RETROPIE_SETUP_DIR"
@@ -258,13 +258,77 @@ function set_share_path() {
     fi
 }
 
-# [5] 스크립트 업데이트 (간단 로직)
+# [5] 스크립트 업데이트 (Git 기반)
 function update_script() {
-    local UPDATE_STATUS="업데이트 가능 (v$__version -> v0.2)"
-    if (whiptail --title "스크립트 업데이트" --yesno "현재 버전: v$__version\n업데이트 상태: $UPDATE_STATUS\n\n업데이트를 진행하시겠습니까?" 10 60);
- then
-        log_msg INFO "retropangui 스크립트 업데이트 로직 실행 시작."
-        whiptail --title "업데이트 진행" --msgbox "스크립트 업데이트 로직이 실행되었습니다. (추가 로직 필요)" 8 60
+    log_msg INFO "스크립트 업데이트 확인 중..."
+    whiptail --title "업데이트 확인" --infobox "원격 저장소에서 최신 버전 정보를 가져오는 중..." 8 60
+
+    # 원격 저장소의 태그 목록을 가져옵니다.
+    local remote_tags=$(git ls-remote --tags origin | awk '{print $2}' | grep -o 'v[0-9]\+\.[0-9]\+\(\.[0-9]\+\)*$' | sort -V | tail -n 1)
+
+    if [ -z "$remote_tags" ]; then
+        log_msg WARN "원격 버전(태그) 정보를 찾을 수 없습니다. 업데이트를 진행할 수 없습니다."
+        whiptail --title "알림" --msgbox "확인 가능한 원격 버전 정보(태그)가 없습니다. 업데이트를 진행할 수 없습니다." 8 78
+        return
+    fi
+
+    local __rpg_latest_remote_version=$remote_tags
+    local remote_version_num=${__rpg_latest_remote_version//v/}
+    local local_version_num=${__version//v/}
+
+    log_msg INFO "버전 비교: Local='v${local_version_num}', Remote='${__rpg_latest_remote_version}'"
+
+    # 버전 비교 (sort -V 사용)
+    if [ "$(printf '%s\n' "$remote_version_num" "$local_version_num" | sort -V | tail -n 1)" != "$local_version_num" ]; then
+        
+        # 최종 디버깅 출력
+        echo "DEBUG: local_version_num=${local_version_num}"
+        echo "DEBUG: __rpg_latest_remote_version=${__rpg_latest_remote_version}"
+
+        if (whiptail --title "스크립트 업데이트" --yesno "새로운 버전의 스크립트를 사용할 수 있습니다.\n\n현재 버전: v${local_version_num}\n최신 버전: ${__rpg_latest_remote_version}\n\n업데이트를 진행하시겠습니까?" 12 60); then
+            log_msg INFO "retropangui 스크립트 업데이트 시작."
+            
+            local stashed=false
+            if [ -n "$(git status --porcelain)" ]; then
+                log_msg INFO "로컬 변경사항을 임시 저장합니다."
+                if ! git stash push -u -m "RetroPangui-Auto-Stash-Before-Update"; then
+                    log_msg ERROR "로컬 변경사항 임시 저장 실패."
+                    whiptail --title "업데이트 실패" --msgbox "로컬 변경사항을 임시 저장하는 데 실패했습니다. 업데이트를 진행할 수 없습니다." 10 78
+                    return
+                fi
+                stashed=true
+            fi
+
+            log_msg INFO "원격 저장소에서 업데이트를 가져옵니다."
+            if ! git pull --rebase origin main > >(tee -a "$LOG_FILE") 2>&1; then
+                log_msg ERROR "업데이트 실패 ('git pull --rebase' 실패)."
+                whiptail --title "업데이트 실패" --msgbox "업데이트를 가져오는 데 실패했습니다. 자세한 내용은 로그를 확인하세요." 8 78
+                if $stashed; then
+                    git stash pop
+                fi
+                return
+            fi
+
+            if $stashed; then
+                log_msg INFO "임시 저장된 로컬 변경사항을 다시 적용합니다."
+                if ! git stash pop; then
+                    log_msg WARN "로컬 변경사항 적용 중 충돌이 발생했습니다. 로컬 변경사항을 롤백합니다."
+                    git reset --hard
+                    whiptail --title "업데이트 완료 (주의)" --msgbox "스크립트가 성공적으로 업데이트되었습니다.\n\n하지만, 로컬 수정사항 중 일부를 자동으로 재적용할 수 없었습니다. 변경하신 내용은 안전하게 백업되어 있으니, 전문가의 도움이 필요할 수 있습니다. (가장 최근 stash 확인)" 12 78
+                else
+                    log_msg SUCCESS "로컬 변경사항을 성공적으로 다시 적용했습니다."
+                    whiptail --title "업데이트 완료" --msgbox "스크립트가 성공적으로 업데이트되었으며, 로컬 변경사항도 유지되었습니다." 10 78
+                fi
+            else
+                whiptail --title "업데이트 완료" --msgbox "스크립트가 성공적으로 업데이트되었습니다." 8 78
+            fi
+
+        else
+            log_msg INFO "스크립트 업데이트가 사용자에 의해 취소되었습니다."
+        fi
+    else
+        log_msg INFO "스크립트가 이미 최신 버전입니다."
+        whiptail --title "스크립트 업데이트" --msgbox "현재 최신 버전의 스크립트를 사용하고 있습니다.\n\n현재 버전: v${local_version_num}" 10 60
     fi
 }
 

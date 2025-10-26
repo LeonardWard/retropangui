@@ -8,12 +8,12 @@
 # ===============================================
 
 # 개발용 ES 소스 정보
-DEV_ES_GIT_URL="https://github.com/RetroPie/EmulationStation.git"
-DEV_ES_PROJECT_NAME="emulationstation-retropie-dev"
+DEV_ES_GIT_URL="https://github.com/LeonardWard/retropangui-emulationstation.git"
+DEV_ES_PROJECT_NAME="retropangui-emulationstation-dev"
 DEV_ES_BUILD_DIR="${MODULES_DIR}/${DEV_ES_PROJECT_NAME}"
 
 # 의존성 패키지 체크 및 설치
-check_dev_dependencies() {
+check_dev_es_deps() {
     local required_packages=(
         "build-essential"
         "cmake"
@@ -29,16 +29,16 @@ check_dev_dependencies() {
         "libgl1-mesa-dev"
         "git"
     )
-    
+
     log_msg INFO "EmulationStation 빌드 의존성 확인 중..."
-    
+
     local missing_packages=()
     for pkg in "${required_packages[@]}"; do
         if ! dpkg -l | grep -q "^ii  $pkg"; then
             missing_packages+=("$pkg")
         fi
     done
-    
+
     if [ ${#missing_packages[@]} -gt 0 ]; then
         log_msg INFO "필요한 패키지 설치 중: ${missing_packages[*]}"
         sudo apt-get update || { log_msg ERROR "apt-get update 실패"; return 1; }
@@ -46,16 +46,16 @@ check_dev_dependencies() {
     else
         log_msg SUCCESS "모든 의존성 패키지가 이미 설치되어 있습니다."
     fi
-    
+
     return 0
 }
 
 # 소스 코드 패치 적용 함수
 apply_custom_patches() {
     local patch_dir="${DEV_ES_BUILD_DIR}/custom_patches"
-    
+
     log_msg INFO "커스텀 패치 적용 확인 중..."
-    
+
     if [ -d "$patch_dir" ] && [ -n "$(ls -A "$patch_dir"/*.patch 2>/dev/null)" ]; then
         log_msg INFO "발견된 패치 파일 적용 중..."
         for patch_file in "$patch_dir"/*.patch; do
@@ -70,14 +70,14 @@ apply_custom_patches() {
 }
 
 # 개발용 ES 빌드 및 준비 함수
-develop_emulationstation() {
+dev_es() {
     # 이 스크립트는 다른 스크립트에서 소싱하여 사용하는 것을 가정합니다.
     # 따라서 log_msg, git_Pull_Or_Clone 등의 함수를 사용할 수 있어야 합니다.
 
     log_msg STEP "커스텀 EmulationStation 개발 환경 준비 시작..."
 
     # 의존성 체크
-    check_dev_dependencies || {
+    check_dev_es_deps || {
         log_msg ERROR "의존성 패키지 설치 실패"
         return 1
     }
@@ -105,7 +105,7 @@ develop_emulationstation() {
         log_msg ERROR "빌드 디렉토리 생성 실패"
         return 1
     }
-    
+
     cd "$DEV_ES_BUILD_DIR/build" || {
         log_msg ERROR "빌드 디렉토리 이동 실패"
         return 1
@@ -151,42 +151,56 @@ Git 브랜치: $(git rev-parse --abbrev-ref HEAD)
 EOF
 
     log_msg SUCCESS "빌드 정보가 build_info.txt에 저장되었습니다."
-    
+
     return 0
 }
 
 # 개발용 ES 실행 함수 (테스트용)
-run_dev_emulationstation() {
+run_dev_es() {
     local binary="$DEV_ES_BUILD_DIR/emulationstation"
-    
+
     if [ ! -f "$binary" ]; then
         log_msg ERROR "빌드된 EmulationStation을 찾을 수 없습니다."
-        log_msg INFO "먼저 develop_emulationstation 함수를 실행하세요."
+        log_msg INFO "먼저 dev_es 함수를 실행하세요."
         return 1
     fi
-    
+
     log_msg INFO "개발용 EmulationStation 실행 중..."
     log_msg INFO "종료하려면 F4 키를 누르세요."
-    
+
     sudo -u "$__user" "$binary" || {
         log_msg ERROR "EmulationStation 실행 실패"
         return 1
     }
-    
+
     return 0
 }
 
 # 개발용 ES 제거 함수
-clean_dev_emulationstation() {
+clean_dev_es() {
     log_msg INFO "개발용 EmulationStation 빌드 정리 중..."
-    
+
     if [ -d "$DEV_ES_BUILD_DIR/build" ]; then
         rm -rf "$DEV_ES_BUILD_DIR/build"
         log_msg SUCCESS "빌드 디렉토리가 정리되었습니다."
     else
         log_msg INFO "정리할 빌드 디렉토리가 없습니다."
     fi
-    
+
+    return 0
+}
+
+# 개발용 ES 완전 삭제 함수
+del_dev_es() {
+    log_msg WARN "개발용 EmulationStation 소스 전체 삭제를 진행합니다..."
+
+    if [ -d "$DEV_ES_BUILD_DIR" ]; then
+        rm -rf "$DEV_ES_BUILD_DIR"
+        log_msg SUCCESS "개발용 EmulationStation 디렉토리가 완전히 삭제되었습니다."
+    else
+        log_msg INFO "삭제할 디렉토리가 없습니다."
+    fi
+
     return 0
 }
 
@@ -195,12 +209,13 @@ clean_dev_emulationstation() {
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
     echo "이 스크립트는 직접 실행할 수 없습니다."
     echo "retropangui_setup.sh를 이 파일과 함께 소싱해서 사용하세요."
-    echo "사용예: source ./retropangui_setup.sh && source ./develop_custom_es.sh && clean_dev_emulationstation"
+    echo "사용예: source ./retropangui_setup.sh && source ./develop_custom_es.sh && dev_es"
     echo ""
     echo "사용 가능한 함수:"
-    echo "  - develop_emulationstation       : 개발 환경 빌드"
-    echo "  - run_dev_emulationstation       : 개발 버전 실행"
-    echo "  - clean_dev_emulationstation     : 빌드 정리"
-    echo "  - check_dev_dependencies         : 의존성 확인"
+    echo "  - dev_es                   : 개발 환경 빌드"
+    echo "  - run_dev_es               : 개발 버전 실행"
+    echo "  - clean_dev_es             : 빌드 정리"
+    echo "  - del_dev_es               : 전체 삭제"
+    echo "  - check_dev_es_deps        : 의존성 확인"
     exit 1
 fi
