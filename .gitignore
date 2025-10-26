@@ -5,7 +5,7 @@ recalbox-emulationstation/
 log/
 
 # 개발용 디렉토리 무시
-retorpangui-emulationstation-dev
+retropangui-emulationstation-dev
 handover*
 scriptmodules/*.bak
 
