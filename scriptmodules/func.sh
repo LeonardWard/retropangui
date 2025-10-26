@@ -343,6 +343,39 @@ install_ra_component() {
     return 0
 }
 
+# 로컬 git 저장소가 원격 저장소에 비해 업데이트가 필요한지 확인하는 함수
+# $1: 확인할 git 저장소의 로컬 경로
+function git_check_update() {
+    local repo_path="$1"
+    if ! [ -d "$repo_path/.git" ]; then
+        # .git 디렉토리가 없으면 git 저장소가 아니므로 업데이트 불필요
+        return 1 # false
+    fi
+
+    cd "$repo_path"
+    
+    # 원격 저장소의 최신 정보를 가져옴
+    git fetch --quiet
+    
+    local LOCAL=$(git rev-parse @)
+    local REMOTE=$(git rev-parse @{u})
+    local BASE=$(git merge-base @ @{u})
+
+    if [ "$LOCAL" = "$REMOTE" ]; then
+        # 로컬과 원격이 동일. 업데이트 불필요.
+        return 1 # false
+    elif [ "$LOCAL" = "$BASE" ]; then
+        # 원격에 새로운 커밋이 있음. 업데이트 필요.
+        return 0 # true
+    elif [ "$REMOTE" = "$BASE" ]; then
+        # 로컬에만 커밋이 있음. 푸시 필요. (업데이트는 아님)
+        return 1 # false
+    else
+        # 브랜치가 갈라짐.
+        return 1 # false
+    fi
+}
+
 # 모듈이 설치되었는지 확인하는 함수
 # $1: 모듈 ID, $2: 모듈 타입 (libretrocores, emulators, ports)
 function is_module_installed() {
@@ -511,6 +544,38 @@ function get_all_packages() {
         fi
 
         printf "%s\0%s\0%s\0%s\0%s\0" "$rp_module_id" "$truncated_desc" "$final_section" "$module_type" "$status"
+    done
+}
+
+# get_all_packages의 결과물을 기반으로 업데이트 상태를 추가하는 래퍼 함수
+function get_packages_with_update_status() {
+    # get_all_packages는 null 문자로 구분된 스트림을 출력합니다.
+    get_all_packages "$@" | while IFS= read -r -d '' id && IFS= read -r -d '' desc && IFS= read -r -d '' section && IFS= read -r -d '' type && IFS= read -r -d '' status; do
+        
+        local final_status="$status"
+        
+        # 모듈이 이미 설치된 경우에만 업데이트 확인
+        if [[ "$status" == "ON" ]]; then
+            local build_dir=""
+            local module_git_url=""
+
+            # 업데이트를 확인할 모듈 목록 (하드코딩)
+            if [[ "$id" == "retroarch" ]]; then
+                module_git_url="$RA_GIT_URL"
+            elif [[ "$id" == "emulationstation" ]]; then
+                module_git_url="$ES_GIT_URL"
+            fi
+
+            if [[ -n "$module_git_url" ]]; then
+                build_dir="$INSTALL_BUILD_DIR/$(get_Git_Project_Dir_Name "$module_git_url")"
+                if git_check_update "$build_dir"; then
+                    final_status="ON (업데이트 가능)"
+                fi
+            fi
+        fi
+        
+        # 원본과 동일한 형식으로 결과 출력
+        printf "%s\0%s\0%s\0%s\0%s\0" "$id" "$desc" "$section" "$type" "$final_status"
     done
 }
 

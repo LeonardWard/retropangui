@@ -90,16 +90,6 @@ function run_base_system_install() {
     fi
 }
 
-# [2] Base System 업데이트 (간단 로직)
-function run_base_system_update() {
-    local UPDATE_STATUS="업데이트 가능 (v0.2)" 
-    if (whiptail --title "Base System 업데이트" --yesno "업데이트 상태: $UPDATE_STATUS\n업데이트를 진행하시겠습니까?" 10 60);
- then
-        log_msg INFO "Base System 업데이트 로직 실행 시작."
-        whiptail --title "업데이트 진행" --msgbox "Base System 업데이트 로직이 실행되었습니다. (추가 로직 필요)" 8 60
-    fi
-}
-
 # [3] 패키지 관리 메뉴 (서브 메뉴)
 
 # 카테고리별 패키지 관리 메뉴를 표시하는 함수
@@ -133,14 +123,14 @@ function manage_packages_by_section() {
     local options=()
     declare -A module_info
 
-    # get_all_packages 함수에 설명 너비 전달
+    # get_packages_with_update_status 함수에 설명 너비 전달
     while IFS= read -r -d '' id && IFS= read -r -d '' desc && IFS= read -r -d '' section && IFS= read -r -d '' type && IFS= read -r -d '' status; do
         if [[ "$section" == "$section_id" ]]; then
             options+=("$id" "$desc" "$status")
             module_info["$id,type"]="$type"
             module_info["$id,status"]="$status"
         fi
-    done < <(get_all_packages "$desc_width")
+    done < <(get_packages_with_update_status "$desc_width")
 
     if [ ${#options[@]} -eq 0 ]; then
         whiptail --title "정보" --msgbox "이 섹션에는 현재 플랫폼에서 설치 가능한 패키지가 없습니다." 8 70
@@ -321,9 +311,11 @@ function update_script() {
                 else
                     log_msg SUCCESS "로컬 변경사항을 성공적으로 다시 적용했습니다."
                     whiptail --title "업데이트 완료" --msgbox "스크립트가 성공적으로 업데이트되었으며, 로컬 변경사항도 유지되었습니다." 10 78
+                    whiptail --title "안내" --msgbox "RetroArch 등 개별 구성요소의 업데이트는 '패키지 관리' 메뉴에서 확인하세요." 10 78
                 fi
             else
                 whiptail --title "업데이트 완료" --msgbox "스크립트가 성공적으로 업데이트되었습니다." 8 78
+                whiptail --title "안내" --msgbox "RetroArch 등 개별 구성요소의 업데이트는 '패키지 관리' 메뉴에서 확인하세요." 10 78
             fi
 
         else
@@ -380,19 +372,17 @@ function main_ui() {
         # 메인 whiptail 메뉴
         CHOICE=$(whiptail --title "$MENU_TITLE" --menu "$MENU_PROMPT" $HEIGHT $WIDTH $CHOICE_HEIGHT \
             "1" "Base System 설치" \
-            "2" "Base System 업데이트" \
-            "3" "패키지 관리 (Core/Main/Driver)" \
-            "4" "설정 / 기타 도구" \
-            "5" "스크립트 업데이트" \
-            "6" "전부 설치 제거 (Share 폴더 제외)" \
-            "7" "시스템 재부팅" \
-            "8" "종료" 3>&1 1>&2 2>&3)
+            "2" "패키지 관리 (Core/Main/Driver)" \
+            "3" "설정 / 기타 도구" \
+            "4" "스크립트 업데이트" \
+            "5" "전부 설치 제거 (Share 폴더 제외)" \
+            "6" "시스템 재부팅" \
+            "7" "종료" 3>&1 1>&2 2>&3)
 
         local exitstatus=$?
         if [ $exitstatus -eq 0 ]; then
             case $CHOICE in
                 1) run_base_system_install ;; 
-                2) run_base_system_update ;; 
                 3) package_management_menu ;; 
                 4) config_tools_menu ;; 
                 5) update_script ;; 
