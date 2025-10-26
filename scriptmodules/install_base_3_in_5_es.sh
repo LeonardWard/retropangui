@@ -53,11 +53,9 @@ install_emulationstation() {
     log_msg INFO "es_settings.cfg 파일을 생성합니다."
     cat > "$ES_CONFIG_DIR/es_settings.cfg" <<EOF
 <?xml version="1.0"?>
-<config>
-    <string name="RetroArchPath" value="$RETROARCH_BIN_PATH" />
-    <string name="LibretroCoresPath" value="$LIBRETRO_CORE_PATH" />
-    <string name="CoreConfigPath" value="$CORE_CONFIG_PATH" />
-</config>
+<string name="RetroArchPath" value="$RETROARCH_BIN_PATH" />
+<string name="LibretroCoresPath" value="$LIBRETRO_CORE_PATH" />
+<string name="CoreConfigPath" value="$CORE_CONFIG_PATH" />
 EOF
     chown $__user:$__user "$ES_CONFIG_DIR/es_settings.cfg"
 
