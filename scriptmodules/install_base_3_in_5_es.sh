@@ -49,6 +49,18 @@ install_emulationstation() {
 
     chown -R $__user:$__user "$ES_CONFIG_DIR" || return 1
 
+    # es_settings.cfg 생성 (경로 설정)
+    log_msg INFO "es_settings.cfg 파일을 생성합니다."
+    cat > "$ES_CONFIG_DIR/es_settings.cfg" <<EOF
+<?xml version="1.0"?>
+<config>
+    <string name="RetroArchPath" value="$RETROARCH_BIN_PATH" />
+    <string name="LibretroCoresPath" value="$LIBRETRO_CORE_PATH" />
+    <string name="CoreConfigPath" value="$CORE_CONFIG_PATH" />
+</config>
+EOF
+    chown $__user:$__user "$ES_CONFIG_DIR/es_settings.cfg"
+
     # systemlist.csv를 기반으로 es_systems.xml 생성 (Multi-core 방식)
     log_msg INFO "es_systems.xml 파일을 생성합니다($ES_CONFIG_DIR/es_systems.xml)."
     source "$MODULES_DIR/es_systems_generator.sh"
