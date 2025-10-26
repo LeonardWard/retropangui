@@ -110,10 +110,10 @@ EOF
             fi
         done
 
-        # XML 종료 (command는 비워둠 - ES가 cores를 보고 동적으로 생성)
+        # XML 종료 (command 템플릿 생성 - ES가 %CORE%, %CONFIG% 변수를 치환)
         cat << EOF | sudo tee -a "$dest_xml" > /dev/null
     </cores>
-    <command></command>
+    <command>$retroarch_path -L %CORE% --config %CONFIG% %ROM%</command>
     <platform>$name</platform>
     <theme>$theme</theme>
  </system>
