@@ -55,6 +55,9 @@ function install_core_dependencies() {
     rsync -avzr "$TEMP_DIR_BASE/$EXT_FOLDER/retropie_packages.sh" "$RETROPIE_SETUP_DIR"
     rsync -avzr "$TEMP_DIR_BASE/$EXT_FOLDER/retropie_setup.sh" "$RETROPIE_SETUP_DIR"
     log_msg SUCCESS "RetroPie 스크립트 모듈을 성공적으로 복사/업데이트했습니다."
+
+    # 작업 완료 후 임시 디렉토리 삭제
+    sudo rm -rf "$TEMP_DIR_BASE/$EXT_FOLDER"
 }
 
 # ----------------- 메인 메뉴 함수 (Main Menu Functions) -----------------
