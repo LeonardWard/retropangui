@@ -55,10 +55,11 @@ git_Pull_Or_Clone() {
     local dest_dir="$2"
     shift 2
     if [ -d "$dest_dir/.git" ]; then
-        cd "$dest_dir"
-        git pull --ff-only
+        # 기존 저장소: pull (progress 출력 강제, 원래 디렉토리 유지)
+        git -C "$dest_dir" pull --ff-only --progress
     else
-        git clone "$@" "$repo_url" "$dest_dir"
+        # 새 저장소: clone (progress 출력 강제)
+        git clone --progress "$@" "$repo_url" "$dest_dir"
     fi
 }
 
