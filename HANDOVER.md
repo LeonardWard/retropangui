@@ -79,39 +79,44 @@ EOF
 
 ---
 
-## 🎯 향후 개선 과제
+## ✅ 완료된 개선 작업
 
-### 개선 1: 코어 설치 시 es_systems.xml 자동 업데이트
+### 개선 1: 코어 설치 시 es_systems.xml 자동 업데이트 ✅ (2025-10-28 완료)
 
 **목표**: 코어 추가 설치 시 es_systems.xml에 자동으로 반영
 
-**설계**:
+**구현 완료**:
 ```
 packages.sh::install_module()
   ↓
 코어 설치 완료 (예: lr-pcsx-rearmed)
   ↓
-실제 설치된 정보 수집:
+update_es_systems_for_core() 자동 호출:
+  - rp_module_help에서 system, extensions 추출
   - 모듈 ID: lr-pcsx-rearmed
   - .so 파일명: .installed_so_name 읽기
-  - 지원 확장자: systemlist.csv 참조
   ↓
 es_systems.xml 업데이트:
-  - 해당 시스템(psx) 찾기
-  - <cores> 섹션에 추가:
-    <core name="pcsx_rearmed" module_id="lr-pcsx-rearmed" priority="2" extensions=".cue .bin" />
+  - add_core_to_system() 호출
+  - <core name="pcsx_rearmed" module_id="lr-pcsx-rearmed" priority="999" extensions=".bin .cue" />
 ```
 
-**수정 필요 파일**:
-1. `scriptmodules/packages.sh`: install_module() 끝에 업데이트 로직 추가
-2. `scriptmodules/es_systems_updater.sh` (신규): XML 업데이트 함수 모음
-3. `es-app/src/SystemData.h`: CoreInfo에 `module_id` 필드 추가
-4. `es-app/src/FileData.cpp`: `module_id` 사용하여 디렉토리 찾기
+**수정된 파일**:
+1. ✅ `scriptmodules/packages.sh`: update_es_systems_for_core() 함수 추가
+2. ✅ `scriptmodules/es_systems_updater.sh` (신규): XML 조작 함수 모음
+3. ✅ `es-app/src/SystemData.h`: CoreInfo에 `module_id` 필드 추가
+4. ✅ `es-app/src/SystemData.cpp`: module_id 파싱 로직 추가
+5. ✅ `es-app/src/FileData.cpp`: module_id 사용으로 하드코딩 제거
 
-**장점**:
-- 하드코딩 완전 제거
-- 유연성 극대화
-- 설치된 코어만 반영 (정확성)
+**달성된 효과**:
+- ✅ 하드코딩 완전 제거 (lr- 접두사, _ → - 변환 규칙 불필요)
+- ✅ 유연성 극대화 (모든 코어 이름 규칙 지원)
+- ✅ 자동화 (코어 설치 시 XML 자동 업데이트)
+- ✅ 호환성 (Fallback 로직으로 기존 XML 동작 보장)
+
+---
+
+## 🎯 향후 개선 과제
 
 ### 개선 2: Settings 경로 관리 개선
 
@@ -184,6 +189,7 @@ exec /opt/retropangui/bin/emulationstation.real "$@"
 ## 커밋 히스토리
 
 ### retropangui-emulationstation
+- `fdab176`: ES 멀티코어: module_id 도입으로 하드코딩 제거 ⭐ NEW
 - `a3b53f9`: 코어 디렉토리 이름 수정 (언더스코어→하이픈)
 - `910b89d`: 코어 경로 동적 탐색 (.installed_so_name 사용)
 - `061f0c5`: 코어 경로 구조 수정
@@ -192,10 +198,17 @@ exec /opt/retropangui/bin/emulationstation.real "$@"
 - `d1d68d9`: ES 멀티코어 command 템플릿 변수 치환
 
 ### retropangui
+- `75b6a8d`: 코어 설치 시 es_systems.xml 자동 업데이트 구현 ⭐ NEW
 - `e132668`: es_settings.cfg 형식 수정 (config 태그 제거)
 - `e2085c1`: ES 설치 시 es_settings.cfg 자동 생성
 - `7d97ba3`: es_systems.xml 생성에 command 템플릿 추가
 
 ---
 
-**마지막 상태**: ES 재빌드 대기 중, 게임 실행 테스트 필요
+**마지막 상태**: 개선 1 완료, ES 재빌드 및 테스트 필요
+
+**테스트 체크리스트**:
+- [ ] ES 재빌드 성공
+- [ ] module_id 로그 확인 (FileData.cpp:532)
+- [ ] 게임 실행 정상 동작
+- [ ] 새 코어 설치 시 XML 자동 업데이트 확인
