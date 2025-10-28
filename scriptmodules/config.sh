@@ -81,9 +81,6 @@ export RA_OVERLAYS_GIT_URL="https://github.com/libretro/common-overlays.git"
 export RA_SHADERS_GIT_URL="https://github.com/libretro/glsl-shaders.git"
 export ES_GIT_URL="https://github.com/LeonardWard/retropangui-emulationstation.git"
 
-# es_systems.cfg 생성을 위한 CSV 데이터베이스 경로
-export SYSTEMLIST_CSV_PATH="$MODULES_DIR/systemlist.csv"
-
 # Whiptail 메뉴 설정 상수
 export HEIGHT=20
 export WIDTH=80

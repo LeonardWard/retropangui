@@ -47,6 +47,57 @@ ensure_cores_node() {
     fi
 }
 
+# 시스템 자동 생성
+# 사용법: create_system <system_name> <extensions>
+create_system() {
+    local system_name="$1"
+    local extensions="$2"
+
+    # fullname: 시스템 이름을 대문자로 시작
+    local fullname=$(echo "$system_name" | sed 's/.*/\u&/')
+
+    # path: $USER_ROMS_PATH/$system_name (환경변수에서 읽거나 기본값)
+    local roms_path="${USER_ROMS_PATH:-$HOME/share/roms}"
+    local system_path="$roms_path/$system_name"
+
+    # command: RetroArch 템플릿
+    local retroarch_path="${RETROARCH_BIN_PATH:-/opt/retropangui/bin/retroarch}"
+    local command="$retroarch_path -L %CORE% --config %CONFIG% %ROM%"
+
+    echo "[INFO] 시스템 '$system_name' 자동 생성 중..."
+
+    backup_es_systems
+
+    # 시스템 XML 생성
+    local tmp_file=$(mktemp)
+    xmlstarlet ed \
+        -s "/systemList" -t elem -n "system_tmp" \
+        -s "//system_tmp" -t elem -n "name" -v "$system_name" \
+        -s "//system_tmp" -t elem -n "fullname" -v "$fullname" \
+        -s "//system_tmp" -t elem -n "path" -v "$system_path" \
+        -s "//system_tmp" -t elem -n "extension" -v "$extensions" \
+        -s "//system_tmp" -t elem -n "cores" \
+        -s "//system_tmp" -t elem -n "command" -v "$command" \
+        -s "//system_tmp" -t elem -n "platform" -v "$system_name" \
+        -s "//system_tmp" -t elem -n "theme" -v "$system_name" \
+        -r "//system_tmp" -v "system" \
+        "$ES_SYSTEMS_XML" > "$tmp_file"
+
+    if [[ $? -eq 0 ]]; then
+        mv "$tmp_file" "$ES_SYSTEMS_XML"
+        echo "[SUCCESS] 시스템 '$system_name' 생성 완료"
+
+        # ROM 디렉토리도 생성
+        mkdir -p "$system_path"
+        echo "[INFO] ROM 디렉토리 생성: $system_path"
+        return 0
+    else
+        echo "[ERROR] 시스템 생성 실패"
+        rm -f "$tmp_file"
+        return 1
+    fi
+}
+
 # 특정 시스템에 코어 추가
 # 사용법: add_core_to_system <system_name> <core_name> <module_id> <priority> <extensions>
 add_core_to_system() {
@@ -71,8 +122,8 @@ add_core_to_system() {
     # 시스템 존재 확인
     local sys_count=$(system_exists "$system_name")
     if [[ "$sys_count" -eq 0 ]]; then
-        echo "[ERROR] 시스템 '$system_name'을 찾을 수 없습니다."
-        return 1
+        echo "[INFO] 시스템 '$system_name'이 없습니다. 자동 생성합니다..."
+        create_system "$system_name" "$extensions" || return 1
     fi
 
     backup_es_systems
