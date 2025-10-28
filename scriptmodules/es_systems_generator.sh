@@ -7,6 +7,81 @@
 # Multi-core 지원을 포함하여 Recalbox 스타일의 시스템 설정을 생성합니다.
 # ===============================================
 
+# systemlist.csv를 기반으로 es_systems.xml 기본 구조만 생성 (코어 정보 제외)
+# 코어 정보는 install_module() 실행 시 자동으로 추가됨
+generate_es_systems_xml_base() {
+    local src_csv="$1"
+    local dest_xml="$2"
+
+    # 필요한 전역 변수 확인
+    local roms_path="${USER_ROMS_PATH}"
+    local retroarch_path="${RETROARCH_BIN_PATH}"
+
+    if [[ ! -f "$src_csv" ]]; then
+        log_msg ERROR "CSV 소스 파일을 찾을 수 없습니다: $src_csv"
+        return 1
+    fi
+
+    log_msg INFO "es_systems.xml 기본 구조 생성을 시작합니다 (코어 정보 제외)..."
+    sudo rm -f "$dest_xml"
+
+    echo '<?xml version="1.0"?>' | sudo tee "$dest_xml" > /dev/null
+    echo "<systemList>" | sudo tee -a "$dest_xml" > /dev/null
+
+    # awk로 CSV를 파싱하여 시스템 기본 정보만 추출 (코어 정보 제외)
+    local parsed_data=$(awk -F, '
+        NR==1 {
+            # 헤더 행: 컬럼 인덱스 매핑
+            for (i=1; i<=NF; i++) {
+                gsub(/\r/, "", $i);
+                col_map[$i] = i;
+            }
+            next;
+        }
+        {
+            # 시스템 기본 정보만 추출
+            name = $(col_map["name"]);
+            fullname = $(col_map["fullname"]);
+            path = $(col_map["descriptor_1_path"]);
+            theme = $(col_map["descriptor_1_theme"]);
+            extensions = $(col_map["descriptor_1_extensions"]);
+
+            if (name == "") { next; }
+
+            # 출력: name^fullname^path^theme^extensions
+            printf "%s^%s^%s^%s^%s\n", name, fullname, path, theme, extensions;
+        }
+    ' "$src_csv")
+
+    # 파싱된 데이터를 한 줄씩 읽어 XML 블록 생성
+    echo "$parsed_data" | while IFS='^' read -r name fullname path theme extensions; do
+        if [[ -z "$name" ]]; then continue; fi
+
+        final_path=$(echo "$path" | sed "s|%ROOT%|$roms_path|")
+
+        # XML 생성 (코어 정보 없이 빈 <cores> 태그)
+        cat << EOF | sudo tee -a "$dest_xml" > /dev/null
+ <system>
+    <name>$name</name>
+    <fullname>$fullname</fullname>
+    <path>$final_path</path>
+    <extension>$extensions</extension>
+    <cores>
+    </cores>
+    <command>$retroarch_path -L %CORE% --config %CONFIG% %ROM%</command>
+    <platform>$name</platform>
+    <theme>$theme</theme>
+ </system>
+EOF
+    done
+
+    echo "</systemList>" | sudo tee -a "$dest_xml" > /dev/null
+
+    sudo chown "$__user":"$__user" "$dest_xml"
+    log_msg SUCCESS "es_systems.xml 기본 구조 생성 완료: $dest_xml"
+    log_msg INFO "코어 정보는 install_module() 실행 시 자동으로 추가됩니다."
+}
+
 # systemlist.csv를 기반으로 es_systems.xml을 생성하는 함수 (Multi-core 지원)
 # ES에서 직접 RetroArch를 실행하고, 여러 코어 중 priority 기반으로 선택
 generate_es_systems_xml_multi_core() {

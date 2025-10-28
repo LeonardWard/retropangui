@@ -59,10 +59,11 @@ install_emulationstation() {
 EOF
     chown $__user:$__user "$ES_CONFIG_DIR/es_settings.cfg"
 
-    # systemlist.csv를 기반으로 es_systems.xml 생성 (Multi-core 방식)
+    # systemlist.csv를 기반으로 es_systems.xml 기본 구조만 생성 (코어 정보 제외)
+    # 코어 정보는 install_base_4_in_5_cores.sh에서 install_module() 실행 시 자동 추가됨
     log_msg INFO "es_systems.xml 파일을 생성합니다($ES_CONFIG_DIR/es_systems.xml)."
     source "$MODULES_DIR/es_systems_generator.sh"
-    generate_es_systems_xml_multi_core "$SYSTEMLIST_CSV_PATH" "$ES_CONFIG_DIR/es_systems.xml"
+    generate_es_systems_xml_base "$SYSTEMLIST_CSV_PATH" "$ES_CONFIG_DIR/es_systems.xml"
     cp "$RESOURCES_DIR/es-recalbox/es_input.cfg" "$USER_CONFIG_PATH/emulationstation"
     log_msg SUCCESS "EmulationStation 빌드 및 설치 완료. 설치 경로: "$INSTALL_ROOT_DIR""
     return 0
