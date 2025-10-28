@@ -155,21 +155,80 @@ function install_module() {
                 break
             fi
         done
-        
+
         if [[ -z "$installed_so_file" ]]; then
             log_msg ERROR "[$module_id] md_ret_files에 .so 파일이 없습니다: ${md_ret_files[*]}"
             return 1
         fi
-        
+
         # 파일명만 추출 (basename)
         local so_filename="$(basename "$installed_so_file")"
-        
+
         echo "$so_filename" | sudo tee "$md_inst/.installed_so_name" >/dev/null
         sudo chown "$__user":"$__user" "$md_inst/.installed_so_name"
         log_msg INFO "[$module_id] 설치된 코어 메타데이터 파일 생성: $md_inst/.installed_so_name -> $so_filename"
+
+        # es_systems.xml 자동 업데이트
+        log_msg INFO "[$module_id] es_systems.xml 업데이트를 시작합니다..."
+        update_es_systems_for_core "$module_id" "$so_filename"
     fi
 
     log_msg SUCCESS "$module_id 모듈 설치 및 설정이 완료되었습니다."
+    return 0
+}
+
+# es_systems.xml에 코어 추가 (libretrocore 설치 후 자동 호출)
+function update_es_systems_for_core() {
+    local module_id="$1"
+    local so_filename="$2"
+
+    # es_systems_updater.sh 로드
+    local updater_script="$MODULES_DIR/es_systems_updater.sh"
+    if [[ ! -f "$updater_script" ]]; then
+        log_msg WARN "[$module_id] es_systems_updater.sh를 찾을 수 없습니다. XML 업데이트 건너뜀."
+        return 0
+    fi
+
+    source "$updater_script"
+
+    # rp_module_help에서 ROM Extensions 추출
+    local extensions=""
+    if [[ -n "$rp_module_help" ]]; then
+        # "ROM Extensions: .bin .cue .cbn" 형태에서 추출
+        extensions=$(echo "$rp_module_help" | grep -oP "ROM Extensions:\s*\K[^\n]*" | head -1 | tr '\n' ' ')
+    fi
+
+    # romdir 경로에서 시스템 이름 추출 (예: $romdir/psx -> psx)
+    local system_name=""
+    if [[ -n "$rp_module_help" ]]; then
+        system_name=$(echo "$rp_module_help" | grep -oP '\$romdir/\K[a-z0-9_-]+' | head -1)
+    fi
+
+    if [[ -z "$system_name" ]]; then
+        log_msg WARN "[$module_id] 시스템 이름을 추출할 수 없습니다. XML 업데이트 건너뜀."
+        return 0
+    fi
+
+    if [[ -z "$extensions" ]]; then
+        log_msg WARN "[$module_id] ROM Extensions를 추출할 수 없습니다. XML 업데이트 건너뜀."
+        return 0
+    fi
+
+    # 코어 이름 추출 (.so 파일명에서 _libretro.so 제거)
+    local core_name="${so_filename%_libretro.so}"
+
+    # 우선순위 자동 설정 (기본값: 999)
+    local priority=999
+
+    log_msg INFO "[$module_id] es_systems.xml 업데이트: system=$system_name, core=$core_name, module_id=$module_id"
+
+    # es_systems.xml에 추가
+    add_core_to_system "$system_name" "$core_name" "$module_id" "$priority" "$extensions" || {
+        log_msg WARN "[$module_id] es_systems.xml 업데이트 실패"
+        return 1
+    }
+
+    log_msg SUCCESS "[$module_id] es_systems.xml 업데이트 완료"
     return 0
 }
 
