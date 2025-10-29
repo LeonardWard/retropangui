@@ -129,6 +129,30 @@ es_systems.xml 업데이트:
 
 ---
 
+### 개선 4: ES UI에 코어 선택 기능 추가 (미구현)
+
+**현재 상태**:
+- ✅ **백엔드**: 멀티코어 구조 완성
+  - es_systems.xml에 복수 코어 등록 가능
+  - module_id, priority, extensions로 코어 정보 관리
+  - FileData.cpp에서 코어 선택 로직 구현됨
+- ❌ **프론트엔드**: 코어 선택 UI 없음
+  - 사용자가 직접 코어 선택 불가
+  - 자동으로 우선순위/확장자 기반 선택
+
+**필요 작업**:
+1. 게임 실행 전 코어 선택 메뉴 추가
+2. 기본 코어 설정 기능 (시스템별)
+3. 게임별 선호 코어 저장 기능
+4. 코어 목록 표시 및 정보 제공
+
+**예시 시나리오**:
+- psx 시스템에 `pcsx_rearmed`, `mednafen_psx_hw` 2개 등록됨
+- 사용자가 게임 실행 시 어떤 코어로 실행할지 선택하고 싶음
+- 현재는 자동으로 선택되어 선택권 없음
+
+---
+
 ## 📝 관련 파일 및 위치
 
 ### 설정 파일
@@ -178,7 +202,9 @@ es_systems.xml 업데이트:
 ## 커밋 히스토리
 
 ### retropangui-emulationstation
-- `fdab176`: ES 멀티코어: module_id 도입으로 하드코딩 제거 ⭐ NEW
+- `2150fcb`: Gamelist: Allow all extensions in gamelist.xml ⭐ NEW
+- `9e4d942`: Settings 경로 관리 개선: 빌드 타임 + 환경변수 지원
+- `fdab176`: ES 멀티코어: module_id 도입으로 하드코딩 제거
 - `a3b53f9`: 코어 디렉토리 이름 수정 (언더스코어→하이픈)
 - `910b89d`: 코어 경로 동적 탐색 (.installed_so_name 사용)
 - `061f0c5`: 코어 경로 구조 수정
