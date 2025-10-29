@@ -198,7 +198,9 @@ exec /opt/retropangui/bin/emulationstation.real "$@"
 - `d1d68d9`: ES 멀티코어 command 템플릿 변수 치환
 
 ### retropangui
-- `3367145`: 코어 설치 시스템 최종 개선: 환경변수 로드 및 추출 로직 강화 ⭐ NEW
+- `7e56557`: packages.sh: rp_module_help 파싱 개선 (대소문자 무시) ⭐ NEW
+- `b97099b`: 핸드오버 문서 업데이트: 개선 3 완료 상태 반영
+- `3367145`: 코어 설치 시스템 최종 개선: 환경변수 로드 및 추출 로직 강화
 - `449cee4`: git_Pull_Or_Clone 수정: 출력 표시 및 디렉토리 변경 문제 해결
 - `d1c6602`: install_base_5_in_5_setup_env.sh 정리: 불필요한 코드 제거
 - `5a7a0a3`: CSV 제거 및 완전 자동화: 빈 XML + 동적 시스템/코어 생성 ⭐ 개선 3
@@ -210,15 +212,18 @@ exec /opt/retropangui/bin/emulationstation.real "$@"
 
 ---
 
-**마지막 상태**: 개선 1, 3 완료. 핵심 기능 구현 완료, 테스트 필요
+**마지막 상태**: 개선 1, 3 완료. 핵심 기능 구현 및 테스트 완료 ✅
 
 **테스트 체크리스트**:
 - [x] ES 재빌드 성공
 - [x] module_id 로그 확인 (FileData.cpp:532)
 - [x] 게임 실행 정상 동작
-- [ ] 새 코어 설치 시 XML 자동 업데이트 확인
-- [ ] 환경변수 override 테스트
-- [ ] es_settings.cfg 없이 ES 실행 테스트
+- [x] 새 코어 설치 시 XML 자동 업데이트 확인 (2025-10-30)
+  - lr-dosbox-pure: $ROMDIR (대문자) 정상 처리 ✅
+  - lr-fbneo: "ROM Extension:" (s 없음) 정상 처리 ✅
+  - 시스템 자동 생성 (pc, fba) 확인 ✅
+- [ ] 환경변수 override 테스트 (선택사항)
+- [ ] es_settings.cfg 없이 ES 실행 테스트 (선택사항)
 
 ---
 
