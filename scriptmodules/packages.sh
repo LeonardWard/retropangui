@@ -202,10 +202,12 @@ function update_es_systems_for_core() {
     local raw_help=$(grep -oP 'rp_module_help="\K[^"]+' "$script_path" | head -1)
 
     # ROM Extensions 추출 (.bin .cue 등의 확장자 목록)
-    local extensions=$(echo "$raw_help" | grep -oP "ROM Extensions:\s*\K[^\\\\]+?(?=\\\\n)" | head -1)
+    # "ROM Extensions:" 또는 "ROM Extension:" 모두 지원 (대소문자 무시)
+    local extensions=$(echo "$raw_help" | grep -oiP "ROM Extensions?:\s*\K[^\\\\]+?(?=\\\\n)" | head -1)
 
     # romdir 경로에서 시스템 이름 추출 (예: $romdir/psx -> psx)
-    local system_name=$(echo "$raw_help" | grep -oP '\$romdir/\K[a-z0-9_-]+' | head -1)
+    # $romdir, $ROMDIR 모두 지원 (대소문자 무시)
+    local system_name=$(echo "$raw_help" | grep -oiP '\$romdir/\K[a-z0-9_-]+' | head -1)
 
     if [[ -z "$system_name" ]]; then
         log_msg WARN "[$module_id] 시스템 이름을 추출할 수 없습니다. XML 업데이트 건너뜀."
