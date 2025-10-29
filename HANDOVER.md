@@ -118,25 +118,14 @@ es_systems.xml 업데이트:
 
 ## 🎯 향후 개선 과제
 
-### 개선 2: Settings 경로 관리 개선
+### ~~개선 2: Settings 경로 관리 개선~~ (필요 없음)
 
-**옵션 A**: 환경변수 사용
-```cpp
-const char* env = std::getenv("LIBRETRO_CORE_PATH");
-mStringMap["LibretroCoresPath"] = env ? env : "";
-```
+**현재 상태**: ES 소스 코드에 이미 환경변수 기능 구현되어 있음
+- `LIBRETRO_CORES_PATH`, `CORE_CONFIG_PATH` 환경변수 지원
+- CMake 빌드 타임 정의 지원 (`RETROPANGUI_CORES_PATH`)
+- es_settings.cfg 자동 생성으로 충분히 동작
 
-**옵션 B**: CMake 빌드 타임 주입
-```cmake
-add_definitions(-DLIBRETRO_CORES_PATH="${LIBRETRO_CORE_PATH}")
-```
-
-**옵션 C**: ES 실행 래퍼 스크립트
-```bash
-#!/bin/bash
-export LIBRETRO_CORE_PATH="/opt/retropangui/libretrocores"
-exec /opt/retropangui/bin/emulationstation.real "$@"
-```
+**결론**: 추가 작업 불필요 ✅
 
 ---
 
@@ -222,8 +211,8 @@ exec /opt/retropangui/bin/emulationstation.real "$@"
   - lr-dosbox-pure: $ROMDIR (대문자) 정상 처리 ✅
   - lr-fbneo: "ROM Extension:" (s 없음) 정상 처리 ✅
   - 시스템 자동 생성 (pc, fba) 확인 ✅
-- [ ] 환경변수 override 테스트 (선택사항)
-- [ ] es_settings.cfg 없이 ES 실행 테스트 (선택사항)
+- [N/A] 환경변수 override 테스트 (필요 없음 - es_settings.cfg 자동 생성으로 충분)
+- [N/A] es_settings.cfg 없이 ES 실행 테스트 (필요 없음 - 정상 사용 시나리오 아님)
 
 ---
 
