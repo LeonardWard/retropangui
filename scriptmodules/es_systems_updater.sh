@@ -3,7 +3,11 @@
 # es_systems_updater.sh
 # XML 업데이트 함수 모음: es_systems.xml에 코어 정보를 동적으로 추가/제거
 
-ES_SYSTEMS_XML="${HOME}/.emulationstation/es_systems.xml"
+# config.sh에서 환경변수 로드
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/config.sh"
+
+ES_SYSTEMS_XML="${ES_CONFIG_DIR}/es_systems.xml"
 
 # xmlstarlet 설치 확인
 ensure_xmlstarlet() {
@@ -66,8 +70,6 @@ create_system() {
 
     echo "[INFO] 시스템 '$system_name' 자동 생성 중..."
 
-    backup_es_systems
-
     # 시스템 XML 생성
     local tmp_file=$(mktemp)
     xmlstarlet ed \
@@ -126,7 +128,6 @@ add_core_to_system() {
         create_system "$system_name" "$extensions" || return 1
     fi
 
-    backup_es_systems
     ensure_cores_node "$system_name"
 
     # 코어가 이미 존재하는지 확인
@@ -182,8 +183,6 @@ remove_core_from_system() {
         echo "[ERROR] es_systems.xml 파일을 찾을 수 없습니다: $ES_SYSTEMS_XML"
         return 1
     fi
-
-    backup_es_systems
 
     echo "[INFO] 코어 제거: system=$system_name, core=$core_name"
     xmlstarlet ed -L \

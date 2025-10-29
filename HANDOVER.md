@@ -205,10 +205,38 @@ exec /opt/retropangui/bin/emulationstation.real "$@"
 
 ---
 
-**마지막 상태**: 개선 1 완료, ES 재빌드 및 테스트 필요
+**마지막 상태**: 개선 1, 2 완료. 설치 스크립트 구조 개선 필요
 
 **테스트 체크리스트**:
-- [ ] ES 재빌드 성공
-- [ ] module_id 로그 확인 (FileData.cpp:532)
-- [ ] 게임 실행 정상 동작
+- [x] ES 재빌드 성공
+- [x] module_id 로그 확인 (FileData.cpp:532)
+- [x] 게임 실행 정상 동작
 - [ ] 새 코어 설치 시 XML 자동 업데이트 확인
+- [ ] 환경변수 override 테스트
+- [ ] es_settings.cfg 없이 ES 실행 테스트
+
+---
+
+## 🚧 개선 3: 설치 스크립트 구조 개선 (진행 중)
+
+**문제점**:
+- `install_base_3_in_5_es.sh`: es_systems.xml을 통째로 하드코딩된 코어 목록과 함께 생성
+- `install_base_4_in_5_cores.sh`: 코어 설치 시 XML 업데이트 안 됨
+- 결과: 오래된 코어 정보(module_id 없음) + 중복 가능성
+
+**올바른 구조**:
+```
+install_base_3_in_5_es.sh
+  ↓
+es_systems.xml 기본 구조만 생성 (시스템 정의만, <cores> 비어있음)
+  ↓
+install_base_4_in_5_cores.sh
+  ↓
+install_module() 호출 → 각 코어 설치 후 자동으로 XML 업데이트
+  ↓
+es_systems.xml에 module_id 포함된 정확한 코어 정보 추가
+```
+
+**수정 필요**:
+1. `install_base_3_in_5_es.sh`: es_systems.xml 생성 로직 수정
+2. `install_base_4_in_5_cores.sh`: install_module() 사용 확인

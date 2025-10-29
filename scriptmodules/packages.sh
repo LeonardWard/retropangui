@@ -191,18 +191,21 @@ function update_es_systems_for_core() {
 
     source "$updater_script"
 
-    # rp_module_help에서 ROM Extensions 추출
-    local extensions=""
-    if [[ -n "$rp_module_help" ]]; then
-        # "ROM Extensions: .bin .cue .cbn" 형태에서 추출
-        extensions=$(echo "$rp_module_help" | grep -oP "ROM Extensions:\s*\K[^\n]*" | head -1 | tr '\n' ' ')
+    # 코어 스크립트 파일 경로
+    local script_path="$MODULES_DIR/retropie_setup/scriptmodules/libretrocores/$module_id.sh"
+    if [[ ! -f "$script_path" ]]; then
+        log_msg WARN "[$module_id] 코어 스크립트 파일을 찾을 수 없습니다: $script_path"
+        return 0
     fi
 
+    # 파일에서 직접 rp_module_help 추출 (변수 치환 없이)
+    local raw_help=$(grep -oP 'rp_module_help="\K[^"]+' "$script_path" | head -1)
+
+    # ROM Extensions 추출 (.bin .cue 등의 확장자 목록)
+    local extensions=$(echo "$raw_help" | grep -oP "ROM Extensions:\s*\K[^\\\\]+?(?=\\\\n)" | head -1)
+
     # romdir 경로에서 시스템 이름 추출 (예: $romdir/psx -> psx)
-    local system_name=""
-    if [[ -n "$rp_module_help" ]]; then
-        system_name=$(echo "$rp_module_help" | grep -oP '\$romdir/\K[a-z0-9_-]+' | head -1)
-    fi
+    local system_name=$(echo "$raw_help" | grep -oP '\$romdir/\K[a-z0-9_-]+' | head -1)
 
     if [[ -z "$system_name" ]]; then
         log_msg WARN "[$module_id] 시스템 이름을 추출할 수 없습니다. XML 업데이트 건너뜀."
@@ -220,7 +223,7 @@ function update_es_systems_for_core() {
     # 우선순위 자동 설정 (기본값: 999)
     local priority=999
 
-    log_msg INFO "[$module_id] es_systems.xml 업데이트: system=$system_name, core=$core_name, module_id=$module_id"
+    log_msg INFO "[$module_id] es_systems.xml 업데이트: system=$system_name, core=$core_name, module_id=$module_id, extensions=$extensions"
 
     # es_systems.xml에 추가
     add_core_to_system "$system_name" "$core_name" "$module_id" "$priority" "$extensions" || {
