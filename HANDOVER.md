@@ -187,7 +187,10 @@ es_systems.xml 업데이트:
 - `d1d68d9`: ES 멀티코어 command 템플릿 변수 치환
 
 ### retropangui
-- `7e56557`: packages.sh: rp_module_help 파싱 개선 (대소문자 무시) ⭐ NEW
+- `514ac19`: es_systems_updater.sh: XML 파일 권한 자동 복원 기능 추가 ⭐ NEW
+- `c15d2e8`: HANDOVER.md: 테스트 체크리스트 및 개선 과제 정리
+- `318ca00`: 테스트 완료: rp_module_help 파싱 개선 검증
+- `7e56557`: packages.sh: rp_module_help 파싱 개선 (대소문자 무시)
 - `b97099b`: 핸드오버 문서 업데이트: 개선 3 완료 상태 반영
 - `3367145`: 코어 설치 시스템 최종 개선: 환경변수 로드 및 추출 로직 강화
 - `449cee4`: git_Pull_Or_Clone 수정: 출력 표시 및 디렉토리 변경 문제 해결
@@ -211,6 +214,9 @@ es_systems.xml 업데이트:
   - lr-dosbox-pure: $ROMDIR (대문자) 정상 처리 ✅
   - lr-fbneo: "ROM Extension:" (s 없음) 정상 처리 ✅
   - 시스템 자동 생성 (pc, fba) 확인 ✅
+- [x] XML 파일 권한 문제 해결 (2025-10-30)
+  - sudo 실행 시 root 소유 문제 발견 및 수정 ✅
+  - fix_xml_permissions() 함수로 자동 복원 ✅
 - [N/A] 환경변수 override 테스트 (필요 없음 - es_settings.cfg 자동 생성으로 충분)
 - [N/A] es_settings.cfg 없이 ES 실행 테스트 (필요 없음 - 정상 사용 시나리오 아님)
 
