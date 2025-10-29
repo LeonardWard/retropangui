@@ -17,6 +17,22 @@ ensure_xmlstarlet() {
     fi
 }
 
+# XML 파일 권한을 사용자로 복원
+# sudo로 실행 시 root 소유가 되는 것을 방지
+fix_xml_permissions() {
+    if [[ ! -f "$ES_SYSTEMS_XML" ]]; then
+        return 0
+    fi
+
+    local target_user="$(get_effective_user)"
+    if [[ -z "$target_user" ]]; then
+        log_msg WARN "유효 사용자 이름 결정 실패. 권한 설정을 건너뜁니다."
+        return 0
+    fi
+
+    chown "$target_user:$target_user" "$ES_SYSTEMS_XML" 2>/dev/null || true
+}
+
 # 백업 생성
 backup_es_systems() {
     local backup_file="${ES_SYSTEMS_XML}.backup.$(date +%Y%m%d_%H%M%S)"
@@ -48,6 +64,7 @@ ensure_cores_node() {
         xmlstarlet ed -L \
             -s "/systemList/system[name='$system_name']" -t elem -n "cores" \
             "$ES_SYSTEMS_XML"
+        fix_xml_permissions
     fi
 }
 
@@ -87,6 +104,7 @@ create_system() {
 
     if [[ $? -eq 0 ]]; then
         mv "$tmp_file" "$ES_SYSTEMS_XML"
+        fix_xml_permissions
         echo "[SUCCESS] 시스템 '$system_name' 생성 완료"
 
         # ROM 디렉토리도 생성
@@ -139,6 +157,7 @@ add_core_to_system() {
         xmlstarlet ed -L \
             -d "/systemList/system[name='$system_name']/cores/core[@name='$core_name']" \
             "$ES_SYSTEMS_XML"
+        fix_xml_permissions
     fi
 
     # 새 코어 추가
@@ -157,6 +176,7 @@ add_core_to_system() {
 
     if [[ $? -eq 0 ]]; then
         mv "$tmp_file" "$ES_SYSTEMS_XML"
+        fix_xml_permissions
         echo "[SUCCESS] 코어 '$core_name'이 시스템 '$system_name'에 추가되었습니다."
         return 0
     else
@@ -188,6 +208,7 @@ remove_core_from_system() {
     xmlstarlet ed -L \
         -d "/systemList/system[name='$system_name']/cores/core[@name='$core_name']" \
         "$ES_SYSTEMS_XML"
+    fix_xml_permissions
 
     echo "[SUCCESS] 코어 '$core_name'이 시스템 '$system_name'에서 제거되었습니다."
 }
