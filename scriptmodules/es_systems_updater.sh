@@ -119,17 +119,23 @@ create_system() {
 }
 
 # 특정 시스템에 코어 추가
-# 사용법: add_core_to_system <system_name> <core_name> <module_id> <priority> <extensions>
+# 사용법: add_core_to_system <system_name> <core_name> <module_id> <priority> <extensions> [fullname]
 add_core_to_system() {
     local system_name="$1"
     local core_name="$2"
     local module_id="$3"
     local priority="$4"
     local extensions="$5"  # e.g., ".cue .bin .iso"
+    local fullname="$6"    # e.g., "PCSX ReARMed" (optional)
 
     if [[ -z "$system_name" || -z "$core_name" || -z "$module_id" ]]; then
         echo "[ERROR] add_core_to_system: system_name, core_name, module_id는 필수입니다."
         return 1
+    fi
+
+    # fullname이 없으면 core_name 사용
+    if [[ -z "$fullname" ]]; then
+        fullname="$core_name"
     fi
 
     ensure_xmlstarlet
@@ -161,13 +167,14 @@ add_core_to_system() {
     fi
 
     # 새 코어 추가
-    echo "[INFO] 코어 추가: system=$system_name, core=$core_name, module_id=$module_id, priority=$priority"
+    echo "[INFO] 코어 추가: system=$system_name, core=$core_name, module_id=$module_id, priority=$priority, fullname=$fullname"
 
     # 임시 파일 생성 후 치환
     local tmp_file=$(mktemp)
     xmlstarlet ed \
         -s "/systemList/system[name='$system_name']/cores" -t elem -n "core_tmp" \
         -i "//core_tmp" -t attr -n "name" -v "$core_name" \
+        -i "//core_tmp" -t attr -n "fullname" -v "$fullname" \
         -i "//core_tmp" -t attr -n "module_id" -v "$module_id" \
         -i "//core_tmp" -t attr -n "priority" -v "${priority:-999}" \
         -i "//core_tmp" -t attr -n "extensions" -v "$extensions" \

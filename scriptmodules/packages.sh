@@ -222,13 +222,29 @@ function update_es_systems_for_core() {
     # 코어 이름 추출 (.so 파일명에서 _libretro.so 제거)
     local core_name="${so_filename%_libretro.so}"
 
-    # 우선순위 자동 설정 (기본값: 999)
+    # emulator_priorities.conf에서 priority와 fullname 조회
+    local priority_file="$SCRIPT_DIR/scriptmodules/emulator_priorities.conf"
     local priority=999
+    local fullname=""
 
-    log_msg INFO "[$module_id] es_systems.xml 업데이트: system=$system_name, core=$core_name, module_id=$module_id, extensions=$extensions"
+    if [[ -f "$priority_file" ]]; then
+        # Format: module_id:system_name:priority:fullname
+        local priority_line=$(grep "^${module_id}:${system_name}:" "$priority_file" | head -1)
+        if [[ -n "$priority_line" ]]; then
+            priority=$(echo "$priority_line" | cut -d: -f3)
+            fullname=$(echo "$priority_line" | cut -d: -f4)
+            log_msg INFO "[$module_id] priorities 파일에서 읽음: priority=$priority, fullname=$fullname"
+        else
+            log_msg WARN "[$module_id] priorities 파일에 항목 없음. 기본값 사용: priority=999"
+        fi
+    else
+        log_msg WARN "priorities 파일 없음: $priority_file"
+    fi
+
+    log_msg INFO "[$module_id] es_systems.xml 업데이트: system=$system_name, core=$core_name, module_id=$module_id, priority=$priority, fullname=$fullname, extensions=$extensions"
 
     # es_systems.xml에 추가
-    add_core_to_system "$system_name" "$core_name" "$module_id" "$priority" "$extensions" || {
+    add_core_to_system "$system_name" "$core_name" "$module_id" "$priority" "$extensions" "$fullname" || {
         log_msg WARN "[$module_id] es_systems.xml 업데이트 실패"
         return 1
     }
