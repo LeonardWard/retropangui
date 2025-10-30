@@ -223,7 +223,8 @@ function update_es_systems_for_core() {
     local core_name="${so_filename%_libretro.so}"
 
     # emulator_priorities.conf에서 priority와 fullname 조회
-    local priority_file="$SCRIPT_DIR/scriptmodules/emulator_priorities.conf"
+    # config.sh에서 export된 MODULES_DIR 사용
+    local priority_file="$MODULES_DIR/emulator_priorities.conf"
     local priority=999
     local fullname=""
 
