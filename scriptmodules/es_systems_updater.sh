@@ -258,6 +258,64 @@ list_cores() {
         "$ES_SYSTEMS_XML"
 }
 
+# 시스템의 기본 코어 설정 (priority 재배치)
+# 사용법: set_default_core <system_name> <core_name>
+# 선택한 core를 priority=1로, 나머지는 +1씩 증가
+set_default_core() {
+    local system_name="$1"
+    local target_core="$2"
+
+    if [[ -z "$system_name" || -z "$target_core" ]]; then
+        echo "[ERROR] set_default_core: system_name, core_name은 필수입니다."
+        return 1
+    fi
+
+    ensure_xmlstarlet
+
+    if [[ ! -f "$ES_SYSTEMS_XML" ]]; then
+        echo "[ERROR] es_systems.xml 파일을 찾을 수 없습니다: $ES_SYSTEMS_XML"
+        return 1
+    fi
+
+    # 대상 코어가 존재하는지 확인
+    local core_exists=$(xmlstarlet sel -t -v "count(/systemList/system[name='$system_name']/cores/core[@name='$target_core'])" "$ES_SYSTEMS_XML" 2>/dev/null)
+    if [[ "$core_exists" -eq 0 ]]; then
+        echo "[ERROR] 코어 '$target_core'가 시스템 '$system_name'에 존재하지 않습니다."
+        return 1
+    fi
+
+    echo "[INFO] 시스템 '$system_name'의 기본 코어를 '$target_core'로 설정 중..."
+
+    # 백업 생성
+    backup_es_systems
+
+    # 임시 파일 생성
+    local tmp_file=$(mktemp)
+
+    # 1단계: 모든 코어의 priority를 +1
+    xmlstarlet ed \
+        -u "/systemList/system[name='$system_name']/cores/core/@priority" \
+        -x ". + 1" \
+        "$ES_SYSTEMS_XML" > "$tmp_file"
+
+    # 2단계: 선택한 코어를 priority=1로 설정
+    xmlstarlet ed -L \
+        -u "/systemList/system[name='$system_name']/cores/core[@name='$target_core']/@priority" \
+        -v "1" \
+        "$tmp_file"
+
+    if [[ $? -eq 0 ]]; then
+        mv "$tmp_file" "$ES_SYSTEMS_XML"
+        fix_xml_permissions
+        echo "[SUCCESS] 시스템 '$system_name'의 기본 코어가 '$target_core'로 설정되었습니다."
+        return 0
+    else
+        echo "[ERROR] priority 업데이트 실패"
+        rm -f "$tmp_file"
+        return 1
+    fi
+}
+
 # 메인 실행 (테스트용)
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
     echo "es_systems_updater.sh - ES Systems XML 업데이트 도구"
