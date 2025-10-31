@@ -12,7 +12,7 @@ ES_SYSTEMS_XML="${ES_CONFIG_DIR}/es_systems.xml"
 # xmlstarlet 설치 확인
 ensure_xmlstarlet() {
     if ! command -v xmlstarlet &> /dev/null; then
-        echo "[INFO] xmlstarlet이 설치되어 있지 않습니다. 설치 중..."
+        log_msg INFO "xmlstarlet이 설치되어 있지 않습니다. 설치 중..."
         sudo apt-get update && sudo apt-get install -y xmlstarlet
     fi
 }
@@ -38,7 +38,7 @@ backup_es_systems() {
     local backup_file="${ES_SYSTEMS_XML}.backup.$(date +%Y%m%d_%H%M%S)"
     if [[ -f "$ES_SYSTEMS_XML" ]]; then
         cp "$ES_SYSTEMS_XML" "$backup_file"
-        echo "[INFO] 백업 생성: $backup_file"
+        log_msg INFO "백업 생성: $backup_file"
     fi
 }
 
@@ -60,7 +60,7 @@ ensure_cores_node() {
     local system_name="$1"
 
     if ! has_cores_node "$system_name"; then
-        echo "[INFO] 시스템 '$system_name'에 <cores> 노드 생성 중..."
+        log_msg INFO "시스템 '$system_name'에 <cores> 노드 생성 중..."
         xmlstarlet ed -L \
             -s "/systemList/system[name='$system_name']" -t elem -n "cores" \
             "$ES_SYSTEMS_XML"
@@ -85,7 +85,7 @@ create_system() {
     local retroarch_path="${RETROARCH_BIN_PATH:-/opt/retropangui/bin/retroarch}"
     local command="$retroarch_path -L %CORE% --config %CONFIG% %ROM%"
 
-    echo "[INFO] 시스템 '$system_name' 자동 생성 중..."
+    log_msg INFO "시스템 '$system_name' 자동 생성 중..."
 
     # 시스템 XML 생성
     local tmp_file=$(mktemp)
@@ -105,14 +105,14 @@ create_system() {
     if [[ $? -eq 0 ]]; then
         mv "$tmp_file" "$ES_SYSTEMS_XML"
         fix_xml_permissions
-        echo "[SUCCESS] 시스템 '$system_name' 생성 완료"
+        log_msg SUCCESS "시스템 '$system_name' 생성 완료"
 
         # ROM 디렉토리도 생성
         mkdir -p "$system_path"
-        echo "[INFO] ROM 디렉토리 생성: $system_path"
+        log_msg INFO "ROM 디렉토리 생성: $system_path"
         return 0
     else
-        echo "[ERROR] 시스템 생성 실패"
+        log_msg ERROR "시스템 생성 실패"
         rm -f "$tmp_file"
         return 1
     fi
@@ -129,7 +129,7 @@ add_core_to_system() {
     local fullname="$6"    # e.g., "PCSX ReARMed" (optional)
 
     if [[ -z "$system_name" || -z "$core_name" || -z "$module_id" ]]; then
-        echo "[ERROR] add_core_to_system: system_name, core_name, module_id는 필수입니다."
+        log_msg ERROR "add_core_to_system: system_name, core_name, module_id는 필수입니다."
         return 1
     fi
 
@@ -141,14 +141,14 @@ add_core_to_system() {
     ensure_xmlstarlet
 
     if [[ ! -f "$ES_SYSTEMS_XML" ]]; then
-        echo "[ERROR] es_systems.xml 파일을 찾을 수 없습니다: $ES_SYSTEMS_XML"
+        log_msg ERROR "es_systems.xml 파일을 찾을 수 없습니다: $ES_SYSTEMS_XML"
         return 1
     fi
 
     # 시스템 존재 확인
     local sys_count=$(system_exists "$system_name")
     if [[ "$sys_count" -eq 0 ]]; then
-        echo "[INFO] 시스템 '$system_name'이 없습니다. 자동 생성합니다..."
+        log_msg INFO "시스템 '$system_name'이 없습니다. 자동 생성합니다..."
         create_system "$system_name" "$extensions" || return 1
     fi
 
@@ -158,7 +158,7 @@ add_core_to_system() {
     local core_count=$(xmlstarlet sel -t -v "count(/systemList/system[name='$system_name']/cores/core[@name='$core_name'])" "$ES_SYSTEMS_XML" 2>/dev/null)
 
     if [[ "$core_count" -gt 0 ]]; then
-        echo "[INFO] 코어 '$core_name'이 이미 시스템 '$system_name'에 존재합니다. 업데이트 중..."
+        log_msg INFO "코어 '$core_name'이 이미 시스템 '$system_name'에 존재합니다. 업데이트 중..."
         # 기존 코어 제거
         xmlstarlet ed -L \
             -d "/systemList/system[name='$system_name']/cores/core[@name='$core_name']" \
@@ -167,7 +167,7 @@ add_core_to_system() {
     fi
 
     # 새 코어 추가
-    echo "[INFO] 코어 추가: system=$system_name, core=$core_name, module_id=$module_id, priority=$priority, fullname=$fullname"
+    log_msg INFO "코어 추가: system=$system_name, core=$core_name, module_id=$module_id, priority=$priority, fullname=$fullname"
 
     # 임시 파일 생성 후 치환
     local tmp_file=$(mktemp)
@@ -184,10 +184,10 @@ add_core_to_system() {
     if [[ $? -eq 0 ]]; then
         mv "$tmp_file" "$ES_SYSTEMS_XML"
         fix_xml_permissions
-        echo "[SUCCESS] 코어 '$core_name'이 시스템 '$system_name'에 추가되었습니다."
+        log_msg SUCCESS "코어 '$core_name'이 시스템 '$system_name'에 추가되었습니다."
         return 0
     else
-        echo "[ERROR] XML 업데이트 실패"
+        log_msg ERROR "XML 업데이트 실패"
         rm -f "$tmp_file"
         return 1
     fi
@@ -200,24 +200,24 @@ remove_core_from_system() {
     local core_name="$2"
 
     if [[ -z "$system_name" || -z "$core_name" ]]; then
-        echo "[ERROR] remove_core_from_system: system_name, core_name은 필수입니다."
+        log_msg ERROR "remove_core_from_system: system_name, core_name은 필수입니다."
         return 1
     fi
 
     ensure_xmlstarlet
 
     if [[ ! -f "$ES_SYSTEMS_XML" ]]; then
-        echo "[ERROR] es_systems.xml 파일을 찾을 수 없습니다: $ES_SYSTEMS_XML"
+        log_msg ERROR "es_systems.xml 파일을 찾을 수 없습니다: $ES_SYSTEMS_XML"
         return 1
     fi
 
-    echo "[INFO] 코어 제거: system=$system_name, core=$core_name"
+    log_msg INFO "코어 제거: system=$system_name, core=$core_name"
     xmlstarlet ed -L \
         -d "/systemList/system[name='$system_name']/cores/core[@name='$core_name']" \
         "$ES_SYSTEMS_XML"
     fix_xml_permissions
 
-    echo "[SUCCESS] 코어 '$core_name'이 시스템 '$system_name'에서 제거되었습니다."
+    log_msg SUCCESS "코어 '$core_name'이 시스템 '$system_name'에서 제거되었습니다."
 }
 
 # 코어 정보 조회
@@ -229,7 +229,7 @@ get_core_info() {
     ensure_xmlstarlet
 
     if [[ ! -f "$ES_SYSTEMS_XML" ]]; then
-        echo "[ERROR] es_systems.xml 파일을 찾을 수 없습니다: $ES_SYSTEMS_XML"
+        log_msg ERROR "es_systems.xml 파일을 찾을 수 없습니다: $ES_SYSTEMS_XML"
         return 1
     fi
 
@@ -247,11 +247,11 @@ list_cores() {
     ensure_xmlstarlet
 
     if [[ ! -f "$ES_SYSTEMS_XML" ]]; then
-        echo "[ERROR] es_systems.xml 파일을 찾을 수 없습니다: $ES_SYSTEMS_XML"
+        log_msg ERROR "es_systems.xml 파일을 찾을 수 없습니다: $ES_SYSTEMS_XML"
         return 1
     fi
 
-    echo "[INFO] 시스템 '$system_name'의 코어 목록:"
+    log_msg INFO "시스템 '$system_name'의 코어 목록:"
     xmlstarlet sel -t \
         -m "/systemList/system[name='$system_name']/cores/core" \
         -v "concat('  - ', @name, ' (module_id=', @module_id, ', priority=', @priority, ')')" -n \
@@ -266,25 +266,25 @@ set_default_core() {
     local target_core="$2"
 
     if [[ -z "$system_name" || -z "$target_core" ]]; then
-        echo "[ERROR] set_default_core: system_name, core_name은 필수입니다."
+        log_msg ERROR "set_default_core: system_name, core_name은 필수입니다."
         return 1
     fi
 
     ensure_xmlstarlet
 
     if [[ ! -f "$ES_SYSTEMS_XML" ]]; then
-        echo "[ERROR] es_systems.xml 파일을 찾을 수 없습니다: $ES_SYSTEMS_XML"
+        log_msg ERROR "es_systems.xml 파일을 찾을 수 없습니다: $ES_SYSTEMS_XML"
         return 1
     fi
 
     # 대상 코어가 존재하는지 확인
     local core_exists=$(xmlstarlet sel -t -v "count(/systemList/system[name='$system_name']/cores/core[@name='$target_core'])" "$ES_SYSTEMS_XML" 2>/dev/null)
     if [[ "$core_exists" -eq 0 ]]; then
-        echo "[ERROR] 코어 '$target_core'가 시스템 '$system_name'에 존재하지 않습니다."
+        log_msg ERROR "코어 '$target_core'가 시스템 '$system_name'에 존재하지 않습니다."
         return 1
     fi
 
-    echo "[INFO] 시스템 '$system_name'의 기본 코어를 '$target_core'로 설정 중..."
+    log_msg INFO "시스템 '$system_name'의 기본 코어를 '$target_core'로 설정 중..."
 
     # 백업 생성
     backup_es_systems
@@ -307,10 +307,10 @@ set_default_core() {
     if [[ $? -eq 0 ]]; then
         mv "$tmp_file" "$ES_SYSTEMS_XML"
         fix_xml_permissions
-        echo "[SUCCESS] 시스템 '$system_name'의 기본 코어가 '$target_core'로 설정되었습니다."
+        log_msg SUCCESS "시스템 '$system_name'의 기본 코어가 '$target_core'로 설정되었습니다."
         return 0
     else
-        echo "[ERROR] priority 업데이트 실패"
+        log_msg ERROR "priority 업데이트 실패"
         rm -f "$tmp_file"
         return 1
     fi

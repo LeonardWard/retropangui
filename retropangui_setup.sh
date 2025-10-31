@@ -25,7 +25,7 @@ source "$MODULES_DIR/packages.sh"
 LOG_FILE="$LOG_DIR/retropangui_$(date +%Y%m%d_%H%M%S).log"
 export LOG_FILE
 
-exec > >(tee -a "$LOG_FILE") 2>&1
+# exec > >(tee -a "$LOG_FILE") 2>&1
 
 # --- [2] 메인 실행 함수 ---
 function main() {
@@ -38,9 +38,9 @@ function main() {
     fi
     ensure_log_dir
     # 스크립트 실행 권한 부여
-    echo "[$TIMESTAMP] [INFO] (retropangui_setup.sh:39) 자신과 하위 스크립트의 실행 권한 확인 및 부여" >> "$LOG_FILE"
+    log_msg INFO "자신과 하위 스크립트의 실행 권한 확인 및 부여"
     find "$ROOT_DIR" -type f -name "*.sh" -exec chmod +x {} \;
-    echo "[$TIMESTAMP] [SUCCESS] (retropangui_setup.sh:41) 모든 .sh 파일에 실행 권한이 부여되었습니다." >> "$LOG_FILE"
+    log_msg SUCCESS "모든 .sh 파일에 실행 권한이 부여되었습니다."
 
     # UI를 실행할지 여부를 결정하는 플래그
     local run_ui=true
@@ -52,11 +52,11 @@ function main() {
 
     if $run_ui; then
         # 메인 UI 실행
-        echo "[$TIMESTAMP] [INFO] (retropangui_setup.sh:44) 🚀 Retro Pangui 설정 관리자를 시작합니다..." >> "$LOG_FILE"
+        log_msg INFO "🚀 Retro Pangui 설정 관리자를 시작합니다..."
         main_ui "${args[@]}"
         exit 0 # UI가 실행되었을 때만 스크립트를 종료
     else
-        echo "[$TIMESTAMP] [INFO] (retropangui_setup.sh:XX) UI 없이 환경만 설정합니다." >> "$LOG_FILE"
+        log_msg INFO "UI 없이 환경만 설정합니다."
         # UI가 실행되지 않으면, install_module이 실행될 수 있도록 종료하지 않고 반환
     fi
 }

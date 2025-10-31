@@ -6,10 +6,10 @@
 depends_on() {
     for pkg in "$@"; do
         if ! dpkg -s "$pkg" &> /dev/null; then
-            echo "[INFO] 패키지 $pkg 설치 중..."
+            log_msg INFO "패키지 $pkg 설치 중..."
             sudo apt-get install -y "$pkg"
         else
-            echo "[INFO] 패키지 $pkg 이미 설치됨."
+            log_msg INFO "패키지 $pkg 이미 설치됨."
         fi
     done
 }
@@ -34,14 +34,14 @@ addEmulator() {
     local sys="$3"
     local so_path="$4"
     # 실제 등록 행위는 UI/DB와 연동시 별도 구현 필요
-    echo "[INFO] 에뮬레이터 등록: $id for $sys ($so_path)"
+    log_msg INFO "에뮬레이터 등록: $id for $sys ($so_path)"
 }
 
 # addSystem: 시스템에 등록(예시)
 addSystem() {
     local sys="$1"
     # 시스템별 등록 구체적 구현 필요
-    echo "[INFO] 시스템 등록: $sys"
+    log_msg INFO "시스템 등록: $sys"
 }
 
 # 개별 모듈(코어, 에뮬레이터, 포트)을 소스에서 빌드하고 설치하는 범용 함수

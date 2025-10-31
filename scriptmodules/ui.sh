@@ -275,8 +275,8 @@ function update_script() {
     if [ "$(printf '%s\n' "$remote_version_num" "$local_version_num" | sort -V | tail -n 1)" != "$local_version_num" ]; then
         
         # 최종 디버깅 출력
-        echo "DEBUG: local_version_num=${local_version_num}"
-        echo "DEBUG: __rpg_latest_remote_version=${__rpg_latest_remote_version}"
+        log_msg DEBUG "local_version_num=${local_version_num}"
+        log_msg DEBUG "__rpg_latest_remote_version=${__rpg_latest_remote_version}"
 
         if (whiptail --title "스크립트 업데이트" --yesno "새로운 버전의 스크립트를 사용할 수 있습니다.\n\n현재 버전: v${local_version_num}\n최신 버전: ${__rpg_latest_remote_version}\n\n업데이트를 진행하시겠습니까?" 12 60); then
             log_msg INFO "retropangui 스크립트 업데이트 시작."
@@ -327,22 +327,29 @@ function update_script() {
     fi
 }
 
-# [6] 전부 설치 제거 (소스 빌드 후 설정 파일 정리 로직)
+# [6] 전부 설치 제거 (Share 폴더 제외)
 function uninstall_all() {
-    if (whiptail --title "설정 파일 정리" --yesno "Base System의 사용자 설정 파일만 모두 제거합니다. (Share 폴더 제외)\n소스 빌드된 바이너리 파일은 시스템에서 직접 제거해야 합니다.\n\n계속하시겠습니까?" 10 70);
+    if (whiptail --title "전체 설치 제거" --yesno "Retro Pangui가 생성한 모든 설정, 로그, 빌드 파일, 설치된 코어 및 에뮬레이터를 제거합니다. (Share 폴더 제외)\n\n이 작업은 되돌릴 수 없습니다. 정말로 계속하시겠습니까?" 12 70);
  then
-        log_msg INFO "전부 설치 제거 (설정 파일 정리) 시작."
+        log_msg INFO "전체 설치 제거 시작."
         (
-            echo "30"; echo "### EmulationStation 설정 디렉토리 제거 중..."; 
-            echo "70"; echo "### RetroArch 설정 디렉토리 제거 중..."; 
-            sudo rm -rf "$ES_CONFIG_DIR" "$RA_CONFIG_DIR" > /dev/null 2>&1
+            echo "10"; echo "### 로그 및 임시 파일 제거 중...";
+            sudo rm -rf "$LOG_DIR" "$TEMP_DIR_BASE" > /dev/null 2>&1
+            echo "30"; echo "### EmulationStation 설정 제거 중..."; 
+            sudo rm -rf "$ES_CONFIG_DIR" > /dev/null 2>&1
+            echo "50"; echo "### RetroArch 설정 제거 중..."; 
+            sudo rm -rf "$RA_CONFIG_DIR" > /dev/null 2>&1
+            echo "70"; echo "### 설치된 코어 및 에뮬레이터 제거 중...";
+            sudo rm -rf "$INSTALL_ROOT_DIR" "$LIBRETRO_CORE_PATH" > /dev/null 2>&1
+            echo "90"; echo "### 빌드 파일 제거 중...";
+            sudo rm -rf "$INSTALL_BUILD_DIR" > /dev/null 2>&1
             echo "100"; echo "### 정리 완료.";
-        ) | whiptail --title "정리 진행" --gauge "사용자 설정 파일 정리 중..." 6 50 0
+        ) | whiptail --title "전체 제거 진행" --gauge "생성된 파일 정리 중..." 8 60 0
         
-        whiptail --title "완료" --msgbox "사용자 설정 파일 제거가 완료되었습니다." 8 60
-        log_msg INFO "설정 파일 정리 완료: $ES_CONFIG_DIR, $RA_CONFIG_DIR 디렉토리 제거됨."
+        whiptail --title "완료" --msgbox "모든 생성 파일(Share 폴더 제외) 제거가 완료되었습니다." 8 60
+        log_msg INFO "전체 설치 제거 완료."
     else
-        log_msg INFO "설정 파일 정리가 사용자 요청에 의해 취소되었습니다."
+        log_msg INFO "전체 설치 제거가 사용자에 의해 취소되었습니다."
     fi
 }
 
