@@ -8,6 +8,7 @@ log/
 retropangui-emulationstation-dev
 handover*
 scriptmodules/*.bak
+HANDOVER.md
 
 # 특정 Markdown 파일 무시
 handover-retropangui-251003.md
@@ -32,3 +33,4 @@ README.md
 
 # CLAude 구성 파일 무시
 .claude
+HANDOVER.md
