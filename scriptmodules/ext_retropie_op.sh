@@ -95,14 +95,42 @@ function applyPatch() {
     local patch_file="$1"
     local patch_applied_file="${patch_file##*/}.applied"
 
-    if [[ ! -f "$patch_applied_file" ]]; then
-        if patch -p1 < "$patch_file"; then
-            touch "$patch_applied_file"
-            log_msg INFO "Successfully applied patch: $patch_file"
+    # 패치 파일의 절대 경로 확인 및 자동 보정
+    if [[ ! -f "$patch_file" ]]; then
+        # 경로가 유효하지 않으면, md_data를 사용하여 경로 재구성
+        if [[ -n "$md_data" && -f "$md_data/${patch_file##*/}" ]]; then
+            patch_file="$md_data/${patch_file##*/}"
+            log_msg INFO "Patch file path corrected to: $patch_file"
+        elif [[ -n "$md_data" ]]; then
+            # md_data가 설정되어 있지만 파일이 없는 경우
+            log_msg ERROR "Patch file not found in md_data directory: $md_data/${patch_file##*/}"
+            return 1
         else
-            log_msg ERROR "Failed to apply patch: $patch_file"
+            # md_data도 없고 파일도 찾을 수 없는 경우
+            log_msg ERROR "Patch file not found and md_data not set: $patch_file"
+            log_msg ERROR "md_data=$md_data, md_id=$md_id"
             return 1
         fi
+    fi
+
+    # 빌드 디렉토리에서 패치 적용
+    if [[ -n "$md_build" && -d "$md_build" ]]; then
+        local build_patch_marker="$md_build/$patch_applied_file"
+        if [[ ! -f "$build_patch_marker" ]]; then
+            log_msg INFO "Applying patch: $patch_file in $md_build"
+            if (cd "$md_build" && patch -p1 < "$patch_file"); then
+                touch "$build_patch_marker"
+                log_msg INFO "Successfully applied patch: $patch_file"
+            else
+                log_msg ERROR "Failed to apply patch: $patch_file"
+                return 1
+            fi
+        else
+            log_msg INFO "Patch already applied: $patch_file"
+        fi
+    else
+        log_msg ERROR "md_build directory not set or does not exist: $md_build"
+        return 1
     fi
     return 0
 }

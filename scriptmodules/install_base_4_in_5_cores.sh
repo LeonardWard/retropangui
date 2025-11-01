@@ -21,8 +21,8 @@ BASE_CORE_MODULES=(
     "lr-beetle-pce-fast"        # PC엔진/TurboGrafx-16
     "lr-beetle-supergrafx"      # PCE
     "lr-fbneo"                  # FBNeo
-    # "lr-mupen64plus"            # NINTENDO 64
-    # "lr-np2kai"                 # PC-98
+    "lr-mupen64plus"            # NINTENDO 64
+    "lr-np2kai"                 # PC-98
 )
 
 

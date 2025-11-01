@@ -13,18 +13,37 @@ function gitPullOrClone() {
     local repo_info="$rp_module_repo"
     local dest_dir="${md_build}"
 
-    local type url branch
-    read -r type url branch <<< "$repo_info"
+    local type url branch commit
+    read -r type url branch commit <<< "$repo_info"
 
     if [[ "$type" != "git" ]] || [[ -z "$url" ]]; then
         log_msg ERROR "Invalid repository URL: $repo_info"
         return 1
     fi
-    
-    if [[ -n "$branch" ]]; then
-        git_Pull_Or_Clone "$url" "$dest_dir" --branch "$branch" --depth=1
+
+    # 기본 브랜치 설정
+    [[ -z "$branch" ]] && branch="master"
+
+    # 커밋이 지정된 경우 shallow clone을 사용하지 않음
+    if [[ -n "$commit" ]]; then
+        log_msg INFO "Cloning with specific commit: $commit"
+        git_Pull_Or_Clone "$url" "$dest_dir" --branch "$branch" --recursive
+
+        # 특정 커밋으로 체크아웃
+        if [[ -d "$dest_dir/.git" ]]; then
+            log_msg INFO "Checking out commit: $commit"
+            git -C "$dest_dir" checkout -f "$commit" || {
+                log_msg ERROR "Failed to checkout commit $commit"
+                return 1
+            }
+        fi
     else
-        git_Pull_Or_Clone "$url" "$dest_dir" --depth=1
+        # 커밋이 지정되지 않은 경우 shallow clone 사용
+        if [[ -n "$branch" ]]; then
+            git_Pull_Or_Clone "$url" "$dest_dir" --branch "$branch" --depth=1 --recursive
+        else
+            git_Pull_Or_Clone "$url" "$dest_dir" --depth=1 --recursive
+        fi
     fi
 }
 
@@ -44,6 +63,7 @@ function installLibretroCore() {
     log_msg INFO "Installing files for $module_id from $build_dir..."
 
     if [[ -n "${md_ret_files[*]}" ]]; then
+        local missing_files=()
         for _file in "${md_ret_files[@]}"; do
             local src_path="$build_dir/$_file"
             local dest_dir=""
@@ -51,7 +71,8 @@ function installLibretroCore() {
             local file_basename="${_file##*/}" # 파일 이름 추출
 
             if [[ ! -e "$src_path" ]]; then
-                log_msg WARN "File/directory to install not found: $src_path"
+                log_msg ERROR "Required file not found: $src_path"
+                missing_files+=("$_file")
                 continue
             fi
 
@@ -92,6 +113,13 @@ function installLibretroCore() {
             log_msg INFO "Copying $src_path to $dest_dir"
             cp -Rvf "$src_path" "$dest_dir"
         done
+
+        # 누락된 파일이 있으면 오류 반환
+        if [[ "${#missing_files[@]}" -gt 0 ]]; then
+            log_msg ERROR "Installation failed: ${#missing_files[@]} required file(s) not found: ${missing_files[*]}"
+            return 1
+        fi
+
         log_msg SUCCESS "All files for $module_id installed to their respective locations."
     else
         log_msg INFO "No files listed in md_ret_files for $module_id. Nothing to install."
@@ -128,7 +156,7 @@ function rpSwap() {
 }
 
 function hasPackage() {
-    dpkg -l "$1" &>/dev/null
+    dpkg -l "$1" 2>/dev/null | grep -q "^ii"
 }
 
 function aptInstall() {
@@ -138,15 +166,36 @@ function aptInstall() {
 function getDepends() {
     local pkgs=("$@")
     local missing_pkgs=()
+
+    if [[ "${#pkgs[@]}" -eq 0 ]]; then
+        log_msg INFO "No dependencies specified"
+        return 0
+    fi
+
+    log_msg INFO "Checking dependencies: ${pkgs[*]}"
+
     for pkg in "${pkgs[@]}"; do
         if ! hasPackage "$pkg"; then
             missing_pkgs+=("$pkg")
+            log_msg INFO "Package '$pkg' is missing"
+        else
+            log_msg INFO "Package '$pkg' is already installed"
         fi
     done
 
     if [[ "${#missing_pkgs[@]}" -gt 0 ]]; then
         log_msg INFO "Installing missing dependencies: ${missing_pkgs[*]}"
-        sudo apt-get update
-        aptInstall "${missing_pkgs[@]}"
+        sudo apt-get update || {
+            log_msg ERROR "apt-get update failed"
+            return 1
+        }
+        aptInstall "${missing_pkgs[@]}" || {
+            log_msg ERROR "Failed to install dependencies: ${missing_pkgs[*]}"
+            return 1
+        }
+        log_msg SUCCESS "Successfully installed dependencies: ${missing_pkgs[*]}"
+    else
+        log_msg INFO "All dependencies are already installed"
     fi
+    return 0
 }

@@ -27,7 +27,7 @@ install_retroarch() {
         --prefix="$INSTALL_ROOT_DIR" \
         --disable-x11 \
         --disable-wayland \
-        --enable-opengles \
+        --enable-opengl \
         --enable-udev \
         --enable-alsa \
         --enable-threads \

@@ -63,3 +63,17 @@ run_command() {
 command_exists() {
     command -v "$1" >/dev/null 2>&1
 }
+
+# whiptail --gauge를 위한 로깅 및 출력 함수
+# 사용법: log_and_gauge <percentage> <message>
+function log_and_gauge() {
+    local percentage="$1"
+    local message="$2"
+
+    # 1. 로그 파일에 기록
+    log_msg STEP "$message"
+
+    # 2. whiptail --gauge에 입력으로 전달
+    echo "$percentage"
+    echo "### $message"
+}

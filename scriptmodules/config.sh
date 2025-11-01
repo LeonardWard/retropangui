@@ -41,6 +41,10 @@ export LOG_DIR="$ROOT_DIR/log"
 export RETROARCH_BIN_PATH="$INSTALL_ROOT_DIR/bin/retroarch"
 export LIBRETRO_CORE_PATH="$INSTALL_ROOT_DIR/libretrocores"
 
+# RetroPie 호환성을 위한 추가 경로
+export emudir="$INSTALL_ROOT_DIR/emulators"
+export biosdir="$USER_BIOS_PATH"
+
 # --- [5] 사용자별 경로 설정 (USER_HOME 기반) ---
 export USER_SHARE_PATH="$USER_HOME/share"
 export USER_ROMS_PATH="$USER_SHARE_PATH/roms"
@@ -106,9 +110,15 @@ __platform_flags=()
 __platform_arch=$(uname -m)
 export __platform="$__platform_arch"
 
+# CPU 플래그 초기화
+__default_cpu_flags=""
+__default_opt_flags="-O2"
+
 case "$__platform_arch" in
     x86_64)
-        __platform_flags+=("x86_64" "64bit" "x86")
+        # x86_64 native 플랫폼 설정 (RetroPie 방식)
+        __default_cpu_flags="-march=native"
+        __platform_flags+=("$__platform_arch" "64bit" "x86" "gl" "vulkan" "x11")
         ;;
     aarch64)
         __platform_flags+=("aarch64" "64bit" "arm")
@@ -121,9 +131,11 @@ case "$__platform_arch" in
         ;;
 esac
 
-# 플랫폼 플래그 export (추가)
+# 플랫폼 관련 변수 export
 export __platform_flags
+export __default_cpu_flags
+export __default_opt_flags
 
-# GCC 버전 설정 (추가)
+# GCC 버전 설정
 __gcc_version=$(gcc -dumpversion | cut -d. -f1 2>/dev/null || echo "0")
 export __gcc_version

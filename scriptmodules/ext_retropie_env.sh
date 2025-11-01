@@ -41,10 +41,23 @@ function setup_env() {
     export __os_id="$(lsb_release -si 2>/dev/null || echo "Unknown")"
     export __os_codename="$(lsb_release -sc 2>/dev/null || echo "Unknown")"
 
-    export CFLAGS="-O2"
+    # RetroPie 방식의 컴파일 플래그 설정
+    local __cflags="$__default_opt_flags $__default_cpu_flags"
+    local __cxxflags="$__default_opt_flags $__default_cpu_flags"
+
+    # GCC 14+ 호환성: 타입 관련 경고를 오류로 처리하지 않음
+    if [[ "$__gcc_version" -ge 14 ]]; then
+        __cflags="$__cflags -Wno-error=incompatible-pointer-types -Wno-error=int-conversion"
+        __cxxflags="$__cxxflags -Wno-error=incompatible-pointer-types -Wno-error=int-conversion"
+        log_msg INFO "GCC $__gcc_version 감지: -Wno-error=incompatible-pointer-types, -Wno-error=int-conversion 플래그 추가"
+    fi
+
+    export CFLAGS="${CFLAGS:-$__cflags}"
+    export CXXFLAGS="${CXXFLAGS:-$__cxxflags}"
     export MAKEFLAGS="$__default_makeflags"
-    
+
     log_msg DEBUG "환경 초기화 완료: 플랫폼=$__platform (${__platform_flags[*]}), GCC=$__gcc_version, 작업=$__jobs"
+    log_msg DEBUG "CFLAGS=$CFLAGS"
 }
 
 

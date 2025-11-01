@@ -57,6 +57,16 @@ function diffFiles() {
     return $?
 }
 
+function runCmd() {
+    local ret
+    "$@"
+    ret=$?
+    if [[ "$ret" -ne 0 ]]; then
+        log_msg ERROR "Error running '$*' - returned $ret"
+    fi
+    return $ret
+}
+
 function copyDefaultConfig() {
     local from="$1"
     local to="$2"

@@ -97,76 +97,140 @@ function manage_packages_by_section() {
     local section_title="$1"
     local section_id="$2"
 
-    log_msg INFO "$section_title 관리 메뉴에 진입했습니다."
+    while true; do
+        log_msg INFO "$section_title 관리 메뉴에 진입했습니다."
 
-    # 터미널 크기 동적 감지
-    local term_height=$(tput lines 2>/dev/null || echo 24)
-    local term_width=$(tput cols 2>/dev/null || echo 80)
+        local term_height=$(tput lines 2>/dev/null || echo 24)
+        local term_width=$(tput cols 2>/dev/null || echo 80)
+        local box_width=$((term_width - 4))
+        [[ "$box_width" -gt 78 ]] && box_width=78
+        [[ "$box_width" -lt 60 ]] && box_width=60
+        local box_height=$((term_height - 4))
+        [[ "$box_height" -lt 10 ]] && box_height=10
+        local list_height=$((box_height - 8))
+        [[ "$list_height" -lt 1 ]] && list_height=1
+        local desc_width=$((box_width - 30))
+        [[ "$desc_width" -lt 20 ]] && desc_width=20
 
-    # 박스 크기 계산
-    local box_width=$((term_width - 4))
-    [[ "$box_width" -gt 78 ]] && box_width=78
-    [[ "$box_width" -lt 60 ]] && box_width=60
+        log_msg DEBUG "Terminal: ${term_height}x${term_width}, Box: ${box_height}x${box_width}, Desc: ${desc_width}"
 
-    local box_height=$((term_height - 4))
-    [[ "$box_height" -lt 10 ]] && box_height=10
+        local options=()
+        declare -A module_info
 
-    local list_height=$((box_height - 8))
-    [[ "$list_height" -lt 1 ]] && list_height=1
+        while IFS= read -r -d '' id && IFS= read -r -d '' desc && IFS= read -r -d '' section && IFS= read -r -d '' type && IFS= read -r -d '' status; do
+            if [[ "$section" == "$section_id" ]]; then
+                local status_icon="[ ]"
+                if [[ "$status" == "ON" ]]; then
+                    status_icon="[✔]"
+                fi
+                options+=("$id" "$status_icon $desc")
+                module_info["$id,type"]="$type"
+                module_info["$id,status"]="$status"
+            fi
+        done < <(get_packages_with_update_status "$desc_width")
 
-    # 설명 텍스트 최대 너비 계산 (보수적으로: box_width - 30)
-    local desc_width=$((box_width - 30))
-    [[ "$desc_width" -lt 20 ]] && desc_width=20
-
-    log_msg DEBUG "Terminal: ${term_height}x${term_width}, Box: ${box_height}x${box_width}, Desc: ${desc_width}"
-
-    local options=()
-    declare -A module_info
-
-    # get_packages_with_update_status 함수에 설명 너비 전달
-    while IFS= read -r -d '' id && IFS= read -r -d '' desc && IFS= read -r -d '' section && IFS= read -r -d '' type && IFS= read -r -d '' status; do
-        if [[ "$section" == "$section_id" ]]; then
-            options+=("$id" "$desc" "$status")
-            module_info["$id,type"]="$type"
-            module_info["$id,status"]="$status"
+        if [ ${#options[@]} -eq 0 ]; then
+            whiptail --title "정보" --msgbox "이 섹션에는 현재 플랫폼에서 설치 가능한 패키지가 없습니다." 8 70
+            return
         fi
-    done < <(get_packages_with_update_status "$desc_width")
 
-    if [ ${#options[@]} -eq 0 ]; then
-        whiptail --title "정보" --msgbox "이 섹션에는 현재 플랫폼에서 설치 가능한 패키지가 없습니다." 8 70
+        local CHOICE
+        CHOICE=$(whiptail --title "$section_title" --menu "패키지를 선택하세요 (설치됨: ✔)." "$box_height" "$box_width" "$list_height" "${options[@]}" 3>&1 1>&2 2>&3)
+
+        if [ $? -eq 0 ]; then
+            package_action_menu "$CHOICE" "${module_info["$CHOICE,type"]}" "${module_info["$CHOICE,status"]}"
+        else
+            break # 뒤로 가기 또는 ESC
+        fi
+    done
+}
+
+# 개별 패키지 액션 메뉴
+function package_action_menu() {
+    local module_id="$1"
+    local module_type="$2"
+    local is_installed="$3"
+    local choice
+
+    local status_text="미설치"
+    if [[ "$is_installed" == "ON" ]]; then
+        status_text="설치됨"
+    fi
+
+    while true; do
+        choice=$(whiptail --title "패키지: $module_id" --menu "상태: $status_text\n\n수행할 작업을 선택하세요." 18 78 10 \
+            "install"  "패키지 설치/업데이트" \
+            "remove"   "패키지 제거" \
+            "info"     "패키지 정보 보기" \
+            "back"     "뒤로" 3>&1 1>&2 2>&3)
+
+        local exitstatus=$?
+        if [ $exitstatus -ne 0 ]; then
+            break
+        fi
+
+        case "$choice" in
+            install)
+                if [[ "$is_installed" == "ON" ]]; then
+                    if !(whiptail --title "경고" --yesno "이 패키지는 이미 설치되어 있습니다.\n다시 설치(업데이트) 하시겠습니까?" 10 60); then
+                        continue
+                    fi
+                fi
+                clear
+                echo "===================================================="
+                echo "  INSTALLING: $module_id ($module_type)"
+                echo "===================================================="
+                install_module "$module_id" "$module_type"
+                echo "----------------------------------------------------"
+                read -p "작업이 완료되었습니다. 메뉴로 돌아가려면 [Enter]를 누르세요."
+                break
+                ;;
+            remove)
+                if [[ "$is_installed" != "ON" ]]; then
+                    whiptail --title "오류" --msgbox "이 패키지는 설치되어 있지 않습니다." 8 78
+                    continue
+                fi
+                if (whiptail --title "확인" --yesno "정말로 '$module_id' 패키지를 제거하시겠습니까?\n이 작업은 되돌릴 수 없습니다." 10 60); then
+                    clear
+                    echo "===================================================="
+                    echo "  REMOVING: $module_id ($module_type)"
+                    echo "===================================================="
+                    remove_module "$module_id" "$module_type"
+                    echo "----------------------------------------------------"
+                    read -p "제거 작업이 완료되었습니다. 메뉴로 돌아가려면 [Enter]를 누르세요."
+                    break
+                fi
+                ;;
+            info)
+                show_package_info "$module_id" "$module_type"
+                ;;
+            back)
+                break
+                ;;
+        esac
+    done
+}
+
+function show_package_info() {
+    local module_id="$1"
+    local module_type="$2"
+
+    log_msg INFO "정보 보기: $module_id"
+
+    local script_path="$MODULES_DIR/retropie_setup/scriptmodules/$module_type/$module_id.sh"
+    if [[ ! -f "$script_path" ]]; then
+        whiptail --title "오류" --msgbox "스크립트 파일을 찾을 수 없습니다:\n$script_path" 8 78
         return
     fi
 
-    local CHOICES
-    CHOICES=$(whiptail --title "$section_title" --checklist "설치할 패키지를 스페이스바로 선택하세요." "$box_height" "$box_width" "$list_height" "${options[@]}" 3>&1 1>&2 2>&3)
+    # romdir, biosdir 변수를 설정하고 서브셸에서 스크립트를 source하여 변수가 확장된 help_text를 가져옴
+    local help_text=$(romdir="$USER_ROMS_PATH"; biosdir="$USER_BIOS_PATH"; source "$script_path"; echo "$rp_module_help")
 
-    if [ $? -eq 0 ]; then
-        clear
-
-        for CHOICE in $CHOICES; do
-            local module_id=$(echo "$CHOICE" | tr -d '"')
-            local module_type=${module_info["$module_id,type"]}
-            local is_installed=${module_info["$module_id,status"]}
-
-            if [[ "$is_installed" == "ON" ]]; then
-                echo "SKIPPING: $module_id is already installed."
-                continue
-            fi
-
-            echo "===================================================="
-            echo "  INSTALLING: $module_id ($module_type)"
-            echo "===================================================="
-
-            install_module "$module_id" "$module_type"
-
-            echo "----------------------------------------------------"
-        done
-
-        echo ""
-        read -p "모든 패키지 작업이 완료되었습니다. 메뉴로 돌아가려면 [Enter]를 누르세요."
-    else
-        log_msg INFO "$section_title 관리가 취소되었습니다."
+    if [[ -z "$help_text" ]]; then
+        help_text="이 패키지에 대한 정보가 없습니다."
     fi
+
+    whiptail --title "정보: $module_id" --msgbox "$help_text" 20 78
 }
 
 # 새로운 패키지 관리 메인 메뉴
@@ -333,17 +397,17 @@ function uninstall_all() {
  then
         log_msg INFO "전체 설치 제거 시작."
         (
-            echo "10"; echo "### 로그 및 임시 파일 제거 중...";
+            log_and_gauge "10" "로그 및 임시 파일 제거 중..."
             sudo rm -rf "$LOG_DIR" "$TEMP_DIR_BASE" > /dev/null 2>&1
-            echo "30"; echo "### EmulationStation 설정 제거 중..."; 
+            log_and_gauge "30" "EmulationStation 설정 제거 중..."
             sudo rm -rf "$ES_CONFIG_DIR" > /dev/null 2>&1
-            echo "50"; echo "### RetroArch 설정 제거 중..."; 
+            log_and_gauge "50" "RetroArch 설정 제거 중..."
             sudo rm -rf "$RA_CONFIG_DIR" > /dev/null 2>&1
-            echo "70"; echo "### 설치된 코어 및 에뮬레이터 제거 중...";
+            log_and_gauge "70" "설치된 코어 및 에뮬레이터 제거 중..."
             sudo rm -rf "$INSTALL_ROOT_DIR" "$LIBRETRO_CORE_PATH" > /dev/null 2>&1
-            echo "90"; echo "### 빌드 파일 제거 중...";
+            log_and_gauge "90" "빌드 파일 제거 중..."
             sudo rm -rf "$INSTALL_BUILD_DIR" > /dev/null 2>&1
-            echo "100"; echo "### 정리 완료.";
+            log_and_gauge "100" "정리 완료."
         ) | whiptail --title "전체 제거 진행" --gauge "생성된 파일 정리 중..." 8 60 0
         
         whiptail --title "완료" --msgbox "모든 생성 파일(Share 폴더 제외) 제거가 완료되었습니다." 8 60

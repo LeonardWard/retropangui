@@ -74,6 +74,11 @@ function install_module() {
             ;;
     esac
 
+    # md_data: 모듈의 데이터 파일(패치 등)이 있는 디렉토리
+    export md_data="$MODULES_DIR/retropie_setup/scriptmodules/$module_type/$module_id"
+
+    log_msg INFO "Setting md_data=$md_data"
+
     log_msg STEP "$module_id ($module_type) 모듈 설치를 시작합니다..."
 
     local script_path="$MODULES_DIR/retropie_setup/scriptmodules/$module_type/$module_id.sh"
@@ -83,6 +88,7 @@ function install_module() {
     fi
 
     export md_ret_files=()
+    export md_ret_require=""
 
     source "$script_path"
 
@@ -93,9 +99,8 @@ function install_module() {
 
         case "$func_name" in
             depends)
-                # depends는 무조건 성공 처리 (공식 RetroPie-Setup 방식)
                 if declare -f "${func_name}_$module_id" > /dev/null; then
-                    "${func_name}_$module_id" || true
+                    "${func_name}_$module_id" || status=$?
                 fi
                 ;;
             sources)
@@ -118,8 +123,21 @@ function install_module() {
                 if [[ -d "$actual_source_dir" ]]; then
                     pushd "$actual_source_dir" >/dev/null || { log_msg ERROR "[$module_id] 디렉토리 '$actual_source_dir'로 이동 실패."; status=1; }
                     if [[ $status -eq 0 ]]; then
-                        "${func_name}_$module_id" || status=$?
+                        if declare -f "${func_name}_$module_id" > /dev/null; then
+                            "${func_name}_$module_id" || status=$?
+                        fi
                         popd >/dev/null
+
+                        # install 단계 직후 libretrocore 파일 복사
+                        if [[ "$func_name" == "install" && "$module_type" == "libretrocores" && $status -eq 0 ]]; then
+                            log_msg INFO "[$module_id] 최종 코어 파일 복사를 실행합니다..."
+                            if [[ ${#md_ret_files[@]} -eq 0 ]]; then
+                                log_msg ERROR "[$module_id] 'install' 단계에서 'md_ret_files'가 설정되지 않았습니다. 설치할 파일이 없습니다."
+                                status=1
+                            else
+                                installLibretroCore "$actual_source_dir" "$module_id" "$md_inst" || status=$?
+                            fi
+                        fi
                     fi
                 else
                     log_msg ERROR "[$module_id] 소스 디렉토리 '$actual_source_dir'를 찾을 수 없습니다. '${func_name}' 단계 실패."
@@ -133,21 +151,35 @@ function install_module() {
                 ;;
         esac
 
+        # 빌드 후 필수 파일 생성 여부 확인
+        if [[ "$func_name" == "build" && $status -eq 0 && -n "$md_ret_require" ]]; then
+            local required_file="${md_ret_require[0]}"
+            local full_path
+
+            # `case` 구문을 사용하여 절대/상대 경로를 명확하게 확인
+            case "$required_file" in
+                /*) # 절대 경로인 경우
+                    full_path="$required_file"
+                    ;;
+                *)  # 상대 경로인 경우
+                    full_path="$md_build/$required_file"
+                    ;;
+            esac
+
+            if [[ ! -f "$full_path" ]]; then
+                log_msg ERROR "[$module_id] 빌드 실패: 필수 파일 '$full_path'가 생성되지 않았습니다."
+                status=1
+            fi
+        fi
+
         if [[ $status -ne 0 ]]; then
             log_msg ERROR "[$module_id] '${func_name}' 단계 실행 중 오류가 발생했습니다 (Exit Code: $status)."
             return 1
         fi
     done
 
+    # libretrocore의 경우 es_systems.xml 업데이트 및 메타데이터 생성
     if [[ "$module_type" == "libretrocores" ]]; then
-        log_msg INFO "[$module_id] 최종 코어 파일 복사를 실행합니다..."
-        local actual_source_dir="$md_build"
-        if [[ ${#md_ret_files[@]} -eq 0 ]]; then
-            log_msg ERROR "[$module_id] 'install' 단계에서 'md_ret_files'가 설정되지 않았습니다. 설치할 파일이 없습니다."
-            return 1
-        fi
-        installLibretroCore "$actual_source_dir" "$module_id" "$md_inst" || return 1
-
         local installed_so_file=""
         for f in "${md_ret_files[@]}"; do
             if [[ "$f" == *.so ]]; then
@@ -161,20 +193,38 @@ function install_module() {
             return 1
         fi
 
-        # 파일명만 추출 (basename)
         local so_filename="$(basename "$installed_so_file")"
 
         echo "$so_filename" | sudo tee "$md_inst/.installed_so_name" >/dev/null
         sudo chown "$__user":"$__user" "$md_inst/.installed_so_name"
         log_msg INFO "[$module_id] 설치된 코어 메타데이터 파일 생성: $md_inst/.installed_so_name -> $so_filename"
 
-        # es_systems.xml 자동 업데이트
         log_msg INFO "[$module_id] es_systems.xml 업데이트를 시작합니다..."
         update_es_systems_for_core "$module_id" "$so_filename"
     fi
 
     log_msg SUCCESS "$module_id 모듈 설치 및 설정이 완료되었습니다."
     return 0
+}
+
+# 특수 케이스: 표준 형식을 따르지 않는 코어들의 정보 반환
+function get_special_core_info() {
+    local module_id="$1"
+    local info_type="$2"  # "extensions" 또는 "system"
+
+    case "$module_id" in
+        lr-scummvm)
+            if [[ "$info_type" == "extensions" ]]; then
+                echo ".svm"
+            elif [[ "$info_type" == "system" ]]; then
+                echo "scummvm"
+            fi
+            ;;
+        # 추가 특수 케이스는 여기에 추가
+        *)
+            echo ""
+            ;;
+    esac
 }
 
 # es_systems.xml에 코어 추가 (libretrocore 설치 후 자동 호출)
@@ -209,14 +259,25 @@ function update_es_systems_for_core() {
     # $romdir, $ROMDIR 모두 지원 (대소문자 무시)
     local system_name=$(echo "$raw_help" | grep -oiP '\$romdir/\K[a-z0-9_-]+' | head -1)
 
+    # 표준 방식으로 추출 실패 시 특수 케이스 확인
     if [[ -z "$system_name" ]]; then
-        log_msg WARN "[$module_id] 시스템 이름을 추출할 수 없습니다. XML 업데이트 건너뜀."
-        return 0
+        system_name=$(get_special_core_info "$module_id" "system")
+        if [[ -z "$system_name" ]]; then
+            log_msg WARN "[$module_id] 시스템 이름을 추출할 수 없습니다. XML 업데이트 건너뜀."
+            return 0
+        else
+            log_msg INFO "[$module_id] 특수 케이스에서 시스템 이름 추출: $system_name"
+        fi
     fi
 
     if [[ -z "$extensions" ]]; then
-        log_msg WARN "[$module_id] ROM Extensions를 추출할 수 없습니다. XML 업데이트 건너뜀."
-        return 0
+        extensions=$(get_special_core_info "$module_id" "extensions")
+        if [[ -z "$extensions" ]]; then
+            log_msg WARN "[$module_id] ROM Extensions를 추출할 수 없습니다. XML 업데이트 건너뜀."
+            return 0
+        else
+            log_msg INFO "[$module_id] 특수 케이스에서 확장자 추출: $extensions"
+        fi
     fi
 
     # 코어 이름 추출 (.so 파일명에서 _libretro.so 제거)
@@ -254,3 +315,79 @@ function update_es_systems_for_core() {
     return 0
 }
 
+# 개별 모듈 제거 함수
+# 사용법: remove_module "모듈id" "모듈타입"
+function remove_module() {
+    local module_id="$1"
+    local module_type="$2"
+
+    if [[ -z "$module_id" || -z "$module_type" ]]; then
+        log_msg ERROR "remove_module: Module ID 또는 Type이 제공되지 않았습니다."
+        return 1
+    fi
+
+    source "$MODULES_DIR/ext_retropie_core.sh"
+    setup_env
+
+    export md_id="$module_id"
+
+    case "$module_type" in
+        libretrocores)
+            export md_inst="$LIBRETRO_CORE_PATH/$module_id"
+            ;;
+        emulators|ports)
+            export md_inst="$INSTALL_ROOT_DIR/$module_type/$module_id"
+            ;;
+        *)
+            log_msg ERROR "알 수 없는 모듈 타입입니다: $module_type"
+            return 1
+            ;;
+    esac
+
+    log_msg STEP "$module_id ($module_type) 모듈 제거를 시작합니다..."
+
+    local script_path="$MODULES_DIR/retropie_setup/scriptmodules/$module_type/$module_id.sh"
+
+    # 1. es_systems.xml에서 코어 정보 제거 (libretro 코어인 경우)
+    if [[ "$module_type" == "libretrocores" ]]; then
+        log_msg INFO "[$module_id] es_systems.xml에서 코어 정보를 제거합니다..."
+        local so_name_file="$md_inst/.installed_so_name"
+        if [[ -f "$so_name_file" ]]; then
+            local so_filename=$(cat "$so_name_file")
+            local core_name="${so_filename%_libretro.so}"
+            
+            if [[ -f "$script_path" ]]; then
+                local raw_help=$(grep -oP 'rp_module_help="\K[^"]+' "$script_path" | head -1)
+                local system_name=$(echo "$raw_help" | grep -oiP '\$romdir/\K[a-z0-9_-]+' | head -1)
+
+                if [[ -n "$system_name" && -n "$core_name" ]]; then
+                    source "$MODULES_DIR/es_systems_updater.sh"
+                    remove_core_from_system "$system_name" "$core_name"
+                else
+                    log_msg WARN "[$module_id] es_systems.xml에서 제거할 시스템 또는 코어 이름을 확인할 수 없습니다."
+                fi
+            else
+                log_msg WARN "[$module_id] 모듈 스크립트 파일을 찾을 수 없어 system 이름을 확인할 수 없습니다."
+            fi
+        else
+            log_msg WARN "[$module_id] 설치된 코어 정보 파일(.installed_so_name)을 찾을 수 없어 es_systems.xml을 업데이트할 수 없습니다."
+        fi
+    fi
+
+    # 2. 실제 파일 제거
+    log_msg INFO "[$module_id] 설치된 파일을 제거합니다: $md_inst"
+    if [[ -d "$md_inst" ]]; then
+        sudo rm -rf "$md_inst"
+        if [[ $? -eq 0 ]]; then
+            log_msg SUCCESS "[$module_id] 디렉토리 제거 완료: $md_inst"
+        else
+            log_msg ERROR "[$module_id] 디렉토리 제거 실패: $md_inst"
+            return 1
+        fi
+    else
+        log_msg WARN "[$module_id] 설치 디렉토리를 찾을 수 없습니다: $md_inst"
+    fi
+
+    log_msg SUCCESS "$module_id 모듈 제거가 완료되었습니다."
+    return 0
+}
