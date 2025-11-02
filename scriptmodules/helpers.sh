@@ -6,7 +6,7 @@
 
 # 로그 레벨 설정 (환경 변수로 제어 가능)
 # 0=DEBUG, 1=INFO, 2=WARN, 3=ERROR, 4=SUCCESS, 5=STEP
-LOG_LEVEL="${LOG_LEVEL:-1}"  # 기본값: INFO (DEBUG 숨김)
+LOG_LEVEL="${LOG_LEVEL:0}"  # 기본값: INFO (DEBUG 숨김)
 
 ensure_log_dir() {
     if [ ! -d "$LOG_DIR" ]; then
@@ -64,7 +64,7 @@ command_exists() {
     command -v "$1" >/dev/null 2>&1
 }
 
-# whiptail --gauge를 위한 로깅 및 출력 함수
+# dialog --gauge를 위한 로깅 및 출력 함수
 # 사용법: log_and_gauge <percentage> <message>
 function log_and_gauge() {
     local percentage="$1"

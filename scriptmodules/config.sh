@@ -85,7 +85,7 @@ export RA_OVERLAYS_GIT_URL="https://github.com/libretro/common-overlays.git"
 export RA_SHADERS_GIT_URL="https://github.com/libretro/glsl-shaders.git"
 export ES_GIT_URL="https://github.com/LeonardWard/retropangui-emulationstation.git"
 
-# Whiptail 메뉴 설정 상수
+# Dialog 메뉴 설정 상수
 export HEIGHT=20
 export WIDTH=80
 export CHOICE_HEIGHT=12
