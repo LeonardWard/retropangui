@@ -4,11 +4,13 @@ recalbox/
 recalbox-emulationstation/
 log/
 
-# 개발용 디렉토리 무시
+# 개발용 디렉토리/파일 무시
 retropangui-emulationstation-dev
 handover*
 scriptmodules/*.bak
 HANDOVER.md
+README.md.bak
+button_related_files.txt
 
 # 특정 Markdown 파일 무시
 handover-retropangui-251003.md
@@ -27,11 +29,6 @@ resources/es-recalbox/es_bios.xsd
 /home/pangui/scripts/retropangui/debug_cores.sh
 /home/pangui/scripts/retropangui/init_folder_files.sh
 
-# 특정 텍스트 파일 무시
-button_related_files.txt
-README.md
-
 # CLAude 구성 파일 무시
 .claude
-HANDOVER.md
 docs/ES_버튼매핑_기술문서.md
