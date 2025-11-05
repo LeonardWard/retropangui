@@ -55,7 +55,7 @@ install_retroarch() {
 
     local CONFIG_RA_SKELETON="$INSTALL_ROOT_DIR/etc/retroarch.cfg"
     if [ -f "$CONFIG_RA_SKELETON" ]; then
-        cp "$CONFIG_RA_SKELETON" "$USER_CONFIG_PATH/retroarch.cfg" || { log_msg ERROR "RetroArch 설정 파일 복사 실패."; return 1; }
+        cp "$CONFIG_RA_SKELETON" "$RA_CONFIG_PATH/retroarch.cfg" || { log_msg ERROR "RetroArch 설정 파일 복사 실패."; return 1; }
         # chown -R $__user:$__user "$USER_CONFIG_PATH/retroarch.cfg" || return 1
         log_msg INFO "기본 ($USER_CONFIG_PATH/retroarch.cfg) 복사 완료."
     else
