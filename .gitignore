@@ -6,10 +6,7 @@ log/
 
 # 개발용 디렉토리/파일 무시
 retropangui-emulationstation-dev
-handover*
 scriptmodules/*.bak
-HANDOVER.md
-README.md.bak
 button_related_files.txt
 
 # 특정 Markdown 파일 무시
