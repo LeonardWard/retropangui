@@ -12,13 +12,13 @@
 # --- [1] 환경 설정 및 모듈 로드 ---
 # config.sh를 source하여 모든 경로와 설정 변수를 로드합니다.
 # config.sh는 이 스크립트의 위치를 기준으로 ROOT_DIR을 올바르게 설정합니다.
-source "$(dirname "${BASH_SOURCE[0]}")/scriptmodules/config.sh"
-source "$MODULES_DIR/helpers.sh"
-source "$MODULES_DIR/inifuncs.sh"
-source "$MODULES_DIR/version.sh"
-source "$MODULES_DIR/ui.sh"
-source "$MODULES_DIR/ext_retropie_core.sh"
-source "$MODULES_DIR/packages.sh"
+source "$(dirname "${BASH_SOURCE[0]}")/config.sh"
+source "$MODULES_DIR/lib/log.sh"
+source "$MODULES_DIR/lib/ini.sh"
+source "$MODULES_DIR/lib/version.sh"
+source "$MODULES_DIR/ui/menu.sh"
+source "$MODULES_DIR/compat/loader.sh"
+source "$MODULES_DIR/lib/packages.sh"
 
 # 로그 파일 경로 정의 (helpers.sh가 사용하기 전에 정의)
 # 로그 디렉토리는 env.sh를 통해 이미 설정되어 있습니다.

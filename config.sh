@@ -11,13 +11,14 @@
 # --- [1] 기본 경로 설정 ---
 # 이 파일의 위치를 기준으로 프로젝트의 루트 디렉토리를 정확하게 설정합니다.
 # BASH_SOURCE[0]는 이 파일(config.sh)의 경로를 나타냅니다.
-export ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+# config.sh가 프로젝트 루트에 위치하므로 .. 없이 현재 디렉토리가 ROOT_DIR입니다.
+export ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 export MODULES_DIR="$ROOT_DIR/scriptmodules"
 export RESOURCES_DIR="$ROOT_DIR/resources"
 
 # --- [2] 공용 함수 로드 ---
 # 사용자 정보를 가져오는 등의 함수를 사용하기 위해 먼저 로드합니다.
-source "$MODULES_DIR/func.sh"
+source "$MODULES_DIR/lib/func.sh"
 
 # --- [3] 사용자 및 홈 디렉토리 설정 ---
 # sudo를 사용해도 실제 사용자 계정을 찾아서 적용합니다.

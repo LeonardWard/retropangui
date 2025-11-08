@@ -8,11 +8,12 @@
 
 # 이 스크립트가 다른 스크립트에 의해 source될 때를 대비
 if [ -z "$MODULES_DIR" ]; then
-    # 스크립트의 실제 경로를 기반으로 ROOT_DIR 설정
+    # version.sh는 scriptmodules/lib/ 안에 있음
+    # SCRIPT_DIR = /path/to/retropangui/scriptmodules/lib
+    # MODULES_DIR = /path/to/retropangui/scriptmodules
     SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd)"
-    ROOT_DIR="$(dirname "$SCRIPT_DIR")"
-    MODULES_DIR="$ROOT_DIR/scriptmodules"
-    source "$MODULES_DIR/helpers.sh"
+    MODULES_DIR="$(dirname "$SCRIPT_DIR")"
+    source "$MODULES_DIR/lib/log.sh"
 fi
 
 # --- 공개 함수 ---

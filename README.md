@@ -1,46 +1,145 @@
-# Retro Pangui
+# RetroPangui
 
-Retro Pangui는 레트로 게임 환경을 쉽고 편리하게 설정하고 관리할 수 있도록 돕는 도구입니다. `retropangui_setup.sh` 스크립트를 실행하여 다양한 레트로 게임 시스템과 에뮬레이터를 설치하고, 게임을 즐기기 위한 환경을 구축할 수 있습니다.
+RetroPangui는 RetroPie EmulationStation 기반의 독자적인 레트로게임 프론트엔드입니다.
+복잡한 설정 과정 없이 간편한 메뉴를 통해 레트로 게임 환경을 쉽게 설치하고 관리할 수 있습니다.
 
 ## 주요 기능
 
--   **통합 설치 및 설정 메뉴**: 복잡한 설정 과정 없이, 텍스트 기반의 간편한 메뉴를 통해 레트로 게임 환경을 쉽게 설치하고 관리할 수 있습니다.
--   **에뮬레이터 및 코어 관리**: 메뉴를 통해 원하는 에뮬레이터(코어)를 선택하여 설치, 제거 및 업데이트할 수 있습니다.
--   **게임 목록 자동 생성**: 보유하고 있는 롬 파일들을 기반으로 EmulationStation에서 사용되는 `gamelist.xml` 파일을 자동으로 생성해줍니다.
--   **다중 디스크 게임 지원**: 여러 개의 디스크로 구성된 게임(예: PS1)을 위한 M3U 플레이리스트를 자동으로 생성하여 게임 실행을 간편하게 합니다.
--   **사용자 편의 기능 적용**: 버튼 설정 변경, 한글 지원, 폴더별 게임 목록 보기 등 다양한 편의 기능을 패치 형태로 쉽게 적용하거나 제거할 수 있습니다.
--   **자동 업데이트**: 스크립트와 핵심 구성 요소들을 최신 버전으로 유지하는 기능을 제공합니다.
+- **멀티코어 지원**: 시스템별로 여러 개의 에뮬레이터 코어를 선택 가능
+- **게임별 코어 선택**: EDIT METADATA 메뉴에서 게임마다 원하는 코어 설정
+- **자동화된 설치**: 코어 및 시스템 자동 등록, es_systems.xml 자동 갱신
+- **다국어 지원**: 한글/영어 공식 지원 (일본어/중국어 확장 가능)
+- **논리 버튼 매핑**: Nintendo/Sony/Xbox 레이아웃 지원
+- **RetroPie 호환**: libretro 코어 자동 설치 시스템
+- **통합 UI**: Dialog 기반의 직관적인 설정 메뉴
 
 ## 요구 사항
 
--   스크립트는 시스템 설정과 패키지 설치를 포함하므로 반드시 `sudo` 권한으로 실행해야 합니다.
+- Debian 기반 Linux (Debian, Ubuntu 등)
+- sudo 권한
+- Git
+
+## 설치
+
+```bash
+git clone https://github.com/your-repo/retropangui.git
+cd retropangui
+sudo ./retropangui_setup.sh
+```
 
 ## 사용법
 
-### 기본 실행 (UI 포함)
-
-메인 설정 UI를 실행합니다.
+### 1. 기본 실행 (UI 메뉴)
 
 ```bash
 sudo ./retropangui_setup.sh
 ```
 
-### UI 없이 환경 설정만 진행
+메뉴에서 다음 작업을 수행할 수 있습니다:
+- Base System 설치 (RetroArch, EmulationStation, 기초 코어)
+- 개별 패키지 설치/제거
+- 시스템 업데이트
+- 설정 관리
 
-UI를 실행하지 않고, 환경 변수 설정 등 초기화 작업만 수행합니다.
+### 2. 패키지 직접 설치 (타입 자동 감지)
+
+```bash
+# 단일 패키지 설치
+sudo ./retropangui_setup.sh install_module lr-pcsx-rearmed
+sudo ./retropangui_setup.sh install_module retroarch
+sudo ./retropangui_setup.sh install_module emulationstation
+
+# 여러 패키지 한번에 설치
+sudo ./retropangui_setup.sh install_module lr-pcsx-rearmed retroarch emulationstation
+```
+
+**자동 타입 감지:**
+- `lr-*` 형식 → libretro 코어로 자동 인식
+- `retroarch`, `emulationstation` → 특별 케이스 처리
+- 파일명 기반 자동 탐색
+
+### 3. UI 없이 환경 설정만
 
 ```bash
 sudo ./retropangui_setup.sh --no-ui
 ```
 
-### 특정 모듈 직접 설치
+## 프로젝트 구조
 
-UI를 거치지 않고 특정 모듈을 직접 설치합니다.
+```
+retropangui/
+├── retropangui_setup.sh          # 메인 진입점
+├── config.sh                     # 환경변수 설정
+├── scriptmodules/                # 핵심 모듈
+│   ├── resources/                # 설정 파일 및 리소스
+│   │   └── priorities.conf       # 에뮬레이터 우선순위
+│   ├── compat/                   # RetroPie 호환 레이어
+│   │   ├── loader.sh             # 호환 레이어 로더
+│   │   ├── env.sh                # 환경 설정
+│   │   ├── build.sh              # 빌드 함수
+│   │   ├── registry.sh           # 에뮬레이터 등록
+│   │   └── utils.sh              # 유틸리티
+│   ├── lib/                      # 작동 함수들
+│   │   ├── log.sh                # 로깅 함수
+│   │   ├── version.sh            # 버전 관리
+│   │   ├── xml.sh                # XML 조작
+│   │   ├── deps.sh               # 의존성 설치
+│   │   └── setup.sh              # 환경 설정
+│   ├── pkg/                      # 설치할 패키지
+│   │   ├── retroarch.sh          # RetroArch
+│   │   ├── emulationstation.sh  # EmulationStation
+│   │   └── base_cores.sh         # 기초 코어 묶음
+│   └── ui/                       # 사용자 인터페이스 (Phase 3)
+└── docs/                         # 문서
+    ├── README.md                 # 리드미 문서
+    └── HANDOVER.md               # 핸드오버 문서
 
-```bash
-sudo ./retropangui_setup.sh install_module <module_name> <action>
+retropangui-emulationstation/    # EmulationStation 포크 소스
 ```
 
--   `<module_name>`: 설치할 모듈의 이름
--   `<action>`: 수행할 작업 (예: `install`, `remove` 등)
+## 지원 패키지
 
+### 코어 시스템
+- RetroArch
+- EmulationStation (커스텀 빌드)
+
+### libretro 코어
+- lr-pcsx-rearmed (PlayStation)
+- lr-mupen64plus (Nintendo 64)
+- lr-np2kai (PC-98)
+- lr-scummvm (ScummVM)
+- 기타 RetroPie 호환 코어
+
+## 개발 정보
+
+### 리팩토링 계획
+
+**Phase 1** (완료):
+- ✅ 폴더 구조 재구성 (resources, compat, lib, pkg, ui)
+- ✅ 파일 이동 및 경로 수정
+- ✅ 타입 자동 감지 시스템
+
+**Phase 2** (완료):
+- ✅ lib/ 폴더에 작동 함수들 이동
+- ✅ 중복 파일 제거 (inifuncs.sh)
+- ✅ 모든 참조 경로 수정
+
+**Phase 3** (예정):
+- 복잡한 파일 분할 (func.sh, ui.sh, packages.sh)
+- RetroPie 의존성 완전 제거
+
+### 핸드오버 문서
+
+프로젝트의 상세한 개발 이력 및 인수인계 정보는 [docs/HANDOVER.md](docs/HANDOVER.md)를 참조하세요.
+
+## 라이선스
+
+[라이선스 정보 추가 필요]
+
+## 기여
+
+이슈 및 풀 리퀘스트는 GitHub를 통해 제출해주세요.
+
+## 문의
+
+[문의 정보 추가 필요]

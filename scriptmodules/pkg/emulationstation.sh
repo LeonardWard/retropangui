@@ -69,7 +69,13 @@ EOF
 EOF
     chown $__user:$__user "$ES_CONFIG_DIR/es_systems.xml"
     log_msg SUCCESS "es_systems.xml 빈 파일 생성 완료. 시스템 정보는 코어 설치 시 자동 추가됩니다."
-    ln -s "$USER_THEMES_PATH" "$USER_CONFIG_PATH/emulationstation/themes" || { log_msg ERROR "테마 디렉토리 심볼릭 링크 생성 실패."; return 1; }
+
+    # 기존 테마 링크가 있으면 제거
+    local themes_link="$USER_CONFIG_PATH/emulationstation/themes"
+    if [[ -L "$themes_link" || -e "$themes_link" ]]; then
+        rm -rf "$themes_link"
+    fi
+    ln -s "$USER_THEMES_PATH" "$themes_link" || { log_msg ERROR "테마 디렉토리 심볼릭 링크 생성 실패."; return 1; }
     cp "$RESOURCES_DIR/es-recalbox/es_input.cfg" "$USER_CONFIG_PATH/emulationstation"
     log_msg SUCCESS "EmulationStation 빌드 및 설치 완료. 설치 경로: "$INSTALL_ROOT_DIR""
     return 0

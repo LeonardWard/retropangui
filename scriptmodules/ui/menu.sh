@@ -96,7 +96,7 @@ function run_base_system_install() {
         log_msg INFO "========================================================"
         
         # system_install.sh 모듈을 source하여 실행
-        source "$MODULES_DIR/system_install.sh"
+        source "$MODULES_DIR/pkg/system_install.sh"
         local INSTALL_STATUS=$?
         
         log_msg INFO "\n========================================================"
@@ -525,14 +525,14 @@ function update_script() {
     fi
 }
 
-# [6] 전부 설치 제거 (Share 폴더 제외)
+# [6] 전부 설치 제거 (Share 폴더 및 로그 제외)
 function uninstall_all() {
-    if (dialog --clear --title "전체 설치 제거" --yesno "Retro Pangui가 생성한 모든 설정, 로그, 빌드 파일, 설치된 코어 및 에뮬레이터를 제거합니다. (Share 폴더 제외)\n\n이 작업은 되돌릴 수 없습니다. 정말로 계속하시겠습니까?" 12 70 2>&1 >/dev/tty);
+    if (dialog --clear --title "전체 설치 제거" --yesno "Retro Pangui가 생성한 모든 설정, 빌드 파일, 설치된 코어 및 에뮬레이터를 제거합니다. (Share 폴더 및 로그 제외)\n\n이 작업은 되돌릴 수 없습니다. 정말로 계속하시겠습니까?" 12 70 2>&1 >/dev/tty);
  then
         log_msg INFO "전체 설치 제거 시작."
         (
-            log_and_gauge "10" "로그 및 임시 파일 제거 중..."
-            sudo rm -rf "$LOG_DIR" "$TEMP_DIR_BASE" > /dev/null 2>&1
+            log_and_gauge "10" "임시 파일 제거 중..."
+            sudo rm -rf "$TEMP_DIR_BASE" > /dev/null 2>&1
             log_and_gauge "30" "EmulationStation 설정 제거 중..."
             sudo rm -rf "$ES_CONFIG_DIR" > /dev/null 2>&1
             log_and_gauge "50" "RetroArch 설정 제거 중..."
@@ -543,8 +543,8 @@ function uninstall_all() {
             sudo rm -rf "$INSTALL_BUILD_DIR" > /dev/null 2>&1
             log_and_gauge "100" "정리 완료."
         ) | dialog --clear --title "전체 제거 진행" --gauge "생성된 파일 정리 중..." 8 60 0 2>&1 >/dev/tty
-        
-        dialog --clear --title "완료" --msgbox "모든 생성 파일(Share 폴더 제외) 제거가 완료되었습니다." 8 60 2>&1 >/dev/tty
+
+        dialog --clear --title "완료" --msgbox "모든 생성 파일(Share 폴더 및 로그 제외) 제거가 완료되었습니다." 8 60 2>&1 >/dev/tty
         log_msg INFO "전체 설치 제거 완료."
     else
         log_msg INFO "전체 설치 제거가 사용자에 의해 취소되었습니다."

@@ -1,12 +1,9 @@
 #!/usr/bin/env bash
 
-# es_systems_updater.sh
+# xml.sh (이전: es_systems_updater.sh)
 # XML 업데이트 함수 모음: es_systems.xml에 코어 정보를 동적으로 추가/제거
 
-# config.sh에서 환경변수 로드
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-source "$SCRIPT_DIR/config.sh"
-
+# config.sh는 retropangui_setup.sh에서 이미 로드됨
 ES_SYSTEMS_XML="${ES_CONFIG_DIR}/es_systems.xml"
 
 # xmlstarlet 설치 확인
