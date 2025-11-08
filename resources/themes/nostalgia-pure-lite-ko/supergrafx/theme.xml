@@ -4,10 +4,10 @@
 
 <view name="system, basic, detailed, video, grid">
   <text name="shortdescription" extra="true">
-   <text>1989  ·  16-BIT CONSOLE</text>
+   <text>1989 · 16비트 게임기</text>
   </text>
   <text name="longdescription" extra="true">
-   <text>The SuperGrafx is an upgraded version of the PC Engine. Only six retail games were produced which took advantage of the improved hardware.</text>
+   <text>슈퍼그래픽스는 PC 엔진의 업그레이드 버전입니다. 향상된 하드웨어를 활용한 소매 게임은 6개만 생산되었습니다.</text>
   </text>
  </view>
 </theme>

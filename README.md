@@ -141,7 +141,8 @@ retropangui-emulationstation/    # EmulationStation 포크 소스
 ### 개발 문서
 
 - **핸드오버 문서**: [docs/HANDOVER.md](docs/HANDOVER.md) - 현재 상태 및 개발 가이드
-- **개발 이력**: [docs/HANDOVER_ARCHIVE.md](docs/HANDOVER_ARCHIVE.md) - 2025-11-08까지의 전체 개발 이력 (아카이브)
+- **변경 이력**: [docs/HISTORY.md](docs/HISTORY.md) - 주요 변경사항 기록
+- **개발 이력 아카이브**: [docs/HANDOVER_ARCHIVE.md](docs/HANDOVER_ARCHIVE.md) - 2025-08~11-08 통합 아카이브
 
 ## 라이선스
 

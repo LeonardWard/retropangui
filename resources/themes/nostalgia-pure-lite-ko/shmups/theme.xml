@@ -4,10 +4,10 @@
 
 <view name="system, basic, detailed, video, grid">
   <text name="shortdescription" extra="true">
-   <text>GAME GENRE</text>
+   <text>게임 장르</text>
   </text>
   <text name="longdescription" extra="true">
-   <text>In a shoot 'em up, the player shoots large numbers of enemies while dodging obstacles, often in a spacecraft or aircraft</text>
+   <text>슈팅 게임에서 플레이어는 종종 우주선이나 항공기를 타고 장애물을 피하면서 수많은 적을 쏘게 됩니다.</text>
   </text>
  </view>
 </theme>

@@ -14,7 +14,7 @@
 4. [개발 규칙](#개발-규칙)
 5. [빠른 시작](#빠른-시작)
 6. [주요 기능](#주요-기능)
-7. [참고 문서](#참고-문서)
+7. [참고 문서](#참고-문서) - 변경 이력은 HISTORY.md 참조
 
 ---
 
@@ -189,26 +189,10 @@ cat scriptmodules/lib/user.sh
 
 ---
 
-## 최근 주요 변경사항
-
-### 2025-11-08
-- ES 설치 시 기본 테마(nostalgia-pure-lite-ko) 자동 설치 기능 추가
-- 공용 함수 사용 원칙 확립 (`set_dir_ownership_and_permissions`)
-- Phase 2 리팩토링 완료 (func.sh, packages.sh 분할)
-- 문서 구조 개선 (HANDOVER_ARCHIVE.md 분리)
-
-### 2025-11-02
-- RetroPie 호환 패키지 설치 시스템 구축
-- libretro 코어 자동 설치 지원
-
-### 2025-11-01
-- EDIT METADATA 코어 선택 기능 완전 구현
-
----
-
 ## 참고 문서
 
-- **전체 개발 이력**: [HANDOVER_ARCHIVE.md](HANDOVER_ARCHIVE.md)
+- **변경 이력**: [HISTORY.md](HISTORY.md) - 주요 변경사항 기록
+- **전체 개발 이력**: [HANDOVER_ARCHIVE.md](HANDOVER_ARCHIVE.md) - 2025-08~11-08 통합 아카이브
 - **사용자 가이드**: [../README.md](../README.md)
 - **GitHub**: https://github.com/LeonardWard/retropangui
 - **EmulationStation 포크**: `/home/pangui/scripts/retropangui-emulationstation/`

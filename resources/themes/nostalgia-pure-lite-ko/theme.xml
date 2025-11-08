@@ -17,7 +17,6 @@ Some logos used in this theme are created or were taken from Chicuelo Theme (www
 <theme>
 <formatVersion>4</formatVersion>
  
-
 <!-- System View -->
 
 <feature supported="carousel">
@@ -38,6 +37,7 @@ Some logos used in this theme are created or were taken from Chicuelo Theme (www
 	<size>1 1</size>
 	<pos>0 0</pos>
  </image>
+
  <text name="shortdescription" extra="true">
 	<fontPath>./_assets/Roboto-Medium.ttf</fontPath>
 	<alignment>center</alignment>
@@ -89,6 +89,14 @@ Some logos used in this theme are created or were taken from Chicuelo Theme (www
 	<size>0.20 0.1</size>
  </text>
  
+ <image name="background_help" extra="true">
+    <path>./_assets/bottom.png</path>
+    <origin>0 1</origin>
+    <pos>0 1</pos>
+    <size>1 0.035</size>
+    <color>FFFFFF99</color>
+ </image>
+
  <helpsystem name="help">
     <fontPath>./_assets/Roboto-Medium.ttf</fontPath>
     <fontSize>0.021</fontSize>
@@ -146,6 +154,14 @@ Some logos used in this theme are created or were taken from Chicuelo Theme (www
 	<lineSpacing>1.54</lineSpacing>
 	<horizontalMargin>0.05</horizontalMargin>
 </textlist>
+
+<image name="background_help" extra="true">
+    <path>./_assets/bottom.png</path>
+    <origin>0 1</origin>
+    <pos>0 1</pos>
+    <size>1 0.035</size>
+    <color>FFFFFF99</color>
+</image>
 
 <helpsystem name="help">
     <fontPath>./_assets/Roboto-Medium.ttf</fontPath>

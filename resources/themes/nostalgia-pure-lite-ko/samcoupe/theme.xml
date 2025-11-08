@@ -4,7 +4,7 @@
 
 <view name="system, basic, detailed, video, grid">
   <text name="shortdescription" extra="true">
-   <text>1989년 8비트 컴퓨터</text>
+   <text>1989 · 8비트 게임기</text>
   </text>
   <text name="longdescription" extra="true">
    <text>SAM Coupé는 영국의 가정용 컴퓨터였으며, Spectrum의 논리적인 업그레이드 버전으로 판매되었습니다.</text>

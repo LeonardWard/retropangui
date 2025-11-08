@@ -4,7 +4,7 @@
 
 <view name="system, basic, detailed, video, grid">
   <text name="shortdescription" extra="true">
-   <text>1977년 8비트 콘솔</text>
+   <text>1977 · 8비트 게임기</text>
   </text>
   <text name="longdescription" extra="true">
    <text>아타리 2600은 마이크로프로세서 기반 하드웨어와 게임 코드가 담긴 롬 카트리지 사용을 대중화한 것으로 평가받습니다.</text>

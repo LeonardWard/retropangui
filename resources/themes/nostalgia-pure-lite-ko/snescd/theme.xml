@@ -4,10 +4,10 @@
 
 <view name="system, basic, detailed, video, grid">
   <text name="shortdescription" extra="true">
-   <text>1990  ·  16-BIT CONSOLE</text>
+   <text>1990 · 16비트 게임기</text>
   </text>
   <text name="longdescription" extra="true">
-   <text>The Super NES CD-ROM System is an unreleased video game peripheral, developed in a partnership between Nintendo and Sony. Play SNES games with audio from CD soundtracks.</text>
+   <text>슈퍼 NES CD-ROM 시스템은 닌텐도와 소니의 협력으로 개발된 미출시 비디오 게임 주변기기입니다. CD 사운드트랙의 오디오로 SNES 게임을 즐겨보세요.</text>
   </text>
  </view>
 </theme>

@@ -4,7 +4,7 @@
 
 <view name="system, basic, detailed, video, grid">
   <text name="shortdescription" extra="true">
-   <text>모든 콘솔 / 휴대용 게임기</text>
+   <text>모든 게임기 / 휴대용 게임기</text>
   </text>
   <text name="longdescription" extra="true">
    <text>전체 라이브러리의 모든 게임에 액세스하고 빠르게 플레이하세요.</text>

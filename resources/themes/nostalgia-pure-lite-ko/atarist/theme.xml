@@ -4,7 +4,7 @@
 
 <view name="system, basic, detailed, video, grid">
   <text name="shortdescription" extra="true">
-   <text>1985년 · 16비트 컴퓨터</text>
+   <text>1985 · 16비트 게임기</text>
   </text>
   <text name="longdescription" extra="true">
    <text>Atari ST는 Atari Corporation의 가정용 컴퓨터 라인이자 Atari 8비트 제품군의 후속작입니다.</text>

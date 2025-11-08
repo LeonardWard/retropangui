@@ -4,7 +4,7 @@
 
 <view name="system, basic, detailed, video, grid">
   <text name="shortdescription" extra="true">
-   <text>1979  ·  16-BIT VM</text>
+   <text>1979년 · 16-BIT VM</text>
   </text>
   <text name="longdescription" extra="true">
    <text>The Z-machine is a virtual machine that was developed by Joel Berez and Marc Blank and used by Infocom for its text adventure games.</text>

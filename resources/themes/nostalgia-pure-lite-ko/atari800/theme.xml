@@ -4,7 +4,7 @@
 
 <view name="system, basic, detailed, video, grid">
   <text name="shortdescription" extra="true">
-   <text>1979년 8비트 컴퓨터</text>
+   <text>1979 · 8비트 게임기</text>
   </text>
   <text name="longdescription" extra="true">
    <text>아타리 8비트 제품군은 8비트 가정용 컴퓨터 시리즈입니다. 이 제품군의 모든 기기는 기술적으로 유사하며 주로 패키징에서 차이가 있습니다.</text>

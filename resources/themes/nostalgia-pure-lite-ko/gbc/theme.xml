@@ -4,7 +4,7 @@
 
 <view name="system, basic, detailed, video, grid">
   <text name="shortdescription" extra="true">
-   <text>1998년 8비트 휴대용 게임기</text>
+   <text>1998 · 8비트 게임기</text>
   </text>
   <text name="longdescription" extra="true">
    <text>게임보이 컬러는 컬러 화면을 특징으로 합니다. 게임보이 포켓보다 약간 더 두껍고 길며 화면은 약간 더 작습니다.</text>

@@ -4,7 +4,7 @@
 
 <view name="system, basic, detailed, video, grid">
   <text name="shortdescription" extra="true">
-   <text>1977  ·  8-BIT COMPUTER</text>
+   <text>1977년 · 8-BIT COMPUTER</text>
   </text>
   <text name="longdescription" extra="true">
    <text>The TRS-80 is a desktop microcomputer and was one of the earliest mass-produced and mass-marketed retail personal computers.</text>

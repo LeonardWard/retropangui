@@ -4,7 +4,7 @@
 
 <view name="system, basic, detailed, video, grid">
   <text name="shortdescription" extra="true">
-   <text>1981  ·  데스크탑 컴퓨터</text>
+   <text>1981년 · 데스크탑 컴퓨터</text>
   </text>
   <text name="longdescription" extra="true">
    <text>MS-DOS는 주로 마이크로소프트에서 개발한 x86 기반 개인용 컴퓨터용 운영 체제이다.</text>

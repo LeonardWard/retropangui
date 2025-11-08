@@ -4,7 +4,7 @@
 
 <view name="system, basic, detailed, video, grid">
   <text name="shortdescription" extra="true">
-   <text>1980년대 8비트 컴퓨터</text>
+   <text>1980 · 8비트 게임기</text>
   </text>
   <text name="longdescription" extra="true">
    <text>Dragon 32와 Dragon 64는 TRS-80 Color Computer와 유사한 가정용 컴퓨터였습니다. 32와 64는 킬로바이트 단위의 RAM을 나타냅니다.</text>

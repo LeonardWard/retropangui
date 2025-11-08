@@ -4,7 +4,7 @@
 
 <view name="system, basic, detailed, video, grid">
   <text name="shortdescription" extra="true">
-   <text>1980년대 8비트 콘솔</text>
+   <text>1980 · 8비트 게임기</text>
   </text>
   <text name="longdescription" extra="true">
    <text>인텔리비전은 마텔 일렉트로닉스에서 출시한 가정용 비디오 게임 콘솔로, 아타리 2600과 직접적인 경쟁 관계에 있었습니다.</text>

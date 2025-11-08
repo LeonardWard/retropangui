@@ -4,7 +4,7 @@
 
 <view name="system, basic, detailed, video, grid">
   <text name="shortdescription" extra="true">
-   <text>1993년 32비트 콘솔</text>
+   <text>1993 · 32비트 게임기</text>
   </text>
   <text name="longdescription" extra="true">
    <text>CD32는 최초의 32비트 콘솔이었으며 아미가 1200 컴퓨터와 유사한 사양을 가지고 있었습니다. 비디오 CD 재생을 위한 하드웨어 MPEG 압축 해제 모듈도 출시되었습니다.</text>

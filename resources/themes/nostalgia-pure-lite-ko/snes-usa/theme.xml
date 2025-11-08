@@ -4,10 +4,10 @@
 
 <view name="system, basic, detailed, video, grid">
   <text name="shortdescription" extra="true">
-   <text>1990  ·  16-BIT CONSOLE</text>
+   <text>1990 · 16비트 게임기</text>
   </text>
   <text name="longdescription" extra="true">
-   <text>Nintendo's second home console introduced advanced graphics and sound capabilities compared with other systems at the time.</text>
+   <text>닌텐도의 두 번째 가정용 콘솔은 당시 다른 시스템에 비해 향상된 그래픽 및 사운드 기능을 도입했습니다.</text>
   </text>
  </view>
 </theme>

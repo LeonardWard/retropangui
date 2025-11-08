@@ -4,7 +4,7 @@
 
 <view name="system, basic, detailed, video, grid">
   <text name="shortdescription" extra="true">
-   <text>1989년 8비트 휴대용 게임기</text>
+   <text>1989 · 8비트 게임기</text>
   </text>
   <text name="longdescription" extra="true">
    <text>닌텐도의 게임 & 워치 시리즈에 이은 두 번째 휴대용 시스템입니다. 주로 게임 기어 및 링스와 경쟁했습니다.</text>

@@ -4,10 +4,10 @@
 
 <view name="system, basic, detailed, video, grid">
   <text name="shortdescription" extra="true">
-   <text>GAME GENRE</text>
+   <text>게임 장르</text>
   </text>
   <text name="longdescription" extra="true">
-   <text>Strategy video games focus on thinking and planning, and provide strategic, tactical, and sometimes logistical challenges</text>
+   <text>전략 비디오 게임은 사고와 계획에 중점을 두며, 전략적, 전술적, 때로는 물류적인 도전을 제공합니다.</text>
   </text>
  </view>
 </theme>

@@ -4,10 +4,10 @@
 
 <view name="system, basic, detailed, video, grid">
   <text name="shortdescription" extra="true">
-   <text>DIGITAL PLATFORM</text>
+   <text>디지털 플랫폼</text>
   </text>
   <text name="longdescription" extra="true">
-   <text>Developed by Valve Corporation,  Steam offers digital rights management, multiplayer gaming, video streaming and social networking services</text>
+   <text>Valve Corporation이 개발한 Steam은 디지털 권한 관리, 멀티플레이어 게임, 비디오 스트리밍 및 소셜 네트워킹 서비스를 제공합니다.</text>
   </text>
  </view>
 </theme>

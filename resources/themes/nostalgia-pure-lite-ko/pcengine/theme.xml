@@ -4,7 +4,7 @@
 
 <view name="system, basic, detailed, video, grid">
   <text name="shortdescription" extra="true">
-   <text>1987  ·  16비트 콘솔</text>
+   <text>1987 · 16비트 게임기</text>
   </text>
   <text name="longdescription" extra="true">
    <text>원래 NES와 경쟁하기 위해 만들어졌지만, 결국 세가 제네시스와 경쟁하게 되었고, 나중에는 슈퍼 닌텐도와 경쟁하게 되었습니다.</text>

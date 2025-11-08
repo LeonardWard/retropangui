@@ -4,7 +4,7 @@
 
 <view name="system, basic, detailed, video, grid">
   <text name="shortdescription" extra="true">
-   <text>1993년 64비트 콘솔</text>
+   <text>1993 · 64비트 게임기</text>
   </text>
   <text name="longdescription" extra="true">
    <text>아타리 브랜드로 개발된 여섯 번째이자 마지막 프로그래밍 가능 콘솔인 아타리는 재규어를 최초의 64비트 비디오 게임 콘솔로 마케팅했습니다.</text>

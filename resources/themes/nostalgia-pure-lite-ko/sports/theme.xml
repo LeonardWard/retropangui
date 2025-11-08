@@ -4,10 +4,10 @@
 
 <view name="system, basic, detailed, video, grid">
   <text name="shortdescription" extra="true">
-   <text>GAME GENRE</text>
+   <text>게임 장르</text>
   </text>
   <text name="longdescription" extra="true">
-   <text>Most sports have been recreated with a game, including team sports, track and field, extreme sports and combat sports</text>
+   <text>대부분의 스포츠는 팀 스포츠, 육상 경기, 익스트림 스포츠, 격투 스포츠를 포함하여 게임으로 재현되었습니다.</text>
   </text>
  </view>
 </theme>

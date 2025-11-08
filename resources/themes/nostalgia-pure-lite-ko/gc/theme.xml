@@ -4,7 +4,7 @@
 
 <view name="system, basic, detailed, video, grid">
   <text name="shortdescription" extra="true">
-   <text>2001년 128비트 콘솔</text>
+   <text>2001 · 128비트 게임기</text>
   </text>
   <text name="longdescription" extra="true">
    <text>닌텐도 게임큐브는 닌텐도 64의 후속작이며, 광학 디스크를 주 저장 매체로 사용한 최초의 닌텐도 콘솔입니다.</text>

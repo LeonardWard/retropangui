@@ -4,7 +4,7 @@
 
 <view name="system, basic, detailed, video, grid">
   <text name="shortdescription" extra="true">
-   <text>1994년 32비트 콘솔</text>
+   <text>1994 · 32비트 게임기</text>
   </text>
   <text name="longdescription" extra="true">
    <text>메가드라이브의 성능을 확장하고 세가 새턴이 출시될 때까지 32비트 시대로의 전환기 콘솔 역할을 하도록 설계되었습니다.</text>

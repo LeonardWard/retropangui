@@ -4,7 +4,7 @@
 
 <view name="system, basic, detailed, video, grid">
   <text name="shortdescription" extra="true">
-   <text>1986년 8비트 게임기</text>
+   <text>1986 · 8비트 게임기</text>
   </text>
   <text name="longdescription" extra="true">
    <text>패밀리 컴퓨터 (패미컴으로도 알려진)는 닌텐도 엔터테인먼트 시스템의 일본 버전이었습니다.</text>
