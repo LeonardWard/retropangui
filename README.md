@@ -138,9 +138,10 @@ retropangui-emulationstation/    # EmulationStation 포크 소스
 - ui/menu.sh 분할 (dialog, config, menu 분리)
 - RetroPie 의존성 완전 제거
 
-### 핸드오버 문서
+### 개발 문서
 
-프로젝트의 상세한 개발 이력 및 인수인계 정보는 [docs/HANDOVER.md](docs/HANDOVER.md)를 참조하세요.
+- **핸드오버 문서**: [docs/HANDOVER.md](docs/HANDOVER.md) - 현재 상태 및 개발 가이드
+- **개발 이력**: [docs/HANDOVER_ARCHIVE.md](docs/HANDOVER_ARCHIVE.md) - 2025-11-08까지의 전체 개발 이력 (아카이브)
 
 ## 라이선스
 
