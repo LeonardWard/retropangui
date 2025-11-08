@@ -1,0 +1,13 @@
+<theme>
+<formatVersion>4</formatVersion>
+<include>./../theme.xml</include>
+
+<view name="system, basic, detailed, video, grid">
+  <text name="shortdescription" extra="true">
+   <text>1985년 8비트 콘솔</text>
+  </text>
+  <text name="longdescription" extra="true">
+   <text>SG-1000의 후속작인 마스터 시스템은 닌텐도 엔터테인먼트 시스템(NES)의 직접적인 경쟁자로 출시되었습니다.</text>
+  </text>
+ </view>
+</theme>

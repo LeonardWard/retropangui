@@ -1,0 +1,13 @@
+<theme>
+<formatVersion>4</formatVersion>
+<include>./../theme.xml</include>
+
+<view name="system, basic, detailed, video, grid">
+  <text name="shortdescription" extra="true">
+   <text>2004  ·  동전 작동식 캐비닛</text>
+  </text>
+  <text name="longdescription" extra="true">
+   <text>CAVE CV1000 (Cave SH-3 하드웨어로도 알려진)는 케이브의 3세대 아케이드 하드웨어입니다.</text>
+  </text>
+ </view>
+</theme>

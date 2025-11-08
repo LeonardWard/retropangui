@@ -1,0 +1,13 @@
+<theme>
+<formatVersion>4</formatVersion>
+<include>./../theme.xml</include>
+
+<view name="system, basic, detailed, video, grid">
+  <text name="shortdescription" extra="true">
+   <text>1990년대 8비트 휴대용 게임기</text>
+  </text>
+  <text name="longdescription" extra="true">
+   <text>게임 기어는 마스터 시스템과 하드웨어의 많은 부분을 공유하며, 자체 타이틀뿐만 아니라 마스터 시스템의 타이틀도 플레이할 수 있습니다.</text>
+  </text>
+ </view>
+</theme>

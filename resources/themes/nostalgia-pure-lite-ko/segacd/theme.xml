@@ -1,0 +1,13 @@
+<theme>
+<formatVersion>4</formatVersion>
+<include>./../theme.xml</include>
+
+<view name="system, basic, detailed, video, grid">
+  <text name="shortdescription" extra="true">
+   <text>1991년 16비트 콘솔</text>
+  </text>
+  <text name="longdescription" extra="true">
+   <text>제네시스의 CD-ROM 애드온으로, 악명 높은 나이트 트랩을 포함한 많은 FMV 게임을 출시했으며, 이는 ESRB 창설로 이어졌습니다.</text>
+  </text>
+ </view>
+</theme>

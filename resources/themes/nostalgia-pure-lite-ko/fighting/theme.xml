@@ -1,0 +1,13 @@
+<theme>
+<formatVersion>4</formatVersion>
+<include>./../theme.xml</include>
+
+<view name="system, basic, detailed, video, grid">
+  <text name="shortdescription" extra="true">
+   <text>게임 장르</text>
+  </text>
+  <text name="longdescription" extra="true">
+   <text>격투 게임에서 플레이어는 AI 또는 플레이어가 조종하는 상대와 근접 전투를 벌입니다.</text>
+  </text>
+ </view>
+</theme>

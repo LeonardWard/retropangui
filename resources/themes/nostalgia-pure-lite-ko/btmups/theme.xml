@@ -1,0 +1,13 @@
+<theme>
+<formatVersion>4</formatVersion>
+<include>./../theme.xml</include>
+
+<view name="system, basic, detailed, video, grid">
+  <text name="shortdescription" extra="true">
+   <text>게임 장르</text>
+  </text>
+  <text name="longdescription" extra="true">
+   <text>비트뎀업(난투형 액션 게임이라고도 함)은 주인공이 믿을 수 없을 정도로 많은 적들과 맨손 또는 무기를 사용하여 싸우는 전투를 특징으로 합니다.</text>
+  </text>
+ </view>
+</theme>

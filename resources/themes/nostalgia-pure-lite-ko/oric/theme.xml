@@ -1,0 +1,13 @@
+<theme>
+<formatVersion>4</formatVersion>
+<include>./../theme.xml</include>
+
+<view name="system, basic, detailed, video, grid">
+  <text name="shortdescription" extra="true">
+   <text>1983년 8비트 컴퓨터</text>
+  </text>
+  <text name="longdescription" extra="true">
+   <text>Oric은 원래 Tangerine Computer Systems에서 출시한 홈 컴퓨터 시리즈로, 오리지널 Oric-1을 포함합니다.</text>
+  </text>
+ </view>
+</theme>

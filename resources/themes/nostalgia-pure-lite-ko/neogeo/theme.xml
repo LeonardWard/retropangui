@@ -1,0 +1,13 @@
+<theme>
+<formatVersion>4</formatVersion>
+<include>./../theme.xml</include>
+
+<view name="system, basic, detailed, video, grid">
+  <text name="shortdescription" extra="true">
+   <text>1990  ·  24비트 콘솔</text>
+  </text>
+  <text name="longdescription" extra="true">
+   <text>원래 MVS 코인 작동식 아케이드 기계로 출시되었습니다. 역대 최고의 비디오 게임 콘솔 25개 중 19위를 차지했습니다.</text>
+  </text>
+ </view>
+</theme>

@@ -1,0 +1,13 @@
+<theme>
+<formatVersion>4</formatVersion>
+<include>./../theme.xml</include>
+
+<view name="system, basic, detailed, video, grid">
+  <text name="shortdescription" extra="true">
+   <text>스트리밍 비디오 서비스</text>
+  </text>
+  <text name="longdescription" extra="true">
+   <text>Kodi는 HTPC(홈 시어터 PC)용 디지털 미디어를 위한 수상 경력에 빛나는 무료 오픈 소스 크로스 플랫폼 소프트웨어 미디어 플레이어이자 엔터테인먼트 허브입니다.</text>
+  </text>
+ </view>
+</theme>

@@ -1,0 +1,13 @@
+<theme>
+<formatVersion>4</formatVersion>
+<include>./../theme.xml</include>
+
+<view name="system, basic, detailed, video, grid">
+  <text name="shortdescription" extra="true">
+   <text>게임 장르</text>
+  </text>
+  <text name="longdescription" extra="true">
+   <text>레이싱 게임에서 플레이어는 실제 또는 가상의 육상, 수상, 공중 또는 우주 차량을 이용한 경쟁에 참여합니다.</text>
+  </text>
+ </view>
+</theme>

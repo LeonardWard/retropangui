@@ -1,0 +1,13 @@
+<theme>
+<formatVersion>4</formatVersion>
+<include>./../theme.xml</include>
+
+<view name="system, basic, detailed, video, grid">
+  <text name="shortdescription" extra="true">
+   <text>1980년 8비트 컴퓨터</text>
+  </text>
+  <text name="longdescription" extra="true">
+   <text>TRS-80 컬러 컴퓨터(애칭 CoCo)는 1991년 단종될 때까지 3세대 하드웨어를 거쳤습니다.</text>
+  </text>
+ </view>
+</theme>

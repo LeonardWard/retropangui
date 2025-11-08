@@ -1,0 +1,13 @@
+<theme>
+<formatVersion>4</formatVersion>
+<include>./../theme.xml</include>
+
+<view name="system, basic, detailed, video, grid">
+  <text name="shortdescription" extra="true">
+   <text>1998년 · 16비트 휴대용 게임기</text>
+  </text>
+  <text name="longdescription" extra="true">
+   <text>SNK에서 출시한 흑백 휴대용 게임기입니다. 이 제품은 SNK의 첫 휴대용 시스템이었으며 네오지오 제품군에 속합니다.</text>
+  </text>
+ </view>
+</theme>

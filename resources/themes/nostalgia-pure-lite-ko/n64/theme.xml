@@ -1,0 +1,13 @@
+<theme>
+<formatVersion>4</formatVersion>
+<include>./../theme.xml</include>
+
+<view name="system, basic, detailed, video, grid">
+  <text name="shortdescription" extra="true">
+   <text>1996년 · 64비트 콘솔</text>
+  </text>
+  <text name="longdescription" extra="true">
+   <text>N64는 닌텐도의 7번째 콘솔인 닌텐도 스위치가 출시되기 전까지 카트리지를 주요 저장 형식으로 사용한 마지막 주요 가정용 콘솔이었습니다.</text>
+  </text>
+ </view>
+</theme>

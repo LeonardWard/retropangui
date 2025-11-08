@@ -1,0 +1,13 @@
+<theme>
+<formatVersion>4</formatVersion>
+<include>./../theme.xml</include>
+
+<view name="system, basic, detailed, video, grid">
+  <text name="shortdescription" extra="true">
+   <text>사용자 지정 컬렉션</text>
+  </text>
+  <text name="longdescription" extra="true">
+   <text>사용자 지정 컬렉션에 추가한 게임에 빠르게 액세스하고 플레이하세요.</text>
+  </text>
+ </view>
+</theme>

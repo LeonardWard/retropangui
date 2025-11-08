@@ -1,0 +1,13 @@
+<theme>
+<formatVersion>4</formatVersion>
+<include>./../theme.xml</include>
+
+<view name="system, basic, detailed, video, grid">
+  <text name="shortdescription" extra="true">
+   <text>게임 장르</text>
+  </text>
+  <text name="longdescription" extra="true">
+   <text>전체 플레이 필드가 화면에 표시되는 모든 비디오 게임에는 고정 또는 단일 화면 관점이 적용됩니다.</text>
+  </text>
+ </view>
+</theme>

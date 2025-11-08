@@ -1,0 +1,13 @@
+<theme>
+<formatVersion>4</formatVersion>
+<include>./../theme.xml</include>
+
+<view name="system, basic, detailed, video, grid">
+  <text name="shortdescription" extra="true">
+   <text>게임 장르</text>
+  </text>
+  <text name="longdescription" extra="true">
+   <text>어드벤처 게임에서 플레이어는 탐험과 퍼즐 해결을 통해 진행되는 상호작용적인 스토리를 따라갑니다.</text>
+  </text>
+ </view>
+</theme>

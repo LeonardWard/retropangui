@@ -1,0 +1,13 @@
+<theme>
+<formatVersion>4</formatVersion>
+<include>./../theme.xml</include>
+
+<view name="system, basic, detailed, video, grid">
+  <text name="shortdescription" extra="true">
+   <text>게임 장르</text>
+  </text>
+  <text name="longdescription" extra="true">
+   <text>액션 게임은 손과 눈의 협응력과 반응 시간을 포함한 신체적인 도전을 강조합니다.</text>
+  </text>
+ </view>
+</theme>

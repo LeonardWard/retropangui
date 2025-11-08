@@ -1,0 +1,13 @@
+<theme>
+<formatVersion>4</formatVersion>
+<include>./../theme.xml</include>
+
+<view name="system, basic, detailed, video, grid">
+  <text name="shortdescription" extra="true">
+   <text>2004년 32비트 휴대용 게임기</text>
+  </text>
+  <text name="longdescription" extra="true">
+   <text>닌텐도 DS는 닌텐도에서 개발하고 출시한 듀얼 스크린 휴대용 게임 콘솔로, 두 개의 LCD 화면이 함께 작동하는 것이 특징입니다.</text>
+  </text>
+ </view>
+</theme>

@@ -1,0 +1,13 @@
+<theme>
+<formatVersion>4</formatVersion>
+<include>./../theme.xml</include>
+
+<view name="system, basic, detailed, video, grid">
+  <text name="shortdescription" extra="true">
+   <text>1996년 코인 오락기 캐비닛</text>
+  </text>
+  <text name="longdescription" extra="true">
+   <text>1996년 AOU 쇼에서 처음 공개되었습니다. 출시 당시 Model 3는 현존하는 아케이드 시스템 보드 중 단연 가장 강력했습니다.</text>
+  </text>
+ </view>
+</theme>

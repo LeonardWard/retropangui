@@ -1,0 +1,13 @@
+<theme>
+<formatVersion>4</formatVersion>
+<include>./../theme.xml</include>
+
+<view name="system, basic, detailed, video, grid">
+  <text name="shortdescription" extra="true">
+   <text>가상 핀볼</text>
+  </text>
+  <text name="longdescription" extra="true">
+   <text>Future Pinball은 Microsoft Windows용 프리웨어 3D 핀볼 편집 및 게임 애플리케이션입니다.</text>
+  </text>
+ </view>
+</theme>

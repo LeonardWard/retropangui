@@ -1,0 +1,13 @@
+<theme>
+<formatVersion>4</formatVersion>
+<include>./../theme.xml</include>
+
+<view name="system, basic, detailed, video, grid">
+  <text name="shortdescription" extra="true">
+   <text>크로스 플랫폼 컴퓨터</text>
+  </text>
+  <text name="longdescription" extra="true">
+   <text>고전적인 "포인트 앤 클릭" 그래픽 어드벤처 게임을 MS-DOS, C64, Apple II 또는 PC와 같은 다양한 플랫폼과 시스템에서 플레이하세요.</text>
+  </text>
+ </view>
+</theme>

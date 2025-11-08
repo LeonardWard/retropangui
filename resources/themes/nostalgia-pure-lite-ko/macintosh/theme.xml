@@ -1,0 +1,13 @@
+<theme>
+<formatVersion>4</formatVersion>
+<include>./../theme.xml</include>
+
+<view name="system, basic, detailed, video, grid">
+  <text name="shortdescription" extra="true">
+   <text>1984 8비트 컴퓨터</text>
+  </text>
+  <text name="longdescription" extra="true">
+   <text>매킨토시 128K는 원래 애플 매킨토시라는 이름으로 출시되었으며, 이는 애플의 최초 개인용 컴퓨터입니다.</text>
+  </text>
+ </view>
+</theme>

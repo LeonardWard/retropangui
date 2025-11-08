@@ -1,0 +1,13 @@
+<theme>
+<formatVersion>4</formatVersion>
+<include>./../theme.xml</include>
+
+<view name="system, basic, detailed, video, grid">
+  <text name="shortdescription" extra="true">
+   <text>1993년 코인 게임기</text>
+  </text>
+  <text name="longdescription" extra="true">
+   <text>세가에서 1993년에 출시한 아케이드 시스템 기판이다. 모델 2는 역대 최고 수익을 올린 아케이드 게임들을 선보였습니다.</text>
+  </text>
+ </view>
+</theme>

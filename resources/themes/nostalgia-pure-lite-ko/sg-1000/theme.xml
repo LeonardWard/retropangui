@@ -1,0 +1,13 @@
+<theme>
+<formatVersion>4</formatVersion>
+<include>./../theme.xml</include>
+
+<view name="system, basic, detailed, video, grid">
+  <text name="shortdescription" extra="true">
+   <text>1983  ·  8비트 게임기</text>
+  </text>
+  <text name="longdescription" extra="true">
+   <text>세가의 첫 가정용 비디오 게임 하드웨어 사업 진출은 더 성공적인 마스터 시스템의 기반을 제공했습니다.</text>
+  </text>
+ </view>
+</theme>

@@ -1,0 +1,13 @@
+<theme>
+<formatVersion>4</formatVersion>
+<include>./../theme.xml</include>
+
+<view name="system, basic, detailed, video, grid">
+  <text name="shortdescription" extra="true">
+   <text>2001  ·  32비트 휴대용 콘솔</text>
+  </text>
+  <text name="longdescription" extra="true">
+   <text>Game Boy Color의 후속작. 당시 시장 경쟁자로는 네오지오 포켓 컬러, 원더스완, GP32, 엔게이지가 있었습니다.</text>
+  </text>
+ </view>
+</theme>

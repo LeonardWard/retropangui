@@ -1,0 +1,13 @@
+<theme>
+<formatVersion>4</formatVersion>
+<include>./../theme.xml</include>
+
+<view name="system, basic, detailed, video, grid">
+  <text name="shortdescription" extra="true">
+   <text>1994년 32비트 콘솔</text>
+  </text>
+  <text name="longdescription" extra="true">
+   <text>PC-FX는 소니의 플레이스테이션 출시 몇 주 후, 세가 새턴 출시 한 달 후에 발매되었습니다. 이 기기는 PC 엔진의 후속작입니다.</text>
+  </text>
+ </view>
+</theme>

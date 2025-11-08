@@ -1,0 +1,13 @@
+<theme>
+<formatVersion>4</formatVersion>
+<include>./../theme.xml</include>
+
+<view name="system, basic, detailed, video, grid">
+  <text name="shortdescription" extra="true">
+   <text>1984년 16비트 컴퓨터</text>
+  </text>
+  <text name="longdescription" extra="true">
+   <text>MSX2는 다양한 하드웨어 제조업체 간의 통합된 표준을 만들려는 시도로 고안된 표준화된 가정용 컴퓨터 아키텍처입니다.</text>
+  </text>
+ </view>
+</theme>

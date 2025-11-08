@@ -1,0 +1,13 @@
+<theme>
+<formatVersion>4</formatVersion>
+<include>./../theme.xml</include>
+
+<view name="system, basic, detailed, video, grid">
+  <text name="shortdescription" extra="true">
+   <text>1980  ·  8-비트 게임기</text>
+  </text>
+  <text name="longdescription" extra="true">
+   <text>1980년대 중반 한국에 ‘컴보이’라는 이름으로 출시된 NES(Nintendo Entertainment System)는 당시 한국 게임 시장에 가정용 게임기의 문을 열었고, 슈퍼 마리오, 젤다의 전설 같은 명작들이 이 콘솔을 통해 소개되었다.</text>
+  </text>
+ </view>
+</theme>

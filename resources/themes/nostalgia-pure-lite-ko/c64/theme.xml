@@ -1,0 +1,13 @@
+<theme>
+<formatVersion>4</formatVersion>
+<include>./../theme.xml</include>
+
+<view name="system, basic, detailed, video, grid">
+  <text name="shortdescription" extra="true">
+   <text>1982  ·  8비트 컴퓨터</text>
+  </text>
+  <text name="longdescription" extra="true">
+   <text>C64는 기네스 세계 기록에 역대 가장 많이 팔린 단일 컴퓨터 모델로 등재되어 있습니다.</text>
+  </text>
+ </view>
+</theme>

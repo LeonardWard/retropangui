@@ -1,0 +1,13 @@
+<theme>
+<formatVersion>4</formatVersion>
+<include>./../theme.xml</include>
+
+<view name="system, basic, detailed, video, grid">
+  <text name="shortdescription" extra="true">
+   <text>1978년 8비트 콘솔</text>
+  </text>
+  <text name="longdescription" extra="true">
+   <text>오디세이2는 1983년 비디오 게임 시장 붕괴 사태 이전에 아타리 2600 및 인텔리비전과 함께 주요 3대 가정용 콘솔 중 하나였습니다.</text>
+  </text>
+ </view>
+</theme>

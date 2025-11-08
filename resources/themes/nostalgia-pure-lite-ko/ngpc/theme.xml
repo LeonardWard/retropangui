@@ -1,0 +1,13 @@
+<theme>
+<formatVersion>4</formatVersion>
+<include>./../theme.xml</include>
+
+<view name="system, basic, detailed, video, grid">
+  <text name="shortdescription" extra="true">
+   <text>1999년 · 16비트 휴대용 게임기</text>
+  </text>
+  <text name="longdescription" extra="true">
+   <text>네오지오 포켓 컬러는 SNK의 흑백 네오지오 포켓의 후속작이며, 컬러 버전은 완벽하게 하위 호환된다.</text>
+  </text>
+ </view>
+</theme>

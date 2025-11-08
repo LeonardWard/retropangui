@@ -1,0 +1,13 @@
+<theme>
+<formatVersion>4</formatVersion>
+<include>./../theme.xml</include>
+
+<view name="system, basic, detailed, video, grid">
+  <text name="shortdescription" extra="true">
+   <text>게임 장르</text>
+  </text>
+  <text name="longdescription" extra="true">
+   <text>어린이 친화적인 게임은 최소한의 만화적인 폭력 또는 공상 폭력, 그리고 드문 약한 욕설을 포함할 수 있습니다.</text>
+  </text>
+ </view>
+</theme>

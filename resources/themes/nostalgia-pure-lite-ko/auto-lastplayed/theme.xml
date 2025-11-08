@@ -1,0 +1,13 @@
+<theme>
+<formatVersion>4</formatVersion>
+<include>./../theme.xml</include>
+
+<view name="system, basic, detailed, video, grid">
+  <text name="shortdescription" extra="true">
+   <text>모든 콘솔 / 휴대용 게임기</text>
+  </text>
+  <text name="longdescription" extra="true">
+   <text>전체 라이브러리에서 최근에 플레이한 게임에 빠르게 액세스하고 플레이하세요.</text>
+  </text>
+ </view>
+</theme>

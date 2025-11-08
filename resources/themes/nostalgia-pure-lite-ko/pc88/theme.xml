@@ -1,0 +1,13 @@
+<theme>
+<formatVersion>4</formatVersion>
+<include>./../theme.xml</include>
+
+<view name="system, basic, detailed, video, grid">
+  <text name="shortdescription" extra="true">
+   <text>1981  ·  8비트 컴퓨터</text>
+  </text>
+  <text name="longdescription" extra="true">
+   <text>PC-88로 줄여 부르는 PC-8800 시리즈는 NEC에서 출시한 Zilog Z80 기반의 가정용 컴퓨터 브랜드입니다.</text>
+  </text>
+ </view>
+</theme>

@@ -1,0 +1,13 @@
+<theme>
+<formatVersion>4</formatVersion>
+<include>./../theme.xml</include>
+
+<view name="system, basic, detailed, video, grid">
+  <text name="shortdescription" extra="true">
+   <text>1977년 8비트 컴퓨터</text>
+  </text>
+  <text name="longdescription" extra="true">
+   <text>스티브 워즈니악이 주로 설계한, 최초의 크게 성공한 대량 생산 마이크로컴퓨터 제품 중 하나입니다.</text>
+  </text>
+ </view>
+</theme>

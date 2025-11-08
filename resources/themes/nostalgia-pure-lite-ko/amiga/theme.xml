@@ -1,0 +1,13 @@
+<theme>
+<formatVersion>4</formatVersion>
+<include>./../theme.xml</include>
+
+<view name="system, basic, detailed, video, grid">
+  <text name="shortdescription" extra="true">
+   <text>1985년 16비트 컴퓨터</text>
+  </text>
+  <text name="longdescription" extra="true">
+   <text>원래 모델은 256KB 이상의 RAM, 마우스 기반 GUI, 향상된 그래픽 및 오디오 기능을 갖춘 16비트 및 32비트 컴퓨터의 물결의 일부였습니다.</text>
+  </text>
+ </view>
+</theme>

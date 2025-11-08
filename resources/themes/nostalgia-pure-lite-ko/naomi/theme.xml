@@ -1,0 +1,13 @@
+<theme>
+<formatVersion>4</formatVersion>
+<include>./../theme.xml</include>
+
+<view name="system, basic, detailed, video, grid">
+  <text name="shortdescription" extra="true">
+   <text>1998년 코인 작동식 캐비닛</text>
+  </text>
+  <text name="longdescription" extra="true">
+   <text>NAOMI (New Arcade Operation Machine Idea)는 세가 모델 3의 후속작입니다.</text>
+  </text>
+ </view>
+</theme>

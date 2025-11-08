@@ -1,0 +1,13 @@
+<theme>
+<formatVersion>4</formatVersion>
+<include>./../theme.xml</include>
+
+<view name="system, basic, detailed, video, grid">
+  <text name="shortdescription" extra="true">
+   <text>시스템 구성</text>
+  </text>
+  <text name="longdescription" extra="true">
+   <text>시스템 하드웨어, 블루투스 및 Wi-Fi 연결을 구성합니다. 업데이트, 애드온 및 시각 테마를 설치합니다.</text>
+  </text>
+ </view>
+</theme>

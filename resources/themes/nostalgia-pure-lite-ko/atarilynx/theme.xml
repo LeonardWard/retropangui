@@ -1,0 +1,13 @@
+<theme>
+<formatVersion>4</formatVersion>
+<include>./../theme.xml</include>
+
+<view name="system, basic, detailed, video, grid">
+  <text name="shortdescription" extra="true">
+   <text>1989년 · 16비트 휴대용 게임기</text>
+  </text>
+  <text name="longdescription" extra="true">
+   <text>링스는 컬러 LCD를 탑재한 세계 최초의 휴대용 전자 게임기였으며, 고급 그래픽과 양손잡이용 레이아웃으로도 유명했습니다.</text>
+  </text>
+ </view>
+</theme>

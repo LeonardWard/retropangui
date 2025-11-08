@@ -1,0 +1,13 @@
+<theme>
+<formatVersion>4</formatVersion>
+<include>./../theme.xml</include>
+
+<view name="system, basic, detailed, video, grid">
+  <text name="shortdescription" extra="true">
+   <text>다중 하드웨어 에뮬레이터</text>
+  </text>
+  <text name="longdescription" extra="true">
+   <text>MESS (Multi Emulator Super System)는 방대한 양의 잘 알려지지 않은 하드웨어를 에뮬레이트하는 시스템입니다.</text>
+  </text>
+ </view>
+</theme>

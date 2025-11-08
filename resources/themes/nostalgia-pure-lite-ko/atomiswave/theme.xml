@@ -1,0 +1,13 @@
+<theme>
+<formatVersion>4</formatVersion>
+<include>./../theme.xml</include>
+
+<view name="system, basic, detailed, video, grid">
+  <text name="shortdescription" extra="true">
+   <text>2003년 동전 작동식 캐비닛</text>
+  </text>
+  <text name="longdescription" extra="true">
+   <text>아토미스웨이브는 새미 코퍼레이션의 맞춤형 아케이드 시스템 보드 및 캐비닛입니다. 세가의 NAOMI 시스템 보드를 기반으로 합니다.</text>
+  </text>
+ </view>
+</theme>

@@ -42,12 +42,12 @@ install_emulationstation() {
 
     # EmulationStation 설정
     log_msg INFO "EmulationStation 설정 디렉토리 생성 및 Recalbox 설정 적용 중..."
-    set_dir_ownership_and_permissions "$USER_CONFIG_PATH/emulationstation" > /dev/null || return 1
+    local target_user
+    target_user="$(set_dir_ownership_and_permissions "$USER_CONFIG_PATH/emulationstation")" || return 1
+
     cp -r "$ES_BUILD_DIR/resources" "$USER_CONFIG_PATH/emulationstation/resources" || { log_msg ERROR "EmulationStation 리소스 복사 실패."; return 1; }
     sudo rm -rf "$USER_HOME/.emulationstation"
     ln -s "$USER_CONFIG_PATH/emulationstation" $USER_HOME/.emulationstation  || { log_msg ERROR "EmulationStation 심볼릭 링크 생성 실패."; return 1; }
-
-    sudo chown -R $__user:$__user "$ES_CONFIG_DIR" || return 1
 
     # es_settings.cfg 생성 (경로 설정)
     log_msg INFO "es_settings.cfg 파일을 생성합니다."
@@ -57,7 +57,7 @@ install_emulationstation() {
 <string name="LibretroCoresPath" value="$LIBRETRO_CORE_PATH" />
 <string name="CoreConfigPath" value="$CORE_CONFIG_PATH" />
 EOF
-    chown $__user:$__user "$ES_CONFIG_DIR/es_settings.cfg"
+    sudo chown "$target_user":"$target_user" "$ES_CONFIG_DIR/es_settings.cfg"
 
     # es_systems.xml 빈 파일 생성
     # 시스템과 코어 정보는 install_base_4_in_5_cores.sh에서 install_module() 실행 시 자동 추가됨
@@ -67,7 +67,7 @@ EOF
 <systemList>
 </systemList>
 EOF
-    chown $__user:$__user "$ES_CONFIG_DIR/es_systems.xml"
+    sudo chown "$target_user":"$target_user" "$ES_CONFIG_DIR/es_systems.xml"
     log_msg SUCCESS "es_systems.xml 빈 파일 생성 완료. 시스템 정보는 코어 설치 시 자동 추가됩니다."
 
     # 기존 테마 링크가 있으면 제거
@@ -76,6 +76,21 @@ EOF
         rm -rf "$themes_link"
     fi
     ln -s "$USER_THEMES_PATH" "$themes_link" || { log_msg ERROR "테마 디렉토리 심볼릭 링크 생성 실패."; return 1; }
+
+    # 기본 테마 설치
+    log_msg INFO "기본 테마(nostalgia-pure-lite-ko) 설치 중..."
+    local default_theme_src="$RESOURCES_DIR/themes/nostalgia-pure-lite-ko"
+    local default_theme_dst="$USER_THEMES_PATH/nostalgia-pure-lite-ko"
+
+    if [[ -d "$default_theme_src" ]]; then
+        set_dir_ownership_and_permissions "$USER_THEMES_PATH" > /dev/null || { log_msg WARN "테마 디렉토리 생성 실패."; }
+        cp -r "$default_theme_src" "$default_theme_dst" || { log_msg WARN "기본 테마 설치 실패 (선택사항)."; }
+        set_dir_ownership_and_permissions "$default_theme_dst" > /dev/null || { log_msg WARN "기본 테마 권한 설정 실패."; }
+        log_msg SUCCESS "기본 테마 설치 완료: $default_theme_dst"
+    else
+        log_msg WARN "기본 테마를 찾을 수 없습니다: $default_theme_src"
+    fi
+
     cp "$RESOURCES_DIR/es-recalbox/es_input.cfg" "$USER_CONFIG_PATH/emulationstation"
     log_msg SUCCESS "EmulationStation 빌드 및 설치 완료. 설치 경로: "$INSTALL_ROOT_DIR""
     return 0

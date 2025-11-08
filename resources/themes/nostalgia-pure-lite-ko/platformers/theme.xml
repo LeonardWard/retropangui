@@ -1,0 +1,13 @@
+<theme>
+<formatVersion>4</formatVersion>
+<include>./../theme.xml</include>
+
+<view name="system, basic, detailed, video, grid">
+  <text name="shortdescription" extra="true">
+   <text>게임 장르</text>
+  </text>
+  <text name="longdescription" extra="true">
+   <text>플랫포머 게임에서 플레이어는 캐릭터를 조종하여 공중에 떠 있는 플랫폼 사이를 점프하고 장애물을 피합니다.</text>
+  </text>
+ </view>
+</theme>

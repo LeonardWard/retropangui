@@ -1,0 +1,13 @@
+<theme>
+<formatVersion>4</formatVersion>
+<include>./../theme.xml</include>
+
+<view name="system, basic, detailed, video, grid">
+  <text name="shortdescription" extra="true">
+   <text>게임 장르</text>
+  </text>
+  <text name="longdescription" extra="true">
+   <text>롤플레잉 게임에서 플레이어는 종종 환상적인 세계에 몰입하여 하나 또는 여러 캐릭터의 행동을 조종합니다.</text>
+  </text>
+ </view>
+</theme>

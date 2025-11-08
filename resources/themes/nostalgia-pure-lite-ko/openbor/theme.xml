@@ -1,0 +1,13 @@
+<theme>
+<formatVersion>4</formatVersion>
+<include>./../theme.xml</include>
+
+<view name="system, basic, detailed, video, grid">
+  <text name="shortdescription" extra="true">
+   <text>2004  ·  오픈 소스 엔진</text>
+  </text>
+  <text name="longdescription" extra="true">
+   <text>'Beats of Rage'의 지속적인 성공 비결은 맞춤 설정이 가능하고 새로운 게임을 구축할 수 있는 게임 엔진입니다.</text>
+  </text>
+ </view>
+</theme>

@@ -1,0 +1,13 @@
+<theme>
+<formatVersion>4</formatVersion>
+<include>./../theme.xml</include>
+
+<view name="system, basic, detailed, video, grid">
+  <text name="shortdescription" extra="true">
+   <text>코인 작동식 캐비닛</text>
+  </text>
+  <text name="longdescription" extra="true">
+   <text>동전 작동식 오락기의 황금기는 1970년대 후반부터 1980년대 중반까지의 기간으로 정의됩니다.</text>
+  </text>
+ </view>
+</theme>
