@@ -26,14 +26,12 @@ setup_environment() {
     create_runcommand_script
 
     # ES 입력 설정 복사
+    set_dir_ownership_and_permissions "$ES_CONFIG_DIR" > /dev/null
     sudo cp "$ROOT_DIR/resources/es-recalbox/es_input.cfg" "$ES_CONFIG_DIR"
 
-    # 소유권 설정
-    set_dir_ownership_and_permissions "$USER_SYSTEM_PATH"
-
-    # USER_SYSTEM_PATH의 소유권을 재귀적으로 변경
-    log_msg INFO "/share/system 경로의 소유권($__user:$__user)을 재귀적으로 적용 중..."
-    sudo chown -R "$__user":"$__user" "$USER_SYSTEM_PATH"
+    # USER_SHARE_PATH 전체의 소유권을 재귀적으로 변경
+    log_msg INFO "share 경로 전체의 소유권($__user:$__user)을 재귀적으로 적용 중..."
+    sudo chown -R "$__user":"$__user" "$USER_SHARE_PATH"
 
     log_msg SUCCESS "환경 설정 완료."
     return 0

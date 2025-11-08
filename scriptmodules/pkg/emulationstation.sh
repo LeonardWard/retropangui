@@ -42,12 +42,12 @@ install_emulationstation() {
 
     # EmulationStation 설정
     log_msg INFO "EmulationStation 설정 디렉토리 생성 및 Recalbox 설정 적용 중..."
-    mkdir -p "$USER_CONFIG_PATH/emulationstation"
+    set_dir_ownership_and_permissions "$USER_CONFIG_PATH/emulationstation" > /dev/null || return 1
     cp -r "$ES_BUILD_DIR/resources" "$USER_CONFIG_PATH/emulationstation/resources" || { log_msg ERROR "EmulationStation 리소스 복사 실패."; return 1; }
     sudo rm -rf "$USER_HOME/.emulationstation"
     ln -s "$USER_CONFIG_PATH/emulationstation" $USER_HOME/.emulationstation  || { log_msg ERROR "EmulationStation 심볼릭 링크 생성 실패."; return 1; }
 
-    chown -R $__user:$__user "$ES_CONFIG_DIR" || return 1
+    sudo chown -R $__user:$__user "$ES_CONFIG_DIR" || return 1
 
     # es_settings.cfg 생성 (경로 설정)
     log_msg INFO "es_settings.cfg 파일을 생성합니다."

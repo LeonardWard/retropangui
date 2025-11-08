@@ -47,15 +47,14 @@ install_retroarch() {
     
     # RetroArch 설정 디렉토리 생성
     log_msg INFO "RetroArch 설정 디렉토리 생성 중..."
-    mkdir -p "$RA_CONFIG_PATH" || { log_msg ERROR "RetroArch 설정 디렉토리 생성 실패."; return 1; }
-    sudo chown -R "$__user":"$__user" "$RA_CONFIG_PATH" || return 1
+    set_dir_ownership_and_permissions "$RA_CONFIG_PATH" > /dev/null || { log_msg ERROR "RetroArch 설정 디렉토리 생성 실패."; return 1; }
 
     # 기존 링크 또는 디렉토리가 있다면 제거하여 올바른 심볼릭 링크 생성을 보장
     sudo rm -rf "$RA_CONFIG_DIR"
 
     # RetroArch 설정 심볼릭 링크 생성
     log_msg INFO "RetroArch 설정 파일 복사 및 패치 (ln -s "$RA_CONFIG_PATH" "$RA_CONFIG_DIR") 중..."
-    ln -s "$RA_CONFIG_PATH" "$RA_CONFIG_DIR" || return 1
+    sudo -u "$__user" ln -s "$RA_CONFIG_PATH" "$RA_CONFIG_DIR" || return 1
 
     local CONFIG_RA_SKELETON="$INSTALL_ROOT_DIR/etc/retroarch.cfg"
     if [ -f "$CONFIG_RA_SKELETON" ]; then

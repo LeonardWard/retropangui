@@ -43,8 +43,8 @@ create_user_paths() {
 
     for dir in "${paths[@]}"; do
         if [ -n "$dir" ]; then
-            mkdir -p "$dir"
-            echo "생성됨: $dir"
+            local owner=$(set_dir_ownership_and_permissions "$dir")
+            echo "생성됨: $dir (소유자: $owner)"
         fi
     done
 }
