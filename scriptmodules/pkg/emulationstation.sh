@@ -70,26 +70,19 @@ EOF
     sudo chown "$target_user":"$target_user" "$ES_CONFIG_DIR/es_systems.xml"
     log_msg SUCCESS "es_systems.xml 빈 파일 생성 완료. 시스템 정보는 코어 설치 시 자동 추가됩니다."
 
-    # 기존 테마 링크가 있으면 제거
+    # 기존 테마 링크가 있으면 제거 (심볼릭 링크만 제거, -n 옵션으로 링크 자체 삭제)
     local themes_link="$USER_CONFIG_PATH/emulationstation/themes"
-    if [[ -L "$themes_link" || -e "$themes_link" ]]; then
+    if [[ -L "$themes_link" ]]; then
+        unlink "$themes_link" || rm -f "$themes_link"
+    elif [[ -e "$themes_link" ]]; then
         rm -rf "$themes_link"
     fi
-    ln -s "$USER_THEMES_PATH" "$themes_link" || { log_msg ERROR "테마 디렉토리 심볼릭 링크 생성 실패."; return 1; }
+    # -n 옵션: 심볼릭 링크를 따라가지 않음 (순환 참조 방지)
+    # -f 옵션: 기존 링크가 있으면 덮어쓰기
+    ln -sfn "$USER_THEMES_PATH" "$themes_link" || { log_msg ERROR "테마 디렉토리 심볼릭 링크 생성 실패."; return 1; }
 
-    # 기본 테마 설치
-    log_msg INFO "기본 테마(nostalgia-pure-lite-ko) 설치 중..."
-    local default_theme_src="$RESOURCES_DIR/themes/nostalgia-pure-lite-ko"
-    local default_theme_dst="$USER_THEMES_PATH/nostalgia-pure-lite-ko"
-
-    if [[ -d "$default_theme_src" ]]; then
-        set_dir_ownership_and_permissions "$USER_THEMES_PATH" > /dev/null || { log_msg WARN "테마 디렉토리 생성 실패."; }
-        cp -r "$default_theme_src" "$default_theme_dst" || { log_msg WARN "기본 테마 설치 실패 (선택사항)."; }
-        set_dir_ownership_and_permissions "$default_theme_dst" > /dev/null || { log_msg WARN "기본 테마 권한 설정 실패."; }
-        log_msg SUCCESS "기본 테마 설치 완료: $default_theme_dst"
-    else
-        log_msg WARN "기본 테마를 찾을 수 없습니다: $default_theme_src"
-    fi
+    # 기본 테마 설치는 setup_environment()로 이동
+    # (ES가 이미 설치된 경우에도 테마가 설치되도록 하기 위함)
 
     cp "$RESOURCES_DIR/es-recalbox/es_input.cfg" "$USER_CONFIG_PATH/emulationstation"
     log_msg SUCCESS "EmulationStation 빌드 및 설치 완료. 설치 경로: "$INSTALL_ROOT_DIR""
