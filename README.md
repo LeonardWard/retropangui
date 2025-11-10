@@ -114,34 +114,9 @@ retropangui-emulationstation/    # EmulationStation 포크 소스
 - lr-scummvm (ScummVM)
 - 기타 RetroPie 호환 코어
 
-## 개발 정보
-
-### 리팩토링 현황 (2025-11-08 업데이트)
-
-**Phase 1** ✅ 완료 (2025-11-08):
-- ✅ 폴더 구조 재구성 (resources, compat, lib, pkg, ui)
-- ✅ 파일 이동 및 경로 수정
-- ✅ 타입 자동 감지 시스템
-- ✅ config.sh 최상위로 이동
-
-**Phase 2** ✅ 완료 (2025-11-08):
-- ✅ func.sh 분할 (493줄 → 5개 모듈 + 19줄 로더)
-  - lib/: git, user, config_utils, retroarch_utils, func
-  - compat/: packages (RetroPie 호환 함수)
-- ✅ packages.sh 분할 (393줄 → 3개 모듈 + 53줄 로더)
-  - lib/: install, remove, special
-- ✅ 중복 파일 제거 및 통합 (inifuncs.sh + ext_retropie_ini.sh → ini.sh)
-- ✅ ES 기본 테마 자동 설치 기능 추가
-- ✅ 공용 함수 사용 원칙 확립
-
-**Phase 3** (향후 계획):
-- ui/menu.sh 분할 (dialog, config, menu 분리)
-- RetroPie 의존성 완전 제거
-
 ### 개발 문서
 
 - **핸드오버 문서**: [docs/HANDOVER.md](docs/HANDOVER.md) - 현재 상태 및 개발 가이드
-- **변경 이력**: [docs/HISTORY.md](docs/HISTORY.md) - 주요 변경사항 기록
 - **개발 이력 아카이브**: [docs/HANDOVER_ARCHIVE.md](docs/HANDOVER_ARCHIVE.md) - 2025-08~11-08 통합 아카이브
 
 ## 라이선스
@@ -151,7 +126,3 @@ retropangui-emulationstation/    # EmulationStation 포크 소스
 ## 기여
 
 이슈 및 풀 리퀘스트는 GitHub를 통해 제출해주세요.
-
-## 문의
-
-[문의 정보 추가 필요]
