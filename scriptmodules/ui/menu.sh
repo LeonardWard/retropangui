@@ -478,42 +478,25 @@ function update_script() {
 
                     if (dialog --clear --title "$(msg 'title_script_update')" --yesno "$(msg 'msg_new_version'): v${local_version_num}\n$(msg 'latest'): ${__rpg_latest_remote_version}\n\n" 12 60 2>&1 >/dev/tty); then            log_msg INFO "$(msg 'script_update_start')"
 
-            local stashed=false
-            if [ -n "$(git status --porcelain)" ]; then
-                log_msg INFO "$(msg 'stashing_changes')"
-                if ! git stash push -u -m "RetroPangui-Auto-Stash-Before-Update"; then
-                    log_msg ERROR "$(msg 'stash_failed')"
-                    dialog --clear --title "$(msg 'title_update_failed')" --msgbox "$(msg 'msg_stash_failed')" 10 78 2>&1 >/dev/tty
-                    return
-                fi
-                stashed=true
-            fi
-
+            # 원격 저장소 최신 정보 가져오기
             log_msg INFO "$(msg 'fetching_update')"
-            if ! git pull --rebase origin master > >(tee -a "$LOG_FILE") 2>&1; then
+            if ! git fetch origin > >(tee -a "$LOG_FILE") 2>&1; then
                 log_msg ERROR "$(msg 'update_failed')"
                 dialog --clear --title "$(msg 'title_update_failed')" --msgbox "$(msg 'msg_pull_failed')" 8 78 2>&1 >/dev/tty
-                if $stashed; then
-                    git stash pop
-                fi
                 return
             fi
 
-            if $stashed; then
-                log_msg INFO "$(msg 'reapplying_changes')"
-                if ! git stash pop; then
-                    log_msg WARN "$(msg 'stash_conflict')"
-                    git reset --hard
-                    dialog --clear --title "$(msg 'title_update_complete_warning')" --msgbox "$(msg 'msg_stash_conflict')" 12 78 2>&1 >/dev/tty
-                else
-                    log_msg SUCCESS "$(msg 'stash_success')"
-                    dialog --clear --title "$(msg 'title_update_complete')" --msgbox "$(msg 'msg_update_success_with_stash')" 10 78 2>&1 >/dev/tty
-                    dialog --clear --title "$(msg 'title_guide')" --msgbox "$(msg 'msg_update_component_notice')" 10 78 2>&1 >/dev/tty
-                fi
-            else
-                dialog --clear --title "$(msg 'title_update_complete')" --msgbox "$(msg 'msg_update_success')" 8 78 2>&1 >/dev/tty
-                dialog --clear --title "$(msg 'title_guide')" --msgbox "$(msg 'msg_update_component_notice')" 10 78 2>&1 >/dev/tty
+            # 로컬 변경사항 무시하고 원격 버전으로 강제 업데이트
+            log_msg INFO "Resetting to remote version (origin/master)..."
+            if ! git reset --hard origin/master > >(tee -a "$LOG_FILE") 2>&1; then
+                log_msg ERROR "$(msg 'update_failed')"
+                dialog --clear --title "$(msg 'title_update_failed')" --msgbox "$(msg 'msg_pull_failed')" 8 78 2>&1 >/dev/tty
+                return
             fi
+
+            log_msg SUCCESS "$(msg 'stash_success')"
+            dialog --clear --title "$(msg 'title_update_complete')" --msgbox "$(msg 'msg_update_success')" 8 78 2>&1 >/dev/tty
+            dialog --clear --title "$(msg 'title_guide')" --msgbox "$(msg 'msg_update_component_notice')" 10 78 2>&1 >/dev/tty
 
         else
             log_msg INFO "$(msg 'script_update_cancelled')"
