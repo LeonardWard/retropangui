@@ -37,6 +37,15 @@ function load_version_from_git() {
     log_msg "DEBUG" "MODULES_DIR: ${MODULES_DIR:-'(설정 안됨)'}"
     log_msg "DEBUG" "repo_dir: $repo_dir"
 
+    # =================== GIT DEBUG START ===================
+    log_msg "DEBUG" "Git command will be run as: $git_cmd"
+    log_msg "DEBUG" "Checking .git directory existence: $(ls -ld $repo_dir/.git 2>&1)"
+    log_msg "DEBUG" "Current git status: $($git_cmd -C "$repo_dir" status 2>&1)"
+    log_msg "DEBUG" "Current HEAD commit: $($git_cmd -C "$repo_dir" rev-parse HEAD 2>&1)"
+    log_msg "DEBUG" "Listing local tags: $($git_cmd -C "$repo_dir" tag 2>&1)"
+    log_msg "DEBUG" "Listing content of .git/refs/tags: $(ls -l $repo_dir/.git/refs/tags 2>&1)"
+    # =================== GIT DEBUG END =====================
+
     local latest_version=$($git_cmd -C "$repo_dir" tag 2>/dev/null | sort -V | tail -n 1)
     log_msg "DEBUG" "로드된 태그: ${latest_version:-'(없음)'}"
 
