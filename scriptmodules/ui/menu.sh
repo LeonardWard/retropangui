@@ -491,10 +491,10 @@ function update_script() {
                 return
             fi
 
-            # 로컬 변경사항 무시하고 원격 버전으로 강제 업데이트
+            # 로컬 변경사항은 무시하고 최신 태그 버전으로 강제 체크아웃
             # 원래 사용자 권한으로 실행하여 파일 소유권 문제 방지
-            log_msg INFO "Resetting to remote version (origin/master)..."
-            if ! sudo -u "$git_user" git reset --hard origin/master > >(tee -a "$LOG_FILE") 2>&1; then
+            log_msg INFO "Checking out the latest version: ${__rpg_latest_remote_version}"
+            if ! sudo -u "$git_user" git checkout "${__rpg_latest_remote_version}" > >(tee -a "$LOG_FILE") 2>&1; then
                 log_msg ERROR "$(msg 'update_failed')"
                 dialog --clear --title "$(msg 'title_update_failed')" --msgbox "$(msg 'msg_pull_failed')" 8 78 2>&1 >/dev/tty
                 return
