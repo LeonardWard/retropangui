@@ -22,7 +22,16 @@ fi
 function load_version_from_git() {
     log_msg "INFO" "Git 태그에서 버전 정보를 로드합니다."
     local latest_version=$(git tag | sort -V | tail -n 1)
-    
+
+    # 로컬에 태그가 없으면 원격에서 가져오기 시도
+    if [ -z "$latest_version" ]; then
+        log_msg "INFO" "로컬 태그가 없습니다. 원격 저장소에서 태그를 가져옵니다..."
+        if git fetch origin --tags >/dev/null 2>&1; then
+            latest_version=$(git tag | sort -V | tail -n 1)
+            log_msg "INFO" "원격 태그를 성공적으로 가져왔습니다."
+        fi
+    fi
+
     if [ -z "$latest_version" ]; then
         log_msg "WARN" "Git 태그를 찾을 수 없어 버전을 '0.0.0'으로 설정합니다."
         export __version="0.0.0"
