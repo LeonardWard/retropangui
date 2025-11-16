@@ -495,8 +495,12 @@ function update_script() {
             fi
 
             log_msg SUCCESS "$(msg 'stash_success')"
-            dialog --clear --title "$(msg 'title_update_complete')" --msgbox "$(msg 'msg_update_success')" 8 78 2>&1 >/dev/tty
-            dialog --clear --title "$(msg 'title_guide')" --msgbox "$(msg 'msg_update_component_notice')" 10 78 2>&1 >/dev/tty
+            dialog --clear --title "$(msg 'title_update_complete')" --msgbox "$(msg 'msg_update_restart')" 8 78 2>&1 >/dev/tty
+
+            # 업데이트된 스크립트로 프로그램 재시작
+            log_msg INFO "Restarting program with updated script..."
+            clear
+            exec sudo "$ROOT_DIR/retropangui_setup.sh" "$@"
 
         else
             log_msg INFO "$(msg 'script_update_cancelled')"

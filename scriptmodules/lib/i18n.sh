@@ -209,6 +209,7 @@ msg() {
             "msg_stash_conflict") echo "스크립트가 성공적으로 업데이트되었습니다.\n\n하지만, 로컬 수정사항 중 일부를 자동으로 재적용할 수 없었습니다. 변경하신 내용은 안전하게 백업되어 있으니, 전문가의 도움이 필요할 수 있습니다. (가장 최근 stash 확인)";;
             "msg_update_success_with_stash") echo "스크립트가 성공적으로 업데이트되었으며, 로컬 변경사항도 유지되었습니다.";;
             "msg_update_success") echo "스크립트가 성공적으로 업데이트되었습니다.";;
+            "msg_update_restart") echo "업데이트가 완료되었습니다.\n\n프로그램을 재시작합니다...";;
             "msg_update_component_notice") echo "RetroArch 등 개별 구성요소의 업데이트는 '패키지 관리' 메뉴에서 확인하세요.";;
             "msg_already_latest") echo "현재 최신 버전의 스크립트를 사용하고 있습니다.\n\n현재 버전";;
             "msg_uninstall_confirm") echo "Retro Pangui가 생성한 모든 설정, 빌드 파일, 설치된 코어 및 에뮬레이터를 제거합니다. (Share 폴더 및 로그 제외)\n\n이 작업은 되돌릴 수 없습니다. 정말로 계속하시겠습니까?";;
@@ -455,6 +456,7 @@ msg() {
             "msg_stash_conflict") echo "Script has been successfully updated.\n\nHowever, some of your local modifications could not be automatically reapplied. Your changes are safely backed up, and you may need expert assistance. (Check the most recent stash)";;
             "msg_update_success_with_stash") echo "Script has been successfully updated, and local changes have been preserved.";;
             "msg_update_success") echo "Script has been successfully updated.";;
+            "msg_update_restart") echo "Update complete.\n\nRestarting the program...";;
             "msg_update_component_notice") echo "For updates to individual components like RetroArch, please check the 'Package Management' menu.";;
             "msg_already_latest") echo "You are currently using the latest version of the script.\n\nCurrent version";;
             "msg_uninstall_confirm") echo "This will remove all settings, build files, installed cores and emulators created by Retro Pangui. (Share folder and logs excluded)\n\nThis action cannot be undone. Are you sure you want to continue?";;
