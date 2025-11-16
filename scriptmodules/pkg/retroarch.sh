@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# 파일명: install_base_2_in_5_ra.sh
+# 파일명: retroarch.sh
 # Retro Pangui Module: RetroArch Installation (Base 2/5)
 # 
 # 이 스크립트는 RetroArch를 Git에서 클론하여 빌드하고 설치하는 
@@ -10,6 +10,9 @@
 install_retroarch() {
     # RetroArch 본체 설치
     log_msg STEP "RetroArch 소스 빌드 및 설치 시작..."
+    log_msg INFO "대상 플랫폼: $__device ($__platform_arch)"
+    log_msg INFO "플랫폼 설정: $PLATFORM_CONFIG_FILE"
+
     local EXT_FOLDER="$(get_Git_Project_Dir_Name "$RA_GIT_URL")"
     local RA_BUILD_DIR="$INSTALL_BUILD_DIR/$EXT_FOLDER"
     log_msg INFO "ℹ️ RetroArch 프로젝트 이름: $EXT_FOLDER"
@@ -21,24 +24,44 @@ install_retroarch() {
 
     cd "$RA_BUILD_DIR" \
         || return 1
-    
-    log_msg INFO "RetroArch 빌드 환경 설정 중..."
-    ./configure \
-        --prefix="$INSTALL_ROOT_DIR" \
-        --disable-x11 \
-        --disable-wayland \
-        --enable-opengl \
-        --enable-udev \
-        --enable-alsa \
-        --enable-threads \
-        --enable-ffmpeg \
-        --enable-7zip \
-        --enable-sdl2 \
-            || { log_msg ERROR "RetroArch configure 실패."; return 1; }
 
-    log_msg INFO "RetroArch 빌드 시작 (make -j$(nproc))..."
+    # 플랫폼별 버전/브랜치 체크아웃
+    if [ -n "$RA_VERSION" ]; then
+        log_msg INFO "RetroArch 버전 체크아웃: $RA_VERSION"
+        git checkout "$RA_VERSION" || { log_msg WARN "버전 체크아웃 실패, 현재 브랜치 유지"; }
+    elif [ -n "$RA_BRANCH" ]; then
+        log_msg INFO "RetroArch 브랜치 체크아웃: $RA_BRANCH"
+        git checkout "$RA_BRANCH" || { log_msg WARN "브랜치 체크아웃 실패, 현재 브랜치 유지"; }
+    fi
+
+    # 플랫폼별 configure 옵션 사용
+    log_msg INFO "RetroArch 빌드 환경 설정 중..."
+    if [ -n "$RA_CONFIGURE_OPTS" ] && [ ${#RA_CONFIGURE_OPTS[@]} -gt 0 ]; then
+        log_msg INFO "플랫폼별 configure 옵션 사용: ${RA_CONFIGURE_OPTS[*]}"
+        ./configure "${RA_CONFIGURE_OPTS[@]}" \
+            || { log_msg ERROR "RetroArch configure 실패."; return 1; }
+    else
+        # 기본 옵션 (x86_64 호환)
+        log_msg WARN "플랫폼별 설정 없음, 기본 옵션 사용"
+        ./configure \
+            --prefix="$INSTALL_ROOT_DIR" \
+            --disable-x11 \
+            --disable-wayland \
+            --enable-opengl \
+            --enable-udev \
+            --enable-alsa \
+            --enable-threads \
+            --enable-ffmpeg \
+            --enable-7zip \
+            --enable-sdl2 \
+                || { log_msg ERROR "RetroArch configure 실패."; return 1; }
+    fi
+
+    # 플랫폼별 make 플래그 사용
+    local make_flags="${PLATFORM_MAKEFLAGS:--j$(nproc)}"
+    log_msg INFO "RetroArch 빌드 시작 (make $make_flags)..."
     make clean
-    make -j$(nproc) \
+    make $make_flags \
         || { log_msg ERROR "RetroArch 빌드 실패."; return 1; }
     
     log_msg INFO "RetroArch 설치 중..."
@@ -97,8 +120,8 @@ install_retroarch() {
 
     cp "$INSTALL_ROOT_DIR/etc/retroarch.cfg" "$INSTALL_ROOT_DIR/etc/retroarch.cfg.origin"
     log_msg INFO "복사 완료: $INSTALL_ROOT_DIR/etc/retroarch.cfg.origin"
-    cp "$RESOURCES_DIR/retroarch.init.cfg" "$INSTALL_ROOT_DIR/etc/retroarch.cfg"
-    log_msg INFO "복사 완료: $INSTALL_ROOT_DIR/etc/retroarch.cfg"
+#    cp "$RESOURCES_DIR/retroarch.init.cfg" "$INSTALL_ROOT_DIR/etc/retroarch.cfg"
+#    log_msg INFO "복사 완료: $INSTALL_ROOT_DIR/etc/retroarch.cfg"
 
     log_msg SUCCESS "RetroArch 빌드 및 설치 완료: $INSTALL_ROOT_DIR"
     return 0

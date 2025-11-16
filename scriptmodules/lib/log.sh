@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
 #
-# 파일명: helpers.sh
+# 파일명: log.sh
 # Retro Pangui Module: Utility and Logging Functions
 # ===============================================
 
 # 로그 레벨 설정 (환경 변수로 제어 가능)
 # 0=DEBUG, 1=INFO, 2=WARN, 3=ERROR, 4=SUCCESS, 5=STEP
-LOG_LEVEL="${LOG_LEVEL:0}"  # 기본값: INFO (DEBUG 숨김)
+LOG_LEVEL="${LOG_LEVEL:-1}"  # 기본값: INFO (DEBUG 숨김)
 
 ensure_log_dir() {
     if [ ! -d "$LOG_DIR" ]; then

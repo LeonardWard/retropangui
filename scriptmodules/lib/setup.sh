@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# 파일명: install_base_5_in_5_setup_env.sh
+# 파일명: setup.sh
 # Retro Pangui Module: Environment Setup (Base 5/5)
 #
 # 이 스크립트는 최종 환경 설정을 처리하는
@@ -48,10 +48,6 @@ setup_environment() {
 
     # runcommand.sh 스크립트 생성
     create_runcommand_script
-
-    # ES 입력 설정 복사
-    set_dir_ownership_and_permissions "$ES_CONFIG_DIR" > /dev/null
-    sudo cp "$ROOT_DIR/resources/es-recalbox/es_input.cfg" "$ES_CONFIG_DIR"
 
     # 기본 테마 설치 (ES가 이미 설치되어 있어도 실행됨)
     install_default_theme

@@ -29,6 +29,25 @@ export LOG_FILE
 
 # --- [2] 메인 실행 함수 ---
 function main() {
+    # 커맨드라인 인자에서 언어 옵션 파싱
+    for arg in "$@"; do
+        case "$arg" in
+            --lang=en|--english|--en)
+                export RETROPANGUI_LANG="en"
+                # i18n.sh 다시 로드하여 언어 재설정
+                source "$MODULES_DIR/lib/i18n.sh"
+                ;;
+            --lang=ko|--korean|--ko|--한국어)
+                export RETROPANGUI_LANG="ko"
+                source "$MODULES_DIR/lib/i18n.sh"
+                ;;
+            --lang=*)
+                echo "❌ Unsupported language. Use --lang=en or --lang=ko"
+                exit 1
+                ;;
+        esac
+    done
+
     load_version_from_git
 
     # 필수 권한 확인
@@ -37,6 +56,85 @@ function main() {
         exit 1
     fi
     ensure_log_dir
+
+    # 플랫폼 정보 출력
+    log_msg INFO "========================================="
+    log_msg INFO "$(msg 'platform_info_title')"
+    log_msg INFO "========================================="
+    log_msg INFO "$(msg 'architecture'): $__platform_arch"
+    log_msg INFO "$(msg 'detected_device'): $__device"
+    log_msg INFO "$(msg 'cpu_flags'): $__default_cpu_flags"
+    log_msg INFO "$(msg 'platform_flags'): ${__platform_flags[*]}"
+    log_msg INFO "$(msg 'platform_config_file'): $PLATFORM_CONFIG_FILE"
+    log_msg INFO "$(msg 'config_loaded'): $PLATFORM_CONFIG_LOADED"
+    if [ "$PLATFORM_CONFIG_LOADED" = "yes" ]; then
+        log_msg INFO "$(msg 'retroarch_version'): ${RA_VERSION:-$(msg 'latest')}"
+        log_msg INFO "$(msg 'retroarch_branch'): ${RA_BRANCH:-master}"
+    fi
+    log_msg INFO "========================================="
+
+    # 플랫폼 설정이 로드되지 않았을 때 처리
+    if [ "$PLATFORM_CONFIG_LOADED" != "yes" ]; then
+        echo ""
+        echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+        echo "$(msg 'warning'): $(msg 'no_platform_config')"
+        echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+        echo ""
+        echo "$(msg 'detected_system_info')"
+        echo "   - $(msg 'architecture'): $__platform_arch ($(uname -m))"
+        echo "   - $(msg 'detected_device'): $__device"
+        if [ -f /proc/device-tree/model ]; then
+            echo "   - $(msg 'device_tree_model'): $(tr -d '\0' < /proc/device-tree/model)"
+        fi
+        echo ""
+        echo "$(msg 'create_platform_config')"
+        echo ""
+        echo "$(msg 'step_check_configs')"
+        echo "   ls $PLATFORMS_DIR/"
+        echo ""
+        echo "$(msg 'step_copy_similar')"
+        echo "   $(msg 'arm64_device_case')"
+        echo "   cp $PLATFORMS_DIR/odroidc5.conf $PLATFORMS_DIR/mynewboard.conf"
+        echo ""
+        echo "   $(msg 'armv7_device_case')"
+        echo "   cp $PLATFORMS_DIR/odroidxu4.conf $PLATFORMS_DIR/mynewboard.conf"
+        echo ""
+        echo "$(msg 'step_add_detection')"
+        echo "   nano $ROOT_DIR/config.sh"
+        echo ""
+        echo "   case \"\$model\" in"
+        echo "       *\"Your Board Name\"*) echo \"mynewboard\"; return;;"
+        echo "   esac"
+        echo ""
+        echo "$(msg 'step_modify_config')"
+        echo "   nano $PLATFORMS_DIR/mynewboard.conf"
+        echo ""
+        echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+        echo ""
+
+        # 사용자에게 계속 진행 여부 확인
+        if [ -f "$PLATFORMS_DIR/$__platform_arch.conf" ]; then
+            read -p "$(msg 'continue_with_generic') ($(msg 'using_generic_config') $__platform_arch.conf) [y/N]: " -n 1 -r
+        else
+            read -p "$(msg 'continue_without_config') [y/N]: " -n 1 -r
+        fi
+        echo ""
+        if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+            log_msg INFO "$(msg 'user_cancelled')"
+            exit 1
+        fi
+
+        # 아키텍처별 기본 설정이 있으면 사용
+        if [ -f "$PLATFORMS_DIR/$__platform_arch.conf" ]; then
+            log_msg WARN "$(msg 'continuing_with_generic') $__platform_arch $(msg 'config_proceeding')"
+            source "$PLATFORMS_DIR/$__platform_arch.conf"
+            export PLATFORM_CONFIG_LOADED="yes"
+            export PLATFORM_CONFIG_FILE="$__platform_arch.conf (generic)"
+        else
+            log_msg WARN "$(msg 'continuing_without_config')"
+        fi
+    fi
+
     # 스크립트 실행 권한 부여
     log_msg INFO "자신과 하위 스크립트의 실행 권한 확인 및 부여"
     find "$ROOT_DIR" -type f -name "*.sh" -exec chmod +x {} \;

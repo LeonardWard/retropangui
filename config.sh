@@ -19,6 +19,7 @@ export RESOURCES_DIR="$ROOT_DIR/resources"
 # --- [2] 공용 함수 로드 ---
 # 사용자 정보를 가져오는 등의 함수를 사용하기 위해 먼저 로드합니다.
 source "$MODULES_DIR/lib/func.sh"
+source "$MODULES_DIR/lib/i18n.sh"
 
 # --- [3] 사용자 및 홈 디렉토리 설정 ---
 # sudo를 사용해도 실제 사용자 계정을 찾아서 적용합니다.
@@ -72,9 +73,7 @@ export ES_CONFIG_DIR="$USER_HOME/.emulationstation"
 
 # --- [6] Git 및 기타 설정 ---
 # 패치 및 설정 파일 참조용
-export RECALBOX_GIT_URL="https://gitlab.com/recalbox/recalbox.git"
 export RETROPIE_SETUP_GIT_URL="https://github.com/RetroPie/RetroPie-Setup.git"
-export RECALBOX_THEMES_GIT_URL="https://gitlab.com/recalbox/recalbox-themes.git"
 
 # 소스 코드 저장소
 export RA_GIT_URL="https://github.com/libretro/RetroArch.git"
@@ -93,7 +92,7 @@ export CHOICE_HEIGHT=12
 
 # --- [7] 빌드 의존성 패키지 목록 ---
 export BUILD_DEPS=(
-    build-essential cmake pkg-config samba
+    build-essential cmake pkg-config
     # RetroArch/Libretro
     libssl-dev libx11-dev libgl1-mesa-dev libegl1-mesa-dev libsdl2-dev
     libasound2-dev libudev-dev libxkbcommon-dev libgbm-dev
@@ -115,6 +114,36 @@ export __platform="$__platform_arch"
 __default_cpu_flags=""
 __default_opt_flags="-O2"
 
+# 기기별 상세 감지 함수
+detect_device() {
+    local arch=$(uname -m)
+
+    # x86_64 아키텍처
+    if [ "$arch" = "x86_64" ]; then
+        echo "x86_64"
+        return
+    fi
+
+    # ARM 계열: device-tree에서 모델명 파싱
+    if [ -f /proc/device-tree/model ]; then
+        local model=$(tr -d '\0' < /proc/device-tree/model)
+        case "$model" in
+            *"Raspberry Pi 3 Model B Plus"*) echo "rpi3b"; return;;
+            *"Raspberry Pi 3 Model B"*) echo "rpi3b"; return;;
+            *"Raspberry Pi 5"*) echo "rpi5"; return;;
+            *"ODROID-C5"*) echo "odroidc5"; return;;
+            *"ODROID-XU4"*) echo "odroidxu4"; return;;
+        esac
+    fi
+
+    # 알 수 없는 기기
+    echo "unknown"
+}
+
+# 감지된 기기 설정
+__device=$(detect_device)
+export __device
+
 case "$__platform_arch" in
     x86_64)
         # x86_64 native 플랫폼 설정 (RetroPie 방식)
@@ -123,9 +152,45 @@ case "$__platform_arch" in
         ;;
     aarch64)
         __platform_flags+=("aarch64" "64bit" "arm")
+
+        # Odroid C5 전용 최적화
+        if [ "$__device" = "odroidc5" ]; then
+            __default_cpu_flags="-mcpu=cortex-a55 -mtune=cortex-a55"
+            __platform_flags+=("odroidc5" "mali" "gles")
+        # Raspberry Pi 5 최적화
+        elif [ "$__device" = "rpi5" ]; then
+            __default_cpu_flags="-mcpu=cortex-a76 -mtune=cortex-a76"
+            __platform_flags+=("rpi5" "videocore" "gles")
+        # Odroid N2 최적화
+        elif [ "$__device" = "odroidn2" ]; then
+            __default_cpu_flags="-mcpu=cortex-a73 -mtune=cortex-a73"
+            __platform_flags+=("odroidn2" "mali" "gles")
+        # Odroid C4 최적화
+        elif [ "$__device" = "odroidc4" ]; then
+            __default_cpu_flags="-mcpu=cortex-a55 -mtune=cortex-a55"
+            __platform_flags+=("odroidc4" "mali" "gles")
+        # 기타 aarch64 (일반)
+        else
+            __default_cpu_flags="-march=armv8-a"
+            __platform_flags+=("gles")
+        fi
         ;;
     armv7l)
         __platform_flags+=("armv7l" "32bit" "arm" "armv7")
+
+        # Raspberry Pi 3B/3B+ 최적화
+        if [ "$__device" = "rpi3b" ]; then
+            __default_cpu_flags="-mcpu=cortex-a53 -mtune=cortex-a53"
+            __platform_flags+=("rpi3b" "videocore" "gles")
+        # Odroid XU4 최적화
+        elif [ "$__device" = "odroidxu4" ]; then
+            __default_cpu_flags="-mcpu=cortex-a15 -mtune=cortex-a15"
+            __platform_flags+=("odroidxu4" "mali" "gles")
+        # 기타 armv7l (일반)
+        else
+            __default_cpu_flags="-march=armv7-a -mfpu=neon-vfpv4"
+            __platform_flags+=("gles")
+        fi
         ;;
     *)
         __platform_flags+=("$__platform_arch")
@@ -140,3 +205,28 @@ export __default_opt_flags
 # GCC 버전 설정
 __gcc_version=$(gcc -dumpversion | cut -d. -f1 2>/dev/null || echo "0")
 export __gcc_version
+
+# --- [9] 플랫폼별 설정 파일 로드 ---
+export PLATFORMS_DIR="$ROOT_DIR/platforms"
+
+# 공통 설정 로드
+if [ -f "$PLATFORMS_DIR/common.conf" ]; then
+    source "$PLATFORMS_DIR/common.conf"
+fi
+
+# 플랫폼별 설정 로드 (감지된 기기에 따라)
+if [ -f "$PLATFORMS_DIR/${__device}.conf" ]; then
+    source "$PLATFORMS_DIR/${__device}.conf"
+    export PLATFORM_CONFIG_LOADED="yes"
+    export PLATFORM_CONFIG_FILE="${__device}.conf"
+else
+    # 기기별 설정이 없으면 아키텍처 기반으로 로드
+    if [ -f "$PLATFORMS_DIR/${__platform_arch}.conf" ]; then
+        source "$PLATFORMS_DIR/${__platform_arch}.conf"
+        export PLATFORM_CONFIG_LOADED="yes"
+        export PLATFORM_CONFIG_FILE="${__platform_arch}.conf"
+    else
+        export PLATFORM_CONFIG_LOADED="no"
+        export PLATFORM_CONFIG_FILE="none"
+    fi
+fi

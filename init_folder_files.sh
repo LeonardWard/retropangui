@@ -8,5 +8,4 @@ sudo rm -rf /tmp/build/
 sudo rm -rf /tmp/retropangui/
 sudo rm -rf /home/pangui/share/system
 sudo rm -rf /home/pangui/.emulationstation
-# sudo rm /home/pangui/.emulationstation
 sudo rm -rf /home/pangui/.config/retroarch

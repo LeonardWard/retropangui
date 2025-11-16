@@ -84,7 +84,7 @@ EOF
     # 기본 테마 설치는 setup_environment()로 이동
     # (ES가 이미 설치된 경우에도 테마가 설치되도록 하기 위함)
 
-    cp "$RESOURCES_DIR/es-recalbox/es_input.cfg" "$USER_CONFIG_PATH/emulationstation"
+    cp "$RESOURCES_DIR/emulationstation/es_input.cfg" "$USER_CONFIG_PATH/emulationstation"
     log_msg SUCCESS "EmulationStation 빌드 및 설치 완료. 설치 경로: "$INSTALL_ROOT_DIR""
     return 0
 }

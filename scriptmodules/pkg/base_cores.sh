@@ -1,12 +1,11 @@
 #!/usr/bin/env bash
 #
-# 파일명: install_base_4_in_5_cores.sh
+# 파일명: base_cores.sh
 # Retro Pangui Module: libretro Core Installation (Base 4/5)
 # 
 # install_base_cores 함수를 정의합니다.
 # 부연설명: 정의된 리스트에 따라 개별 코어 스크립트를 source하여 코어를 빌드/설치합니다.
 # ===============================================
-
 
 # 설치 대상 코어 목록
 BASE_CORE_MODULES=(
@@ -25,7 +24,6 @@ BASE_CORE_MODULES=(
     "lr-np2kai"                 # PC-98
 )
 
-
 # packages.sh의 install_module 함수를 소싱합니다.
 source_install_module() {
     local packages_script="$MODULES_DIR/lib/packages.sh"
@@ -37,7 +35,6 @@ source_install_module() {
     log_msg DEBUG "packages.sh 소싱 완료 (install_module 함수 로드됨)"
     return 0
 }
-
 
 # 메인 코어 설치 함수
 install_base_cores() {
@@ -70,7 +67,6 @@ install_base_cores() {
 
     log_msg SUCCESS "모든 base 코어 설치 완료."
 }
-
 
 # 이 스크립트가 직접 실행될 때만 install_base_cores 함수를 호출합니다.
 if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then

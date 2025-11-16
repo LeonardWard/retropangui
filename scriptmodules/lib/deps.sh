@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# 파일명: install_base_1_in_5_deps.sh
+# 파일명: deps.sh
 # Retro Pangui Module: Dependency Installation (Base 1/5)
 # 
 # 이 스크립트는 Retro Pangui 
