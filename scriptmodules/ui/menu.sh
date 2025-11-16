@@ -490,7 +490,7 @@ function update_script() {
             fi
 
             log_msg INFO "$(msg 'fetching_update')"
-            if ! git pull --rebase origin main > >(tee -a "$LOG_FILE") 2>&1; then
+            if ! git pull --rebase origin master > >(tee -a "$LOG_FILE") 2>&1; then
                 log_msg ERROR "$(msg 'update_failed')"
                 dialog --clear --title "$(msg 'title_update_failed')" --msgbox "$(msg 'msg_pull_failed')" 8 78 2>&1 >/dev/tty
                 if $stashed; then
