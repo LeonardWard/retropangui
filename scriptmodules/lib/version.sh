@@ -20,14 +20,18 @@ fi
 
 # Git 태그에서 버전 정보를 읽어와 __version 변수를 export하는 함수
 function load_version_from_git() {
-    log_msg "INFO" "Git 태그에서 버전 정보를 로드합니다."
-    local latest_version=$(git tag | sort -V | tail -n 1)
+    # Git 저장소 루트 디렉토리 찾기
+    # ROOT_DIR이 설정되어 있으면 사용, 없으면 MODULES_DIR의 부모 디렉토리 사용
+    local repo_dir="${ROOT_DIR:-$(dirname "$MODULES_DIR")}"
+
+    log_msg "INFO" "Git 태그에서 버전 정보를 로드합니다. (저장소: $repo_dir)"
+    local latest_version=$(git -C "$repo_dir" tag 2>/dev/null | sort -V | tail -n 1)
 
     # 로컬에 태그가 없으면 원격에서 가져오기 시도
     if [ -z "$latest_version" ]; then
         log_msg "INFO" "로컬 태그가 없습니다. 원격 저장소에서 태그를 가져옵니다..."
-        if git fetch origin --tags >/dev/null 2>&1; then
-            latest_version=$(git tag | sort -V | tail -n 1)
+        if git -C "$repo_dir" fetch origin --tags >/dev/null 2>&1; then
+            latest_version=$(git -C "$repo_dir" tag 2>/dev/null | sort -V | tail -n 1)
             log_msg "INFO" "원격 태그를 성공적으로 가져왔습니다."
         fi
     fi
@@ -45,7 +49,8 @@ function load_version_from_git() {
 # 버전을 올리고 새로운 Git 태그를 생성 및 푸시하는 함수
 function bump_version() {
     local part_to_bump=$1 # major, minor, patch
-    local latest_version=$(git tag | sort -V | tail -n 1)
+    local repo_dir="${ROOT_DIR:-$(dirname "$MODULES_DIR")}"
+    local latest_version=$(git -C "$repo_dir" tag 2>/dev/null | sort -V | tail -n 1)
 
     if [ -z "$latest_version" ]; then
         # 태그가 없으면 v0.0.0을 기준으로 시작
@@ -83,7 +88,7 @@ function bump_version() {
     echo "새로운 버전: $new_version"
 
     # 새로운 주석 태그 생성
-    if git tag -a "$new_version" -m "Version $new_version release"; then
+    if git -C "$repo_dir" tag -a "$new_version" -m "Version $new_version release"; then
         echo "로컬에 '$new_version' 태그를 생성했습니다."
     else
         echo "오류: 태그 생성에 실패했습니다."
@@ -91,11 +96,11 @@ function bump_version() {
     fi
 
     # 원격 저장소에 태그 푸시
-    if git push origin "$new_version"; then
+    if git -C "$repo_dir" push origin "$new_version"; then
         echo "원격 저장소에 '$new_version' 태그를 푸시했습니다."
     else
         echo "오류: 원격 저장소에 태그를 푸시하는 데 실패했습니다."
-        git tag -d "$new_version" # 실패 시 로컬 태그 롤백
+        git -C "$repo_dir" tag -d "$new_version" # 실패 시 로컬 태그 롤백
         return 1
     fi
 
