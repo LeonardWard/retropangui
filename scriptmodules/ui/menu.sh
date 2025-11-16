@@ -478,9 +478,9 @@ function update_script() {
 
                     if (dialog --clear --title "$(msg 'title_script_update')" --yesno "$(msg 'msg_new_version'): v${local_version_num}\n$(msg 'latest'): ${__rpg_latest_remote_version}\n\n" 12 60 2>&1 >/dev/tty); then            log_msg INFO "$(msg 'script_update_start')"
 
-            # 원격 저장소 최신 정보 가져오기
+            # 원격 저장소 최신 정보 가져오기 (태그 포함)
             log_msg INFO "$(msg 'fetching_update')"
-            if ! git fetch origin > >(tee -a "$LOG_FILE") 2>&1; then
+            if ! git fetch origin --tags > >(tee -a "$LOG_FILE") 2>&1; then
                 log_msg ERROR "$(msg 'update_failed')"
                 dialog --clear --title "$(msg 'title_update_failed')" --msgbox "$(msg 'msg_pull_failed')" 8 78 2>&1 >/dev/tty
                 return
