@@ -24,8 +24,14 @@ function load_version_from_git() {
     # ROOT_DIR이 설정되어 있으면 사용, 없으면 MODULES_DIR의 부모 디렉토리 사용
     local repo_dir="${ROOT_DIR:-$(dirname "$MODULES_DIR")}"
 
-    log_msg "INFO" "Git 태그에서 버전 정보를 로드합니다. (저장소: $repo_dir)"
+    log_msg "INFO" "Git 태그에서 버전 정보를 로드합니다."
+    log_msg "DEBUG" "현재 작업 디렉토리: $(pwd)"
+    log_msg "DEBUG" "ROOT_DIR: ${ROOT_DIR:-'(설정 안됨)'}"
+    log_msg "DEBUG" "MODULES_DIR: ${MODULES_DIR:-'(설정 안됨)'}"
+    log_msg "DEBUG" "repo_dir: $repo_dir"
+
     local latest_version=$(git -C "$repo_dir" tag 2>/dev/null | sort -V | tail -n 1)
+    log_msg "DEBUG" "로드된 태그: ${latest_version:-'(없음)'}"
 
     # 로컬에 태그가 없으면 원격에서 가져오기 시도
     if [ -z "$latest_version" ]; then
