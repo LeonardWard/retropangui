@@ -28,7 +28,30 @@ export LOG_FILE
 # exec > >(tee -a "$LOG_FILE") 2>&1
 
 # --- [2] 메인 실행 함수 ---
+
+# Git 'dubious ownership' 오류를 자동으로 수정하는 함수
+function fix_git_dubious_ownership() {
+    # A harmless git command to check for the error. We check stderr.
+    if ! git -C "$ROOT_DIR" rev-parse --is-inside-work-tree > /dev/null 2>&1; then
+        local git_error
+        git_error=$(git -C "$ROOT_DIR" status 2>&1)
+        if [[ "$git_error" == *"dubious ownership"* ]]; then
+            log_msg "WARN" "Git 'dubious ownership' error detected. Applying automatic fix."
+            # The script is run as root (via sudo), so we apply the config to root's global git config.
+            git config --global --add safe.directory "$ROOT_DIR"
+            if [ $? -eq 0 ]; then
+                log_msg "SUCCESS" "Successfully added '$ROOT_DIR' to git safe.directory list."
+            else
+                log_msg "ERROR" "Failed to apply fix for 'dubious ownership' error."
+            fi
+        fi
+    fi
+}
+
 function main() {
+    # 스크립트 초기에 Git 소유권 문제를 확인하고 수정합니다.
+    fix_git_dubious_ownership
+
     # 커맨드라인 인자에서 언어 옵션 파싱
     for arg in "$@"; do
         case "$arg" in
