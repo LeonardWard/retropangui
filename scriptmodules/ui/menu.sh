@@ -454,8 +454,12 @@ function update_script() {
     log_msg INFO "$(msg 'script_update_checking')"
     dialog --clear --title "$(msg 'title_update_check')" --infobox "$(msg 'msg_fetching_update')" 8 60 2>&1 >/dev/tty
 
+    # git 명령을 원래 사용자 권한으로 실행하기 위한 함수
+    # sudo로 실행된 경우 파일 소유권 문제를 방지
+    local git_user="${SUDO_USER:-$USER}"
+
     # 원격 저장소의 태그 목록을 가져옵니다.
-    local remote_tags=$(git ls-remote --tags origin | awk '{print $2}' | grep -o 'v[0-9]\+\.[0-9]\+\(\.[0-9]\+\)*$' | sort -V | tail -n 1)
+    local remote_tags=$(sudo -u "$git_user" git ls-remote --tags origin | awk '{print $2}' | grep -o 'v[0-9]\+\.[0-9]\+\(\.[0-9]\+\)*$' | sort -V | tail -n 1)
 
     if [ -z "$remote_tags" ]; then
         log_msg WARN "$(msg 'no_remote_version')"
@@ -479,16 +483,18 @@ function update_script() {
                     if (dialog --clear --title "$(msg 'title_script_update')" --yesno "$(msg 'msg_new_version'): v${local_version_num}\n$(msg 'latest'): ${__rpg_latest_remote_version}\n\n" 12 60 2>&1 >/dev/tty); then            log_msg INFO "$(msg 'script_update_start')"
 
             # 원격 저장소 최신 정보 가져오기 (태그 포함)
+            # 원래 사용자 권한으로 실행하여 파일 소유권 문제 방지
             log_msg INFO "$(msg 'fetching_update')"
-            if ! git fetch origin --tags > >(tee -a "$LOG_FILE") 2>&1; then
+            if ! sudo -u "$git_user" git fetch origin --tags > >(tee -a "$LOG_FILE") 2>&1; then
                 log_msg ERROR "$(msg 'update_failed')"
                 dialog --clear --title "$(msg 'title_update_failed')" --msgbox "$(msg 'msg_pull_failed')" 8 78 2>&1 >/dev/tty
                 return
             fi
 
             # 로컬 변경사항 무시하고 원격 버전으로 강제 업데이트
+            # 원래 사용자 권한으로 실행하여 파일 소유권 문제 방지
             log_msg INFO "Resetting to remote version (origin/master)..."
-            if ! git reset --hard origin/master > >(tee -a "$LOG_FILE") 2>&1; then
+            if ! sudo -u "$git_user" git reset --hard origin/master > >(tee -a "$LOG_FILE") 2>&1; then
                 log_msg ERROR "$(msg 'update_failed')"
                 dialog --clear --title "$(msg 'title_update_failed')" --msgbox "$(msg 'msg_pull_failed')" 8 78 2>&1 >/dev/tty
                 return
