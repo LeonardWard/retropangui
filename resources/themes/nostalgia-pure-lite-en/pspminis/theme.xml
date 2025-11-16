@@ -1,0 +1,13 @@
+<theme>
+<formatVersion>4</formatVersion>
+<include>./../theme.xml</include>
+
+<view name="system, basic, detailed, video, grid">
+  <text name="shortdescription" extra="true">
+   <text>2009  ·  32-BIT HANDHELD CONSOLE</text>
+  </text>
+  <text name="longdescription" extra="true">
+   <text>290 PlayStation minis released for the PlayStation Portable, which are games available to download from the PlayStation Store.</text>
+  </text>
+ </view>
+</theme>

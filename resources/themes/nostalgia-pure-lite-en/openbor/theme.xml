@@ -1,0 +1,13 @@
+<theme>
+<formatVersion>4</formatVersion>
+<include>./../theme.xml</include>
+
+<view name="system, basic, detailed, video, grid">
+  <text name="shortdescription" extra="true">
+   <text>2004  ·  Open Source Engine</text>
+  </text>
+  <text name="longdescription" extra="true">
+   <text>A reason for the continuing success of Beats of Rage is the game's engine that can be customized and it allows for new games to be built within it.</text>
+  </text>
+ </view>
+</theme>

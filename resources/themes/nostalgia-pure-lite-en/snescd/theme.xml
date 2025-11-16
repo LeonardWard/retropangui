@@ -1,0 +1,13 @@
+<theme>
+<formatVersion>4</formatVersion>
+<include>./../theme.xml</include>
+
+<view name="system, basic, detailed, video, grid">
+  <text name="shortdescription" extra="true">
+   <text>1990  ·  16-BIT CONSOLE</text>
+  </text>
+  <text name="longdescription" extra="true">
+   <text>The Super NES CD-ROM System is an unreleased video game peripheral, developed in a partnership between Nintendo and Sony. Play SNES games with audio from CD soundtracks.</text>
+  </text>
+ </view>
+</theme>

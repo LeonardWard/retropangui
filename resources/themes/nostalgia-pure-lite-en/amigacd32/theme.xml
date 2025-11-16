@@ -1,0 +1,13 @@
+<theme>
+<formatVersion>4</formatVersion>
+<include>./../theme.xml</include>
+
+<view name="system, basic, detailed, video, grid">
+  <text name="shortdescription" extra="true">
+   <text>1993  ·  32-BIT CONSOLE</text>
+  </text>
+  <text name="longdescription" extra="true">
+   <text>The CD32 was the first 32-bit console and is of similar specification to the Amiga 1200 computer. A hardware MPEG decompression module for playing Video CD was also released.</text>
+  </text>
+ </view>
+</theme>

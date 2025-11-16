@@ -1,0 +1,13 @@
+<theme>
+<formatVersion>4</formatVersion>
+<include>./../theme.xml</include>
+
+<view name="system, basic, detailed, video, grid">
+  <text name="shortdescription" extra="true">
+   <text>1994  ·  24-BIT CONSOLE</text>
+  </text>
+  <text name="longdescription" extra="true">
+   <text>Three versions of the Neo Geo CD were released. (A front-loading version, A top-loading version, The Neo Geo CDZ)</text>
+  </text>
+ </view>
+</theme>
