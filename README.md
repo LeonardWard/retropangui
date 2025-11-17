@@ -1,6 +1,6 @@
 # RetroPangui
 
-RetroPangui는 RetroPie EmulationStation 기반의 독자적인 레트로게임 프론트엔드입니다.
+RetroPangui는 RetroPie를 바탕으로한 레트로게임 프론트엔드입니다.
 복잡한 설정 과정 없이 간편한 메뉴를 통해 레트로 게임 환경을 쉽게 설치하고 관리할 수 있습니다.
 
 ## 주요 기능
