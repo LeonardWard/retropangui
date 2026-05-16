@@ -27,3 +27,6 @@ build_*.log
 *.swo
 *~
 .DS_Store
+
+# 별도의 comment 파일
+stability_report_20260505.md

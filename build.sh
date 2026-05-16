@@ -2,20 +2,43 @@
 # build.sh - 호스트에서 실행하는 빌드 진입점
 #
 # 사용법:
-#   ./build.sh [DEVICE]               # 기기 지정 (기본: odroidc5)
+#   ./build.sh [DEVICE]               # 기기 지정 (기본: odroidc5, 버전은 Git 태그 자동 인식)
 #   DEVICE=odroidc5 ./build.sh        # 환경변수로 지정
 #   VERSION=1.1.0 ./build.sh odroidc5 # 버전 지정
+#   ./build.sh --partial              # 부분 빌드: gamepad-mgr + board 파일 + 이미지 재패킹만
+#   ./build.sh odroidc5 --partial     # 기기 지정 + 부분 빌드
 
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+
+# --partial 옵션 파싱
+PARTIAL=0
+ARGS=()
+for arg in "$@"; do
+    if [ "$arg" = "--partial" ] || [ "$arg" = "-p" ]; then
+        PARTIAL=1
+    else
+        ARGS+=("$arg")
+    fi
+done
+set -- "${ARGS[@]}"
+
 DEVICE="${1:-${DEVICE:-odroidc5}}"
-VERSION="${VERSION:-1.0.0}"
+# 1. 사용자가 주입한 VERSION이 없다면 Git 태그를 조회
+if [ -z "${VERSION}" ]; then
+    # 현재 커밋에 붙은 태그가 있으면 가져오고, 없으면 가장 가까운 태그 기반으로 이름 생성
+    # (Git 저장소가 아니거나 태그가 하나도 없으면 에러 방지를 위해 기본값 1.0.0 사용)
+    VERSION=$(git describe --tags --always 2>/dev/null || echo "1.0.0")
+fi
+# 2. 만약 태그 앞에 'v1.0.0'처럼 'v'가 붙어있다면 제거 (선택 사항)
+VERSION="${VERSION#v}"
 
 echo "============================================"
 echo "  RETROPANGUI 빌드 시작"
 echo "  기기: ${DEVICE}"
 echo "  버전: ${VERSION}"
+echo "  모드: $([ $PARTIAL -eq 1 ] && echo '부분 빌드 (gamepad-mgr + 이미지)' || echo '전체 빌드')"
 echo "  defconfig: retropangui-${DEVICE}_defconfig"
 echo "============================================"
 
@@ -40,11 +63,11 @@ fi
 mkdir -p "${SCRIPT_DIR}/dl"
 mkdir -p "${SCRIPT_DIR}/output"
 
-# ES 테마 디렉토리 (기본값: ~/share/themes, THEMES_DIR 환경변수로 오버라이드 가능)
-THEMES_DIR="${THEMES_DIR:-${HOME}/share/themes}"
+# ES 테마 디렉토리 (기본값: 스크립트 경로 내의 themes 폴더, THEMES_DIR 환경변수로 오버라이드 가능)
+THEMES_DIR="${THEMES_DIR:-${SCRIPT_DIR}/themes}"
 if [ ! -d "${THEMES_DIR}" ]; then
     echo "WARNING: 테마 디렉토리가 없습니다: ${THEMES_DIR}"
-    echo "  nostalgia-pure-lite-ko 테마 없이 빌드됩니다."
+    echo "  기본 테마 없이 빌드됩니다."
     THEMES_DIR=""
 fi
 
@@ -63,6 +86,7 @@ docker run --rm \
     -e DEVICE="${DEVICE}" \
     -e VERSION="${VERSION}" \
     -e BUILD_JOBS="$(nproc)" \
+    -e PARTIAL="${PARTIAL}" \
     -v "${SCRIPT_DIR}/buildroot:/home/builder/buildroot" \
     -v "${SCRIPT_DIR}/configs:/home/builder/configs" \
     -v "${SCRIPT_DIR}/board:/home/builder/board" \

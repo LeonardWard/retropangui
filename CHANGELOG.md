@@ -6,6 +6,70 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [Unreleased] — 2026-05-17
+
+### Fixed
+
+- **ES 이중 입력 수정 (gamepad-daemon: 물리 패드 없는 슬롯 무시)**
+
+  Twin USB Joystick(2포트)을 연결하면 SDL이 내부적으로 4개의 조이스틱 이벤트를 발생시켜
+  슬롯 2·3(P3·P4)에 할당된 가상 패드에도 입력이 전달됐다. EmulationStation에서 메뉴 이동 시
+  하나의 물리 입력이 여러 번 처리되는 이중 입력 현상 발생.
+
+  **수정**: `gamepad_daemon.c` 메인루프에 `if (g_phys_fd[slot] < 0) continue;` 게이트 추가.
+  물리 패드가 연결되지 않은 슬롯은 가상 패드로 이벤트를 전달하지 않는다.
+
+- **RetroArch Port 1 패드 오할당 수정 (S95retropangui: -1 rotation 보정)**
+
+  RetroArch는 udev inotify로 입력 장치를 열거하다가 SDL이 첫 번째 가상 패드(가장 낮은
+  event 번호, P1)를 open할 때 발생하는 udev change 이벤트를 감지해 P1을 장치 목록 맨 끝으로
+  재배치한다. 결과적으로 evdev 스캔 순서(P1=rank 0)와 RA 내부 인덱스가 -1씩 어긋났다.
+
+  **수정**: `S95retropangui`의 joypad_index 계산에 `-1 rotation` 보정 공식 적용.
+  ```
+  ra_virt_rank = (evdev_virt_rank - 1 + num_virt) % num_virt
+  idx = num_phys + ra_virt_rank
+  ```
+  물리 패드 2개(Twin USB) + 가상 패드 4개 환경에서 결과: P1→idx 5, P2→idx 2, P3→idx 3, P4→idx 4.
+  RetroArch Port 1이 RetroPangUI P1을 올바르게 선택함을 확인.
+
+- **gamepad-daemon: EVIOCGRAB EBUSY 수정 (st_rdev 중복 방지)**
+
+  `find_phys_evdev()`가 같은 VID+PID를 가진 장치 중 이미 다른 슬롯에 할당된 것을 다시 열고
+  `EVIOCGRAB`을 시도해 EBUSY 오류 발생. 동일한 USB 허브에 같은 모델 컨트롤러가 여러 개
+  연결된 경우에도 재현.
+
+  **수정**: `g_phys_fd`에 이미 열려있는 fd의 `st_rdev`를 수집해 중복 장치를 건너뜀.
+
+- **S58gamepad: SDL_JOYSTICK_HIDAPI=0 설정 추가**
+
+  SDL의 HIDAPI 드라이버가 일부 장치를 가로채 evdev와의 충돌을 일으키는 문제 방지.
+  데몬 실행 전 `SDL_JOYSTICK_HIDAPI=0`을 환경변수로 설정.
+
+- **scripts/fetch-blobs.sh: Hardkernel apt URL 수정**
+
+  Mali DDK deb 패키지 주소가 변경됨에 따라 URL을
+  `https://dn.odroid.com/ubuntu/ubuntu24` → `https://dn.odroid.com/S905X5M/ODROID-C5/Ubuntu`로 갱신.
+
+### Added
+
+- **부분 빌드 옵션 (`--partial` / `-p`)**
+
+  `build.sh`에 `--partial` 옵션 추가. gamepad-mgr 소스 수정 후 전체 Buildroot 재빌드 없이
+  board 파일 동기화 + gamepad-mgr 재빌드 + 이미지 재패킹만 수행. 빌드 시간을 대폭 단축.
+
+  ```bash
+  ./build.sh --partial
+  ./build.sh odroidc5 --partial
+  ```
+
+- **build.sh: 버전 Git 태그 자동 인식**
+
+  `VERSION` 환경변수가 없으면 `git describe --tags --always`로 버전을 자동 결정.
+  태그 `v0.2`를 달면 이미지 파일명이 `retropangui-odroidc5-0.2.img`로 자동 결정.
+
+---
+
 ## [Unreleased] — 2026-05-16
 
 ### Fixed

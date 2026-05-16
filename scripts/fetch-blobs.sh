@@ -32,7 +32,7 @@ mkdir -p "${BLOBS_DIR}/lib/firmware" "${BLOBS_DIR}/vulkan"
 # ────────────────────────────────────────────────────────────
 # 방법 1: Hardkernel apt 저장소에서 deb 패키지 직접 다운로드
 # ────────────────────────────────────────────────────────────
-HARDKERNEL_APT="https://dn.odroid.com/ubuntu/ubuntu24"
+HARDKERNEL_APT="https://dn.odroid.com/S905X5M/ODROID-C5/Ubuntu"
 
 echo "[1/3] Hardkernel apt 저장소에서 Mali 패키지 검색 중..."
 

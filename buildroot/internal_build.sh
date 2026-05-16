@@ -6,6 +6,7 @@ set -eo pipefail
 BUILDROOT_VERSION="${BUILDROOT_VERSION:-2024.02.1}"
 DEVICE="${DEVICE:-odroidc5}"
 VERSION="${VERSION:-1.0.0}"
+PARTIAL="${PARTIAL:-0}"
 DEFCONFIG="retropangui-${DEVICE}_defconfig"
 
 cd /home/builder/buildroot
@@ -15,8 +16,38 @@ echo "  Buildroot 내부 빌드 스크립트"
 echo "  Buildroot 버전: ${BUILDROOT_VERSION}"
 echo "  기기: ${DEVICE}"
 echo "  프로젝트 버전: ${VERSION}"
+echo "  모드: $([ "$PARTIAL" = "1" ] && echo '부분 빌드' || echo '전체 빌드')"
 echo "  defconfig: ${DEFCONFIG}"
 echo "============================================"
+
+# 부분 빌드: board 파일 복사 + gamepad-mgr 재빌드 + 이미지 재패킹만 수행
+if [ "$PARTIAL" = "1" ]; then
+    BR2_EXTERNAL_PATH=/home/builder/br2-external
+    echo "[부분 빌드] board 파일 복사 중..."
+    mkdir -p board/${DEVICE}
+    rsync -a --delete /home/builder/board/${DEVICE}/ board/${DEVICE}/
+    mkdir -p board/${DEVICE}/rootfs-overlay/etc
+    echo "${VERSION}" > board/${DEVICE}/rootfs-overlay/etc/retropangui-version
+
+    echo "[부분 빌드] gamepad-mgr 재빌드 중..."
+    rm -rf output/build/gamepad-mgr-*/
+    JOBS="${BUILD_JOBS:-$(nproc)}"
+    make BR2_EXTERNAL="${BR2_EXTERNAL_PATH}" -j${JOBS} 2>&1 | tee /home/builder/output/build-partial.log
+
+    OUTPUT_IMG="retropangui-${DEVICE}-${VERSION}.img"
+    if [ -f output/images/sdcard.img ]; then
+        cp output/images/sdcard.img /home/builder/output/${OUTPUT_IMG}
+        echo "============================================"
+        echo "  부분 빌드 성공!"
+        echo "  이미지: ${OUTPUT_IMG}"
+        echo "  크기: $(du -h /home/builder/output/${OUTPUT_IMG} | cut -f1)"
+        echo "============================================"
+    else
+        echo "ERROR: sdcard.img 생성 실패!"
+        exit 1
+    fi
+    exit 0
+fi
 
 # Buildroot 소스 다운로드 (없을 경우)
 if [ ! -f Makefile ]; then

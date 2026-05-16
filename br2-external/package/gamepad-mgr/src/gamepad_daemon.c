@@ -47,6 +47,17 @@ static int find_phys_evdev(SDL_Joystick *js)
         return -1;
     }
 
+    /* 이미 다른 슬롯에 할당된 장치(st_rdev)는 건너뜀 — 같은 vid+pid 다중 장치 지원 */
+    dev_t used[GP_MAX_SLOTS];
+    int n_used = 0;
+    for (int i = 0; i < GP_MAX_SLOTS; i++) {
+        if (g_phys_fd[i] >= 0) {
+            struct stat st;
+            if (fstat(g_phys_fd[i], &st) == 0)
+                used[n_used++] = st.st_rdev;
+        }
+    }
+
     DIR *dir = opendir("/dev/input");
     if (!dir) {
         perror("gamepad_daemon: opendir /dev/input");
@@ -63,6 +74,15 @@ static int find_phys_evdev(SDL_Joystick *js)
 
         int fd = open(path, O_RDWR | O_NONBLOCK); /* FF ioctl(EVIOCSFF)은 쓰기 권한 필요 */
         if (fd < 0) continue;
+
+        struct stat st;
+        int skip = 0;
+        if (fstat(fd, &st) == 0) {
+            for (int i = 0; i < n_used; i++) {
+                if (used[i] == st.st_rdev) { skip = 1; break; }
+            }
+        }
+        if (skip) { close(fd); continue; }
 
         struct input_id iid;
         if (ioctl(fd, EVIOCGID, &iid) >= 0 &&
@@ -228,6 +248,8 @@ static void on_gamepad_event(const GP_Event *ev, void *userdata)
                 if (ioctl(sdl_fd, EVIOCGRAB, 1) < 0)
                     fprintf(stderr, "gamepad_daemon: EVIOCGRAB slot %d: %s\n",
                             slot, strerror(errno));
+                else
+                    fprintf(stderr, "gamepad_daemon: EVIOCGRAB slot %d: OK\n", slot);
             } else {
                 fprintf(stderr, "gamepad_daemon: SDL evdev fd not found for slot %d\n", slot);
             }
@@ -309,6 +331,7 @@ int main(void)
 
         for (int slot = 0; slot < GP_MAX_SLOTS; slot++) {
             if (!g_vdev[slot]) continue;
+            if (g_phys_fd[slot] < 0) continue; /* 물리 패드 없는 슬롯 무시 */
             if (!gp_get_state(slot, &cur)) continue;
             gp_vdev_write_state(g_vdev[slot], &cur, &g_prev[slot]);
             gp_vdev_poll_ff(g_vdev[slot]);

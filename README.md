@@ -14,7 +14,7 @@
 ```bash
 cd /path/to/retropangui
 
-# 기기 지정 (기본: odroidc5)
+# 기기 지정 (기본: odroidc5, 버전은 Git 태그 자동 인식)
 ./build.sh odroidc5
 
 # 버전 지정
@@ -23,9 +23,16 @@ VERSION=1.0.0 ./build.sh odroidc5
 # 클린 빌드 (빌드 캐시 삭제, 다운로드 캐시 유지)
 rm -rf buildroot/output/
 ./build.sh odroidc5
+
+# 부분 빌드 (gamepad-mgr 소스 수정 후 빠른 재빌드)
+./build.sh --partial
+./build.sh odroidc5 --partial
 ```
 
 출력: `output/retropangui-<device>-<version>.img`
+
+버전은 `VERSION` 환경변수가 없으면 `git describe --tags --always`로 자동 결정됩니다.
+`git tag v0.2` 후 빌드하면 `retropangui-odroidc5-0.2.img`가 생성됩니다.
 
 지원되는 기기 목록은 `configs/retropangui-*_defconfig` 파일 이름으로 확인할 수 있습니다.
 잘못된 기기명을 입력하면 목록을 출력합니다.
@@ -42,6 +49,12 @@ bash scripts/fetch-blobs.sh
 ```
 
 ### 증분 빌드 (특정 패키지만)
+
+gamepad-mgr 소스 수정 후 빠른 재빌드 (`--partial` 옵션):
+```bash
+# board 파일 동기화 + gamepad-mgr 재빌드 + 이미지 재패킹만 수행
+./build.sh --partial
+```
 
 mali-ddk 래퍼 소스 수정 후:
 ```bash
