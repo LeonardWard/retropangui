@@ -141,7 +141,7 @@ retropangui/
 │       │   │   └── gamepad_config.json   # GUID 슬롯 히스토리 + SDL 매핑
 │       │   ├── retroarch/
 │       │   │   └── autoconfig/           # RetroArch udev 패드 매핑
-│       │   │       ├── RetropanGui P1~P4.cfg  # 가상 패드 자동 인식
+│       │   │       ├── RetroPangUI P1~P4.cfg  # 가상 패드 자동 인식
 │       │   │       └── PS2 USB Adapter.cfg    # 어댑터 직접 연결 시
 │       │   ├── udev/rules.d/
 │       │   │   ├── 50-odroid-gpu-mali.rules
@@ -428,18 +428,18 @@ RetroPangui의 입력 시스템은 RetroArch의 **RetroPad** 추상화를 기준
   ④ 재연결 시 uinput 장치 보존(phys_fd만 교체) → jsN 번호 불변
         ↓
 [uinput 가상 장치 (부팅 시 선점 생성)]
-  /dev/input/event? "RetropanGui P1" (VID:5052 PID:0001)
-  /dev/input/event? "RetropanGui P2" (VID:5052 PID:0002)
-  /dev/input/event? "RetropanGui P3" (VID:5052 PID:0003)
-  /dev/input/event? "RetropanGui P4" (VID:5052 PID:0004)
+  /dev/input/event? "RetroPangUI P1" (VID:5052 PID:0001)
+  /dev/input/event? "RetroPangUI P2" (VID:5052 PID:0002)
+  /dev/input/event? "RetroPangUI P3" (VID:5052 PID:0003)
+  /dev/input/event? "RetroPangUI P4" (VID:5052 PID:0004)
   ※ FF_RUMBLE 항상 선언, virt_id→phys_id 매핑으로 물리 장치에 패스스루
   ※ 물리 장치 FF 미지원(PS2 어댑터 등)이면 패스스루 생략
         ↓
-[ES (SDL2 + gamecontrollerdb.txt)]   [RetroArch (udev + autoconfig/RetropanGui P*.cfg)]
+[ES (SDL2 + gamecontrollerdb.txt)]   [RetroArch (udev + autoconfig/RetroPangUI P*.cfg)]
   항상 같은 가상 장치만 봄 → P1~P4 슬롯 항상 일정
 
 [S95retropangui (부팅 시)]
-  /proc/bus/input/devices에서 RetropanGui P1~P4의 jsN 번호 파싱
+  /proc/bus/input/devices에서 RetroPangUI P1~P4의 jsN 번호 파싱
   → retroarch.cfg input_playerN_joypad_index 자동 기록
 ```
 

@@ -159,7 +159,7 @@ GP_VDev *gp_vdev_create(int slot, int phys_evdev_fd)
     /* 5. 장치 생성 */
     struct uinput_setup us;
     memset(&us, 0, sizeof(us));
-    snprintf(us.name, UINPUT_MAX_NAME_SIZE, "RetropanGui P%d", slot + 1);
+    snprintf(us.name, UINPUT_MAX_NAME_SIZE, "RetroPangUI P%d", slot + 1);
     us.id.bustype    = 0x0006; /* BUS_VIRTUAL */
     us.id.vendor     = 0x5052; /* "RP" */
     us.id.product    = (unsigned short)(slot + 1);
