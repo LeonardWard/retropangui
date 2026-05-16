@@ -1,6 +1,6 @@
-# RetroPangui
+# Retro Pang UI
 
-Buildroot 기반 레트로 게이밍 OS. 현재 지원 기기: **Odroid C5** (Amlogic S905X5M).
+레트로 게이밍 OS. 현재 지원 기기: **Odroid C5** (Amlogic S905X5M).
 
 ## 시스템 요구사항 (빌드 환경)
 
