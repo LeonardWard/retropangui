@@ -1,0 +1,29 @@
+# ============================================================
+# C5-PANGUI - GitHub 관리 대상 아님
+# 저장소에는 커스텀 코드만 포함:
+#   br2-external/, board/, configs/, build.sh, Dockerfile, README.md
+# Buildroot 소스는 빌드 시 자동 다운로드됨 (internal_build.sh 참고)
+# ============================================================
+
+# Buildroot 소스 전체 제외 (빌드 시 buildroot.org에서 자동 다운로드)
+buildroot/*
+# 단, 우리가 만든 내부 빌드 스크립트는 추적
+!buildroot/internal_build.sh
+
+# 다운로드 캐시 (수십 GB)
+dl/
+
+# 전용 바이너리 블롭 (ARM 라이선스 — 공개 불가)
+# scripts/fetch-blobs.sh 로 로컬에서 준비
+board/odroidc5/blobs/mali/
+
+# 빌드 결과물
+output/
+build_*.log
+*.log
+
+# 임시/에디터 파일
+*.swp
+*.swo
+*~
+.DS_Store

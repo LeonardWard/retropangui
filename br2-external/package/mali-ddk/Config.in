@@ -1,0 +1,8 @@
+config BR2_PACKAGE_MALI_DDK
+	bool "mali-ddk"
+	help
+	  ARM Mali-G310 Valhall DDK r44p0 (proprietary binary driver).
+	  libMali.so provides EGL, OpenGL ES, GBM, Wayland-EGL, OpenCL, Vulkan.
+
+	  Requires blobs to be pre-populated via scripts/fetch-blobs.sh.
+	  See board/odroidc5/blobs/README.md for instructions.

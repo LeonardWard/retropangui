@@ -1,0 +1,44 @@
+#!/bin/sh
+# S62audio - Odroid C5 오디오 초기화 (HDMI 출력 전용)
+#
+# AML-AUGESOUND: TDM-B → i2s2hdmi → HDMI
+
+CARD=0
+
+start() {
+    # ASoC 카드 구성에 필요한 코덱 드라이버 로드
+    modprobe amlogic-snd-codec-dummy 2>/dev/null || true
+    modprobe amlogic-snd-codec-t9015 2>/dev/null || true
+
+    # 카드 준비 대기 (최대 5초)
+    i=0
+    while [ $i -lt 10 ]; do
+        amixer -c ${CARD} info >/dev/null 2>&1 && break
+        sleep 0.5
+        i=$((i+1))
+    done
+
+    if ! amixer -c ${CARD} info >/dev/null 2>&1; then
+        echo "WARNING: ALSA card '${CARD}' not found"
+        return 1
+    fi
+
+    # HDMI 출력 경로: TDM-B → HDMITX
+    amixer -c ${CARD} sset "HDMITX Audio Source Select" "Tdm_B" 2>/dev/null || true
+    amixer -c ${CARD} sset "Audio I2S to HDMITX Mask"  1       2>/dev/null || true
+    amixer -c ${CARD} sset "Audio hdmi-out mute"        0       2>/dev/null || true
+    amixer -c ${CARD} sset "TDMOUT_B Mute"              0       2>/dev/null || true
+    amixer -c ${CARD} sset "TDMOUT_B Lane0 Mute"        0       2>/dev/null || true
+    amixer -c ${CARD} sset "TDMOUT_B Lane1 Mute"        0       2>/dev/null || true
+    amixer -c ${CARD} sset "TDMOUT_B GAIN"              255     2>/dev/null || true
+    amixer -c ${CARD} sset "TDMOUT_B Software Gain"     100     2>/dev/null || true
+
+    echo "Audio ready (HDMI)."
+}
+
+case "$1" in
+    start)   start ;;
+    stop)    : ;;
+    restart) start ;;
+    *) echo "Usage: $0 {start|stop|restart}"; exit 1 ;;
+esac

@@ -1,0 +1,28 @@
+From: retropangui-c5 build <build@retropangui-c5>
+Date: Fri, 15 May 2026 00:00:00 +0000
+Subject: [PATCH] arm64: dts: odroidc5: mali: set coarse_demand power policy
+
+The default Mali PM policy on CSF hardware is "always_on", which sets
+CSF_DYNAMIC_PM_CORE_KEEP_ON and firmware_hctl_core_pwr=true. This causes
+global_init() to write DISABLE_GLB_PWROFF_TIMER=0 to GLB_PWROFF_TIMER,
+disabling the firmware's autonomous power-off timer entirely.
+
+On s905x5m (Mali-G310 r44p0), this appears to prevent the firmware from
+processing the initial GLB_REQ_CFG_MASK (0x10c0e) global request, causing
+a 2100ms timeout ("Timed out waiting for global request").
+
+Switch to "coarse_demand" policy so that firmware_hctl_core_pwr=false and
+the firmware receives a non-zero, valid PWROFF_TIMER value during global_init.
+---
+ common_drivers/arch/arm64/boot/dts/amlogic/meson-s7d.dtsi | 1 +
+ 1 file changed, 1 insertion(+)
+
+--- a/common_drivers/arch/arm64/boot/dts/amlogic/meson-s7d.dtsi
++++ b/common_drivers/arch/arm64/boot/dts/amlogic/meson-s7d.dtsi
+@@ -2840,6 +2840,7 @@
+ 	num_of_pp = <1>;
+ 	system-coherency = <31>;
++	power-policy = "coarse_demand";
+ 	clocks = <&clkc CLKID_MALI>,
+ 		 <&clkc CLKID_MALI_STACK>;
+ 	clock-names = "gpu_mux", "gpu_stack";

@@ -1,0 +1,109 @@
+#!/bin/sh
+# S61share - Share 파티션(exFAT) 생성 및 마운트
+# 1단계: 파티션 생성 후 재부팅
+# 2단계: 재부팅 후 포맷 및 마운트
+
+# 현재 루트 파티션에서 장치 경로를 동적으로 탐지 (SD/eMMC 모두 대응)
+# findmnt 대신 busybox awk 사용 — findmnt(util-linux)는 이미지에 미포함
+ROOT_PART=$(awk '$2 == "/" && $1 != "rootfs" {print $1; exit}' /proc/mounts)
+# 폴백: /proc/mounts가 /dev/root(커널 앨리어스)를 반환하거나 비어있으면 /proc/cmdline 사용
+if [ -z "${ROOT_PART}" ] || [ "${ROOT_PART}" = "/dev/root" ]; then
+    ROOT_PART=$(tr ' ' '\n' < /proc/cmdline | grep '^root=' | sed 's/root=//')
+fi
+DEVICE=$(echo "${ROOT_PART}" | sed 's/p[0-9]*$//')
+SHARE_MOUNT="/retropangui/share"
+PHASE_FLAG="/etc/.share_format_needed"
+
+# p1, p2 외 파티션 탐색
+find_share_part() {
+    local dev_name
+    dev_name=$(basename "${DEVICE}")
+    awk '{print $4}' /proc/partitions | \
+        grep "^${dev_name}p" | \
+        grep -vE "p1$|p2$" | \
+        head -1 | \
+        sed 's|^|/dev/|'
+}
+
+case "$1" in
+    start)
+        mkdir -p "${SHARE_MOUNT}"
+
+        SHARE_PART=$(find_share_part)
+        HAVE_PART=0
+        HAVE_FLAG=0
+        [ -n "${SHARE_PART}" ] && [ -b "${SHARE_PART}" ] && HAVE_PART=1
+        [ -f "${PHASE_FLAG}" ] && HAVE_FLAG=1
+
+        if [ "${HAVE_PART}" = "0" ] && [ "${HAVE_FLAG}" = "0" ]; then
+            # 1단계: p2 끝 다음 섹터부터 파티션 생성 후 재부팅
+            echo ">>> Share 파티션 생성 중..."
+            DEV_NAME=$(basename "${DEVICE}")
+            P2_START=$(cat /sys/block/${DEV_NAME}/${DEV_NAME}p2/start)
+            P2_SIZE=$(cat /sys/block/${DEV_NAME}/${DEV_NAME}p2/size)
+            P3_START=$((P2_START + P2_SIZE))
+            echo ">>> p3 시작 섹터: ${P3_START}"
+            printf "n\np\n3\n%s\n\nw\n" "${P3_START}" | fdisk "${DEVICE}"
+            # 커널 파티션 테이블 갱신 후 쓰기 완전히 마치고 재부팅
+            partprobe "${DEVICE}" 2>/dev/null || true
+            sync
+            sync
+            touch "${PHASE_FLAG}"
+            echo ">>> 재부팅합니다..."
+            sleep 3
+            reboot
+        fi
+
+        SHARE_PART=$(find_share_part)
+
+        if [ "${HAVE_FLAG}" = "1" ] && [ -n "${SHARE_PART}" ] && [ -b "${SHARE_PART}" ]; then
+            # 2단계: exFAT 포맷
+            echo ">>> Share 파티션 exFAT 포맷 중... (${SHARE_PART})"
+            mkfs.exfat -n "share" "${SHARE_PART}"
+            rm -f "${PHASE_FLAG}"
+            echo ">>> 포맷 완료"
+        fi
+
+        # 마운트
+        SHARE_PART=$(find_share_part)
+        if [ -n "${SHARE_PART}" ] && [ -b "${SHARE_PART}" ]; then
+            if ! grep -q "${SHARE_MOUNT}" /proc/mounts; then
+                mount -t exfat -o uid=0,gid=0,fmask=0022,dmask=0022 \
+                    "${SHARE_PART}" "${SHARE_MOUNT}"
+                mkdir -p \
+                    "${SHARE_MOUNT}/roms/nes" \
+                    "${SHARE_MOUNT}/roms/snes" \
+                    "${SHARE_MOUNT}/roms/psx" \
+                    "${SHARE_MOUNT}/bios" \
+                    "${SHARE_MOUNT}/saves/states" \
+                    "${SHARE_MOUNT}/screenshots" \
+                    "${SHARE_MOUNT}/music" \
+                    "${SHARE_MOUNT}/system/emulationstation"
+                # 번들 게임 복사 (아직 없을 때만)
+                BUNDLED="/usr/share/retropangui/bundled-roms"
+                if [ -d "${BUNDLED}" ]; then
+                    for sys in nes snes; do
+                        if [ -d "${BUNDLED}/${sys}" ]; then
+                            cp -n "${BUNDLED}/${sys}"/* "${SHARE_MOUNT}/roms/${sys}/" 2>/dev/null || true
+                        fi
+                    done
+                    echo ">>> 번들 게임 복사 완료"
+                fi
+                echo ">>> Share 마운트 완료: ${SHARE_MOUNT} (${SHARE_PART})"
+            fi
+        fi
+        ;;
+    stop)
+        umount "${SHARE_MOUNT}" 2>/dev/null || true
+        ;;
+    restart|reload)
+        "$0" stop
+        "$0" start
+        ;;
+    *)
+        echo "Usage: $0 {start|stop|restart}"
+        exit 1
+        ;;
+esac
+
+exit 0

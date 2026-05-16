@@ -1,0 +1,162 @@
+From: retropangui <retropangui@odroidc5>
+Date: Thu, 1 May 2026 00:00:00 +0000
+Subject: [PATCH] drm_ctx: Mali-G310 Valhall (r44p0) Odroid C5 fixes
+
+Six issues fixed for Mali-G310 Valhall (r44p0) on Odroid C5:
+
+1. gfx_ctx_drm_egl_set_video_mode switch: case GFX_CTX_OPENGL_ES_API was
+   inside #ifdef HAVE_OPENGL, so with HAVE_OPENGL=0 the case label was
+   removed and attrib_ptr stayed NULL. NULL dereference in the HAVE_DYLIB
+   attrib loop after egl_init_context_common succeeded (SIGSEGV).
+   Move case GFX_CTX_OPENGL_ES_API outside HAVE_OPENGL, guard it with
+   HAVE_OPENGLES instead.
+
+2. gbm_choose_xrgb8888_cb only accepted XRGB8888 EGL configs by
+   NATIVE_VISUAL_ID. Our EGL wrapper reports ARGB8888 as NATIVE_VISUAL_ID
+   (Mali's internal ABGR8888 maps to ARGB8888 for SDL2/ES format matching).
+   Without this fix RetroArch gets EGL_BAD_CONFIG.
+
+3. drm_fb_get_from_bo used legacy drmModeAddFB(depth=24, bpp=32) which
+   DRM maps to XRGB8888 (byte0=B). Mali stores pixels as [R][G][B][A],
+   causing red/blue channel swap. Replace with drmModeAddFB2 using the
+   format from gbm_bo_get_format (our libgbm wrapper returns ABGR8888).
+
+4. drmSetMaster was called with g_drm_fd before g_drm_fd = fd assignment,
+   causing EBADF. Use local fd variable instead. Made non-fatal: when
+   EmulationStation holds DRM master and launches RetroArch, drmSetMaster
+   fails with EBUSY; warn and continue for page-flip-based rendering.
+
+5. drmModeSetCrtc returns EACCES (not EPERM) when another process holds
+   DRM master. Made non-fatal for both EPERM and EACCES so RetroArch can
+   proceed to page flipping when launched from EmulationStation.
+
+6. Mode fallback: when no matching mode found, fall back to the current
+   CRTC mode (g_orig_crtc->mode) instead of modes[0] which may be 4K.
+
+Tested on Odroid C5 (Amlogic S905X5, Mali-G310 r44p0).
+---
+--- a/gfx/drivers_context/drm_ctx.c
++++ b/gfx/drivers_context/drm_ctx.c
+@@ -50,6 +50,7 @@
+ #endif
+ 
+ #include "../common/gl_common.h"
++#include <errno.h>
+ 
+ #ifdef HAVE_OPENGLES
+ 
+@@ -226,7 +227,10 @@
+    if (!egl_get_config_attrib(dpy, config, EGL_NATIVE_VISUAL_ID, &id))
+       return false;
+ 
+-   return id == GBM_FORMAT_XRGB8888;
++   /* Mali Valhall EGL configs have ABGR8888 internal format; our EGL wrapper
++    * reports ARGB8888 as NATIVE_VISUAL_ID so that Kodi/ES format matching
++    * works.  Accept both XRGB8888 (standard) and ARGB8888 (Mali wrapper). */
++   return id == GBM_FORMAT_XRGB8888 || id == GBM_FORMAT_ARGB8888;
+ }
+ 
+ #define DRM_EGL_ATTRIBS_BASE \
+@@ -279,8 +283,10 @@
+       case GFX_CTX_OPENGL_API:
+ #ifdef HAVE_OPENGL
+          attrib_ptr = egl_attribs_gl;
++#endif
+          break;
+       case GFX_CTX_OPENGL_ES_API:
++#ifdef HAVE_OPENGLES
+ #ifdef EGL_KHR_create_context
+          if (drm->egl.major >= 3)
+             attrib_ptr = egl_attribs_gles3;
+@@ -441,6 +447,10 @@
+ {
+    int ret;
+    unsigned width, height, stride, handle;
++   uint32_t handles[4] = {0, 0, 0, 0};
++   uint32_t pitches[4] = {0, 0, 0, 0};
++   uint32_t offsets[4] = {0, 0, 0, 0};
++   uint32_t fmt;
+    struct drm_fb *fb = (struct drm_fb*)calloc(1, sizeof(*fb));
+ 
+    fb->bo = bo;
+@@ -449,14 +459,24 @@
+    height = gbm_bo_get_height(bo);
+    stride = gbm_bo_get_stride(bo);
+    handle = gbm_bo_get_handle(bo).u32;
+-
+-   RARCH_LOG("[KMS] New FB: %ux%u (stride: %u).\n",
+-         width, height, stride);
+-
+-   ret = drmModeAddFB(g_drm_fd, width, height, 24, 32,
+-         stride, handle, &fb->fb_id);
++   /* gbm_bo_get_format returns the GBM surface format; our libgbm wrapper
++    * converts XRGB8888 to ABGR8888 so the DRM display engine uses the correct
++    * byte-order descriptor for Mali Valhall's [R][G][B][A] pixel layout. */
++   fmt = gbm_bo_get_format(bo);
++
++   RARCH_LOG("[KMS] New FB: %ux%u (stride: %u, fmt: 0x%x).\n",
++         width, height, stride, fmt);
++
++   handles[0] = handle;
++   pitches[0] = stride;
++   ret = drmModeAddFB2(g_drm_fd, width, height, fmt,
++         handles, pitches, offsets, &fb->fb_id, 0);
+    if (ret < 0)
++   {
++      RARCH_ERR("[KMS] drmModeAddFB2 failed (fmt=0x%x): %s\n", fmt, strerror(-ret));
+       goto error;
++   }
++   RARCH_LOG("[KMS] drmModeAddFB2 OK fb_id=%u\n", fb->fb_id);
+ 
+    gbm_bo_set_user_data(bo, fb, drm_fb_destroy_callback);
+    return fb;
+@@ -757,7 +777,8 @@
+       drm->fb_height = g_drm_connector->modes[0].vdisplay;
+    }
+ 
+-   drmSetMaster(g_drm_fd);
++   if (drmSetMaster(fd) < 0)
++      RARCH_WARN("[KMS] drmSetMaster failed (%s) - proceeding without DRM master.\n", strerror(errno));
+ 
+    drm->gbm_dev      = gbm_create_device(fd);
+ 
+@@ -828,8 +849,17 @@
+    }
+    if ((width == 0 && height == 0) || !fullscreen)
+    {
+-      RARCH_WARN("[KMS] Falling back to mode 0 (default).\n");
+-      g_drm_mode     = &g_drm_connector->modes[0];
++      if (g_orig_crtc && g_orig_crtc->mode.hdisplay > 0)
++      {
++         RARCH_WARN("[KMS] Falling back to current CRTC mode: %dx%d.\n",
++               g_orig_crtc->mode.hdisplay, g_orig_crtc->mode.vdisplay);
++         g_drm_mode  = &g_orig_crtc->mode;
++      }
++      else
++      {
++         RARCH_WARN("[KMS] Falling back to mode 0 (default).\n");
++         g_drm_mode  = &g_drm_connector->modes[0];
++      }
+    }
+    else
+    {
+@@ -909,7 +939,18 @@
+ 
+    if ((ret  = drmModeSetCrtc(g_drm_fd,
+          g_crtc_id, fb->fb_id, 0, 0, &g_connector_id, 1, g_drm_mode)) < 0)
+-      goto error;
++   {
++      if (-ret == EPERM || -ret == EACCES)
++         RARCH_WARN("[KMS] drmModeSetCrtc %s - no DRM master, continuing for page flip.\n", strerror(-ret));
++      else
++      {
++         RARCH_ERR("[KMS] drmModeSetCrtc failed: %s (crtc=%u fb=%u mode=%dx%d)\n",
++               strerror(-ret), g_crtc_id, fb ? fb->fb_id : 0,
++               g_drm_mode ? g_drm_mode->hdisplay : 0,
++               g_drm_mode ? g_drm_mode->vdisplay : 0);
++         goto error;
++      }
++   }
+ 
+    return true;
+ 

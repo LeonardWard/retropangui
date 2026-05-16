@@ -1,0 +1,59 @@
+#!/bin/sh
+# S49ntp - 시각 초기화 및 NTP 동기화
+# fake-hwclock: RTC 없는 시스템에서 에폭(1970) 기동 방지
+DAEMON=/usr/sbin/ntpd
+PIDFILE=/run/ntpd.pid
+FAKEHWCLOCK=/etc/fake-hwclock
+
+[ -x "${DAEMON}" ] || exit 0
+
+case "$1" in
+    start)
+        # 저장된 시각 복원 (없으면 빌드 근사 날짜로 초기화)
+        if [ -f "${FAKEHWCLOCK}" ]; then
+            date -s "$(cat ${FAKEHWCLOCK})" 2>/dev/null
+        else
+            date -s "2026-05-01 00:00:00" 2>/dev/null
+        fi
+
+        echo "Starting NTP..."
+        kill $(cat "${PIDFILE}" 2>/dev/null) 2>/dev/null || true
+        rm -f "${PIDFILE}"
+        # 네트워크(기본 라우트) 준비 후 시각 보정 및 ntpd 시작 — 부팅 지연 방지로 백그라운드 실행
+        {
+            i=0
+            while [ $i -lt 60 ]; do
+                route -n 2>/dev/null | grep -q "^0\.0\.0\.0" && break
+                sleep 1
+                i=$((i + 1))
+            done
+            # HTTPS Date 헤더로 정밀 초기 시각 설정
+            # fake-hwclock 복원값과 실제 시각 차이를 수초 이내로 줄여 ntpd가 동기화 가능한 범위로 맞춤
+            HTTPDATE=$(wget --no-check-certificate --server-response -O /dev/null \
+                https://www.google.com 2>&1 | grep -i "Date:" | head -1 | sed "s/.*Date: //")
+            if [ -n "$HTTPDATE" ]; then
+                SETDATE=$(echo "$HTTPDATE" | awk '{
+                    split("Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec", m, " ")
+                    for(i=1;i<=12;i++) if(m[i]==$3) mon=sprintf("%02d",i)
+                    printf "%s-%s-%s %s\n", $4, mon, $2, $5
+                }')
+                date -s "$SETDATE" 2>/dev/null
+            fi
+            "${DAEMON}" -p "${PIDFILE}"
+        } &
+        ;;
+    stop)
+        echo "Stopping NTP..."
+        # 종료 전 현재 시각 저장 (다음 부팅을 위한 fake-hwclock)
+        date -u +"%Y-%m-%d %H:%M:%S" > "${FAKEHWCLOCK}" 2>/dev/null
+        kill $(cat "${PIDFILE}" 2>/dev/null) 2>/dev/null || true
+        rm -f "${PIDFILE}"
+        ;;
+    restart|reload)
+        "$0" stop; sleep 1; "$0" start
+        ;;
+    *)
+        echo "Usage: $0 {start|stop|restart}"; exit 1
+        ;;
+esac
+exit 0

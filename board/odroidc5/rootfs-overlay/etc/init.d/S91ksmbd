@@ -1,0 +1,36 @@
+#!/bin/sh
+
+DAEMON="ksmbd.mountd"
+CONF="/etc/ksmbd/smb.conf"
+
+PWDB="/etc/ksmbd/ksmbdpwd.db"
+
+case "$1" in
+    start)
+        # 첫 부팅: 비밀번호 DB가 비어있으면 생성
+        if [ ! -s "${PWDB}" ]; then
+            echo "ksmbd: 첫 부팅 - 사용자 계정 생성 중 (pangui/odroid)..."
+            ksmbd.adduser -P "${PWDB}" -a pangui -p odroid 2>/dev/null || true
+        fi
+        echo "Starting ksmbd..."
+        modprobe ksmbd 2>/dev/null || true
+        ksmbd.mountd -C "${CONF}"
+        ;;
+    stop)
+        echo "Stopping ksmbd..."
+        ksmbd.control --shutdown 2>/dev/null || true
+        killall ksmbd.mountd 2>/dev/null || true
+        rmmod ksmbd 2>/dev/null || true
+        ;;
+    restart)
+        "$0" stop
+        sleep 1
+        "$0" start
+        ;;
+    *)
+        echo "Usage: $0 {start|stop|restart}"
+        exit 1
+        ;;
+esac
+
+exit 0

@@ -1,0 +1,142 @@
+#!/bin/bash
+# internal_build.sh - Docker 컨테이너 내부에서 실행되는 빌드 스크립트
+
+set -eo pipefail
+
+BUILDROOT_VERSION="${BUILDROOT_VERSION:-2024.02.1}"
+DEVICE="${DEVICE:-odroidc5}"
+VERSION="${VERSION:-1.0.0}"
+DEFCONFIG="retropangui-${DEVICE}_defconfig"
+
+cd /home/builder/buildroot
+
+echo "============================================"
+echo "  Buildroot 내부 빌드 스크립트"
+echo "  Buildroot 버전: ${BUILDROOT_VERSION}"
+echo "  기기: ${DEVICE}"
+echo "  프로젝트 버전: ${VERSION}"
+echo "  defconfig: ${DEFCONFIG}"
+echo "============================================"
+
+# Buildroot 소스 다운로드 (없을 경우)
+if [ ! -f Makefile ]; then
+    echo "[1/6] Buildroot 소스 다운로드 중..."
+    wget -q https://buildroot.org/downloads/buildroot-${BUILDROOT_VERSION}.tar.gz
+    tar xf buildroot-${BUILDROOT_VERSION}.tar.gz --strip-components=1
+    rm buildroot-${BUILDROOT_VERSION}.tar.gz
+else
+    echo "[1/6] Buildroot 소스 이미 존재함 (스킵)"
+fi
+
+# 다운로드 캐시 디렉토리 연결
+echo "[2/6] 다운로드 캐시 디렉토리 설정..."
+mkdir -p /home/builder/dl
+ln -sfn /home/builder/dl dl
+
+# 커스텀 defconfig 복사
+echo "[3/6] 커스텀 설정 파일 복사 (${DEFCONFIG})..."
+cp /home/builder/configs/${DEFCONFIG} configs/
+
+# board 디렉토리 복사 (--delete로 호스트에서 삭제된 파일도 반영)
+echo "[4/6] 보드 설정 파일 복사 (board/${DEVICE})..."
+mkdir -p board/${DEVICE}
+rsync -a --delete /home/builder/board/${DEVICE}/ board/${DEVICE}/
+
+# br2-external 연결
+echo "[4b/6] BR2_EXTERNAL 설정..."
+BR2_EXTERNAL_PATH=/home/builder/br2-external
+
+# 버전 파일 생성
+mkdir -p board/${DEVICE}/rootfs-overlay/etc
+echo "${VERSION}" > board/${DEVICE}/rootfs-overlay/etc/retropangui-version
+
+# Buildroot 빌드 실행
+echo "[5/6] Buildroot 빌드 시작..."
+echo "  - defconfig 로드 중..."
+rm -f output/.config
+rm -f output/build/freeimage-3180/.stamp_built output/build/freeimage-3180/.stamp_staging_installed output/build/freeimage-3180/.stamp_target_installed
+make BR2_EXTERNAL="${BR2_EXTERNAL_PATH}" ${DEFCONFIG}
+
+# common_drivers 서브모듈 준비 (커널 추출 후, 빌드 전)
+echo "  - 커널 소스 추출 중..."
+make BR2_EXTERNAL="${BR2_EXTERNAL_PATH}" linux-extract
+
+LINUX_BUILD_DIR=$(ls -d output/build/linux-* 2>/dev/null | head -1)
+if [ -n "${LINUX_BUILD_DIR}" ] && [ -f "${LINUX_BUILD_DIR}/.gitmodules" ]; then
+    echo "  - 커널 서브모듈 클론 중..."
+    while IFS= read -r line; do
+        if [[ "$line" =~ ^[[:space:]]*path[[:space:]]*=[[:space:]]*(.+)$ ]]; then
+            submod_path="${BASH_REMATCH[1]}"
+        elif [[ "$line" =~ ^[[:space:]]*url[[:space:]]*=[[:space:]]*(.+)$ ]]; then
+            submod_url="${BASH_REMATCH[1]}"
+        elif [[ "$line" =~ ^[[:space:]]*branch[[:space:]]*=[[:space:]]*(.+)$ ]]; then
+            submod_branch="${BASH_REMATCH[1]}"
+            # 디렉토리가 없거나 비어있으면 클론 (타볼 추출 시 빈 디렉토리 생성 대응)
+            if [ -n "${submod_path}" ] && [ -z "$(ls -A "${LINUX_BUILD_DIR}/${submod_path}" 2>/dev/null)" ]; then
+                echo "    - ${submod_path} 클론 중 (브랜치: ${submod_branch})..."
+                rm -rf "${LINUX_BUILD_DIR}/${submod_path}"
+                git clone --depth=15 -b "${submod_branch}" "${submod_url}" \
+                    "${LINUX_BUILD_DIR}/${submod_path}"
+                # common_drivers: r54p1 DDK(ba6471e firmware와 불호환)가 추가되기 전
+                # r44p1-01eac0이 마지막으로 있었던 커밋(HEAD에서 11번째)으로 고정
+                if [ "${submod_path}" = "common_drivers" ]; then
+                    git -C "${LINUX_BUILD_DIR}/${submod_path}" \
+                        checkout 8f02b4a0ec2e7500e1b1cbc5277108bf67adb00f
+                fi
+            else
+                echo "    - ${submod_path} 이미 존재함 (스킵)"
+            fi
+            submod_path=""; submod_url=""; submod_branch=""
+        fi
+    done < "${LINUX_BUILD_DIR}/.gitmodules"
+fi
+
+# common_drivers DTS를 Buildroot가 찾는 두 경로 모두 symlink 연결
+# - arch/arm64/boot/dts/amlogic  (커널 빌드 시스템용)
+# - arch/arm64/boot/amlogic      (Buildroot DTB install용: BR2_LINUX_KERNEL_INTREE_DTS_NAME 경로)
+if [ -n "${LINUX_BUILD_DIR}" ]; then
+    AMLOGIC_DTS_SRC="${LINUX_BUILD_DIR}/common_drivers/arch/arm64/boot/dts/amlogic"
+    if [ -d "${AMLOGIC_DTS_SRC}" ]; then
+        AMLOGIC_DTS_DST="${LINUX_BUILD_DIR}/arch/arm64/boot/dts/amlogic"
+        if [ ! -e "${AMLOGIC_DTS_DST}" ]; then
+            echo "  - DTS symlink 생성 중 (dts/amlogic)..."
+            ln -s "../../../../common_drivers/arch/arm64/boot/dts/amlogic" "${AMLOGIC_DTS_DST}"
+        fi
+        AMLOGIC_BOOT_DST="${LINUX_BUILD_DIR}/arch/arm64/boot/amlogic"
+        if [ ! -e "${AMLOGIC_BOOT_DST}" ]; then
+            echo "  - DTS symlink 생성 중 (boot/amlogic)..."
+            ln -s "../../../common_drivers/arch/arm64/boot/dts/amlogic" "${AMLOGIC_BOOT_DST}"
+        fi
+    fi
+fi
+
+# mali-ddk는 Buildroot 자동 감지가 안 되는 로컬 소스이므로 매번 강제 재빌드
+echo "  - mali-ddk 강제 재빌드 (로컬 소스 변경 반영)..."
+rm -f output/build/mali-ddk-r44p0/.stamp_built \
+      output/build/mali-ddk-r44p0/.stamp_staging_installed \
+      output/build/mali-ddk-r44p0/.stamp_target_installed
+
+# gamepad-mgr도 로컬 소스이므로 매번 강제 재빌드 (빌드 디렉토리 통째로 삭제)
+echo "  - gamepad-mgr 강제 재빌드 (로컬 소스 변경 반영)..."
+rm -rf output/build/gamepad-mgr-*/
+
+JOBS="${BUILD_JOBS:-$(nproc)}"
+echo "  - 전체 빌드 시작 (병렬 작업 수: ${JOBS})"
+echo "  - 로그: /home/builder/output/build.log"
+make BR2_EXTERNAL="${BR2_EXTERNAL_PATH}" -j${JOBS} 2>&1 | tee /home/builder/output/build.log
+
+# 최종 이미지 복사
+echo "[6/6] 최종 이미지 생성..."
+OUTPUT_IMG="retropangui-${DEVICE}-${VERSION}.img"
+if [ -f output/images/sdcard.img ]; then
+    cp output/images/sdcard.img /home/builder/output/${OUTPUT_IMG}
+    echo ""
+    echo "============================================"
+    echo "  빌드 성공!"
+    echo "  이미지: ${OUTPUT_IMG}"
+    echo "  크기: $(du -h /home/builder/output/${OUTPUT_IMG} | cut -f1)"
+    echo "============================================"
+else
+    echo "ERROR: sdcard.img 생성 실패!"
+    exit 1
+fi

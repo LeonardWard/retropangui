@@ -1,0 +1,52 @@
+[
+  {
+    "name": "nes",
+    "fullname": "Nintendo Entertainment System",
+    "extensions": ".nes .zip .7z",
+    "platform": "nes",
+    "theme": "nes",
+    "cores": [
+      { "name": "nestopia", "fullname": "Nestopia", "module_id": "lr-nestopia", "priority": 1 }
+    ]
+  },
+  {
+    "name": "snes",
+    "fullname": "Super Nintendo Entertainment System",
+    "extensions": ".bin .smc .sfc .fig .swc .mgd .zip .7z",
+    "platform": "snes",
+    "theme": "snes",
+    "cores": [
+      { "name": "snes9x", "fullname": "Snes9x", "module_id": "lr-snes9x", "priority": 1 }
+    ]
+  },
+  {
+    "name": "psx",
+    "fullname": "Sony PlayStation",
+    "extensions": ".bin .cue .img .iso .pbp .chd .zip",
+    "platform": "psx",
+    "theme": "psx",
+    "cores": [
+      { "name": "pcsx_rearmed", "fullname": "PCSX ReARMed", "module_id": "lr-pcsx-rearmed", "priority": 1 }
+    ]
+  },
+  {
+    "name": "pc",
+    "fullname": "PC (DOS)",
+    "extensions": ".exe .com .bat .conf .zip .7z",
+    "platform": "pc",
+    "theme": "pc",
+    "cores": [
+      { "name": "dosbox_pure", "fullname": "DOSBox Pure", "module_id": "lr-dosbox-pure", "priority": 1 }
+    ]
+  },
+  {
+    "name": "scummvm",
+    "fullname": "ScummVM",
+    "extensions": ".scummvm",
+    "platform": "scummvm",
+    "theme": "scummvm",
+    "cores": [
+      { "name": "scummvm", "fullname": "ScummVM", "module_id": "lr-scummvm", "priority": 1 }
+    ]
+  }
+]

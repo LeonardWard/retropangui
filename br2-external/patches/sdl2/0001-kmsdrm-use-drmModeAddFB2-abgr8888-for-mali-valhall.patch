@@ -1,0 +1,43 @@
+From: retropangui <retropangui@odroidc5>
+Date: Thu, 1 May 2026 00:00:00 +0000
+Subject: [PATCH] kmsdrm: use drmModeAddFB2 with ABGR8888 for Mali Valhall
+
+Mali Valhall (r44p0) EGL stores pixels as [R][G][B][A] in its ABGR8888
+surface.  SDL2's KMSDRM previously called drmModeAddFB(depth=24, bpp=32)
+which the DRM kernel converts to DRM_FORMAT_XRGB8888 (byte0=B).  This
+causes a red/blue channel swap (blue tint) on the Amlogic OSD plane.
+
+Replace with drmModeAddFB2 + DRM_FORMAT_ABGR8888 (byte0=R) so the
+display engine reads the correct channel order.
+
+KMSDRM_drmModeAddFB2 is already declared in SDL_kmsdrmsym.h.
+
+Tested on Odroid C5 (Amlogic S905X5, Mali-G310 r44p0).
+---
+--- a/src/video/kmsdrm/SDL_kmsdrmvideo.c
++++ b/src/video/kmsdrm/SDL_kmsdrmvideo.c
+@@ -336,6 +336,10 @@
+     unsigned w, h;
+     int ret;
+     Uint32 stride, handle;
++    Uint32 handles[4] = {0, 0, 0, 0};
++    Uint32 pitches[4] = {0, 0, 0, 0};
++    Uint32 offsets[4] = {0, 0, 0, 0};
++#define SDL_DRM_FORMAT_ABGR8888 0x34324241U
+
+     /* Check for an existing framebuffer */
+     KMSDRM_FBInfo *fb_info = (KMSDRM_FBInfo *)KMSDRM_gbm_bo_get_user_data(bo);
+@@ -360,8 +364,11 @@
+     h = KMSDRM_gbm_bo_get_height(bo);
+     stride = KMSDRM_gbm_bo_get_stride(bo);
+     handle = KMSDRM_gbm_bo_get_handle(bo).u32;
+-    ret = KMSDRM_drmModeAddFB(viddata->drm_fd, w, h, 24, 32, stride, handle,
+-                              &fb_info->fb_id);
++    handles[0] = handle;
++    pitches[0] = stride;
++    ret = KMSDRM_drmModeAddFB2(viddata->drm_fd, w, h, SDL_DRM_FORMAT_ABGR8888,
++                               handles, pitches, offsets,
++                               &fb_info->fb_id, 0);
+     if (ret) {
+         SDL_free(fb_info);
+         return NULL;

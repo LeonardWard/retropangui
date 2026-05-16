@@ -1,0 +1,69 @@
+#!/bin/sh
+# S99emulationstation - Launch EmulationStation as retro gaming frontend
+
+case "$1" in
+    start)
+        echo "Starting EmulationStation..."
+        # /dev/dri/card0 준비 대기 (최대 15초, S60display 이미 포그라운드 완료 후이므로 보통 즉시)
+        i=0
+        while [ $i -lt 30 ]; do
+            [ -c /dev/dri/card0 ] && break
+            sleep 0.5
+            i=$((i + 1))
+        done
+        nohup sh -c '
+            export SDL_VIDEODRIVER=kmsdrm
+            export MESA_LOADER_DRIVER_OVERRIDE=meson
+            export SDL_JOYSTICK_HIDAPI=0
+            export SDL_GAMECONTROLLERCONFIG_FILE=/etc/gamepad/gamecontrollerdb.txt
+            export HOME=/root
+            while true; do
+                rm -f /tmp/es-restart /tmp/es-shutdown /tmp/es-sysrestart /tmp/es-kodi
+                # HDMI 연결 대기 (최대 60초) — 뽑혀있으면 PHY/DRM 초기화가 실패함
+                i=0
+                while [ "$(cat /sys/devices/virtual/amhdmitx/amhdmitx0/hpd_state 2>/dev/null)" != "1" ] && [ $i -lt 60 ]; do
+                    sleep 1; i=$((i+1))
+                done
+                # HDMI PHY 활성화 — HPD 이벤트 후 드라이버가 자동 복구하지 않음
+                echo 1 > /sys/class/amhdmitx/amhdmitx0/phy 2>/dev/null || true
+                killall odroid-drm-fbset 2>/dev/null || true
+                odroid-drm-fbset -outputmode 1080p60hz
+                emulationstation --no-splash
+                if [ -f /tmp/es-sysrestart ]; then
+                    reboot
+                fi
+                if [ -f /tmp/es-shutdown ]; then
+                    poweroff
+                fi
+                if [ -f /tmp/es-kodi ]; then
+                    rm -f /tmp/es-kodi
+                    if command -v kodi >/dev/null 2>&1; then
+                        killall odroid-drm-fbset 2>/dev/null; sleep 1
+                        odroid-drm-fbset -outputmode 1080p60hz
+                        env -u SDL_VIDEODRIVER -u MESA_LOADER_DRIVER_OVERRIDE \
+                            LD_PRELOAD=/usr/lib64/libEGL.so.1 \
+                            kodi --standalone >> /var/log/kodi.log 2>&1 || true
+                        odroid-drm-fbset -outputmode 1080p60hz
+                    fi
+                    continue
+                fi
+                # ES가 종료되면 항상 재시작 (HDMI 재연결, 크래시 등 모든 경우 포함)
+                sleep 2
+            done
+        ' > /var/log/emulationstation.log 2>&1 &
+        ;;
+    stop)
+        killall emulationstation 2>/dev/null
+        ;;
+    restart|reload)
+        "$0" stop
+        sleep 1
+        "$0" start
+        ;;
+    *)
+        echo "Usage: $0 {start|stop|restart}"
+        exit 1
+        ;;
+esac
+
+exit 0

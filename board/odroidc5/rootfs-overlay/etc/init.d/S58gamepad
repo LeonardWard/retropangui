@@ -1,0 +1,33 @@
+#!/bin/sh
+# S58gamepad — gamepad-mgr 가상 패드 데몬
+# S57 이후, S60display(HDMI) 이전에 시작
+
+PIDFILE=/var/run/gamepad-daemon.pid
+DAEMON=gamepad-daemon
+LOGFILE=/var/log/gamepad.log
+
+case "$1" in
+    start)
+        printf "Starting gamepad daemon: "
+        $DAEMON >> "$LOGFILE" 2>&1 &
+        echo $! > "$PIDFILE"
+        echo "OK"
+        ;;
+    stop)
+        printf "Stopping gamepad daemon: "
+        if [ -f "$PIDFILE" ]; then
+            kill "$(cat "$PIDFILE")" 2>/dev/null
+            rm -f "$PIDFILE"
+        fi
+        echo "OK"
+        ;;
+    restart|reload)
+        "$0" stop
+        "$0" start
+        ;;
+    *)
+        echo "Usage: $0 {start|stop|restart}"
+        exit 1
+        ;;
+esac
+exit 0
