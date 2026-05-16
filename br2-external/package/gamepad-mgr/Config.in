@@ -1,0 +1,7 @@
+config BR2_PACKAGE_GAMEPAD_MGR
+	bool "gamepad-mgr"
+	depends on BR2_PACKAGE_SDL2
+	help
+	  SDL2 기반 게임패드 슬롯 매니저 라이브러리.
+	  Player 1~4 슬롯 관리, GUID 기반 재연결 복원,
+	  GC 매핑 / raw 조이스틱 폴백을 제공한다.

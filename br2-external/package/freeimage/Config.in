@@ -1,0 +1,7 @@
+config BR2_PACKAGE_FREEIMAGE
+	bool "freeimage"
+	help
+	  FreeImage is an Open Source library project for developers
+	  who would like to support popular graphics image formats.
+
+	  https://freeimage.sourceforge.net/

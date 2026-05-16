@@ -1,0 +1,141 @@
+# retropangui.conf - RetroPangui Unified Configuration
+# =====================================================
+# 이 파일은 /share/system/retropangui.conf 의 기본값 템플릿입니다.
+# 첫 부팅 시 /share/system/retropangui.conf 가 없으면 이 파일에서 복사됩니다.
+#
+# 적용 방식:
+#   global.*         → /opt/retropangui/retroarch.cfg 에 반영
+#   emulationstation.* → ~/.emulationstation/es_settings.cfg 에 반영
+#   system.*         → OS 설정 (hostname, timezone 등)
+#
+# 값 변경 후 재부팅하거나 apply_retropangui_conf.sh 를 실행하면 적용됩니다.
+# =====================================================
+
+
+## Section A - System Settings ##
+
+# 시스템 언어 (ko_KR, en_US, ja_JP, ...)
+system.language=ko_KR
+
+# 시스템 시간대
+# 예: Asia/Seoul, America/New_York, Europe/Paris
+system.timezone=Asia/Seoul
+
+# 호스트명
+system.hostname=retropangui
+
+# 자동 업데이트 여부 (0=비활성, 1=활성)
+# system.autoupdate=0
+
+
+## Section B - Network ##
+
+# SSH 활성화 (0=비활성, 1=활성)
+system.ssh=1
+
+# Samba (파일 공유) 활성화
+# system.samba=0
+
+# Wi-Fi (해당 기기에서 미지원 시 무시됨)
+# system.wifi.enabled=0
+# system.wifi.ssid=
+# system.wifi.key=
+
+
+## Section C - Audio ##
+
+# 오디오 출력 디바이스 (ALSA 디바이스명)
+# 예: default, hw:0,0, hw:1,0
+global.audio_device=default
+
+# 오디오 활성화 (0=비활성, 1=활성)
+global.audio_enable=1
+
+# 오디오 레이턴시 (ms) - 낮을수록 반응 빠르나 끊김 위험
+global.audio_latency=32
+
+# 볼륨 (0-100)
+# system.volume=80
+
+
+## Section D - Controllers ##
+
+# 컨트롤러 입력 드라이버 (udev 권장)
+global.input_driver=udev
+global.input_joypad_driver=udev
+
+# 조이스틱 HIDAPI 비활성화 (PS2 USB 어댑터 아날로그 모드 유지용)
+# SDL_JOYSTICK_HIDAPI=0 는 /etc/profile.d/retropangui-sdl.sh 에서 별도 관리됨
+
+
+## Section E - EmulationStation ##
+
+# UI 테마
+emulationstation.theme=retropangui
+
+# 스크린세이버 딜레이 (초, 0=비활성)
+emulationstation.ScreenSaverTime=300
+
+# 스크린세이버 동작 (dim, black, slideshow, video)
+emulationstation.ScreenSaverBehavior=dim
+
+# 게임 목록 정렬 기준 (filename, name, rating, releasedate, ...)
+# emulationstation.SortSystems=name
+
+# 즐겨찾기 컬렉션 표시 여부
+# emulationstation.FavoritesFirst=1
+
+
+## Section F - Global RetroArch Settings ##
+
+# 비디오 드라이버 (gl, vulkan, ...)
+global.video_driver=gl
+
+# 화면 비율 자동 조정
+global.video_aspect_ratio_auto=true
+
+# 정수 스케일링 (픽셀 퍼펙트, false=비율 유지 꽉찬 화면)
+global.video_scale_integer=false
+
+# 비디오 스무딩 (안티앨리어싱, false=픽셀 선명)
+global.video_smooth=false
+
+# 수직 동기화
+global.video_vsync=true
+
+# 되감기 기능 (성능 영향 큼)
+global.rewind_enable=false
+
+# 자동 저장/불러오기 (게임 종료/시작 시 자동 세이브스테이트)
+global.savestate_auto_save=false
+global.savestate_auto_load=false
+
+# RetroAchievements (업적 시스템)
+# global.cheevos_enable=false
+# global.cheevos_username=
+# global.cheevos_password=
+
+# 셰이더 (성능 영향. 경로 지정 시 활성화)
+# global.video_shader=
+# global.video_shader_enable=false
+
+# 메뉴 드라이버 (rgui=가벼움, ozone=현대적)
+global.menu_driver=rgui
+
+
+## Section G - Per-System Core Selection ##
+
+# 각 시스템의 기본 libretro 코어 디렉토리명 지정
+# 값은 /opt/retropangui/libretrocores/ 하위 디렉토리명과 일치해야 함
+# (해당 디렉토리 내 .installed_so_name 파일에서 실제 .so 파일명을 읽음)
+
+system.nes.core=lr-nestopia
+system.snes.core=lr-snes9x
+system.psx.core=lr-pcsx-rearmed
+system.pc.core=lr-dosbox-pure
+system.scummvm.core=lr-scummvm
+
+
+## Section H - Kodi (미지원, 향후 확장용) ##
+
+# kodi.enabled=0

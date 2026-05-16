@@ -1,0 +1,15 @@
+config BR2_PACKAGE_EMULATIONSTATION
+	bool "emulationstation"
+	depends on BR2_PACKAGE_SDL2
+	depends on BR2_PACKAGE_MESA3D_OPENGL_ES
+	depends on BR2_PACKAGE_FREEIMAGE
+	depends on BR2_PACKAGE_VLC
+	depends on BR2_PACKAGE_FREETYPE
+	depends on BR2_PACKAGE_LIBCURL
+	depends on BR2_PACKAGE_ALSA_LIB
+	depends on BR2_PACKAGE_RAPIDJSON
+	help
+	  EmulationStation is a cross-platform graphical front-end
+	  for emulators with controller navigation support.
+
+	  https://github.com/LeonardWard/retropangui-emulationstation

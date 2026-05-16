@@ -1,0 +1,5 @@
+config BR2_PACKAGE_BUNDLED_ROMS
+	bool "bundled-roms"
+	help
+	  Freely licensed homebrew games bundled with the image.
+	  Copied to /share/roms/ on first boot.

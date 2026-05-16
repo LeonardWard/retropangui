@@ -1,0 +1,2 @@
+# HDMI hotplug recovery for Amlogic S905X5M (Odroid C5)
+ACTION=="change", SUBSYSTEM=="drm", ENV{HOTPLUG}=="1", RUN+="/usr/sbin/hdmi-hotplug"

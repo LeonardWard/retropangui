@@ -1,0 +1,4 @@
+config BR2_PACKAGE_LIBRETRO_CORES
+	bool "libretro-cores"
+	help
+	  Libretro cores for RetroArch: fceumm (NES), snes9x (SNES), pcsx_rearmed (PSX).

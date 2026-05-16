@@ -1,0 +1,18 @@
+# ARM Mali GPU device
+
+# Amlogic S922X/S905X3
+ACTION=="add", SUBSYSTEM=="devfreq", DEVPATH=="/devices/platform/soc/ffe40000.gpu/devfreq/ffe40000.gpu", RUN+="/usr/bin/gpufreq-set '$env{DEVPATH}'"
+
+# Rockchip RK3566/RK3568
+ACTION=="add", SUBSYSTEM=="devfreq", DEVPATH=="/devices/platform/fde60000.gpu/devfreq/fde60000.gpu", RUN+="/usr/bin/gpufreq-set '$env{DEVPATH}'"
+
+# Amlogic S905X5M3
+ACTION=="add", SUBSYSTEM=="devfreq", DEVPATH=="/devices/platform/fd000000.valhall/devfreq/fd000000.valhall", RUN+="/usr/bin/gpufreq-set '$env{DEVPATH}'"
+
+ACTION=="add", SUBSYSTEM=="dma_heap", ENV{DEVNAME}=="/dev/dma_heap/linux,cma", GROUP="video", MODE="0660"
+ACTION=="add", SUBSYSTEM=="dma_heap", ENV{DEVNAME}=="/dev/dma_heap/system-uncached", GROUP="video", MODE="0660"
+ACTION=="add", SUBSYSTEM=="dma_heap", ENV{DEVNAME}=="/dev/dma_heap/heap-gfx", GROUP="video", MODE="0660"
+
+ACTION=="add", SUBSYSTEM=="ionvideo", ENV{DEVNAME}=="/dev/ionvideo", GROUP="video", MODE="0660"
+ACTION=="add", SUBSYSTEM=="misc", ENV{DEVNAME}=="/dev/ion", GROUP="video", MODE="0660"
+ACTION=="add", SUBSYSTEM=="misc", ENV{DEVNAME}=="/dev/mali0", GROUP="video", MODE="0660"

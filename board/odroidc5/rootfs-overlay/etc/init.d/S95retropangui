@@ -1,0 +1,152 @@
+#!/bin/sh
+# S95retropangui - RetroPangui 설정 초기화 및 적용
+# S61share(마운트) 이후, S99emulationstation(ES 실행) 이전에 실행
+
+CONF_DEFAULT="/opt/retropangui/share/retropangui.conf.default"
+CONF_USER="/retropangui/share/system/retropangui.conf"
+RA_CFG_DEFAULT="/opt/retropangui/retroarch.cfg"
+RA_CFG_USER="/retropangui/share/system/retroarch/retroarch.cfg"
+ES_CFG_USER="/retropangui/share/system/emulationstation/es_settings.cfg"
+APPLY_SCRIPT="/opt/retropangui/share/apply_retropangui_conf.sh"
+
+case "$1" in
+    start)
+        # /retropangui/share 파티션이 마운트될 때까지 대기 (최대 10초)
+        i=0
+        while [ $i -lt 10 ]; do
+            grep -q " /retropangui/share " /proc/mounts && break
+            sleep 1
+            i=$((i + 1))
+        done
+
+        if ! grep -q " /retropangui/share " /proc/mounts; then
+            echo "[retropangui] /retropangui/share 파티션이 마운트되지 않았습니다. 설정 적용 건너뜀."
+            exit 0
+        fi
+
+        # CPU/GPU: schedutil/ondemand는 게임 중 최저 주파수에 머물 수 있어 performance로 고정
+        for gov in /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor; do
+            echo performance > "$gov" 2>/dev/null || true
+        done
+        MALI_DEVFREQ=$(ls /sys/class/misc/mali0/device/devfreq/ 2>/dev/null | head -1)
+        if [ -n "$MALI_DEVFREQ" ]; then
+            echo performance > /sys/class/misc/mali0/device/devfreq/${MALI_DEVFREQ}/governor 2>/dev/null || true
+        fi
+
+        # 디렉토리 생성
+        mkdir -p /retropangui/share/system/retroarch
+        mkdir -p /retropangui/share/system/emulationstation
+
+        # /root/.emulationstation → /retropangui/share/system/emulationstation 심볼릭 링크
+        if [ ! -L /root/.emulationstation ]; then
+            rm -rf /root/.emulationstation
+            ln -sfn /retropangui/share/system/emulationstation /root/.emulationstation
+        fi
+
+        # 첫 부팅: retropangui.conf 없으면 기본값에서 복사
+        if [ ! -f "${CONF_USER}" ]; then
+            if [ -f "${CONF_DEFAULT}" ]; then
+                echo "[retropangui] 첫 부팅: 기본 설정 파일 복사 중..."
+                cp "${CONF_DEFAULT}" "${CONF_USER}"
+                echo "[retropangui] ${CONF_USER} 생성 완료"
+            else
+                echo "[retropangui] 기본 설정 파일 없음: ${CONF_DEFAULT}"
+                exit 0
+            fi
+        fi
+
+        # 첫 부팅: retroarch.cfg 없으면 기본값에서 복사
+        if [ ! -f "${RA_CFG_USER}" ]; then
+            echo "[retropangui] 첫 부팅: retroarch.cfg 복사 중..."
+            cp "${RA_CFG_DEFAULT}" "${RA_CFG_USER}"
+        fi
+
+        # 첫 부팅: es_settings.cfg 없으면 최소 XML 골격 생성
+        # (빈 파일이면 EmulationStation이 "No document element found" 에러 발생)
+        if [ ! -f "${ES_CFG_USER}" ] || ! grep -q "<config" "${ES_CFG_USER}" 2>/dev/null; then
+            echo "[retropangui] es_settings.cfg XML 골격 생성 중..."
+            printf '<?xml version="1.0"?>\n<config>\n</config>\n' > "${ES_CFG_USER}"
+        fi
+
+        # 첫 부팅: retroarch-core-options.cfg 없으면 기본값에서 복사
+        RA_CORE_OPTS_SRC="/opt/retropangui/retroarch-core-options.cfg"
+        RA_CORE_OPTS_DST="/retropangui/share/system/retroarch/retroarch-core-options.cfg"
+        if [ ! -f "${RA_CORE_OPTS_DST}" ] && [ -f "${RA_CORE_OPTS_SRC}" ]; then
+            echo "[retropangui] 첫 부팅: retroarch-core-options.cfg 복사 중..."
+            cp "${RA_CORE_OPTS_SRC}" "${RA_CORE_OPTS_DST}"
+        fi
+
+        # 첫 부팅: es_input.cfg 없으면 기본값에서 복사
+        ES_INPUT_SRC="/opt/retropangui/share/es_input.cfg"
+        ES_INPUT_DST="/retropangui/share/system/emulationstation/es_input.cfg"
+        if [ ! -f "${ES_INPUT_DST}" ] && [ -f "${ES_INPUT_SRC}" ]; then
+            echo "[retropangui] 첫 부팅: es_input.cfg 복사 중..."
+            cp "${ES_INPUT_SRC}" "${ES_INPUT_DST}"
+        fi
+
+        # 첫 부팅: 테마 없으면 기본값에서 복사
+        THEMES_SRC="/opt/retropangui/themes"
+        THEMES_DST="/retropangui/share/system/emulationstation/themes"
+        if [ ! -d "${THEMES_DST}" ] && [ -d "${THEMES_SRC}" ]; then
+            echo "[retropangui] 첫 부팅: 테마 복사 중..."
+            mkdir -p "${THEMES_DST}"
+            cp -r "${THEMES_SRC}/." "${THEMES_DST}/"
+        fi
+
+        # 설정 적용 (retropangui.conf → retroarch.cfg, es_settings.cfg)
+        if [ -x "${APPLY_SCRIPT}" ]; then
+            "${APPLY_SCRIPT}" "${CONF_USER}"
+        else
+            echo "[retropangui] apply 스크립트 없음: ${APPLY_SCRIPT}"
+        fi
+
+        # 매 부팅마다 RetropanGui P1-P4의 실제 RA 인덱스를 /proc/bus/input/devices에서
+        # 탐색해 retroarch.cfg에 기록한다.
+        # /proc/bus/input/devices의 jsN 번호 = RetroArch udev driver 열거 순서 (evdev 등록 순)
+        if [ -f "${RA_CFG_USER}" ]; then
+            # gamepad-daemon이 vdev를 생성할 때까지 대기 (최대 10초)
+            i=0
+            while [ $i -lt 20 ]; do
+                grep -q "RetropanGui P1" /proc/bus/input/devices && break
+                sleep 0.5; i=$((i+1))
+            done
+            if ! grep -q "RetropanGui P1" /proc/bus/input/devices; then
+                echo "[retropangui] WARNING: RetropanGui P1 not found in /proc/bus/input/devices (timeout)" | tee -a /var/log/retropangui.log
+            fi
+
+            for p in 1 2 3 4; do
+                js=$(awk -v dev="RetropanGui P${p}" '
+                    /^N: Name=/ && index($0, dev) { found=1; next }
+                    found && /^H: Handlers=/ {
+                        for (i=1; i<=NF; i++)
+                            if ($i ~ /^js[0-9]/) {
+                                sub(/^js/, "", $i); print $i+0; found=0; exit
+                            }
+                        found=0
+                    }
+                    /^[[:space:]]*$/ { found=0 }
+                ' /proc/bus/input/devices)
+
+                [ -z "$js" ] && continue
+
+                if grep -q "^input_player${p}_joypad_index" "${RA_CFG_USER}"; then
+                    sed -i "s|^input_player${p}_joypad_index = .*|input_player${p}_joypad_index = \"${js}\"|" "${RA_CFG_USER}"
+                else
+                    echo "input_player${p}_joypad_index = \"${js}\"" >> "${RA_CFG_USER}"
+                fi
+                echo "[retropangui] RetropanGui P${p} → joypad index ${js}" | tee -a /var/log/retropangui.log
+            done
+        fi
+        ;;
+    stop)
+        ;;
+    restart|reload)
+        "$0" start
+        ;;
+    *)
+        echo "Usage: $0 {start|stop|restart}"
+        exit 1
+        ;;
+esac
+
+exit 0

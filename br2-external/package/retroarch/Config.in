@@ -1,0 +1,9 @@
+config BR2_PACKAGE_RETROARCH
+	bool "retroarch"
+	depends on BR2_PACKAGE_SDL2
+	depends on BR2_PACKAGE_MESA3D_OPENGL_ES
+	depends on BR2_PACKAGE_LIBDRM
+	help
+	  RetroArch is the reference frontend for the libretro API.
+
+	  https://www.retroarch.com/

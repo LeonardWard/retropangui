@@ -1,0 +1,26 @@
+From: retropangui-c5 build <build@retropangui-c5>
+Date: Mon, 1 Jan 2024 00:00:00 +0000
+Subject: [PATCH] arm64: dts: odroidc5: increase heap-gfx CMA to 128M for 4K
+
+Mali DDK allocates scanout buffers from the heap-gfx CMA pool.
+4K ARGB8888 triple buffering requires ~95MB (3840x2160x4x3),
+exceeding the original 88MB limit. Increase to 128MB to support
+4K rendering with GBM_BO_USE_SCANOUT.
+
+---
+ common_drivers/arch/arm64/boot/dts/amlogic/s7d_s905x5m_odroidc5.dts | 3 +--
+ 1 file changed, 1 insertion(+), 2 deletions(-)
+
+diff --git a/common_drivers/arch/arm64/boot/dts/amlogic/s7d_s905x5m_odroidc5.dts b/common_drivers/arch/arm64/boot/dts/amlogic/s7d_s905x5m_odroidc5.dts
+index 1111111..2222222 100644
+--- a/common_drivers/arch/arm64/boot/dts/amlogic/s7d_s905x5m_odroidc5.dts
++++ b/common_drivers/arch/arm64/boot/dts/amlogic/s7d_s905x5m_odroidc5.dts
+@@ -103,8 +103,7 @@
+ 		dmaheap_cma_reserved:heap-gfx {
+ 			compatible = "shared-dma-pool";
+ 			reusable;
+-			/* 1080p STB androidU size 88M */
+-			size = <0x0 0x5800000>;
++			size = <0x0 0x8000000>; /* 128M: 4K ARGB8888 triple-buffer = 95M min */
+ 			alignment = <0x0 0x400000>;
+ 		};

@@ -1,0 +1,11 @@
+#!/bin/sh
+# HDMI hotplug: re-enable HDMI PHY on reconnect (no ES restart needed)
+# ES survives HDMI disconnect; only PHY re-enable is required to restore display
+HPD="/sys/devices/virtual/amhdmitx/amhdmitx0/hpd_state"
+PHY="/sys/class/amhdmitx/amhdmitx0/phy"
+
+[ -r "${HPD}" ] || exit 0
+sleep 2
+[ "$(cat "${HPD}")" = "1" ] || exit 0
+
+echo 1 > "${PHY}" 2>/dev/null || true
