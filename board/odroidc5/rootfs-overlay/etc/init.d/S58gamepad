@@ -9,7 +9,7 @@ LOGFILE=/var/log/gamepad.log
 case "$1" in
     start)
         printf "Starting gamepad daemon: "
-        $DAEMON >> "$LOGFILE" 2>&1 &
+        SDL_JOYSTICK_HIDAPI=0 $DAEMON >> "$LOGFILE" 2>&1 &
         echo $! > "$PIDFILE"
         echo "OK"
         ;;
