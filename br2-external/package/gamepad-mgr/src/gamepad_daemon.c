@@ -286,7 +286,7 @@ int main(void)
     signal(SIGINT,  handle_signal);
 
     /* 가상 장치를 물리 컨트롤러 탐색 전에 미리 생성한다.
-     * RetroArch가 열거할 때 RetropanGui P1-P4가 index 0-3을 차지하게 되어
+     * RetroArch가 열거할 때 RetroPangUI P1-P4가 index 0-3을 차지하게 되어
      * retroarch.cfg의 input_player1-4_joypad_index = "0"-"3" 고정 설정이 동작한다. */
     for (int i = 0; i < GP_MAX_SLOTS; i++) {
         g_vdev[i] = gp_vdev_create(i, -1);

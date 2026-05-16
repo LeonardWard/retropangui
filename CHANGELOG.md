@@ -71,7 +71,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - **gamepad-daemon: FF(진동) ID 매핑 수정**: `UI_FF_UPLOAD` 시 가상 장치의 `effect.id`(virt_id)를 그대로 `EVIOCSFF(phys_fd)`에 전달하던 버그 수정. 물리 장치가 이를 "슬롯 N 업데이트"로 해석해 EINVAL 반환 → RetroArch가 진동 effect를 전송하지 못하던 문제. 수정: `ff_id_map[FF_MAX_EFFECTS]` 배열로 virt_id→phys_id 매핑 관리, 신규 업로드 시 `effect.id = -1`로 강제해 물리 장치가 새 슬롯을 할당하게 함.
 - **gamepad-daemon: 부팅 시 uinput 가상 장치 선점 생성**: 물리 장치 연결 전(`gp_init()` 호출 전)에 P1~P4 가상 장치를 먼저 생성. udev 열거 순서상 가상 장치가 낮은 jsN 인덱스를 확보해 RetroArch `input_playerN_joypad_index` 설정과 일치.
 - **gamepad-daemon: 재연결 시 uinput 장치 보존**: 물리 패드 재연결 시 기존 uinput 장치를 파괴/재생성하지 않고 `gp_vdev_rebind_phys()`로 `phys_fd`만 교체. udev 열거 번호가 유지되어 RetroArch 인덱스 틀어짐 방지.
-- **S95retropangui: 부팅마다 joypad 인덱스 자동 감지**: `/proc/bus/input/devices`에서 `RetropanGui P1~P4`의 `jsN` 번호를 파싱해 `retroarch.cfg`의 `input_playerN_joypad_index`에 매 부팅마다 기록. Xbox 360 등 외부 장치가 먼저 열거돼 인덱스가 밀리는 문제 해결.
+- **S95retropangui: 부팅마다 joypad 인덱스 자동 감지**: `/proc/bus/input/devices`에서 `RetroPangUI P1~P4`의 `jsN` 번호를 파싱해 `retroarch.cfg`의 `input_playerN_joypad_index`에 매 부팅마다 기록. Xbox 360 등 외부 장치가 먼저 열거돼 인덱스가 밀리는 문제 해결.
 - **es_settings.cfg 초기화 수정**: 빈 파일 생성(`touch`) 대신 XML 골격(`<?xml version="1.0"?><config></config>`) 생성. EmulationStation(pugixml)이 빈 파일에서 "No document element found" 파싱 오류를 내던 문제 수정.
 - **apply_retropangui_conf.sh 경로 및 XML 수정**: `RETROARCH_CFG`, `ES_SETTINGS_CFG` 경로가 `/share/system/`을 잘못 참조하던 문제를 `/retropangui/share/system/`으로 수정. `es_set()` 함수의 XML 삽입 방식도 `</config>` 태그 앞에 올바르게 삽입하도록 수정.
 - **S58gamepad: 데몬 로그 추가**: 데몬 stdout/stderr를 `/var/log/gamepad.log`로 리디렉션.
@@ -88,7 +88,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - **gamepad-mgr**: SDL2 기반 게임패드 슬롯 매니저 라이브러리 추가. Player 1~4 슬롯 고정 할당, SDL GUID 기반 재연결 시 동일 슬롯 복원, SDL GameController API (자동 매핑) / raw 조이스틱 폴백 통합, 상태 폴링 + 이벤트 콜백 양쪽 지원. `99-gamepad.rules`로 `/dev/input/js*`, `/dev/input/event*` 퍼미션 설정. `gamepad_config.json`에 PS2 USB 어댑터(0810:0001) SDL 매핑 포함. `/usr/bin/gamepad-test`로 현장 디버깅 가능.
 - **gamepad-daemon (uinput 가상 패드)**: 물리 컨트롤러를 Player 1~4 가상 장치로 정규화하는 데몬 추가. `S58gamepad` init 스크립트로 ES/RetroArch보다 먼저 시작. 핵심 기능: ① SDL GUID 기반 슬롯 고정 — 연결 순서나 유/무선 혼재 무관하게 P1~P4 유지, ② uinput으로 `/dev/input/eventX` 가상 장치 생성 — ES(SDL2), RetroArch(udev 드라이버) 양쪽 투명 인식, ③ FF 패스스루 — 물리 장치가 `FF_RUMBLE` 지원 시 가상 장치에도 FF 선언 후 ioctl 경유 물리 장치로 전달(DS3/DS4/Xbox 360 진동 작동, PS2 어댑터는 하드웨어 한계로 미지원), ④ 125Hz 폴링 루프.
 - **gamecontrollerdb.txt**: `/etc/gamepad/gamecontrollerdb.txt` 추가. ES 시작 시 `SDL_GAMECONTROLLERCONFIG_FILE` 환경변수로 자동 로드. PS2 어댑터(0810:0001) 3종 버전 GUID 매핑 및 가상 패드 P1~P4 매핑 포함.
-- **RetroArch autoconfig**: `/etc/retroarch/autoconfig/` 추가. `RetropanGui P1~P4.cfg` — 가상 패드 udev 버튼/축 매핑(BTN_SOUTH=304 등). `PS2 USB Adapter.cfg` — 데몬 없이 직접 연결 시 임시 대응. `retroarch.cfg`에 `joypad_autoconfig_dir` 추가.
+- **RetroArch autoconfig**: `/etc/retroarch/autoconfig/` 추가. `RetroPangUI P1~P4.cfg` — 가상 패드 udev 버튼/축 매핑(BTN_SOUTH=304 등). `PS2 USB Adapter.cfg` — 데몬 없이 직접 연결 시 임시 대응. `retroarch.cfg`에 `joypad_autoconfig_dir` 추가.
 - **PCSX-ReARMed DualShock 기본값**: `retroarch-core-options.cfg` 템플릿 추가. `pcsx_rearmed_pad1~4type=dualshock`, `pcsx_rearmed_vibration=enabled` — PS1 게임 실행 시 아날로그 스틱과 진동이 기본 활성화됨. `retroarch.cfg`에 `core_options_path` 추가; 첫 부팅 시 `S95retropangui`가 `/share`로 복사.
 
 ## [Unreleased] _ 2026-5-1

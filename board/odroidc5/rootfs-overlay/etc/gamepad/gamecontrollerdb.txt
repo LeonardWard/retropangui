@@ -35,10 +35,10 @@
 # 고정 GUID: VID:5052(RP) PID:0001~0004 BUS:VIRTUAL(0006)
 # ─────────────────────────────────────────────────────────────────
 
-06000000525000000100000000000000,RetropanGui P1,platform:Linux,a:b0,b:b1,x:b2,y:b3,back:b6,start:b7,guide:b8,leftshoulder:b4,rightshoulder:b5,lefttrigger:a4,righttrigger:a5,leftx:a0,lefty:a1,rightx:a2,righty:a3,leftstick:b9,rightstick:b10,dpup:h0.1,dpdown:h0.4,dpleft:h0.8,dpright:h0.2
+06000000525000000100000000000000,RetroPangUI P1,platform:Linux,a:b0,b:b1,x:b2,y:b3,back:b6,start:b7,guide:b8,leftshoulder:b4,rightshoulder:b5,lefttrigger:a4,righttrigger:a5,leftx:a0,lefty:a1,rightx:a2,righty:a3,leftstick:b9,rightstick:b10,dpup:h0.1,dpdown:h0.4,dpleft:h0.8,dpright:h0.2
 
-06000000525000000200000000000000,RetropanGui P2,platform:Linux,a:b0,b:b1,x:b2,y:b3,back:b6,start:b7,guide:b8,leftshoulder:b4,rightshoulder:b5,lefttrigger:a4,righttrigger:a5,leftx:a0,lefty:a1,rightx:a2,righty:a3,leftstick:b9,rightstick:b10,dpup:h0.1,dpdown:h0.4,dpleft:h0.8,dpright:h0.2
+06000000525000000200000000000000,RetroPangUI P2,platform:Linux,a:b0,b:b1,x:b2,y:b3,back:b6,start:b7,guide:b8,leftshoulder:b4,rightshoulder:b5,lefttrigger:a4,righttrigger:a5,leftx:a0,lefty:a1,rightx:a2,righty:a3,leftstick:b9,rightstick:b10,dpup:h0.1,dpdown:h0.4,dpleft:h0.8,dpright:h0.2
 
-06000000525000000300000000000000,RetropanGui P3,platform:Linux,a:b0,b:b1,x:b2,y:b3,back:b6,start:b7,guide:b8,leftshoulder:b4,rightshoulder:b5,lefttrigger:a4,righttrigger:a5,leftx:a0,lefty:a1,rightx:a2,righty:a3,leftstick:b9,rightstick:b10,dpup:h0.1,dpdown:h0.4,dpleft:h0.8,dpright:h0.2
+06000000525000000300000000000000,RetroPangUI P3,platform:Linux,a:b0,b:b1,x:b2,y:b3,back:b6,start:b7,guide:b8,leftshoulder:b4,rightshoulder:b5,lefttrigger:a4,righttrigger:a5,leftx:a0,lefty:a1,rightx:a2,righty:a3,leftstick:b9,rightstick:b10,dpup:h0.1,dpdown:h0.4,dpleft:h0.8,dpright:h0.2
 
-06000000525000000400000000000000,RetropanGui P4,platform:Linux,a:b0,b:b1,x:b2,y:b3,back:b6,start:b7,guide:b8,leftshoulder:b4,rightshoulder:b5,lefttrigger:a4,righttrigger:a5,leftx:a0,lefty:a1,rightx:a2,righty:a3,leftstick:b9,rightstick:b10,dpup:h0.1,dpdown:h0.4,dpleft:h0.8,dpright:h0.2
+06000000525000000400000000000000,RetroPangUI P4,platform:Linux,a:b0,b:b1,x:b2,y:b3,back:b6,start:b7,guide:b8,leftshoulder:b4,rightshoulder:b5,lefttrigger:a4,righttrigger:a5,leftx:a0,lefty:a1,rightx:a2,righty:a3,leftstick:b9,rightstick:b10,dpup:h0.1,dpdown:h0.4,dpleft:h0.8,dpright:h0.2
