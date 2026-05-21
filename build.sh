@@ -61,6 +61,18 @@ fi
 mkdir -p "${SCRIPT_DIR}/dl"
 mkdir -p "${SCRIPT_DIR}/output"
 
+# Docker 접근 권한 확인 — 직접 접근 불가 시 sudo로 폴백
+if docker info >/dev/null 2>&1; then
+    DOCKER="docker"
+elif sudo docker info >/dev/null 2>&1; then
+    echo "[INFO] docker 그룹 미소속 — sudo docker 사용"
+    DOCKER="sudo docker"
+else
+    echo "ERROR: Docker에 접근할 수 없습니다."
+    echo "  sudo usermod -aG docker \$USER && newgrp docker"
+    exit 1
+fi
+
 # ES 테마 디렉토리 (기본값: 스크립트 경로 내의 themes 폴더, THEMES_DIR 환경변수로 오버라이드 가능)
 THEMES_DIR="${THEMES_DIR:-${SCRIPT_DIR}/themes}"
 if [ ! -d "${THEMES_DIR}" ]; then
@@ -74,11 +86,11 @@ bash "${SCRIPT_DIR}/scripts/fetch-blobs.sh"
 
 # Docker 이미지 빌드
 echo "[1/3] Docker 빌드 환경 이미지 생성 중..."
-docker build -t retropangui-builder "${SCRIPT_DIR}"
+${DOCKER} build -t retropangui-builder "${SCRIPT_DIR}"
 
 # Docker 컨테이너에서 빌드 실행
 echo "[2/3] Buildroot 빌드 시작..."
-docker run --rm \
+${DOCKER} run --rm \
     --cpus="$(nproc)" \
     --memory="$(awk '/MemTotal/{printf "%dm", $2/1024}' /proc/meminfo)" \
     -e DEVICE="${DEVICE}" \
