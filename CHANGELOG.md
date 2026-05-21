@@ -6,7 +6,68 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
-## [Unreleased] — 2026-05-17
+## [0.3] — 2026-05-21
+
+### Fixed
+
+- **RetroArch linuxraw 드라이버 활성화 (openvt VT 할당)**
+
+  ES가 `nohup sh -c '...'` 안에서 실행되어 ctty=0(controlling terminal 없음) 상태였고,
+  RetroArch의 linuxraw 드라이버는 `KDSKBMODE` 적용을 위해 VT 필수라 항상 udev로 폴백했다.
+  udev 드라이버는 sysfs 경로 정렬 특성상 물리 패드를 index 0으로 열거해 Port 1에 Xbox가 붙었다.
+
+  **수정**: `S99emulationstation`에서 `openvt -c 1 -s -w --`로 ES/RA에 tty1 할당.
+  linuxraw 활성화 → jsX 순서 기반 열거 → Port 1 = RetroPangUI P1.
+
+- **xpad 로드 순서 제어로 vdev jsX 선점 보장 (CONFIG_JOYSTICK_XPAD=m)**
+
+  xpad가 built-in(=y)이면 커널 부팅 시 Xbox 컨트롤러가 js0을 선점해 vdev가 js1~js4로 밀렸다.
+
+  **수정**: `linux-ksmbd.config`에 `CONFIG_JOYSTICK_XPAD=m` 설정.
+  `S58gamepad`에서 vdev 생성 완료(`RetroPangUI P1` 감지) 후 `modprobe xpad` 실행.
+
+- **S95retropangui: vdev jsX 번호 동적 탐색**
+
+  물리 컨트롤러가 부팅 시 연결돼 있거나 js 번호가 재활용되면 vdev 번호가 가변적이었다.
+  기존 `input_player1_joypad_index = "0"` 하드코딩으로는 대응 불가.
+
+  **수정**: `/sys/class/input/jsX/device/name`으로 vdev 이름 탐색 후 실제 번호 기록.
+
+- **RA autoconfig linuxraw 전환 + d-pad 축 매핑 수정**
+
+  autoconfig에 `input_driver = "udev"`가 남아있어 linuxraw 환경에서 매핑이 무시됐다.
+  d-pad가 HAT 표기(`h0up`)로 되어있어 linuxraw에서 동작하지 않았다.
+
+  **수정**: 전 패드(P1~P4) `input_driver = "linuxraw"` 변경,
+  d-pad를 axis 표기(`-7`/`+7`/`-6`/`+6`)로 변경 (joydev ABS_HAT0X/Y → axis 6/7).
+
+- **gamepad_daemon: find_phys_evdev Xbox 수신기/컨트롤러 구분**
+
+  Xbox 무선 수신기와 컨트롤러 슬롯이 동일 VID:PID를 가져 수신기가 먼저 선택됐다.
+  수신기는 EV_ABS 없어 `EVIOCGRAB` ENODEV 반환.
+
+  **수정**: SDL이 열어놓은 fd와 `st_rdev` 매칭 우선, 없으면 EV_ABS 보유 장치만 후보로 선택.
+
+- **modprobe.d/xpad.conf: udev auto-load 차단**
+
+  udev가 Xbox 연결 시 modalias로 xpad를 자동 로드하는 것을 방지.
+  S58gamepad의 수동 `modprobe xpad` 호출은 blacklist 무관하게 정상 동작.
+
+### Changed
+
+- **fetch-blobs.sh: Mali DDK 소스를 meta-odroid-aml Yocto 레이어로 변경**
+
+  기존 Hardkernel apt/CDN 서버(`dn.odroid.com`)는 Cloudflare 봇 차단으로 자동 다운로드 불가.
+  Hardkernel 공식 Yocto 레이어(`github.com/mdrjr/meta-odroid-aml`) master 브랜치의
+  `tarball.tar.bin`(~100MB)에서 Mali DDK를 추출.
+
+- **build.sh: `v` 접두사 제거 코드 삭제**
+
+  태그 정책을 `v0.x` → `0.x`로 변경했으므로 `VERSION="${VERSION#v}"` 불필요.
+
+---
+
+## [0.2] — 2026-05-17
 
 ### Fixed
 
@@ -70,7 +131,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
-## [Unreleased] — 2026-05-16
+## [0.2] — 2026-05-16
 
 ### Fixed
 
@@ -89,7 +150,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
-## [Unreleased] — 2026-05-15
+## [0.2] — 2026-05-15
 
 ### Fixed
 
@@ -124,7 +185,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
-## [Unreleased] — 2026-05-13
+## [0.1] — 2026-05-13
 
 ### Changed
 - **프로젝트 소스 폴더명 변경**: `c5-pangui/` → `retropangui-c5/`
@@ -142,7 +203,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
-## [Unreleased] — 2026-05-11
+## [0.1] — 2026-05-11
 
 ### Added
 - **Multi-device build system**: `build.sh` now accepts a positional `DEVICE` argument (e.g. `./build.sh odroidc5`); falls back to `DEVICE` env var, default `odroidc5`. Validates defconfig and board directory existence before entering Docker, and prints supported device list on invalid input. Output image renamed to `retropangui-<device>-<version>.img`.
@@ -155,7 +216,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - **RetroArch autoconfig**: `/etc/retroarch/autoconfig/` 추가. `RetroPangUI P1~P4.cfg` — 가상 패드 udev 버튼/축 매핑(BTN_SOUTH=304 등). `PS2 USB Adapter.cfg` — 데몬 없이 직접 연결 시 임시 대응. `retroarch.cfg`에 `joypad_autoconfig_dir` 추가.
 - **PCSX-ReARMed DualShock 기본값**: `retroarch-core-options.cfg` 템플릿 추가. `pcsx_rearmed_pad1~4type=dualshock`, `pcsx_rearmed_vibration=enabled` — PS1 게임 실행 시 아날로그 스틱과 진동이 기본 활성화됨. `retroarch.cfg`에 `core_options_path` 추가; 첫 부팅 시 `S95retropangui`가 `/share`로 복사.
 
-## [Unreleased] _ 2026-5-1
+## [0.1] — 2026-05-01
 
 ### Fixed
 - **boot.cmd / boot.ini**: Hardcoded `root=/dev/mmcblk1p2` and `fatload mmc 1:1` replaced with `${devnum}` — U-Boot substitutes at runtime (SD=1, eMMC=0), enabling eMMC boot without kernel panic
@@ -186,7 +247,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
-## [Unreleased] — 2026-04-26
+## [0.1] — 2026-04-26
 
 ### Added
 - Initial release: Buildroot-based retro gaming OS for Odroid C5 (Amlogic S905X5M, Mali-G310 Valhall r44p0)
