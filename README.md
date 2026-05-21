@@ -39,8 +39,10 @@ rm -rf buildroot/output/
 
 ### Mali DDK 블롭
 
-`build.sh`가 `scripts/fetch-blobs.sh`를 자동 호출하여 Hardkernel apt 저장소에서
-Mali-G310 r44p0 DDK 바이너리를 다운로드합니다. 이미 있으면 스킵.
+`build.sh`가 `scripts/fetch-blobs.sh`를 자동 호출하여
+Hardkernel 공식 Yocto 레이어([meta-odroid-aml](https://github.com/mdrjr/meta-odroid-aml))에서
+Mali-G310 DDK 바이너리(`libMali.so`, `mali_csffw.bin` 등 ~100MB)를 다운로드합니다.
+이미 있으면 스킵.
 
 수동 재다운로드:
 ```bash
