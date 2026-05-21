@@ -61,14 +61,9 @@ fi
 mkdir -p "${SCRIPT_DIR}/dl"
 mkdir -p "${SCRIPT_DIR}/output"
 
-# Docker 접근 권한 확인 — 직접 접근 불가 시 sudo로 폴백
-if docker info >/dev/null 2>&1; then
-    DOCKER="docker"
-elif sudo docker info >/dev/null 2>&1; then
-    echo "[INFO] docker 그룹 미소속 — sudo docker 사용"
-    DOCKER="sudo docker"
-else
-    echo "ERROR: Docker에 접근할 수 없습니다."
+# Docker 접근 권한 확인 — 빌드 시작 전 실패해야 긴 빌드 도중 멈추지 않음
+if ! docker info >/dev/null 2>&1; then
+    echo "ERROR: Docker에 접근할 수 없습니다. 다음 명령어로 권한을 추가하세요:"
     echo "  sudo usermod -aG docker \$USER && newgrp docker"
     exit 1
 fi
@@ -86,11 +81,11 @@ bash "${SCRIPT_DIR}/scripts/fetch-blobs.sh"
 
 # Docker 이미지 빌드
 echo "[1/3] Docker 빌드 환경 이미지 생성 중..."
-${DOCKER} build -t retropangui-builder "${SCRIPT_DIR}"
+docker build -t retropangui-builder "${SCRIPT_DIR}"
 
 # Docker 컨테이너에서 빌드 실행
 echo "[2/3] Buildroot 빌드 시작..."
-${DOCKER} run --rm \
+docker run --rm \
     --cpus="$(nproc)" \
     --memory="$(awk '/MemTotal/{printf "%dm", $2/1024}' /proc/meminfo)" \
     -e DEVICE="${DEVICE}" \
