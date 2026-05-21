@@ -12,6 +12,21 @@ case "$1" in
         SDL_JOYSTICK_HIDAPI=0 $DAEMON >> "$LOGFILE" 2>&1 &
         echo $! > "$PIDFILE"
         echo "OK"
+
+        # vdev 생성이 완료될 때까지 대기한 뒤 xpad 로드
+        # (xpad가 built-in이면 js0을 선점하므로 반드시 모듈로 빌드해야 함)
+        i=0
+        while [ $i -lt 20 ]; do
+            grep -q "RetroPangUI P1" /proc/bus/input/devices && break
+            sleep 0.5; i=$((i + 1))
+        done
+        if grep -q "RetroPangUI P1" /proc/bus/input/devices; then
+            modprobe xpad 2>/dev/null || true
+            echo "[gamepad] xpad loaded after vdev creation" >> "$LOGFILE"
+        else
+            echo "[gamepad] WARNING: vdev not ready, loading xpad anyway" >> "$LOGFILE"
+            modprobe xpad 2>/dev/null || true
+        fi
         ;;
     stop)
         printf "Stopping gamepad daemon: "

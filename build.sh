@@ -25,14 +25,12 @@ done
 set -- "${ARGS[@]}"
 
 DEVICE="${1:-${DEVICE:-odroidc5}}"
-# 1. 사용자가 주입한 VERSION이 없다면 Git 태그를 조회
+# 사용자가 주입한 VERSION이 없다면 Git 태그를 조회
 if [ -z "${VERSION}" ]; then
     # 현재 커밋에 붙은 태그가 있으면 가져오고, 없으면 가장 가까운 태그 기반으로 이름 생성
     # (Git 저장소가 아니거나 태그가 하나도 없으면 에러 방지를 위해 기본값 1.0.0 사용)
     VERSION=$(git describe --tags --always 2>/dev/null || echo "1.0.0")
 fi
-# 2. 만약 태그 앞에 'v1.0.0'처럼 'v'가 붙어있다면 제거 (선택 사항)
-VERSION="${VERSION#v}"
 
 echo "============================================"
 echo "  RETROPANGUI 빌드 시작"
