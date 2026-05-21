@@ -110,88 +110,38 @@ case "$1" in
             echo "[retropangui] WARNING: RetroPangUI P1 not found in /proc/bus/input/devices (timeout)" | tee -a /var/log/retropangui.log
         fi
 
-        # RA가 이전 세션에 저장한 joypad_index를 모두 제거하고 evdev 스캔으로 재계산한다.
+        # RA는 세션 종료 시 input_driver/input_joypad_driver를 udev로 덮어쓸 수 있다.
+        # udev는 logind/seat 없이 키보드 권한을 못 얻고, joypad 열거 순서도 예측 불가.
+        # linuxraw는 /dev/tty(키보드) + jsX 순서(패드)를 seat 없이 사용 가능.
+        if [ -f "${RA_CFG_USER}" ]; then
+            sed -i 's/^input_driver = .*/input_driver = "linuxraw"/' "${RA_CFG_USER}"
+            grep -q "^input_driver" "${RA_CFG_USER}" || \
+                echo 'input_driver = "linuxraw"' >> "${RA_CFG_USER}"
+            sed -i 's/^input_joypad_driver = .*/input_joypad_driver = "linuxraw"/' "${RA_CFG_USER}"
+            grep -q "^input_joypad_driver" "${RA_CFG_USER}" || \
+                echo 'input_joypad_driver = "linuxraw"' >> "${RA_CFG_USER}"
+        fi
+
+        # linuxraw는 /dev/input/jsX 순서로 열거한다.
+        # 물리 컨트롤러가 init 전에 연결되면 js0을 선점할 수 있으므로
+        # vdev 이름으로 실제 jsX 번호를 동적으로 탐색한다.
         if [ -f "${RA_CFG_USER}" ]; then
             sed -i '/^input_player[0-9]*_joypad_index /d' "${RA_CFG_USER}"
-
-            # /proc/bus/input/devices를 event 번호 오름차순으로 정렬해 RA의 열거 순서와 일치시킨다.
-            gp_list=$(awk '
-                function hextodec(hex,    i,c,d,v) {
-                    v=0; for(i=1;i<=length(hex);i++) {
-                        c=substr(hex,i,1)
-                        if(c~/[0-9]/) d=c+0
-                        else if(c~/[a-f]/) d=index("abcdef",c)+9
-                        else if(c~/[A-F]/) d=index("ABCDEF",c)+9
-                        else d=0
-                        v=v*16+d
-                    }
-                    return v
-                }
-                function hexnibble(c) {
-                    if(c~/[0-9]/) return c+0
-                    if(c~/[a-f]/) return index("abcdef",c)+9
-                    if(c~/[A-F]/) return index("ABCDEF",c)+9
-                    return 0
-                }
-                function bit_in_hex(hexstr, bitpos,    ni,hlen,nv,i) {
-                    ni=int(bitpos/4); hlen=length(hexstr)
-                    if(ni>=hlen) return 0
-                    nv=hexnibble(substr(hexstr,hlen-ni,1))
-                    for(i=0;i<bitpos%4;i++) nv=int(nv/2)
-                    return nv%2
-                }
-                /^N: Name=/ { name=substr($0,index($0,"=")+2); gsub(/"/,"",name) }
-                /^H: Handlers=/ {
-                    evnum=-1
-                    for(j=1;j<=NF;j++) {
-                        f=$j; sub(/.*=/, "", f)
-                        if(f~/^event[0-9]/) evnum=substr(f,6)+0
-                    }
-                }
-                /^B: EV=/ {
-                    ev=hextodec(substr($0,index($0,"=")+1))
-                    is_gp=(int(ev/2)%2 && int(ev/8)%2) ? 1 : 0
-                }
-                /^B: KEY=/ {
-                    keyline=substr($0,index($0,"=")+1)
-                    nk=split(keyline,kchunks," "); has_btn=0
-                    if(nk>=5) {
-                        c4=kchunks[nk-4]
-                        if(bit_in_hex(c4,32) || bit_in_hex(c4,48)) has_btn=1
-                    }
-                }
-                /^[[:space:]]*$/ {
-                    if(is_gp && has_btn && evnum>=0) printf "%05d\t%s\n",evnum,name
-                    name=""; evnum=-1; is_gp=0; has_btn=0
-                }
-            ' /proc/bus/input/devices | sort)
-
-            # SDL이 첫 번째 가상 패드(가장 낮은 event#)를 열 때 RA가 해당 장치를
-            # 목록 맨 뒤로 재배치한다. 이를 보정하기 위해 -1 rotation을 적용한다.
-            num_phys=$(echo "$gp_list" | grep -v "RetroPangUI" | wc -l | tr -d ' ')
-            num_virt=$(echo "$gp_list" | grep -c "RetroPangUI")
-            virt_list=$(echo "$gp_list" | grep "RetroPangUI")
-
             for p in 1 2 3 4; do
-                evdev_virt_rank=$(echo "$virt_list" | awk -v target="RetroPangUI P${p}" '
-                    BEGIN { i=0 }
-                    { if(index($0,target)) { print i; exit }; i++ }
-                ')
-
-                [ -z "$evdev_virt_rank" ] && {
-                    echo "[retropangui] WARNING: RetroPangUI P${p} not found in gamepad list" | tee -a /var/log/retropangui.log
-                    continue
-                }
-
-                ra_virt_rank=$(( (evdev_virt_rank - 1 + num_virt) % num_virt ))
-                idx=$((num_phys + ra_virt_rank))
-
-                if grep -q "^input_player${p}_joypad_index " "${RA_CFG_USER}"; then
-                    sed -i "s|^input_player${p}_joypad_index = .*|input_player${p}_joypad_index = \"${idx}\"|" "${RA_CFG_USER}"
-                else
+                idx=""
+                for js in /dev/input/js*; do
+                    name=$(cat /sys/class/input/$(basename "$js")/device/name 2>/dev/null)
+                    if [ "$name" = "RetroPangUI P${p}" ]; then
+                        idx=$(echo "$js" | sed 's|/dev/input/js||')
+                        break
+                    fi
+                done
+                if [ -n "$idx" ]; then
                     echo "input_player${p}_joypad_index = \"${idx}\"" >> "${RA_CFG_USER}"
+                    echo "[retropangui] RetroPangUI P${p} → joypad index ${idx} (linuxraw/js${idx})" | tee -a /var/log/retropangui.log
+                else
+                    echo "[retropangui] WARNING: RetroPangUI P${p} jsX not found" | tee -a /var/log/retropangui.log
                 fi
-                echo "[retropangui] RetroPangUI P${p} → joypad index ${idx}" | tee -a /var/log/retropangui.log
             done
         fi
         ;;

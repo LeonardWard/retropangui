@@ -22,6 +22,10 @@ output/
 build_*.log
 *.log
 
+# fetch-blobs.sh 임시 다운로드 파일
+Packages.gz
+*.deb
+
 # 임시/에디터 파일
 *.swp
 *.swo
@@ -30,3 +34,4 @@ build_*.log
 
 # 별도의 comment 파일
 stability_report_20260505.md
+project_analysis_report.html
