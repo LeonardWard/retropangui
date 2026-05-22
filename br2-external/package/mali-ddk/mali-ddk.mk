@@ -76,13 +76,16 @@ define MALI_DDK_INSTALL_TARGET_CMDS
 	$(INSTALL) -D -m 0644 $(MALI_DDK_BLOBS_DIR)/lib/firmware/mali_csffw.bin \
 		$(TARGET_DIR)/lib/firmware/mali_csffw.bin
 
-	# Vulkan ICD / 레이어
-	$(INSTALL) -D -m 0755 $(MALI_DDK_BLOBS_DIR)/vulkan/libVkLayer_window_system_integration.so \
-		$(TARGET_DIR)/usr/share/vulkan/implicit_layer.d/libVkLayer_window_system_integration.so
-	$(INSTALL) -D -m 0644 $(MALI_DDK_BLOBS_DIR)/vulkan/VkLayer_window_system_integration.json \
-		$(TARGET_DIR)/usr/share/vulkan/implicit_layer.d/VkLayer_window_system_integration.json
-	$(INSTALL) -D -m 0644 $(MALI_DDK_BLOBS_DIR)/vulkan/mali.json \
-		$(TARGET_DIR)/usr/share/vulkan/icd.d/mali.json
+	# Vulkan ICD / 레이어 (tarball에 없는 파일은 건너뜀)
+	$(if $(wildcard $(MALI_DDK_BLOBS_DIR)/vulkan/libVkLayer_window_system_integration.so), \
+		$(INSTALL) -D -m 0755 $(MALI_DDK_BLOBS_DIR)/vulkan/libVkLayer_window_system_integration.so \
+			$(TARGET_DIR)/usr/share/vulkan/implicit_layer.d/libVkLayer_window_system_integration.so)
+	$(if $(wildcard $(MALI_DDK_BLOBS_DIR)/vulkan/VkLayer_window_system_integration.json), \
+		$(INSTALL) -D -m 0644 $(MALI_DDK_BLOBS_DIR)/vulkan/VkLayer_window_system_integration.json \
+			$(TARGET_DIR)/usr/share/vulkan/implicit_layer.d/VkLayer_window_system_integration.json)
+	$(if $(wildcard $(MALI_DDK_BLOBS_DIR)/vulkan/mali.json), \
+		$(INSTALL) -D -m 0644 $(MALI_DDK_BLOBS_DIR)/vulkan/mali.json \
+			$(TARGET_DIR)/usr/share/vulkan/icd.d/mali.json)
 
 	# EGL 래퍼 (eglGetPlatformDisplayEXT 제공, SONAME=libEGL.so.1)
 	$(INSTALL) -D -m 0755 $(@D)/libEGL.so.1.0.0 \
