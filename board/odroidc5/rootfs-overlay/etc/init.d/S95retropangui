@@ -120,6 +120,10 @@ case "$1" in
             sed -i 's/^input_joypad_driver = .*/input_joypad_driver = "linuxraw"/' "${RA_CFG_USER}"
             grep -q "^input_joypad_driver" "${RA_CFG_USER}" || \
                 echo 'input_joypad_driver = "linuxraw"' >> "${RA_CFG_USER}"
+            # 조이패드로 RGUI 메뉴 탐색: menu_unified_controls=false(기본)이면 메뉴 입력 불가
+            sed -i 's/^menu_unified_controls = .*/menu_unified_controls = "true"/' "${RA_CFG_USER}"
+            grep -q "^menu_unified_controls" "${RA_CFG_USER}" || \
+                echo 'menu_unified_controls = "true"' >> "${RA_CFG_USER}"
         fi
 
         # linuxraw는 /dev/input/jsX 순서로 열거한다.
