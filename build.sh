@@ -88,6 +88,7 @@ echo "[2/3] Buildroot 빌드 시작..."
 docker run --rm \
     --cpus="$(nproc)" \
     --memory="$(awk '/MemTotal/{printf "%dm", $2/1024}' /proc/meminfo)" \
+    --memory-swap=-1 \
     -e DEVICE="${DEVICE}" \
     -e VERSION="${VERSION}" \
     -e BUILD_JOBS="$(nproc)" \
