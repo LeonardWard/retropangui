@@ -79,15 +79,21 @@ fi
 # 전용 바이너리 블롭 확인 (Mali DDK 등)
 bash "${SCRIPT_DIR}/scripts/fetch-blobs.sh"
 
-# uboot 사전 shallow clone (전체 히스토리 fetch로 인한 Docker 내 OOM 방지)
-# Buildroot는 dl/uboot/git/.git 이 존재하면 fetch만 하고 checkout을 건너뜀
-UBOOT_DL="${SCRIPT_DIR}/dl/uboot/git"
-if [ ! -d "${UBOOT_DL}/.git" ]; then
-    echo "[pre] uboot shallow clone 중 (odroidc5-v2023.01)..."
-    git clone --depth=1 -b odroidc5-v2023.01 \
-        https://git.odroid.com/yocto/uboot \
-        "${UBOOT_DL}"
-fi
+# 대형 git 패키지 사전 shallow clone (전체 히스토리 fetch로 인한 Docker 내 OOM 방지)
+# Buildroot는 dl/<pkg>/git/.git 이 존재하면 fetch만 하고 checkout을 건너뜀
+_shallow_clone() {
+    local name="$1" url="$2" branch="$3"
+    local dldir="${SCRIPT_DIR}/dl/${name}/git"
+    if [ ! -d "${dldir}/.git" ]; then
+        echo "[pre] ${name} shallow clone 중 (${branch})..."
+        git clone --depth=1 -b "${branch}" "${url}" "${dldir}"
+    fi
+}
+
+_shallow_clone uboot            https://git.odroid.com/yocto/uboot                              odroidc5-v2023.01
+_shallow_clone kodi-pangui      https://github.com/xbmc/xbmc                                    21.3-Omega
+_shallow_clone retroarch        https://github.com/libretro/RetroArch                           v1.22.2
+_shallow_clone emulationstation https://github.com/LeonardWard/retropangui-emulationstation     main
 
 # Docker 이미지 빌드
 echo "[1/3] Docker 빌드 환경 이미지 생성 중..."
