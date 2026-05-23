@@ -79,6 +79,16 @@ fi
 # 전용 바이너리 블롭 확인 (Mali DDK 등)
 bash "${SCRIPT_DIR}/scripts/fetch-blobs.sh"
 
+# uboot 사전 shallow clone (전체 히스토리 fetch로 인한 Docker 내 OOM 방지)
+# Buildroot는 dl/uboot/git/.git 이 존재하면 fetch만 하고 checkout을 건너뜀
+UBOOT_DL="${SCRIPT_DIR}/dl/uboot/git"
+if [ ! -d "${UBOOT_DL}/.git" ]; then
+    echo "[pre] uboot shallow clone 중 (odroidc5-v2023.01)..."
+    git clone --depth=1 -b odroidc5-v2023.01 \
+        https://git.odroid.com/yocto/uboot \
+        "${UBOOT_DL}"
+fi
+
 # Docker 이미지 빌드
 echo "[1/3] Docker 빌드 환경 이미지 생성 중..."
 docker build -t retropangui-builder "${SCRIPT_DIR}"
