@@ -28,7 +28,7 @@ case "$1" in
                 echo 1 > /sys/class/amhdmitx/amhdmitx0/phy 2>/dev/null || true
                 killall odroid-drm-fbset 2>/dev/null || true
                 odroid-drm-fbset -outputmode 1080p60hz
-                openvt -c 1 -s -w -- sh -c 'emulationstation --no-splash >> /var/log/emulationstation.log 2>&1'
+                openvt -c 1 -s -w -- sh -c "emulationstation --no-splash >> /var/log/emulationstation.log 2>&1"
                 if [ -f /tmp/es-sysrestart ]; then
                     reboot
                 fi

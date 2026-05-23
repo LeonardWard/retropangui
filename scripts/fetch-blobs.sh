@@ -17,7 +17,7 @@ trap "rm -rf ${WORK_DIR}" EXIT
 TARBALL_URL="https://raw.githubusercontent.com/mdrjr/meta-odroid-aml/master/recipes-graphics/libmali-odroid-c5/files/tarball.tar.bin"
 
 echo "========================================"
-echo "  C5-PANGUI Mali DDK 블롭 다운로드"
+echo "  RETROPANGUI-C5 Mali DDK 블롭 다운로드"
 echo "========================================"
 
 if [ -f "${BLOBS_DIR}/libMali.so" ]; then
