@@ -2,40 +2,62 @@
 #
 # bundled-roms - Freely licensed homebrew games bundled with the image
 #
+# NES : retrobrews/nes-games (~83종) + 2048 (retrobrews 미포함)
+# SNES: retrobrews/snes-games (~14종) + Super-Apocalux (retrobrews 미포함)
+#
 ################################################################################
 
 BUNDLED_ROMS_VERSION = 1.0
-BUNDLED_ROMS_LICENSE = GPL-3.0
+BUNDLED_ROMS_LICENSE = Various (see individual game licenses)
 # 자체 wget으로 다운로드하므로 Buildroot 자동 소스 다운로드 비활성화
 BUNDLED_ROMS_SOURCE =
 
-# NES: Nova the Squirrel - full platformer (GPL-3.0)
-NOVA_URL = https://github.com/NovaSquirrel/NovaTheSquirrel/releases/download/v1.0.6a/nova.nes
-# NES: Thwaite - missile command style arcade (GPL-3.0)
-THWAITE_URL = https://github.com/pinobatch/thwaite-nes/releases/download/v0.04/thwaite.nes
-# NES: 2048 - puzzle game (open source)
-NES2048_URL = https://raw.githubusercontent.com/mmuszkow/2048-nes/master/2048.nes
-# SNES: Super-Apocalux - action game (GPL-3.0)
+# retrobrews 컬렉션 (무료 배포 승인 홈브류 게임 모음)
+# https://github.com/retrobrews/nes-games
+# https://github.com/retrobrews/snes-games
+RETROBREWS_NES_URL  = https://github.com/retrobrews/nes-games/archive/refs/heads/master.tar.gz
+RETROBREWS_SNES_URL = https://github.com/retrobrews/snes-games/archive/refs/heads/master.tar.gz
+
+# retrobrews에 없는 게임 (개별 다운로드)
+# NES: 2048 - puzzle (open source)
+NES2048_URL  = https://raw.githubusercontent.com/mmuszkow/2048-nes/master/2048.nes
+# SNES: Super-Apocalux - action (GPL-3.0)
 APOCALUX_URL = https://github.com/DanielTheSilly/Super-Apocalux/releases/download/V1.0b/Super-Apocalux_V1.0b.smc
 
 BUNDLED_ROMS_TARGET_DIR = $(TARGET_DIR)/usr/share/retropangui/bundled-roms
 
 define BUNDLED_ROMS_BUILD_CMDS
 	mkdir -p $(@D)/nes $(@D)/snes
-	$(if $(wildcard $(@D)/nes/nova.nes),,\
-		wget -q -O $(@D)/nes/nova.nes $(NOVA_URL))
-	$(if $(wildcard $(@D)/nes/thwaite.nes),,\
-		wget -q -O $(@D)/nes/thwaite.nes $(THWAITE_URL))
-	$(if $(wildcard $(@D)/nes/2048.nes),,\
-		wget -q -O $(@D)/nes/2048.nes $(NES2048_URL))
-	$(if $(wildcard $(@D)/snes/Super-Apocalux.smc),,\
-		wget -q -O $(@D)/snes/Super-Apocalux.smc $(APOCALUX_URL))
+
+	# retrobrews NES 컬렉션 (캐시 있으면 스킵)
+	if [ ! -d $(@D)/nes-games-master ]; then \
+		echo "[bundled-roms] retrobrews NES 컬렉션 다운로드 중..."; \
+		wget -q -O $(@D)/nes-games.tar.gz $(RETROBREWS_NES_URL) && \
+		tar xzf $(@D)/nes-games.tar.gz -C $(@D) && \
+		rm -f $(@D)/nes-games.tar.gz; \
+	fi
+	cp -n $(@D)/nes-games-master/*.nes $(@D)/nes/ 2>/dev/null || true
+
+	# retrobrews SNES 컬렉션 (캐시 있으면 스킵)
+	if [ ! -d $(@D)/snes-games-master ]; then \
+		echo "[bundled-roms] retrobrews SNES 컬렉션 다운로드 중..."; \
+		wget -q -O $(@D)/snes-games.tar.gz $(RETROBREWS_SNES_URL) && \
+		tar xzf $(@D)/snes-games.tar.gz -C $(@D) && \
+		rm -f $(@D)/snes-games.tar.gz; \
+	fi
+	cp -n $(@D)/snes-games-master/*.smc $(@D)/snes/ 2>/dev/null || true
+	cp -n $(@D)/snes-games-master/*.sfc $(@D)/snes/ 2>/dev/null || true
+
+	# 개별 다운로드 (retrobrews 미포함)
+	test -f $(@D)/nes/2048.nes       || wget -q -O $(@D)/nes/2048.nes       $(NES2048_URL)
+	test -f $(@D)/snes/Super-Apocalux.smc || wget -q -O $(@D)/snes/Super-Apocalux.smc $(APOCALUX_URL)
 endef
 
 define BUNDLED_ROMS_INSTALL_TARGET_CMDS
 	mkdir -p $(BUNDLED_ROMS_TARGET_DIR)/nes $(BUNDLED_ROMS_TARGET_DIR)/snes
-	cp $(@D)/nes/*.nes $(BUNDLED_ROMS_TARGET_DIR)/nes/
-	cp $(@D)/snes/*.smc $(BUNDLED_ROMS_TARGET_DIR)/snes/
+	cp $(@D)/nes/*.nes   $(BUNDLED_ROMS_TARGET_DIR)/nes/
+	cp $(@D)/snes/*.smc  $(BUNDLED_ROMS_TARGET_DIR)/snes/ 2>/dev/null || true
+	cp $(@D)/snes/*.sfc  $(BUNDLED_ROMS_TARGET_DIR)/snes/ 2>/dev/null || true
 endef
 
 $(eval $(generic-package))
