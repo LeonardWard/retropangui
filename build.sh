@@ -72,17 +72,25 @@ fi
 # (테마는 post-build.sh에서 GitHub에서 자동 다운로드됨)
 bash "${SCRIPT_DIR}/scripts/fetch-blobs.sh"
 
-# 대형 git 패키지 사전 shallow clone (전체 히스토리 fetch로 인한 Docker 내 OOM 방지)
-# Buildroot는 dl/<pkg>/git/.git 이 존재하면 fetch만 하고 checkout을 건너뜀
+# 대형 git 패키지 사전 shallow clone
+# - Buildroot의 git 다운로더는 기본적으로 --depth=1을 사용하도록 패치됨
+#   (buildroot/support/download/git + BR2_GIT_FETCH_DEPTH=1)
+# - 하지만 첫 빌드 시 Docker 안에서 clone이 시작되면 OOM이 발생할 수 있으므로
+#   여기서 미리 dl/ 캐시에 받아두면 Docker 안에서는 fetch(업데이트)만 수행
+# - 이미 캐시가 있으면 스킵 (증분 빌드 시 중요)
 _shallow_clone() {
     local name="$1" url="$2" branch="$3"
     local dldir="${SCRIPT_DIR}/dl/${name}/git"
     if [ ! -d "${dldir}/.git" ]; then
         echo "[pre] ${name} shallow clone 중 (${branch})..."
         git clone --depth=1 -b "${branch}" "${url}" "${dldir}"
+    else
+        echo "[pre] ${name} 캐시 존재 (스킵)"
     fi
 }
 
+# 서브모듈 포함 대형 패키지는 반드시 여기서 미리 clone
+# (git SITE_METHOD이고 서브모듈 있는 것들)
 _shallow_clone uboot            https://git.odroid.com/yocto/uboot                              odroidc5-v2023.01
 _shallow_clone kodi-pangui      https://github.com/xbmc/xbmc                                    21.3-Omega
 _shallow_clone retroarch        https://github.com/libretro/RetroArch                           v1.22.2
