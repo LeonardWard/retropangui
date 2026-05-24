@@ -562,7 +562,7 @@ amixer -c 0 cset name="Audio I2S to HDMITX Mask" 1
 
 | 분류 | 패키지 |
 |------|--------|
-| SSH / SFTP | Dropbear (SSH 서버), OpenSSH sftp-server (`/usr/libexec/sftp-server`) |
+| SSH / SFTP | OpenSSH (sshd + sftp-server) |
 | 디스플레이 | odroid-drm-fbset, libdrm, Mesa3D (swrast + meson_dri), SDL2 (KMS/DRM) |
 | GPU 드라이버 | Mali DDK r44p0 + EGL/GBM/GLES2 래퍼 |
 | 오디오 | ALSA utils, amlogic-snd-codec-dummy, amlogic-snd-codec-t9015 |

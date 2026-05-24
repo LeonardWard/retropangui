@@ -10,11 +10,11 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
-- **SFTP 지원 (openssh sftp-server)**
+- **SSH/SFTP: Dropbear → OpenSSH 전환**
 
-  `BR2_PACKAGE_OPENSSH=y`를 defconfig에 추가해 `/usr/libexec/sftp-server` 설치.
-  SSH 서버는 기존대로 Dropbear가 담당하며, `S50sshd` no-op 스크립트로 openssh sshd 자동 시작 방지.
-  FileZilla, WinSCP 등 SFTP 클라이언트로 롬·세이브·설정 파일 접근 가능.
+  Dropbear를 제거하고 OpenSSH로 일원화.
+  OpenSSH는 SSH 서버(`sshd`) + SFTP(`sftp-server`) + 클라이언트 도구를 모두 포함.
+  FileZilla, WinSCP, Cyberduck 등 SFTP 클라이언트로 롬·BIOS·세이브 파일 직접 접근 가능.
 
 - **retropangui-slate 테마 (독립 레포)**
 
