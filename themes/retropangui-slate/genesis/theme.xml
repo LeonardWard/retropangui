@@ -1,0 +1,13 @@
+<?xml version="1.0"?>
+<theme>
+  <formatVersion>4</formatVersion>
+  <include>./../theme.xml</include>
+  <view name="system, basic, detailed, video, grid">
+    <text name="shortdescription" extra="true">
+      <text>1988 · SEGA · 16-BIT</text>
+    </text>
+    <text name="longdescription" extra="true">
+      <text>세가 제네시스 (북미판 메가드라이브). 소닉 더 헤지혹의 고향입니다.</text>
+    </text>
+  </view>
+</theme>

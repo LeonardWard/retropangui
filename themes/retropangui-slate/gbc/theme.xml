@@ -1,0 +1,13 @@
+<?xml version="1.0"?>
+<theme>
+  <formatVersion>4</formatVersion>
+  <include>./../theme.xml</include>
+  <view name="system, basic, detailed, video, grid">
+    <text name="shortdescription" extra="true">
+      <text>1998 · NINTENDO · 8-BIT</text>
+    </text>
+    <text name="longdescription" extra="true">
+      <text>게임보이 컬러. 컬러 화면과 함께 포켓몬 2세대를 만나보세요.</text>
+    </text>
+  </view>
+</theme>
