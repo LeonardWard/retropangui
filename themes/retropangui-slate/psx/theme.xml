@@ -1,0 +1,13 @@
+<?xml version="1.0"?>
+<theme>
+  <formatVersion>4</formatVersion>
+  <include>./../theme.xml</include>
+  <view name="system, basic, detailed, video, grid">
+    <text name="shortdescription" extra="true">
+      <text>1994 · SONY · 32-BIT</text>
+    </text>
+    <text name="longdescription" extra="true">
+      <text>소니의 첫 번째 플레이스테이션. CD-ROM 기반으로 3D 게임 시대를 열었습니다.</text>
+    </text>
+  </view>
+</theme>

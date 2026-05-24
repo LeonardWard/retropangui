@@ -1,0 +1,13 @@
+<?xml version="1.0"?>
+<theme>
+  <formatVersion>4</formatVersion>
+  <include>./../theme.xml</include>
+  <view name="system, basic, detailed, video, grid">
+    <text name="shortdescription" extra="true">
+      <text>1990 · SNK · ARCADE</text>
+    </text>
+    <text name="longdescription" extra="true">
+      <text>아케이드와 완전히 동일한 게임을 가정에서 즐길 수 있었던 SNK의 프리미엄 콘솔입니다.</text>
+    </text>
+  </view>
+</theme>

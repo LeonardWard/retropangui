@@ -1,0 +1,13 @@
+<?xml version="1.0"?>
+<theme>
+  <formatVersion>4</formatVersion>
+  <include>./../theme.xml</include>
+  <view name="system, basic, detailed, video, grid">
+    <text name="shortdescription" extra="true">
+      <text>1970s~ · VARIOUS · ARCADE</text>
+    </text>
+    <text name="longdescription" extra="true">
+      <text>파이널번 알파. SNK, 캡콤 등의 명작 아케이드 게임을 지원합니다.</text>
+    </text>
+  </view>
+</theme>
