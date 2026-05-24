@@ -63,6 +63,41 @@ else
     echo "[1/6] Buildroot 소스 이미 존재함 (스킵)"
 fi
 
+# [패치] Buildroot git 다운로더에 shallow clone 지원 추가
+# 원본 git 다운로더는 항상 전체 히스토리를 fetch → 매우 느림
+# BR2_GIT_FETCH_DEPTH 환경변수로 --depth 옵션을 주입하는 패치를 적용
+_GIT_DL="support/download/git"
+if ! grep -q "BR2_GIT_FETCH_DEPTH" "${_GIT_DL}" 2>/dev/null; then
+    echo "[1b/6] git 다운로더 shallow-clone 패치 적용 중..."
+    python3 - "${_GIT_DL}" <<'PYEOF'
+import sys, re
+
+path = sys.argv[1]
+with open(path) as f:
+    src = f.read()
+
+# 1) "Fetching all references" 출력 직후 깊이 변수 삽입
+old1 = 'printf "Fetching all references\\n"\n_git fetch origin\n_git fetch origin -t'
+new1 = ('printf "Fetching all references (depth=${BR2_GIT_FETCH_DEPTH:-1})\\n"\n'
+        '_BR2_DEPTH_OPT=""; [ -n "${BR2_GIT_FETCH_DEPTH:-1}" ] && _BR2_DEPTH_OPT="--depth=${BR2_GIT_FETCH_DEPTH:-1}"\n'
+        '_git fetch ${_BR2_DEPTH_OPT} origin\n'
+        '_git fetch ${_BR2_DEPTH_OPT} origin -t')
+
+# 2) 특수 ref fetch에도 depth 적용
+old2 = "_git fetch origin \"'${cset}:${cset}'\""
+new2 = "_git fetch ${_BR2_DEPTH_OPT} origin \"'${cset}:${cset}'\""
+
+src = src.replace(old1, new1, 1)
+src = src.replace(old2, new2, 1)
+
+with open(path, 'w') as f:
+    f.write(src)
+print("패치 완료")
+PYEOF
+else
+    echo "[1b/6] git 다운로더 패치 이미 적용됨 (스킵)"
+fi
+
 # 다운로드 캐시 디렉토리 연결
 echo "[2/6] 다운로드 캐시 디렉토리 설정..."
 mkdir -p /home/builder/dl
