@@ -6,6 +6,58 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [0.4] — 2026-05-24
+
+### Added
+
+- **retropangui-slate 테마 (독립 레포)**
+
+  EmulationStation 기본 테마를 별도 GitHub 레포로 분리.
+  디자인 컨셉: 다크 네이비 사이드바 + 밝은 그레이 메인 영역 + 블루 액센트, Pretendard 폰트(한글+라틴).
+
+  - 레포: `https://github.com/LeonardWard/retropangui-slate`
+  - 포함 에셋: Pretendard 폰트(v1.3.9), 시스템 SVG 로고 119종, 콘솔 아트 PNG 110종
+  - 지원 뷰: `system` (수직 캐러셀 + 콘솔 아트), `detailed` (3컬럼 텍스트리스트), `video`, `grid`, `basic`
+  - 20개 시스템별 한글 설명 및 연도·제조사 정보 포함
+
+- **빌드 시 테마 자동 다운로드**
+
+  `post-build.sh`가 GitHub 아카이브(`/archive/refs/heads/main.tar.gz`)를 wget으로 받아
+  `/opt/retropangui/themes/retropangui-slate/`에 설치. 첫 부팅 시 `S95retropangui`가
+  `/retropangui/share/system/emulationstation/themes/`로 복사.
+
+- **git shallow clone 전면 적용 (빌드 속도 개선)**
+
+  Buildroot git 다운로더가 기본적으로 전체 히스토리를 fetch하는 문제를 패치.
+  `internal_build.sh`에서 `buildroot/support/download/git` 파일을 Python으로 실시간 수정해
+  `BR2_GIT_FETCH_DEPTH=1` 환경변수를 `--depth` 옵션으로 주입.
+  대형 git 패키지(uboot, kodi, retroarch, emulationstation)는 `build.sh`의 `_shallow_clone()`으로
+  Docker 실행 전 `dl/` 캐시에 미리 받아 OOM 및 반복 clone 방지.
+
+### Fixed
+
+- **post-build.sh: 테마 복사 경로 수정**
+
+  `retropangui-slate` GitHub 레포 폴더 구조 재정리(`git mv`로 파일을 레포 루트로 이동) 후
+  `post-build.sh`의 tar.gz 추출 경로가 맞지 않던 문제 수정.
+  `retropangui-slate-main/retropangui-slate/` (없는 하위 폴더) →
+  `retropangui-slate-main/`을 통째로 `retropangui-slate`로 복사하도록 변경.
+
+- **es_input.cfg: 키보드 Enter/Escape 역할 교체**
+
+  키보드 매핑에서 `"a"`(확인)과 `"b"`(취소) 키 ID가 반전돼 있던 문제 수정.
+  - `"a"` (확인): Escape → Enter (id=13)
+  - `"b"` (취소): Enter → Escape (id=27)
+
+### Removed
+
+- **themes/ 폴더 삭제**
+
+  `retropangui-slate` 테마를 독립 레포로 분리함에 따라
+  메인 레포의 `themes/` 디렉토리 제거. 빌드 시 GitHub에서 자동 다운로드.
+
+---
+
 ## [0.3] — 2026-05-21
 
 ### Fixed

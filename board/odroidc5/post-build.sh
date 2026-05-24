@@ -105,9 +105,10 @@ TMPDIR=$(mktemp -d)
 if wget -q "${SLATE_REPO}/archive/refs/heads/main.tar.gz" -O "${TMPDIR}/theme.tar.gz"; then
     tar xzf "${TMPDIR}/theme.tar.gz" -C "${TMPDIR}"
     # tar 압축 해제 시 폴더명: retropangui-slate-main/retropangui-slate/
-    if [ -d "${TMPDIR}/retropangui-slate-main/${SLATE_THEME_NAME}" ]; then
+    # 레포 루트가 곧 테마 폴더이므로 retropangui-slate-main을 통째로 이동
+    if [ -d "${TMPDIR}/retropangui-slate-main" ]; then
         rm -rf "${THEMES_DST}/${SLATE_THEME_NAME}"
-        cp -r "${TMPDIR}/retropangui-slate-main/${SLATE_THEME_NAME}" "${THEMES_DST}/"
+        cp -r "${TMPDIR}/retropangui-slate-main" "${THEMES_DST}/${SLATE_THEME_NAME}"
         echo ">>> 테마 설치 완료: ${THEMES_DST}/${SLATE_THEME_NAME}"
     else
         echo ">>> WARNING: 테마 폴더를 찾지 못함 (tar 구조 확인 필요)"

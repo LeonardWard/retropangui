@@ -335,6 +335,18 @@ audio_sync = true
 > `alsa` 드라이버는 ALSA 버퍼 처리 시 에뮬레이션 스레드가 직접 블록됨.
 > `alsathread`는 별도 스레드에서 오디오 처리 → 에뮬레이션 스레드 독립.
 
+## 테마
+
+기본 테마: **retropangui-slate** — 독립 GitHub 레포로 관리됩니다.
+
+- 레포: [LeonardWard/retropangui-slate](https://github.com/LeonardWard/retropangui-slate)
+- 빌드 시 `post-build.sh`가 GitHub에서 자동 다운로드 → `/opt/retropangui/themes/retropangui-slate/`
+- 첫 부팅 시 `S95retropangui`가 `/retropangui/share/system/emulationstation/themes/`로 복사
+
+테마 개발은 `retropangui-slate` 레포에서 독립적으로 진행합니다.
+빌드에 즉시 반영하려면 `main` 브랜치에 푸시 후 클린 빌드하거나,
+기기에서 직접 파일을 교체하면 됩니다.
+
 ## EmulationStation
 
 ### 실행
