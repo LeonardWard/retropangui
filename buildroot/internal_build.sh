@@ -11,6 +11,10 @@ DEFCONFIG="retropangui-${DEVICE}_defconfig"
 
 cd /home/builder/buildroot
 
+# git 다운로드를 shallow(--depth=1)로 강제 → 히스토리 불필요한 빌드 패키지 다운로드 시간 단축
+# full history가 필요한 패키지가 생기면 해당 .mk에서 BR2_GIT_FETCH_DEPTH="" 오버라이드
+export BR2_GIT_FETCH_DEPTH=1
+
 echo "============================================"
 echo "  Buildroot 내부 빌드 스크립트"
 echo "  Buildroot 버전: ${BUILDROOT_VERSION}"
