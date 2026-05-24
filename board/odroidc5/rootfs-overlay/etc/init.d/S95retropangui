@@ -43,6 +43,12 @@ case "$1" in
             ln -sfn /retropangui/share/system/emulationstation /root/.emulationstation
         fi
 
+        # /root/share → /retropangui/share 심볼릭 링크
+        # ES 바이너리가 $HOME/share/system/retropangui.conf 경로로 설정을 찾음
+        if [ ! -L /root/share ]; then
+            ln -sfn /retropangui/share /root/share
+        fi
+
         # 첫 부팅: retropangui.conf 없으면 기본값에서 복사
         if [ ! -f "${CONF_USER}" ]; then
             if [ -f "${CONF_DEFAULT}" ]; then
