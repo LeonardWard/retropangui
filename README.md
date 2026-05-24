@@ -96,7 +96,11 @@ sudo dd if=output/retropangui-odroidc5-1.0.0.img of=/dev/sdX bs=4M status=progre
 |------|------|
 | SSH (hostname) | `ssh root@retropangui-c5.lan` |
 | SSH (IP) | `ssh root@<IP>` |
+| SFTP (FileZilla 등) | `sftp://root@retropangui-c5.lan` |
 | 기본 비밀번호 | `odroid` |
+
+SFTP는 Dropbear SSH 위에서 OpenSSH `sftp-server`(`/usr/libexec/sftp-server`)를 통해 동작합니다.
+FileZilla, WinSCP, Cyberduck 등 SFTP 클라이언트로 롬·BIOS·세이브 파일을 직접 전송할 수 있습니다.
 
 ## 파티션 구조
 
@@ -558,7 +562,7 @@ amixer -c 0 cset name="Audio I2S to HDMITX Mask" 1
 
 | 분류 | 패키지 |
 |------|--------|
-| SSH | Dropbear |
+| SSH / SFTP | Dropbear (SSH 서버), OpenSSH sftp-server (`/usr/libexec/sftp-server`) |
 | 디스플레이 | odroid-drm-fbset, libdrm, Mesa3D (swrast + meson_dri), SDL2 (KMS/DRM) |
 | GPU 드라이버 | Mali DDK r44p0 + EGL/GBM/GLES2 래퍼 |
 | 오디오 | ALSA utils, amlogic-snd-codec-dummy, amlogic-snd-codec-t9015 |

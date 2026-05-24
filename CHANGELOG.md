@@ -10,6 +10,12 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- **SFTP 지원 (openssh sftp-server)**
+
+  `BR2_PACKAGE_OPENSSH=y`를 defconfig에 추가해 `/usr/libexec/sftp-server` 설치.
+  SSH 서버는 기존대로 Dropbear가 담당하며, `S50sshd` no-op 스크립트로 openssh sshd 자동 시작 방지.
+  FileZilla, WinSCP 등 SFTP 클라이언트로 롬·세이브·설정 파일 접근 가능.
+
 - **retropangui-slate 테마 (독립 레포)**
 
   EmulationStation 기본 테마를 별도 GitHub 레포로 분리.
@@ -52,6 +58,36 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
   `S61share`가 첫 부팅 시 `/retropangui/share/roms/{nes,snes}/`로 복사 (`cp -n`).
 
 ### Fixed
+
+- **ES 볼륨 조절 불가 수정 (`VolumeControl::init()` 실패)**
+
+  C5 ALSA (AML-AUGESOUND)에는 표준 `Master` simple mixer element가 없어
+  `VolumeControl::init()`이 항상 실패했다. ES 메뉴에서 볼륨을 설정해도 0으로 초기화되던 문제.
+
+  **수정**: `retropangui.conf.default`에 `emulationstation.AudioDevice=AED master volume` 추가.
+  C5 ALSA의 마스터 볼륨 컨트롤(`AED master volume`, 범위 0–1023, amixer scontents 확인)을 ES 볼륨 컨트롤로 지정.
+
+- **retropangui.conf 테마 설정 키 수정 (ThemeSet)**
+
+  `retropangui.conf.default`의 테마 설정 키가 `emulationstation.theme`로 잘못 기록되어 있었다.
+  ES Settings 맵의 실제 키는 `ThemeSet`이므로 `theme` 키는 무시됐다.
+
+  **수정**: `emulationstation.theme=retropangui` → `emulationstation.ThemeSet=retropangui-slate`.
+
+- **S95retropangui: /root/share 심볼릭 링크 누락**
+
+  ES 바이너리가 `$HOME/share/system/retropangui.conf`를 탐색하는데,
+  `/root/share → /retropangui/share` 심볼릭 링크가 없어 설정 파일을 찾지 못하고
+  `map::at()` 키 접근 시 `std::out_of_range` 예외로 크래시.
+
+  **수정**: `S95retropangui`에 `/root/share → /retropangui/share` 링크 생성 추가.
+
+- **로그 파일명 정리**
+
+  - `S95retropangui`: `/var/log/retropangui.log` → `/var/log/joypad-setup.log`
+    (조이패드 인덱스 설정 로그 전용 이름으로 명확화)
+  - `S99emulationstation`: `/var/log/emulationstation.log` → `/var/log/es-launcher.log`
+    (ES 내부 로그 `es_log.txt`와 구분; 래퍼 루프의 stdout/stderr 전용)
 
 - **post-build.sh: 테마 복사 경로 수정**
 
