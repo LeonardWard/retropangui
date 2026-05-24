@@ -57,6 +57,10 @@ global.audio_latency=32
 # 볼륨 (0-100)
 # system.volume=80
 
+# ES 볼륨 컨트롤 ALSA mixer element
+# C5 (AML-AUGESOUND) 에는 "Master" simple element가 없으므로 명시 필요
+emulationstation.AudioDevice=AED master volume
+
 
 ## Section D - Controllers ##
 
@@ -70,8 +74,8 @@ global.input_joypad_driver=udev
 
 ## Section E - EmulationStation ##
 
-# UI 테마
-emulationstation.theme=retropangui
+# UI 테마 (Settings 맵 키 이름: ThemeSet)
+emulationstation.ThemeSet=retropangui-slate
 
 # 스크린세이버 딜레이 (초, 0=비활성)
 emulationstation.ScreenSaverTime=300

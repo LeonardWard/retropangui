@@ -113,7 +113,7 @@ case "$1" in
             sleep 0.5; i=$((i+1))
         done
         if ! grep -q "RetroPangUI P1" /proc/bus/input/devices; then
-            echo "[retropangui] WARNING: RetroPangUI P1 not found in /proc/bus/input/devices (timeout)" | tee -a /var/log/retropangui.log
+            echo "[retropangui] WARNING: RetroPangUI P1 not found in /proc/bus/input/devices (timeout)" | tee -a /var/log/joypad-setup.log
         fi
 
         # RA는 세션 종료 시 input_driver/input_joypad_driver를 udev로 덮어쓸 수 있다.
@@ -148,9 +148,9 @@ case "$1" in
                 done
                 if [ -n "$idx" ]; then
                     echo "input_player${p}_joypad_index = \"${idx}\"" >> "${RA_CFG_USER}"
-                    echo "[retropangui] RetroPangUI P${p} → joypad index ${idx} (linuxraw/js${idx})" | tee -a /var/log/retropangui.log
+                    echo "[retropangui] RetroPangUI P${p} → joypad index ${idx} (linuxraw/js${idx})" | tee -a /var/log/joypad-setup.log
                 else
-                    echo "[retropangui] WARNING: RetroPangUI P${p} jsX not found" | tee -a /var/log/retropangui.log
+                    echo "[retropangui] WARNING: RetroPangUI P${p} jsX not found" | tee -a /var/log/joypad-setup.log
                 fi
             done
         fi

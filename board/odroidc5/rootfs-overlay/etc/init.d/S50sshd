@@ -1,0 +1,8 @@
+#!/bin/sh
+# S50sshd - openssh sshd 비활성 (SSH 서버는 Dropbear가 담당)
+# openssh 패키지는 sftp-server(/usr/libexec/sftp-server) 제공 목적으로만 설치됨
+case "$1" in
+  start|stop|restart|reload) ;;
+  *) echo "Usage: $0 {start|stop|restart}"; exit 1 ;;
+esac
+exit 0
