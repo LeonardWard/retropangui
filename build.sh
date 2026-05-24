@@ -68,15 +68,8 @@ if ! docker info >/dev/null 2>&1; then
     exit 1
 fi
 
-# ES 테마 디렉토리 (기본값: 스크립트 경로 내의 themes 폴더, THEMES_DIR 환경변수로 오버라이드 가능)
-THEMES_DIR="${THEMES_DIR:-${SCRIPT_DIR}/themes}"
-if [ ! -d "${THEMES_DIR}" ]; then
-    echo "WARNING: 테마 디렉토리가 없습니다: ${THEMES_DIR}"
-    echo "  기본 테마 없이 빌드됩니다."
-    THEMES_DIR=""
-fi
-
 # 전용 바이너리 블롭 확인 (Mali DDK 등)
+# (테마는 post-build.sh에서 GitHub에서 자동 다운로드됨)
 bash "${SCRIPT_DIR}/scripts/fetch-blobs.sh"
 
 # 대형 git 패키지 사전 shallow clone (전체 히스토리 fetch로 인한 Docker 내 OOM 방지)
@@ -115,7 +108,6 @@ docker run --rm \
     -v "${SCRIPT_DIR}/dl:/home/builder/dl" \
     -v "${SCRIPT_DIR}/output:/home/builder/output" \
     -v "${SCRIPT_DIR}/br2-external:/home/builder/br2-external" \
-    ${THEMES_DIR:+-v "${THEMES_DIR}:/home/builder/themes:ro"} \
     retropangui-builder \
     bash /home/builder/buildroot/internal_build.sh
 

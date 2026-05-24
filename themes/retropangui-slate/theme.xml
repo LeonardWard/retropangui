@@ -1,6 +1,0 @@
-<?xml version="1.0"?>
-<theme>
-  <formatVersion>4</formatVersion>
-  <include>./_inc/system-view.xml</include>
-  <include>./_inc/gamelist-view.xml</include>
-</theme>
