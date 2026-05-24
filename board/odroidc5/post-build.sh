@@ -92,16 +92,30 @@ if [ ! -s "${KSMBD_PWDB}" ]; then
     fi
 fi
 
-# 테마 복사 (빌드 시 호스트에서 마운트된 테마 → bundled-themes 갱신)
-THEMES_SRC="/home/builder/themes"
+# 테마 다운로드 (GitHub → /opt/retropangui/themes/)
+# S95retropangui 부팅 시 /retropangui/share/system/emulationstation/themes/ 로 복사됨
 THEMES_DST="${TARGET_DIR}/opt/retropangui/themes"
-if [ -d "${THEMES_SRC}" ] && [ -n "$(ls -A "${THEMES_SRC}" 2>/dev/null)" ]; then
-    echo ">>> 테마 복사 중: ${THEMES_SRC} → ${THEMES_DST}"
-    mkdir -p "${THEMES_DST}"
-    cp -r "${THEMES_SRC}/." "${THEMES_DST}/"
+SLATE_REPO="https://github.com/LeonardWard/retropangui-slate"
+SLATE_THEME_NAME="retropangui-slate"
+
+mkdir -p "${THEMES_DST}"
+
+echo ">>> 테마 다운로드 중: ${SLATE_REPO}"
+TMPDIR=$(mktemp -d)
+if wget -q "${SLATE_REPO}/archive/refs/heads/main.tar.gz" -O "${TMPDIR}/theme.tar.gz"; then
+    tar xzf "${TMPDIR}/theme.tar.gz" -C "${TMPDIR}"
+    # tar 압축 해제 시 폴더명: retropangui-slate-main/retropangui-slate/
+    if [ -d "${TMPDIR}/retropangui-slate-main/${SLATE_THEME_NAME}" ]; then
+        rm -rf "${THEMES_DST}/${SLATE_THEME_NAME}"
+        cp -r "${TMPDIR}/retropangui-slate-main/${SLATE_THEME_NAME}" "${THEMES_DST}/"
+        echo ">>> 테마 설치 완료: ${THEMES_DST}/${SLATE_THEME_NAME}"
+    else
+        echo ">>> WARNING: 테마 폴더를 찾지 못함 (tar 구조 확인 필요)"
+    fi
 else
-    echo ">>> 테마 없음 (스킵): ${THEMES_SRC}"
+    echo ">>> WARNING: 테마 다운로드 실패 (네트워크 확인)"
 fi
+rm -rf "${TMPDIR}"
 
 # es_systems.xml 생성
 echo ">>> es_systems.xml 생성 중..."
