@@ -34,6 +34,23 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
   대형 git 패키지(uboot, kodi, retroarch, emulationstation)는 `build.sh`의 `_shallow_clone()`으로
   Docker 실행 전 `dl/` 캐시에 미리 받아 OOM 및 반복 clone 방지.
 
+### Changed
+
+- **번들 롬: retrobrews 컬렉션 전량 추가**
+
+  기존 개별 다운로드(Nova the Squirrel, Thwaite) 방식을 폐기하고
+  retrobrews 홈브류 컬렉션 전체를 tar.gz 일괄 다운로드로 전환.
+
+  - NES: [retrobrews/nes-games](https://github.com/retrobrews/nes-games) 전량 (~83종)
+    — Driar, Lala The Magical, Legends Of Owlia, Twin Dragons, Super Tilt Bro.,
+      Tiger Jenny, Nomolos, Nova The Squirrel, Thwaite 등
+  - SNES: [retrobrews/snes-games](https://github.com/retrobrews/snes-games) 전량 (~14종)
+    — Astrohawk, Jet Pilot Rising, Super Boss Gaiden, Furry RPG, N-Warp Daisakusen 등
+  - 개별 유지: 2048 (NES), Super-Apocalux (SNES) — retrobrews 미포함
+
+  빌드 캐시(`output/build/bundled-roms-*/`) 있으면 재다운로드 없이 스킵.
+  `S61share`가 첫 부팅 시 `/retropangui/share/roms/{nes,snes}/`로 복사 (`cp -n`).
+
 ### Fixed
 
 - **post-build.sh: 테마 복사 경로 수정**

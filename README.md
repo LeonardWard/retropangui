@@ -566,7 +566,7 @@ amixer -c 0 cset name="Audio I2S to HDMITX Mask" 1
 | mDNS | Avahi (`retropangui-c5.lan`) |
 | 에뮬레이터 | RetroArch v1.22.2 + libretro 코어 (NES/SNES/PSX) |
 | 프론트엔드 | EmulationStation (retropangui fork, GLES3.2/Mali-G310) |
-| 번들 롬 | Nova the Squirrel (NES), Thwaite (NES), 2048 (NES), Super-Apocalux (SNES) |
+| 번들 롬 | retrobrews NES 컬렉션 (~83종), retrobrews SNES 컬렉션 (~14종), 2048 (NES), Super-Apocalux (SNES) |
 
 ## 커널 패치 (`board/odroidc5/patches/linux/`)
 
