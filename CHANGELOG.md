@@ -6,7 +6,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
-## [0.4] — 2026-05-24
+## [0.4] — 2026-05-25
 
 ### Added
 
@@ -88,6 +88,44 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
     (조이패드 인덱스 설정 로그 전용 이름으로 명확화)
   - `S99emulationstation`: `/var/log/emulationstation.log` → `/var/log/es-launcher.log`
     (ES 내부 로그 `es_log.txt`와 구분; 래퍼 루프의 stdout/stderr 전용)
+
+- **RAUI(RetroArch 인게임 메뉴) 조이패드·키보드 입력 불가 수정**
+
+  KMS/DRM 환경에서 활성 VT(Virtual Terminal)가 없어 `linuxraw` 입력 드라이버의
+  `KDSKBMODE` ioctl이 실패 → RAUI에서 키보드·조이패드 입력이 전혀 안 되던 문제.
+
+  **수정**: `input_driver = "linuxraw"` → `"udev"` 전환.
+  `udev` 드라이버는 `/dev/input/event*`를 직접 읽어 VT·logind 불필요 (root 권한으로 접근).
+  `input_joypad_driver = "linuxraw"`는 유지해 `/dev/input/jsX` 인덱스 순서 그대로 사용.
+
+- **SSH 세션 한글 파일명 깨짐 수정**
+
+  `BR2_GENERATE_LOCALE="en_US.UTF-8"`로 locale 데이터는 빌드에 포함되지만,
+  SSH 로그인 세션에서 `LANG` 환경변수가 미설정돼 non-ASCII 파일명이 `?`로 표시되던 문제.
+
+  **수정**: `/etc/profile.d/locale.sh` 추가 (`LANG=en_US.UTF-8`, `LC_ALL=en_US.UTF-8`).
+
+- **OpenSSH root 패스워드 로그인 허용**
+
+  OpenSSH 기본값(`PermitRootLogin prohibit-password`)으로 패스워드 로그인이 차단돼
+  SSH 접속 불가. `/etc/ssh/sshd_config` 오버레이 추가:
+  `PermitRootLogin yes`, `PermitEmptyPasswords yes`.
+
+- **es_input.cfg 조이패드 GUID 불일치 수정 (설정창 팝업)**
+
+  클린 빌드로 SDL2 버전 업데이트 후 GUID 생성 방식 변경(SDL2 2.24.0+: 장치명 CRC16 포함).
+  저장된 GUID(`06000000...`)와 실제 감지 GUID(`0600xxxx...`) 불일치로
+  ES가 모든 조이패드를 미설정으로 인식, 부팅마다 조이패드 설정 팝업 발생.
+
+  P1: `06000000→0600a608`, P2: `06000000→0600e609`,
+  P3: `06000000→060027c9`, P4: `06000000→0600660b`
+
+- **커널 빌드 에러: `DTV_BLIND_SCAN_STEP_NEXT` 미선언 (패치 재적용)**
+
+  `2b2bdd1`에서 "업스트림 반영됨"으로 판단해 제거한 패치가 Hardkernel
+  `odroids7d-5.15.y` 브랜치에 실제로 미반영 상태임을 재확인.
+  `common_drivers/drivers/media/dtv_demod/amlfrontend.c:2843` 빌드 에러 재발.
+  `include/uapi/linux/dvb/aml_fe_ext.h`에 `DTV_BLIND_SCAN_STEP_NEXT = 117` 정의 패치 복원.
 
 - **post-build.sh: 테마 복사 경로 수정**
 
