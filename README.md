@@ -99,7 +99,7 @@ sudo dd if=output/retropangui-odroidc5-1.0.0.img of=/dev/sdX bs=4M status=progre
 | SFTP (FileZilla 등) | `sftp://root@retropangui-c5.lan` |
 | 기본 비밀번호 | `odroid` |
 
-SFTP는 Dropbear SSH 위에서 OpenSSH `sftp-server`(`/usr/libexec/sftp-server`)를 통해 동작합니다.
+SSH/SFTP는 OpenSSH(`sshd` + `sftp-server`)로 통합 운영됩니다.
 FileZilla, WinSCP, Cyberduck 등 SFTP 클라이언트로 롬·BIOS·세이브 파일을 직접 전송할 수 있습니다.
 
 ## 파티션 구조

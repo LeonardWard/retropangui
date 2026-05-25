@@ -116,13 +116,14 @@ case "$1" in
             echo "[retropangui] WARNING: RetroPangUI P1 not found in /proc/bus/input/devices (timeout)" | tee -a /var/log/joypad-setup.log
         fi
 
-        # RA는 세션 종료 시 input_driver/input_joypad_driver를 udev로 덮어쓸 수 있다.
-        # udev는 logind/seat 없이 키보드 권한을 못 얻고, joypad 열거 순서도 예측 불가.
-        # linuxraw는 /dev/tty(키보드) + jsX 순서(패드)를 seat 없이 사용 가능.
+        # input_driver: udev는 /dev/input/event*를 직접 읽어 VT/logind 불필요 (root 권한으로 접근).
+        # linuxraw 키보드는 KDSKBMODE ioctl이 활성 VT를 필요로 하는데,
+        # KMS/DRM 환경에서 VT가 없으면 RAUI 키보드 입력이 전혀 안 됨.
+        # input_joypad_driver: linuxraw 유지 → /dev/input/jsX 인덱스 순서 그대로 사용.
         if [ -f "${RA_CFG_USER}" ]; then
-            sed -i 's/^input_driver = .*/input_driver = "linuxraw"/' "${RA_CFG_USER}"
+            sed -i 's/^input_driver = .*/input_driver = "udev"/' "${RA_CFG_USER}"
             grep -q "^input_driver" "${RA_CFG_USER}" || \
-                echo 'input_driver = "linuxraw"' >> "${RA_CFG_USER}"
+                echo 'input_driver = "udev"' >> "${RA_CFG_USER}"
             sed -i 's/^input_joypad_driver = .*/input_joypad_driver = "linuxraw"/' "${RA_CFG_USER}"
             grep -q "^input_joypad_driver" "${RA_CFG_USER}" || \
                 echo 'input_joypad_driver = "linuxraw"' >> "${RA_CFG_USER}"
