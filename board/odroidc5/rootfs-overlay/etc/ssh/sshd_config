@@ -1,0 +1,9 @@
+# RetroПangui C5 sshd_config
+# root 패스워드/빈패스워드 로그인 허용 (로컬 LAN 전용 기기)
+
+PermitRootLogin yes
+PermitEmptyPasswords yes
+PasswordAuthentication yes
+
+AuthorizedKeysFile .ssh/authorized_keys
+Subsystem sftp /usr/libexec/sftp-server
