@@ -116,21 +116,14 @@ case "$1" in
             echo "[retropangui] WARNING: RetroPangUI P1 not found in /proc/bus/input/devices (timeout)" | tee -a /var/log/joypad-setup.log
         fi
 
-        # input_driver: udev는 /dev/input/event*를 직접 읽어 VT/logind 불필요 (root 권한으로 접근).
-        # linuxraw 키보드는 KDSKBMODE ioctl이 활성 VT를 필요로 하는데,
-        # KMS/DRM 환경에서 VT가 없으면 RAUI 키보드 입력이 전혀 안 됨.
-        # input_joypad_driver: linuxraw 유지 → /dev/input/jsX 인덱스 순서 그대로 사용.
+        # [하드웨어 고정] input_driver=udev 강제 적용.
+        # KMS/DRM 환경에서 활성 VT가 없으므로 linuxraw 키보드는 KDSKBMODE ioctl 실패.
+        # udev는 /dev/input/event*를 직접 읽어 VT/logind 불필요 (root 권한으로 접근).
+        # input_joypad_driver, menu_unified_controls 등 나머지 항목은 retropangui.conf로 관리.
         if [ -f "${RA_CFG_USER}" ]; then
             sed -i 's/^input_driver = .*/input_driver = "udev"/' "${RA_CFG_USER}"
             grep -q "^input_driver" "${RA_CFG_USER}" || \
                 echo 'input_driver = "udev"' >> "${RA_CFG_USER}"
-            sed -i 's/^input_joypad_driver = .*/input_joypad_driver = "linuxraw"/' "${RA_CFG_USER}"
-            grep -q "^input_joypad_driver" "${RA_CFG_USER}" || \
-                echo 'input_joypad_driver = "linuxraw"' >> "${RA_CFG_USER}"
-            # 조이패드로 RGUI 메뉴 탐색: menu_unified_controls=false(기본)이면 메뉴 입력 불가
-            sed -i 's/^menu_unified_controls = .*/menu_unified_controls = "true"/' "${RA_CFG_USER}"
-            grep -q "^menu_unified_controls" "${RA_CFG_USER}" || \
-                echo 'menu_unified_controls = "true"' >> "${RA_CFG_USER}"
         fi
 
         # linuxraw는 /dev/input/jsX 순서로 열거한다.

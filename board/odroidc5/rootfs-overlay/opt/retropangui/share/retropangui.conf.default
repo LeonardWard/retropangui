@@ -64,9 +64,15 @@ emulationstation.AudioDevice=AED master volume
 
 ## Section D - Controllers ##
 
-# 컨트롤러 입력 드라이버 (udev 권장)
-global.input_driver=udev
-global.input_joypad_driver=udev
+# [하드웨어 고정] input_driver=udev 는 KMS/DRM 환경 필수값.
+# S95retropangui가 부팅 시 강제 적용하므로 여기서 설정하지 않음.
+
+# 조이패드 드라이버: linuxraw = /dev/input/jsX 인덱스 순서 사용 (가상 패드 슬롯 보장)
+# udev 로 변경 시 jsX 번호 대신 evdev 번호로 열거되어 순서가 달라질 수 있음
+global.input_joypad_driver=linuxraw
+
+# 조이패드로 RetroArch 메뉴(RGUI) 탐색 허용
+global.menu_unified_controls=true
 
 # 조이스틱 HIDAPI 비활성화 (PS2 USB 어댑터 아날로그 모드 유지용)
 # SDL_JOYSTICK_HIDAPI=0 는 /etc/profile.d/retropangui-sdl.sh 에서 별도 관리됨
