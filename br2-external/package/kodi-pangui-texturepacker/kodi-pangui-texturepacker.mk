@@ -1,10 +1,10 @@
 ################################################################################
 #
-# kodi-pangui-texturepacker - Host TexturePacker for kodi-pangui (21.3-Omega)
+# kodi-pangui-texturepacker - Host TexturePacker for kodi-pangui
 #
 ################################################################################
 
-KODI_PANGUI_TEXTUREPACKER_VERSION = 21.3-Omega
+KODI_PANGUI_TEXTUREPACKER_VERSION = $(KODI_PANGUI_VERSION)
 KODI_PANGUI_TEXTUREPACKER_SITE = $(call github,xbmc,xbmc,$(KODI_PANGUI_TEXTUREPACKER_VERSION))
 KODI_PANGUI_TEXTUREPACKER_LICENSE = GPL-2.0
 KODI_PANGUI_TEXTUREPACKER_LICENSE_FILES = LICENSE.md
