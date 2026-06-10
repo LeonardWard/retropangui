@@ -1,0 +1,106 @@
+# retropangui_features.yml
+# ES 시작 시 이 파일을 읽어 메뉴 항목을 자동 생성한다.
+# 값은 retropangui.conf 에 저장된다.
+# restart: none | es | system
+
+menus:
+  - id: system_settings
+    label: "SYSTEM SETTINGS"
+    parent: main
+    items:
+      - id: rp.language
+        label: "LANGUAGE"
+        type: list
+        conf_key: system.language
+        restart: es
+        options:
+          - value: ko_KR
+            label: "한국어"
+          - value: en_US
+            label: "English"
+          - value: ja_JP
+            label: "日本語"
+
+      - id: rp.timezone
+        label: "TIMEZONE"
+        type: list
+        conf_key: system.timezone
+        restart: system
+        options:
+          - value: Asia/Seoul
+            label: "Seoul (KST)"
+          - value: America/New_York
+            label: "New York (EST)"
+          - value: Europe/Paris
+            label: "Paris (CET)"
+          - value: America/Los_Angeles
+            label: "Los Angeles (PST)"
+
+  - id: network_settings
+    label: "NETWORK SETTINGS"
+    parent: main
+    items:
+      - id: rp.ssh
+        label: "SSH"
+        type: toggle
+        conf_key: system.ssh
+        restart: system
+
+  - id: video_settings
+    label: "VIDEO SETTINGS"
+    parent: main
+    items:
+      - id: rp.video_smooth
+        label: "SMOOTH SCALING"
+        type: toggle
+        conf_key: global.video_smooth
+        restart: none
+
+      - id: rp.video_scale_integer
+        label: "INTEGER SCALING"
+        type: toggle
+        conf_key: global.video_scale_integer
+        restart: none
+
+  - id: game_settings
+    label: "GAME SETTINGS"
+    parent: main
+    items:
+      - id: rp.rewind
+        label: "REWIND"
+        type: toggle
+        conf_key: global.rewind_enable
+        restart: none
+
+      - id: rp.savestate_auto_save
+        label: "AUTO SAVE STATE"
+        type: toggle
+        conf_key: global.savestate_auto_save
+        restart: none
+
+      - id: rp.savestate_auto_load
+        label: "AUTO LOAD STATE"
+        type: toggle
+        conf_key: global.savestate_auto_load
+        restart: none
+
+  - id: advanced_settings
+    label: "ADVANCED SETTINGS"
+    parent: main
+    items:
+      - id: rp.input_joypad_driver
+        label: "JOYPAD DRIVER"
+        type: list
+        conf_key: global.input_joypad_driver
+        restart: system
+        options:
+          - value: linuxraw
+            label: "linuxraw (기본)"
+          - value: udev
+            label: "udev"
+
+      - id: rp.menu_unified_controls
+        label: "UNIFIED CONTROLS"
+        type: toggle
+        conf_key: global.menu_unified_controls
+        restart: none
