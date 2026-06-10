@@ -17,6 +17,7 @@ case "$1" in
             export SDL_JOYSTICK_HIDAPI=0
             export SDL_GAMECONTROLLERCONFIG_FILE=/etc/gamepad/gamecontrollerdb.txt
             export HOME=/root
+            export RETROPANGUI_SHARE=/retropangui/share
             while true; do
                 rm -f /tmp/es-restart /tmp/es-shutdown /tmp/es-sysrestart /tmp/es-kodi
                 # HDMI 연결 대기 (최대 60초) — 뽑혀있으면 PHY/DRM 초기화가 실패함
