@@ -1,6 +1,9 @@
 # Odroid C5 Retro Gaming OS Configuration
 # Target: Amlogic S905X5M (ARM Cortex-A55)
 
+# 다운로드 미러 — savannah.gnu.org 등 불안정한 서버 우회
+BR2_PRIMARY_SITE="https://sources.buildroot.net"
+
 # 타겟 아키텍처
 BR2_aarch64=y
 BR2_cortex_a55=y
