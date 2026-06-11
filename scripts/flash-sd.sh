@@ -167,11 +167,12 @@ if [ -n "${PCSPKR}" ]; then
         printf '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x12\x00\x02\x00'"$1" \
             | sudo tee "${PCSPKR}" >/dev/null 2>&1 || true
     }
-    for _ in 1 2 3; do
-        tone '\x70\x03\x00\x00'   # 880Hz 켜기
-        sleep 0.25
+    # 도미솔도 상행 멜로디 (C5 523Hz, E5 659Hz, G5 784Hz, C6 1047Hz)
+    for note in '\x0b\x02\x00\x00' '\x93\x02\x00\x00' '\x10\x03\x00\x00' '\x17\x04\x00\x00'; do
+        tone "$note"
+        sleep 0.2
         tone '\x00\x00\x00\x00'   # 끄기
-        sleep 0.15
+        sleep 0.05
     done
 elif command -v aplay >/dev/null 2>&1; then
     for _ in 1 2 3; do
