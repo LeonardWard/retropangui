@@ -8,19 +8,9 @@ menus:
     label: "SYSTEM SETTINGS"
     parent: main
     items:
-      - id: rp.language
-        label: "LANGUAGE"
-        type: list
-        conf_key: system.language
-        restart: es
-        options:
-          - value: ko_KR
-            label: "한국어"
-          - value: en_US
-            label: "English"
-          - value: ja_JP
-            label: "日本語"
-
+      # LANGUAGE 항목은 제거됨 — system.language는 ES 언어와 무관해서
+      # "바꿔도 한국어가 안 나오는" 혼란만 유발. ES 언어는 UI SETTINGS의
+      # LANGUAGE 메뉴(emulationstation.Language, conf 역기록 지원)로 변경.
       - id: rp.timezone
         label: "TIMEZONE"
         type: list
