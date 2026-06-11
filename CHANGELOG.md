@@ -6,6 +6,35 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [Unreleased] — 2026-06-11
+
+### Fixed
+
+- **ES 소스 캐시로 인한 빌드 미반영 회귀 (2중)**
+
+  `EMULATIONSTATION_VERSION = main`(브랜치)이라 dl 캐시가 있으면 GitHub 새 커밋이
+  재빌드에 반영되지 않는 문제. tarball 캐시뿐 아니라 git bare repo 캐시에서
+  fetch 없이 tarball이 재생성되는 경우까지 있어, 전체 빌드 시
+  `buildroot/dl/emulationstation/` 디렉토리를 통째로 삭제하도록 `build.sh` 수정.
+
+- **kodi-pangui-texturepacker 버전 빈 값 회귀**
+
+  `$(KODI_PANGUI_VERSION)` 참조로 바꾼 리팩토링이 buildroot의 알파벳 순 .mk
+  include 순서 때문에 빈 버전으로 확장되어 빌드 실패. `21.3-Omega` 하드코딩 복원.
+
+- **`/root/share` 심볼릭 링크 우회책 제거**
+
+  ES가 `$HOME/share` 폴백으로 conf를 찾던 시절의 우회책. ES 전체가
+  `RETROPANGUI_SHARE` 환경 변수로 경로를 결정하므로 S95retropangui에서 제거,
+  기존 기기의 잔존 링크도 부팅 시 정리.
+
+### Added
+
+- **flash-sd.sh 플래싱 완료 알림음**
+
+  PC 스피커(메인보드 부저)로 도-미-솔-도 상행 멜로디 재생
+  (pcspkr input 장치에 EV_SND/SND_TONE 직접 기록, 없으면 aplay → 터미널 벨 폴백).
+
 ## [0.4] — 2026-05-25
 
 ### Added
