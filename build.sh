@@ -96,6 +96,16 @@ _shallow_clone kodi-pangui      https://github.com/xbmc/xbmc                    
 _shallow_clone retroarch        https://github.com/libretro/RetroArch                           v1.22.2
 _shallow_clone emulationstation https://github.com/LeonardWard/retropangui-emulationstation     main
 
+# emulationstation은 버전이 브랜치(main)라서 dl 캐시 tarball이 한 번 생기면
+# GitHub에 새 커밋을 push해도 재빌드에 반영되지 않음
+# → 전체 빌드 시 tarball과 빌드 디렉토리를 지워 항상 최신 main을 받도록 함
+if [ $PARTIAL -eq 0 ]; then
+    echo "[pre] emulationstation 캐시 제거 (최신 main 반영)"
+    rm -f  "${SCRIPT_DIR}/dl/emulationstation/emulationstation-main"*.tar.gz \
+           "${SCRIPT_DIR}/buildroot/dl/emulationstation/emulationstation-main"*.tar.gz
+    rm -rf "${SCRIPT_DIR}/buildroot/output/build/emulationstation-main"
+fi
+
 # Docker 이미지 빌드
 echo "[1/3] Docker 빌드 환경 이미지 생성 중..."
 docker build -t retropangui-builder "${SCRIPT_DIR}"
