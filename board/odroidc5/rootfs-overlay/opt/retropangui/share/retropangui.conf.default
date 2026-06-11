@@ -104,8 +104,8 @@ emulationstation.GamelistViewStyle=detailed
 
 ## Section F - Global RetroArch Settings ##
 
-# 비디오 드라이버 (gl, vulkan, ...)
-global.video_driver=gl
+# 비디오 드라이버 (vulkan, gl, ...) — C5(Mali-G310)는 Vulkan 지원 (VK_KHR_display)
+global.video_driver=vulkan
 
 # 화면 비율 자동 조정
 global.video_aspect_ratio_auto=true
