@@ -43,11 +43,10 @@ case "$1" in
             ln -sfn /retropangui/share/system/emulationstation /root/.emulationstation
         fi
 
-        # /root/share → /retropangui/share 심볼릭 링크
-        # ES 바이너리가 $HOME/share/system/retropangui.conf 경로로 설정을 찾음
-        if [ ! -L /root/share ]; then
-            ln -sfn /retropangui/share /root/share
-        fi
+        # (구) /root/share → /retropangui/share 심볼릭 링크는 제거됨.
+        # ES가 RETROPANGUI_SHARE 환경 변수(S99에서 export)로 직접 경로를 찾으므로
+        # $HOME/share 폴백 우회책이 더 이상 필요 없음. 잔존 링크는 정리.
+        [ -L /root/share ] && rm -f /root/share
 
         # 첫 부팅: retropangui.conf 없으면 기본값에서 복사
         if [ ! -f "${CONF_USER}" ]; then
