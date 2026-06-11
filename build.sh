@@ -91,20 +91,22 @@ _shallow_clone() {
 
 # 서브모듈 포함 대형 패키지는 반드시 여기서 미리 clone
 # (git SITE_METHOD이고 서브모듈 있는 것들)
+# emulationstation은 버전이 브랜치(main)라서 dl 캐시가 한 번 생기면
+# GitHub에 새 커밋을 push해도 재빌드에 반영되지 않음.
+# 주의: tarball만 지우면 buildroot가 같은 폴더의 git 캐시에서 fetch 없이
+# tarball을 재생성하므로 (낡은 커밋 그대로) git 캐시까지 통째로 삭제해야 함.
+# 실제 buildroot 캐시는 buildroot/dl/ 임 (호스트 dl/은 사전 clone 전용).
+if [ $PARTIAL -eq 0 ]; then
+    echo "[pre] emulationstation 캐시 제거 (최신 main 반영)"
+    rm -rf "${SCRIPT_DIR}/dl/emulationstation" \
+           "${SCRIPT_DIR}/buildroot/dl/emulationstation" \
+           "${SCRIPT_DIR}/buildroot/output/build/emulationstation-main"
+fi
+
 _shallow_clone uboot            https://git.odroid.com/yocto/uboot                              odroidc5-v2023.01
 _shallow_clone kodi-pangui      https://github.com/xbmc/xbmc                                    21.3-Omega
 _shallow_clone retroarch        https://github.com/libretro/RetroArch                           v1.22.2
 _shallow_clone emulationstation https://github.com/LeonardWard/retropangui-emulationstation     main
-
-# emulationstation은 버전이 브랜치(main)라서 dl 캐시 tarball이 한 번 생기면
-# GitHub에 새 커밋을 push해도 재빌드에 반영되지 않음
-# → 전체 빌드 시 tarball과 빌드 디렉토리를 지워 항상 최신 main을 받도록 함
-if [ $PARTIAL -eq 0 ]; then
-    echo "[pre] emulationstation 캐시 제거 (최신 main 반영)"
-    rm -f  "${SCRIPT_DIR}/dl/emulationstation/emulationstation-main"*.tar.gz \
-           "${SCRIPT_DIR}/buildroot/dl/emulationstation/emulationstation-main"*.tar.gz
-    rm -rf "${SCRIPT_DIR}/buildroot/output/build/emulationstation-main"
-fi
 
 # Docker 이미지 빌드
 echo "[1/3] Docker 빌드 환경 이미지 생성 중..."
