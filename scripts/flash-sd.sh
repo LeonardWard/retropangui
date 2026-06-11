@@ -156,3 +156,14 @@ echo -e "${GRN}================================================${NC}"
 echo ""
 echo "SD카드를 안전하게 제거한 후 Odroid C5에 꽂으세요."
 echo ""
+
+# ── 완료 알림음 (비프 3회) ────────────────────────────────
+if command -v aplay >/dev/null 2>&1; then
+    for _ in 1 2 3; do
+        awk 'BEGIN{for(i=0;i<4000;i++)printf "%c",128+100*sin(i*0.55)}' \
+            | aplay -q -r 8000 -f U8 -t raw - 2>/dev/null || true
+        sleep 0.15
+    done
+else
+    for _ in 1 2 3; do printf '\a'; sleep 0.3; done
+fi
