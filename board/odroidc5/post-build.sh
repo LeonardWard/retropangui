@@ -72,11 +72,14 @@ if [ -f "${LIBPATH}/libMali.so" ]; then
     [ -f "${LIBPATH}/libGLESv2.so.2.0.0" ] && ln -sf libGLESv2.so.2.0.0 "${LIBPATH}/libGLESv2.so.2"
 
     # libMali.so를 직접 가리켜도 되는 라이브러리
+    # 주의: libvulkan은 여기 넣으면 안 됨 — Mali 블롭은 Vulkan 로더 진입점
+    # (vkGetInstanceProcAddr)을 export하지 않아 "broken loader"로 실패함.
+    # vulkan-loader 패키지의 정식 로더(libvulkan.so.1.3.x)가 그대로 남아야 하고,
+    # Mali 연결은 ICD(/usr/share/vulkan/icd.d/mali.json → libMali.so)가 담당.
     for lib in \
         libGLESv1_CM.so libGLESv1_CM.so.1 \
         libwayland-egl.so libwayland-egl.so.1 \
-        libOpenCL.so libOpenCL.so.1 \
-        libvulkan.so libvulkan.so.1; do
+        libOpenCL.so libOpenCL.so.1; do
         ln -sf libMali.so "${LIBPATH}/${lib}"
     done
     echo ">>> libMali 심볼릭 링크 완료"

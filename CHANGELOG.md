@@ -8,7 +8,21 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased] — 2026-06-11
 
+### Added
+
+- **RetroArch 기본 비디오 드라이버 vulkan 전환 (실기기 검증 완료)**
+
+  Mali-G310 DDK의 Vulkan(VK_KHR_display) 지원 확인 후 기본값을 gl → vulkan으로 변경.
+  `retropangui.conf.default`와 기본 `retroarch.cfg` 모두 적용.
+
 ### Fixed
+
+- **libvulkan 심볼릭 링크가 Vulkan 로더를 가로채던 문제**
+
+  `post-build.sh`가 `libvulkan.so(.1)`을 `libMali.so`로 링크해 vulkan-loader
+  패키지의 정식 로더를 덮어씀. Mali 블롭은 로더 진입점(`vkGetInstanceProcAddr`)을
+  export하지 않아 RetroArch vulkan이 "broken loader"로 즉시 종료했음.
+  링크 생성을 제거해 정식 로더 + ICD(mali.json) 구조로 동작하도록 수정.
 
 - **ES 소스 캐시로 인한 빌드 미반영 회귀 (2중)**
 
