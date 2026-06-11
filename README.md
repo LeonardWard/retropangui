@@ -29,6 +29,10 @@ rm -rf buildroot/output/
 ./build.sh odroidc5 --partial
 ```
 
+> **참고**: emulationstation은 브랜치(main) 추적 패키지라서 전체 빌드 시
+> `build.sh`가 dl 캐시(tarball + git)를 자동 삭제하고 항상 최신 main을 받아 빌드합니다.
+> 부분 빌드(`--partial`)는 ES를 건드리지 않으므로 캐시를 유지합니다.
+
 출력: `output/retropangui-<device>-<version>.img`
 
 버전은 `VERSION` 환경변수가 없으면 `git describe --tags --always`로 자동 결정됩니다.
