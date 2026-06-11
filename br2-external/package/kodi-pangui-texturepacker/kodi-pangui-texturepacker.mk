@@ -4,7 +4,10 @@
 #
 ################################################################################
 
-KODI_PANGUI_TEXTUREPACKER_VERSION = $(KODI_PANGUI_VERSION)
+# 주의: $(KODI_PANGUI_VERSION) 참조 불가 — buildroot가 .mk를 알파벳 순으로
+# include해서 이 파일이 kodi-pangui.mk보다 먼저 파싱됨 (빈 버전이 되어 빌드 실패).
+# kodi-pangui.mk의 KODI_PANGUI_VERSION과 항상 같은 값으로 유지할 것.
+KODI_PANGUI_TEXTUREPACKER_VERSION = 21.3-Omega
 KODI_PANGUI_TEXTUREPACKER_SITE = $(call github,xbmc,xbmc,$(KODI_PANGUI_TEXTUREPACKER_VERSION))
 KODI_PANGUI_TEXTUREPACKER_LICENSE = GPL-2.0
 KODI_PANGUI_TEXTUREPACKER_LICENSE_FILES = LICENSE.md
