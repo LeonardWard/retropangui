@@ -158,7 +158,22 @@ echo "SD카드를 안전하게 제거한 후 Odroid C5에 꽂으세요."
 echo ""
 
 # ── 완료 알림음 (비프 3회) ────────────────────────────────
-if command -v aplay >/dev/null 2>&1; then
+# PC 스피커(메인보드 부저) 우선 — 사운드카드에 스피커가 안 물려 있어도 들림
+# (pcspkr 모듈의 input 장치에 EV_SND/SND_TONE 이벤트를 직접 씀)
+PCSPKR="$(grep -l '^PC Speaker$' /sys/class/input/event*/device/name 2>/dev/null | head -1)"
+if [ -n "${PCSPKR}" ]; then
+    PCSPKR="/dev/input/$(basename "$(dirname "$(dirname "${PCSPKR}")")")"
+    tone() {
+        printf '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x12\x00\x02\x00'"$1" \
+            | sudo tee "${PCSPKR}" >/dev/null 2>&1 || true
+    }
+    for _ in 1 2 3; do
+        tone '\x70\x03\x00\x00'   # 880Hz 켜기
+        sleep 0.25
+        tone '\x00\x00\x00\x00'   # 끄기
+        sleep 0.15
+    done
+elif command -v aplay >/dev/null 2>&1; then
     for _ in 1 2 3; do
         awk 'BEGIN{for(i=0;i<4000;i++)printf "%c",128+100*sin(i*0.55)}' \
             | aplay -q -r 8000 -f U8 -t raw - 2>/dev/null || true
