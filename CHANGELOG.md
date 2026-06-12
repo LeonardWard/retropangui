@@ -13,8 +13,21 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - **배경 음악(BGM) 지원** (ES 레포의 libVLC 기반 MusicManager와 동기)
 
   - conf 기본값 `emulationstation.BackgroundMusic=true`
-  - 부팅 시 `/retropangui/share/music` 디렉토리 자동 생성 (S95retropangui)
-  - 음악 파일(mp3/ogg/flac/wav/m4a)을 music 폴더에 넣으면 ES에서 셔플 재생
+  - 음악 파일(mp3/ogg/flac/wav/m4a/mid)을 share의 music 폴더에 넣으면 ES에서 셔플 재생
+    (music 폴더는 S61share가 마운트 시 생성 — S95의 중복 mkdir 제거)
+
+- **MIDI BGM 지원 — bundled-bgmusic 패키지 + fluidsynth**
+
+  - `BR2_PACKAGE_FLUIDSYNTH=y` — VLC fluidsynth 플러그인 활성화.
+    **기존 빌드에 적용 시 `make vlc-dirclean` 후 재빌드 필요** (증분 빌드는
+    이미 빌드된 VLC를 재구성하지 않음)
+  - bundled-bgmusic 패키지: MT-32 사운드폰트(MT32.sf2, 약 7.2MB)를
+    archive.org에서 빌드 시 자동 다운로드(sha256 검증) →
+    `/usr/share/soundfonts/MT32.sf2` 설치. 기존에 폴더에만 있던 번들
+    MIDI 2곡(FF5_logo, LossOfMoral)도 패키지로 설치하고 첫 부팅 시
+    S61share가 `share/music/`으로 복사
+  - 사운드폰트 교체: share의 music 폴더에 .sf2를 넣으면 번들 대신 사용 (ES 재시작 필요)
+  - S61share의 `saves/states` 생성을 `saves`로 정리 (스테이트 통합과 동기)
 
 ## [0.5] — 2026-06-13
 

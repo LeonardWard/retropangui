@@ -75,7 +75,7 @@ case "$1" in
                     "${SHARE_MOUNT}/roms/snes" \
                     "${SHARE_MOUNT}/roms/psx" \
                     "${SHARE_MOUNT}/bios" \
-                    "${SHARE_MOUNT}/saves/states" \
+                    "${SHARE_MOUNT}/saves" \
                     "${SHARE_MOUNT}/screenshots" \
                     "${SHARE_MOUNT}/music" \
                     "${SHARE_MOUNT}/system/emulationstation"
@@ -88,6 +88,12 @@ case "$1" in
                         fi
                     done
                     echo ">>> 번들 게임 복사 완료"
+                fi
+                # 번들 배경음악 복사 (아직 없을 때만)
+                BGMUSIC="/usr/share/retropangui/bundled-bgmusic"
+                if [ -d "${BGMUSIC}" ]; then
+                    cp -n "${BGMUSIC}"/* "${SHARE_MOUNT}/music/" 2>/dev/null || true
+                    echo ">>> 번들 배경음악 복사 완료"
                 fi
                 echo ">>> Share 마운트 완료: ${SHARE_MOUNT} (${SHARE_PART})"
             fi
