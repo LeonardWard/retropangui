@@ -10,7 +10,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
-- **메뉴 구조 재정비와 동기 — retropangui_features.yml parent 재배치**
+- **메뉴 구조 재정비와 동기 — retropangui_features.yml parent 재배치** (실기기 검증 완료)
 
   ES 메인 메뉴가 8개 카테고리로 재편됨에 따라(ES 레포 참고) YAML 메뉴들이
   독립 메뉴(parent: main)에서 카테고리 안 항목으로 흡수됨:
