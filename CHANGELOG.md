@@ -10,6 +10,22 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- **기본값 개선 (2026-06-12)**
+
+  - `emulationstation.TransitionStyle=instant` — fade의 시스템 전환 블랙 플래시 제거
+  - `emulationstation.ButtonLayout=xbox` — 최초 부팅 시 A/B 반전(닌텐도 방식) 해소
+  - retroarch.cfg 템플릿: 저장 파일 분류를 코어 이름 → 콘텐츠 디렉토리(시스템) 이름으로
+    (`sort_savefiles_by_content_enable=true` 등 4키. 기존 코어 이름 폴더는 마이그레이션하지 않음)
+
+- **한글 표시 / 번역 수정 (실기기 검증 완료)**
+
+  ko_KR인데 번역·한글 글리프가 안 나오던 문제의 빌드 측 원인 수정 (`9e97823`):
+  `BR2_GENERATE_LOCALE`에 ko_KR.UTF-8 추가(setlocale 실패 해소),
+  locale purge 화이트리스트에 ko_KR 추가(.mo 삭제 방지),
+  conf 기본값 `emulationstation.Language=ko_KR`, YAML의 중복 language 항목 제거,
+  한 번도 효력이 없던 죽은 시드 오버레이 `/root/.emulationstation` 삭제.
+  ES 측 수정(.mo 경로, 폰트 폴백)은 retropangui-emulationstation 레포 참고.
+
 - **RetroArch 기본 비디오 드라이버 vulkan 전환 (실기기 검증 완료)**
 
   Mali-G310 DDK의 Vulkan(VK_KHR_display) 지원 확인 후 기본값을 gl → vulkan으로 변경.

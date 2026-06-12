@@ -86,6 +86,12 @@ emulationstation.Language=ko_KR
 # UI 테마 (Settings 맵 키 이름: ThemeSet)
 emulationstation.ThemeSet=retropangui-slate
 
+# 화면 전환 효과 (instant, fade, slide) — fade는 시스템 전환 시 블랙 플래시 발생
+emulationstation.TransitionStyle=instant
+
+# 버튼 방식 (xbox: A=확인/B=취소, nintendo: B=확인/A=취소, sony)
+emulationstation.ButtonLayout=xbox
+
 # 스크린세이버 딜레이 (초, 0=비활성)
 emulationstation.ScreenSaverTime=300
 
