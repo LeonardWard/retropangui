@@ -16,6 +16,8 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
   - `emulationstation.ButtonLayout=xbox` — 최초 부팅 시 A/B 반전(닌텐도 방식) 해소
   - retroarch.cfg 템플릿: 저장 파일 분류를 코어 이름 → 콘텐츠 디렉토리(시스템) 이름으로
     (`sort_savefiles_by_content_enable=true` 등 4키. 기존 코어 이름 폴더는 마이그레이션하지 않음)
+  - retroarch.cfg 템플릿: `savestate_directory`를 `saves/states` → `saves`로 통일 (2026-06-13)
+    — 세이브와 스테이트가 `saves/<시스템>/`에 함께 저장됨 (실기기 피드백 반영)
   - `emulationstation.SaveGamelistsMode=always` — gamelist.xml이 한 번도
     기록되지 않던 원인(ES 기본값 never) 수정과 동기 (ES 레포 35e3795)
 
