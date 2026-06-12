@@ -6,6 +6,16 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [Unreleased]
+
+### Added
+
+- **배경 음악(BGM) 지원** (ES 레포의 libVLC 기반 MusicManager와 동기)
+
+  - conf 기본값 `emulationstation.BackgroundMusic=true`
+  - 부팅 시 `/retropangui/share/music` 디렉토리 자동 생성 (S95retropangui)
+  - 음악 파일(mp3/ogg/flac/wav/m4a)을 music 폴더에 넣으면 ES에서 셔플 재생
+
 ## [0.5] — 2026-06-13
 
 ### Added

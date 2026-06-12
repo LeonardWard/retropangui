@@ -36,6 +36,7 @@ case "$1" in
         # 디렉토리 생성
         mkdir -p /retropangui/share/system/retroarch
         mkdir -p /retropangui/share/system/emulationstation
+        mkdir -p /retropangui/share/music
 
         # /root/.emulationstation → /retropangui/share/system/emulationstation 심볼릭 링크
         if [ ! -L /root/.emulationstation ]; then
