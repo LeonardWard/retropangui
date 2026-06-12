@@ -2,11 +2,14 @@
 # ES 시작 시 이 파일을 읽어 메뉴 항목을 자동 생성한다.
 # 값은 retropangui.conf 에 저장된다.
 # restart: none | es | system
+# parent: 항목이 삽입될 위치
+#   - game | controller | system : 해당 ES 카테고리 메뉴 안에 항목으로 직접 삽입
+#   - main                       : 메인 메뉴에 독립 서브메뉴로 추가 (확장용)
 
 menus:
   - id: system_settings
     label: "SYSTEM SETTINGS"
-    parent: main
+    parent: system   # ES SYSTEM SETTINGS 메뉴에 항목으로 삽입됨
     items:
       # LANGUAGE 항목은 제거됨 — system.language는 ES 언어와 무관해서
       # "바꿔도 한국어가 안 나오는" 혼란만 유발. ES 언어는 UI SETTINGS의
@@ -28,7 +31,7 @@ menus:
 
   - id: network_settings
     label: "NETWORK SETTINGS"
-    parent: main
+    parent: system
     items:
       - id: rp.ssh
         label: "SSH"
@@ -38,7 +41,7 @@ menus:
 
   - id: video_settings
     label: "VIDEO SETTINGS"
-    parent: main
+    parent: game     # ES GAME SETTINGS 메뉴에 항목으로 삽입됨
     items:
       - id: rp.video_smooth
         label: "SMOOTH SCALING"
@@ -54,7 +57,7 @@ menus:
 
   - id: game_settings
     label: "GAME SETTINGS"
-    parent: main
+    parent: game
     items:
       - id: rp.rewind
         label: "REWIND"
@@ -76,7 +79,7 @@ menus:
 
   - id: advanced_settings
     label: "ADVANCED SETTINGS"
-    parent: main
+    parent: controller   # ES CONTROLLER SETTINGS 메뉴에 항목으로 삽입됨
     items:
       - id: rp.input_joypad_driver
         label: "JOYPAD DRIVER"
