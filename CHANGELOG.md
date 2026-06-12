@@ -24,6 +24,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
   export하지 않아 RetroArch vulkan이 "broken loader"로 즉시 종료했음.
   링크 생성을 제거해 정식 로더 + ICD(mali.json) 구조로 동작하도록 수정.
 
+- **스테일 libvulkan 링크가 이미지에 잔존하던 회귀 (0.4-18-gc3b4ebc)**
+
+  위 수정은 잘못된 링크 *생성*만 제거했는데, buildroot의 `output/target/`은
+  증분 디렉토리라 이전 빌드가 만든 `libvulkan.so(.1) → libMali.so` 링크가
+  삭제되지 않고 새 이미지에 그대로 포함됨 → 게임 실행 불가 재발.
+  `post-build.sh`에서 실제 로더 파일(`libvulkan.so.1.x.y`)을 찾아
+  `libvulkan.so.1` 링크를 매 빌드마다 강제 복원하도록 수정.
+
 - **ES 소스 캐시로 인한 빌드 미반영 회귀 (2중)**
 
   `EMULATIONSTATION_VERSION = main`(브랜치)이라 dl 캐시가 있으면 GitHub 새 커밋이

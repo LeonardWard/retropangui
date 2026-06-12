@@ -85,6 +85,20 @@ if [ -f "${LIBPATH}/libMali.so" ]; then
     echo ">>> libMali 심볼릭 링크 완료"
 fi
 
+# libvulkan: 정식 로더로 강제 복원
+# target/은 증분 빌드라 과거 빌드가 만든 libvulkan→libMali 링크가 지워지지 않고
+# 이미지에 남을 수 있음 (0.4-18-gc3b4ebc 회귀 원인). 생성을 안 하는 것만으로는
+# 부족하므로 실제 로더 파일(libvulkan.so.1.3.x)을 찾아 링크를 명시적으로 덮어쓴다.
+for f in "${LIBPATH}"/libvulkan.so.1.*; do
+    if [ -f "${f}" ] && [ ! -L "${f}" ]; then
+        VK_LOADER=$(basename "${f}")
+        echo ">>> libvulkan.so.1 → ${VK_LOADER} 강제 복원"
+        ln -sf "${VK_LOADER}" "${LIBPATH}/libvulkan.so.1"
+        ln -sf libvulkan.so.1 "${LIBPATH}/libvulkan.so"
+        break
+    fi
+done
+
 # ksmbd 계정 초기화 (pangui/odroid)
 # ksmbdpwd.db가 없거나 비어있으면 ksmbd가 인증을 처리하지 못함
 KSMBD_PWDB="${TARGET_DIR}/etc/ksmbd/ksmbdpwd.db"
