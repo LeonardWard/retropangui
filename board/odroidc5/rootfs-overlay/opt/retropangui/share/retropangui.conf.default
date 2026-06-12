@@ -104,6 +104,10 @@ emulationstation.ScreenSaverBehavior=dim
 # 게임 목록 뷰 스타일 (automatic, basic, detailed, video, grid)
 emulationstation.GamelistViewStyle=detailed
 
+# gamelist.xml 저장 시점 (always: 메타데이터 변경 즉시, on exit: ES 종료 시, never)
+# 전원을 바로 끄는 기기 특성상 always 권장
+emulationstation.SaveGamelistsMode=always
+
 # 즐겨찾기 컬렉션 표시 여부
 # emulationstation.FavoritesFirst=1
 
