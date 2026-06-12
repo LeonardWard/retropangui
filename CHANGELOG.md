@@ -6,6 +6,18 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [Unreleased]
+
+### Changed
+
+- **메뉴 구조 재정비와 동기 — retropangui_features.yml parent 재배치**
+
+  ES 메인 메뉴가 8개 카테고리로 재편됨에 따라(ES 레포 참고) YAML 메뉴들이
+  독립 메뉴(parent: main)에서 카테고리 안 항목으로 흡수됨:
+  - system_settings(시간대) / network_settings(SSH) → `parent: system`
+  - video_settings(스무딩/정수) / game_settings(되감기/자동저장) → `parent: game`
+  - advanced_settings(조이패드 드라이버/통합) → `parent: controller`
+
 ## [0.6] — 2026-06-13
 
 ### Added
