@@ -33,10 +33,9 @@ case "$1" in
             echo performance > /sys/class/misc/mali0/device/devfreq/${MALI_DEVFREQ}/governor 2>/dev/null || true
         fi
 
-        # 디렉토리 생성
+        # 디렉토리 생성 (music 등 share 하위 폴더는 S61share가 마운트 시 생성)
         mkdir -p /retropangui/share/system/retroarch
         mkdir -p /retropangui/share/system/emulationstation
-        mkdir -p /retropangui/share/music
 
         # /root/.emulationstation → /retropangui/share/system/emulationstation 심볼릭 링크
         if [ ! -L /root/.emulationstation ]; then

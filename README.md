@@ -131,7 +131,7 @@ Windows/Mac에서 SD카드 연결 시 `share` 드라이브로 인식됩니다.
 ├── bios/                      # BIOS 파일
 ├── saves/                     # 세이브 파일 + 스테이트 (시스템별 폴더, 예: saves/snes/)
 ├── screenshots/               # 스크린샷
-├── music/                     # 배경음악 (mp3/ogg/flac/wav/m4a — ES가 셔플 재생)
+├── music/                     # 배경음악 (mp3/ogg/flac/wav/m4a/mid — ES가 셔플 재생, .sf2를 넣으면 MIDI 사운드폰트 교체)
 └── system/
     ├── retroarch/
     │   └── retroarch.cfg      # 사용자 RetroArch 설정 (첫 부팅 시 기본값 복사)
