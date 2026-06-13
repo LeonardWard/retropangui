@@ -57,6 +57,25 @@ static uint64_t mono_ms(void)
     return (uint64_t)ts.tv_sec * 1000ULL + (uint64_t)ts.tv_nsec / 1000000ULL;
 }
 
+/* ── fd_is_deleted ───────────────────────────────────────────── */
+/*
+ * fd가 이미 삭제된(unplug된) 장치 노드를 가리키면 1.
+ * 핫스왑 시 커널이 같은 event 번호를 재사용하면 st_rdev가 동일해
+ * fstat만으로는 옛 장치의 스테일 fd와 새 fd를 구분할 수 없다 —
+ * /proc/self/fd 링크 타깃의 "(deleted)" 표시로 판별한다.
+ * (증상: 스테일 fd에 EVIOCGRAB → ENODEV → 물리 패드가 grab되지 않아
+ *  ES/RA에 물리+가상 이중 노출)
+ */
+static int fd_is_deleted(int fd)
+{
+    char lnk[32], tgt[PATH_MAX];
+    snprintf(lnk, sizeof(lnk), "/proc/self/fd/%d", fd);
+    ssize_t n = readlink(lnk, tgt, sizeof(tgt) - 1);
+    if (n <= 0) return 0;
+    tgt[n] = '\0';
+    return strstr(tgt, "(deleted)") != NULL;
+}
+
 /* ── is_joystick_by_udev ─────────────────────────────────────── */
 /*
  * devpath = "/dev/input/eventX"
@@ -404,7 +423,8 @@ static int find_phys_evdev(SDL_Joystick *js)
                         struct stat ps;
                         if (fstat(pfd, &ps) == 0 &&
                             S_ISCHR(ps.st_mode) &&
-                            ps.st_rdev == cur.st_rdev) {
+                            ps.st_rdev == cur.st_rdev &&
+                            !fd_is_deleted(pfd)) {
                             is_sdl = 1;
                             break;
                         }
@@ -414,7 +434,10 @@ static int find_phys_evdev(SDL_Joystick *js)
             }
         }
         if (is_sdl) {
-            /* SDL이 열어둔 장치 — 완벽한 매칭, 즉시 반환 */
+            /* SDL이 열어둔 장치 — 완벽한 매칭, 즉시 반환
+             * (앞서 보관한 EV_ABS 후보 fd는 누수되지 않게 닫는다) */
+            if (found_fd >= 0)
+                close(found_fd);
             found_fd = fd;
             break;
         }
@@ -542,7 +565,8 @@ static int find_sdl_evdev_fd(int our_phys_fd)
         struct stat st;
         if (fstat(fd, &st) == 0 &&
             S_ISCHR(st.st_mode) &&
-            st.st_rdev == our_st.st_rdev) {
+            st.st_rdev == our_st.st_rdev &&
+            !fd_is_deleted(fd)) { /* 같은 rdev여도 옛 장치의 스테일 fd 제외 */
             found = fd;
             break;
         }
@@ -677,8 +701,24 @@ int main(void)
 
     /* 메인루프 (~125 Hz) */
     GP_State cur;
+    int hygiene_tick = 0;
     while (g_running) {
         gp_update();
+
+        /* 1초마다 슬롯 phys_fd 위생 점검 — unplug 시 SDL REMOVED 이벤트가
+         * 유실된 슬롯(다중 인터페이스 패드 등)의 스테일 fd를 정리한다 */
+        if (++hygiene_tick >= 125) {
+            hygiene_tick = 0;
+            for (int slot = 0; slot < GP_MAX_SLOTS; slot++) {
+                if (g_phys_fd[slot] >= 0 && fd_is_deleted(g_phys_fd[slot])) {
+                    fprintf(stderr, "gamepad_daemon: slot %d stale phys fd 정리\n", slot);
+                    close(g_phys_fd[slot]);
+                    g_phys_fd[slot] = -1;
+                    if (g_vdev[slot])
+                        gp_vdev_rebind_phys(g_vdev[slot], -1);
+                }
+            }
+        }
 
         /* 첫 루프에서 startup_scan 실행 (SDL init 완료 후) */
         if (!g_startup_done) {

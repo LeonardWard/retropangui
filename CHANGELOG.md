@@ -8,6 +8,34 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Fixed
+
+- **RetroArch RGUI 메뉴 입력 불가 — `all_users_control_menu = "true"` 적용**
+
+  `all_users_control_menu = "false"` 상태에서 vdev 포트 매핑이 어긋나면
+  port 1이 아닌 포트의 패드는 RGUI 메뉴를 조작할 수 없어 패드+키보드 동시
+  불응 현상 발생. `"true"`로 변경해 모든 포트의 패드가 메뉴를 조작하도록 허용.
+  (근본 원인: RA 1.22에서 `input_player_num` autoconf 키가 무시됨 →
+  vdev가 원하는 포트가 아닌 번호에 배정될 수 있음)
+
+- **gamepad-mgr: 핫스왑 시 스테일 fd로 인한 EVIOCGRAB 실패** (실기기 진단 2026-06-13)
+
+  패드 A를 뽑고 패드 B를 꽂으면 커널이 같은 event 번호를 재사용하는데,
+  st_rdev가 동일해 옛 장치의 스테일 fd와 구분되지 않아 스테일 fd에 grab을
+  시도 → `No such device` 실패 → 물리 패드가 grab되지 않아 가상 패드와
+  **이중 노출**되던 문제. `/proc/self/fd`의 "(deleted)" 표시로 판별:
+  - `find_sdl_evdev_fd` / `find_phys_evdev`: 삭제된 fd 후보 제외
+  - `find_phys_evdev`: is_sdl 매칭 시 기존 후보 fd 누수 수정
+  - 메인 루프: 1초 주기 슬롯 phys_fd 위생 점검 (SDL REMOVED 유실 대비)
+
+### Added
+
+- **RetroArch 메뉴 드라이버 xmb / ozone / materialui 빌드 활성화**
+
+  rgui만 빌드되던 것을 4종으로. `retroarch.cfg`의 `menu_driver`로 선택.
+  **기존 빌드에 적용 시 `rm -rf buildroot/output/build/retroarch-*` 후
+  전체 빌드 필요** (vlc-dirclean과 같은 이유)
+
 ### Changed
 
 - **메뉴 구조 재정비와 동기 — retropangui_features.yml parent 재배치** (실기기 검증 완료)

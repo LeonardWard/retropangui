@@ -33,9 +33,9 @@ RETROARCH_CONF_OPTS = \
 	--disable-al \
 	--disable-x11 \
 	--disable-wayland \
-	--disable-xmb \
-	--disable-ozone \
-	--disable-materialui \
+	--enable-xmb \
+	--enable-ozone \
+	--enable-materialui \
 	--disable-qt \
 	--disable-metal \
 	--enable-vulkan \
