@@ -103,10 +103,11 @@ if [ $PARTIAL -eq 0 ]; then
            "${SCRIPT_DIR}/buildroot/output/build/emulationstation-main"
 fi
 
-_shallow_clone uboot            https://git.odroid.com/yocto/uboot                              odroidc5-v2023.01
-_shallow_clone kodi-pangui      https://github.com/xbmc/xbmc                                    21.3-Omega
-_shallow_clone retroarch        https://github.com/libretro/RetroArch                           v1.22.2
-_shallow_clone emulationstation https://github.com/LeonardWard/retropangui-emulationstation     main
+_shallow_clone uboot             https://git.odroid.com/yocto/uboot                             odroidc5-v2023.01
+_shallow_clone kodi-pangui       https://github.com/xbmc/xbmc                                   21.3-Omega
+_shallow_clone retroarch         https://github.com/libretro/RetroArch                          v1.22.2
+_shallow_clone retroarch-assets  https://github.com/libretro/retroarch-assets.git              master
+_shallow_clone emulationstation  https://github.com/LeonardWard/retropangui-emulationstation    main
 
 # Docker 이미지 빌드
 echo "[1/3] Docker 빌드 환경 이미지 생성 중..."

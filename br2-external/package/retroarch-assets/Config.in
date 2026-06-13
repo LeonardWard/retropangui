@@ -1,0 +1,7 @@
+config BR2_PACKAGE_RETROARCH_ASSETS
+	bool "retroarch-assets"
+	help
+	  RetroArch Ozone/XMB 메뉴에 필요한 UI 텍스처·아이콘 패키지.
+	  retroarch 빌드의 media/ 에는 폰트만 포함되므로 별도로 설치해야 함.
+
+	  https://github.com/libretro/retroarch-assets

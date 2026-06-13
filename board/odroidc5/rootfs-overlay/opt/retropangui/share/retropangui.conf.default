@@ -148,8 +148,11 @@ global.savestate_auto_load=false
 # global.video_shader=
 # global.video_shader_enable=false
 
-# 메뉴 드라이버 (rgui=가벼움, ozone=현대적)
-global.menu_driver=rgui
+# 메뉴 드라이버 (ozone=현대적, rgui=가벼움/구형)
+global.menu_driver=ozone
+
+# Ozone/XMB 폰트·텍스처 경로 (한국어 폰트 포함)
+global.assets_directory=/opt/retropangui/share/retroarch
 
 
 ## Section G - Per-System Core Selection ##

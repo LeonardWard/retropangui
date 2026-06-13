@@ -31,14 +31,32 @@
 03000000100800000100000000000000,PS2 USB Adapter (0810:0001 v000),platform:Linux,a:b1,b:b2,x:b0,y:b3,back:b8,start:b9,leftshoulder:b4,rightshoulder:b5,lefttrigger:b6,righttrigger:b7,leftx:a0,lefty:a1,rightx:a2,righty:a3,leftstick:b10,rightstick:b11,dpup:h0.1,dpdown:h0.4,dpleft:h0.8,dpright:h0.2
 
 # ─────────────────────────────────────────────────────────────────
-# gamepad-mgr 가상 패드 (데몬 완성 후 자동 활성)
-# 고정 GUID: VID:5052(RP) PID:0001~0004 BUS:VIRTUAL(0006)
+# Microsoft Xbox 360 (VID:045e PID:028e, ver:0110)
+#
+# GUID: 030000005e0400008e02000010010000
+# 버튼: BTN_SOUTH~WEST(b0-3), BTN_TL/TR(b4-5), BTN_SELECT(b6), BTN_START(b7),
+#       BTN_MODE(b8), BTN_THUMBL/R(b9-10)  ← BTN_TL2/TR2 없음
+# 축:   ABS_X/Y(a0-1), ABS_Z(a2=LT), ABS_RX/RY(a3-4), ABS_RZ(a5=RT)
 # ─────────────────────────────────────────────────────────────────
 
-06000000525000000100000000000000,RetroPangUI P1,platform:Linux,a:b0,b:b1,x:b2,y:b3,back:b6,start:b7,guide:b8,leftshoulder:b4,rightshoulder:b5,lefttrigger:a4,righttrigger:a5,leftx:a0,lefty:a1,rightx:a2,righty:a3,leftstick:b9,rightstick:b10,dpup:h0.1,dpdown:h0.4,dpleft:h0.8,dpright:h0.2
+030000005e0400008e02000010010000,Microsoft X-Box 360 pad,platform:Linux,a:b0,b:b1,x:b2,y:b3,back:b6,start:b7,guide:b8,leftshoulder:b4,rightshoulder:b5,lefttrigger:a2,righttrigger:a5,leftx:a0,lefty:a1,rightx:a3,righty:a4,leftstick:b9,rightstick:b10,dpup:h0.1,dpdown:h0.4,dpleft:h0.8,dpright:h0.2
 
-06000000525000000200000000000000,RetroPangUI P2,platform:Linux,a:b0,b:b1,x:b2,y:b3,back:b6,start:b7,guide:b8,leftshoulder:b4,rightshoulder:b5,lefttrigger:a4,righttrigger:a5,leftx:a0,lefty:a1,rightx:a2,righty:a3,leftstick:b9,rightstick:b10,dpup:h0.1,dpdown:h0.4,dpleft:h0.8,dpright:h0.2
+# ─────────────────────────────────────────────────────────────────
+# gamepad-mgr 가상 패드 (데몬 완성 후 자동 활성)
+# 고정 GUID: VID:5052(RP) PID:0001~0004 BUS:VIRTUAL(0006)
+#
+# 버튼 joydev 인덱스 (BTN 코드 오름차순):
+#   b0=BTN_SOUTH(A)  b1=BTN_EAST(B)   b2=BTN_NORTH(X)  b3=BTN_WEST(Y)
+#   b4=BTN_TL(LB)    b5=BTN_TR(RB)    b6=BTN_TL2(LT)   b7=BTN_TR2(RT)
+#   b8=BTN_SELECT    b9=BTN_START     b10=BTN_MODE      b11=BTN_THUMBL  b12=BTN_THUMBR
+# 축 joydev 인덱스 (ABS 코드 오름차순):
+#   a0=ABS_X(LX)  a1=ABS_Y(LY)  a2=ABS_Z(LT)  a3=ABS_RX(RX)  a4=ABS_RY(RY)  a5=ABS_RZ(RT)
+# ─────────────────────────────────────────────────────────────────
 
-06000000525000000300000000000000,RetroPangUI P3,platform:Linux,a:b0,b:b1,x:b2,y:b3,back:b6,start:b7,guide:b8,leftshoulder:b4,rightshoulder:b5,lefttrigger:a4,righttrigger:a5,leftx:a0,lefty:a1,rightx:a2,righty:a3,leftstick:b9,rightstick:b10,dpup:h0.1,dpdown:h0.4,dpleft:h0.8,dpright:h0.2
+06000000525000000100000000000000,RetroPangUI P1,platform:Linux,a:b0,b:b1,x:b2,y:b3,back:b8,start:b9,guide:b10,leftshoulder:b4,rightshoulder:b5,lefttrigger:a2,righttrigger:a5,leftx:a0,lefty:a1,rightx:a3,righty:a4,leftstick:b11,rightstick:b12,dpup:h0.1,dpdown:h0.4,dpleft:h0.8,dpright:h0.2
 
-06000000525000000400000000000000,RetroPangUI P4,platform:Linux,a:b0,b:b1,x:b2,y:b3,back:b6,start:b7,guide:b8,leftshoulder:b4,rightshoulder:b5,lefttrigger:a4,righttrigger:a5,leftx:a0,lefty:a1,rightx:a2,righty:a3,leftstick:b9,rightstick:b10,dpup:h0.1,dpdown:h0.4,dpleft:h0.8,dpright:h0.2
+06000000525000000200000000000000,RetroPangUI P2,platform:Linux,a:b0,b:b1,x:b2,y:b3,back:b8,start:b9,guide:b10,leftshoulder:b4,rightshoulder:b5,lefttrigger:a2,righttrigger:a5,leftx:a0,lefty:a1,rightx:a3,righty:a4,leftstick:b11,rightstick:b12,dpup:h0.1,dpdown:h0.4,dpleft:h0.8,dpright:h0.2
+
+06000000525000000300000000000000,RetroPangUI P3,platform:Linux,a:b0,b:b1,x:b2,y:b3,back:b8,start:b9,guide:b10,leftshoulder:b4,rightshoulder:b5,lefttrigger:a2,righttrigger:a5,leftx:a0,lefty:a1,rightx:a3,righty:a4,leftstick:b11,rightstick:b12,dpup:h0.1,dpdown:h0.4,dpleft:h0.8,dpright:h0.2
+
+06000000525000000400000000000000,RetroPangUI P4,platform:Linux,a:b0,b:b1,x:b2,y:b3,back:b8,start:b9,guide:b10,leftshoulder:b4,rightshoulder:b5,lefttrigger:a2,righttrigger:a5,leftx:a0,lefty:a1,rightx:a3,righty:a4,leftstick:b11,rightstick:b12,dpup:h0.1,dpdown:h0.4,dpleft:h0.8,dpright:h0.2

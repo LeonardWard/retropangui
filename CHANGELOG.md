@@ -31,13 +31,15 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - **[ ] ES ROM 목록 비디오 미리보기 재생 안 됨** — 미리보기 비디오 있는 항목에서 재생
   불가. libVLC 또는 ffmpeg/mpv 플레이어 연동 점검 필요.
 
+## [0.7] — 2026-06-14
+
 ### Fixed
 
-- **RetroArch RGUI 메뉴 입력 불가 — `all_users_control_menu = "true"` 적용**
+- **RetroArch 메뉴 입력 불가 — `all_users_control_menu = "true"` 적용**
 
   `all_users_control_menu = "false"` 상태에서 vdev 포트 매핑이 어긋나면
-  port 1이 아닌 포트의 패드는 RGUI 메뉴를 조작할 수 없어 패드+키보드 동시
-  불응 현상 발생. `"true"`로 변경해 모든 포트의 패드가 메뉴를 조작하도록 허용.
+  port 1이 아닌 포트의 패드는 RA 메뉴를 조작할 수 없어 패드 입력 불응 현상 발생.
+  `"true"`로 변경해 모든 포트의 패드가 메뉴를 조작하도록 허용.
   (근본 원인: RA 1.22에서 `input_player_num` autoconf 키가 무시됨 →
   vdev가 원하는 포트가 아닌 번호에 배정될 수 있음)
 
@@ -53,11 +55,37 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
-- **RetroArch 메뉴 드라이버 xmb / ozone / materialui 빌드 활성화**
+- **RetroArch 메뉴 드라이버 ozone / xmb / materialui 빌드 활성화**
 
-  rgui만 빌드되던 것을 4종으로. `retroarch.cfg`의 `menu_driver`로 선택.
+  rgui만 빌드되던 것을 4종으로. 기본값 `menu_driver = "ozone"` 전환.
   **기존 빌드에 적용 시 `rm -rf buildroot/output/build/retroarch-*` 후
-  전체 빌드 필요** (vlc-dirclean과 같은 이유)
+  전체 빌드 필요** (증분 빌드는 configure 옵션 변경 미반영)
+
+- **retroarch-assets 패키지 — Ozone/XMB UI 에셋**
+
+  Ozone 메뉴에 필요한 폰트·텍스처·아이콘을 별도 패키지로 설치.
+  `BR2_PACKAGE_RETROARCH_ASSETS=y`, 설치 경로 `/opt/retropangui/share/retroarch/`.
+  `build.sh`에 `retroarch-assets` shallow clone 추가.
+
+- **RetroArch 추가 언어 빌드 (`HAVE_LANGEXTRA=1`)**
+
+  한국어 포함 추가 언어 번역 파일 빌드 활성화.
+
+- **GC 매핑 수정 — Xbox 360 추가, P1-P4 vdev 버튼/축 인덱스 수정**
+
+  `gamecontrollerdb.txt`에 Xbox 360(045e:028e) SDL GC 매핑 추가.
+  P1-P4 vdev 매핑을 실측 joydev 인덱스로 정정:
+  back→b8, start→b9, guide→b10, thumbl→b11, thumbr→b12,
+  LT→a2(ABS_Z), RT→a5(ABS_RZ), RX→a3, RY→a4.
+
+- **`system.language` → RA `user_language` 자동 매핑**
+
+  `apply_retropangui_conf.sh`에서 시스템 언어 설정 변경 시
+  RetroArch `user_language` 값도 자동 동기화 (ko→10, ja→1 등 18개 언어).
+
+- **키보드 PageUp/PageDown ES 입력 추가**
+
+  `es_input.cfg`에 PageUp(pageup) / PageDown(pagedown) 키 매핑 추가.
 
 ### Changed
 
@@ -68,6 +96,11 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
   - system_settings(시간대) / network_settings(SSH) → `parent: system`
   - video_settings(스무딩/정수) / game_settings(되감기/자동저장) → `parent: game`
   - advanced_settings(조이패드 드라이버/통합) → `parent: controller`
+
+- **`config_save_on_exit = "false"` 기본값 추가**
+
+  RA 종료 시 cfg 자동 저장을 비활성화해 S95retropangui의 joypad index 설정이
+  덮어씌워지는 문제 방지.
 
 ## [0.6] — 2026-06-13
 
