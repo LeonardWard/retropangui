@@ -8,6 +8,29 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Todo (미구현 — 우선순위 순)
+
+- **[ ] FDS 시스템 ES 인식** — Famicom Disk System 폴더 추가 후 ES 캐러셀에 미표시.
+  es_systems.cfg 항목 + 코어(Nestopia/Mesen) 매핑 필요.
+
+- **[ ] 사운드 볼륨 조절 작동 안 함** — ES 사운드 설정의 볼륨 슬라이더가 실제 볼륨 미반영.
+  apply_retropangui_conf.sh 또는 ES amixer 호출 점검 필요.
+
+- **[ ] ES 현재 재생 중 BGM 표시** — BGM 재생 시 우측 하단 footer에 곡 제목 표시.
+  긴 제목은 가로 스크롤. MusicManager에 현재 트랙명 노출 API 추가 + footer UI 수정.
+
+- **[ ] NTP 시각/시간대 정확도** — 부팅 후 현재 시각 부정확, retropangui.conf 시간대 값
+  미반영 가능성. apply_retropangui_conf.sh 시간대 처리 + chrony/ntpd 동작 점검.
+
+- **[ ] ES 스크린샷 시스템 메뉴** — 리코박스/바토세라처럼 캐러셀에 "Screenshots" 항목
+  추가, 촬영된 스크린샷을 시스템별로 분류하여 브라우징 가능하도록.
+
+- **[ ] 스크린샷 → slate 테마 배경** — 스크린샷을 시스템별 폴더에 저장하고,
+  retropangui-slate 테마에서 해당 시스템 스크린샷을 배경 이미지로 사용.
+
+- **[ ] ES ROM 목록 비디오 미리보기 재생 안 됨** — 미리보기 비디오 있는 항목에서 재생
+  불가. libVLC 또는 ffmpeg/mpv 플레이어 연동 점검 필요.
+
 ### Fixed
 
 - **RetroArch RGUI 메뉴 입력 불가 — `all_users_control_menu = "true"` 적용**
