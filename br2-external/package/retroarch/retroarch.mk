@@ -82,7 +82,8 @@ define RETROARCH_BUILD_CMDS
 		AR="$(TARGET_AR)" \
 		RANLIB="$(TARGET_RANLIB)" \
 		STRIP="$(TARGET_STRIP)" \
-		OBJCOPY="$(TARGET_OBJCOPY)"
+		OBJCOPY="$(TARGET_OBJCOPY)" \
+		HAVE_LANGEXTRA=1
 endef
 
 define RETROARCH_INSTALL_TARGET_CMDS
@@ -91,6 +92,12 @@ define RETROARCH_INSTALL_TARGET_CMDS
 	mkdir -p $(TARGET_DIR)/opt/retropangui/libretrocores
 	$(INSTALL) -D -m 0644 $(@D)/retroarch.cfg \
 		$(TARGET_DIR)/opt/retropangui/retroarch.cfg
+	# Ozone/XMB 메뉴에 필요한 assets (폰트, 텍스처 등)
+	# rootfs-overlay의 파일이 나중에 덮어쓰므로 폰트 교체 가능
+	mkdir -p $(TARGET_DIR)/opt/retropangui/share/retroarch
+	if [ -d $(@D)/media ]; then \
+		cp -r $(@D)/media/. $(TARGET_DIR)/opt/retropangui/share/retroarch/; \
+	fi
 endef
 
 $(eval $(generic-package))

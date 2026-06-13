@@ -120,8 +120,9 @@ BR2_PACKAGE_FREETYPE=y
 BR2_PACKAGE_LIBCURL=y
 BR2_PACKAGE_RAPIDJSON=y
 
-# RetroArch v1.22.2 + libretro cores
+# RetroArch v1.22.2 + libretro cores + UI assets
 BR2_PACKAGE_RETROARCH=y
+BR2_PACKAGE_RETROARCH_ASSETS=y
 BR2_PACKAGE_LIBRETRO_CORES=y
 
 # EmulationStation
