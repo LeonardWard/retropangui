@@ -640,6 +640,13 @@ static void on_gamepad_event(const GP_Event *ev, void *userdata)
             }
         }
         memset(&g_prev[slot], 0, sizeof(GP_State));
+        /* 무선 컨트롤러는 연결 직후 SDL2 axis가 -32768로 보고될 수 있음.
+         * RA가 vdev를 열었을 때 "LS 최대 좌/상 고정" 상태로 인식하는 것을 방지하기 위해
+         * center 상태(all axes=0, all buttons=0)를 즉시 emit한다. */
+        if (g_vdev[slot]) {
+            GP_State center = {0};
+            gp_vdev_write_state(g_vdev[slot], &center, NULL);
+        }
         fprintf(stderr, "gamepad_daemon: slot %d connected: %s\n",
                 slot, ev->pad_name ? ev->pad_name : "(unknown)");
         break;

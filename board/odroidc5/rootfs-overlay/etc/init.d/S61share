@@ -79,21 +79,26 @@ case "$1" in
                     "${SHARE_MOUNT}/screenshots" \
                     "${SHARE_MOUNT}/music" \
                     "${SHARE_MOUNT}/system/emulationstation"
-                # 번들 게임 복사 (아직 없을 때만)
-                BUNDLED="/usr/share/retropangui/bundled-roms"
-                if [ -d "${BUNDLED}" ]; then
-                    for sys in nes snes; do
-                        if [ -d "${BUNDLED}/${sys}" ]; then
-                            cp -n "${BUNDLED}/${sys}"/* "${SHARE_MOUNT}/roms/${sys}/" 2>/dev/null || true
-                        fi
-                    done
-                    echo ">>> 번들 게임 복사 완료"
-                fi
-                # 번들 배경음악 복사 (아직 없을 때만)
-                BGMUSIC="/usr/share/retropangui/bundled-bgmusic"
-                if [ -d "${BGMUSIC}" ]; then
-                    cp -n "${BGMUSIC}"/* "${SHARE_MOUNT}/music/" 2>/dev/null || true
-                    echo ">>> 번들 배경음악 복사 완료"
+                # 번들 콘텐츠 복사 — sentinel이 없을 때만 (첫 포맷 시 1회)
+                # 재부팅마다 실행하면 사용자가 지운 파일이 복구되므로 sentinel로 보호
+                # factory reset: sentinel 삭제 후 재부팅하면 재복사됨
+                SENTINEL="${SHARE_MOUNT}/.bundled_initialized"
+                if [ ! -f "${SENTINEL}" ]; then
+                    BUNDLED="/usr/share/retropangui/bundled-roms"
+                    if [ -d "${BUNDLED}" ]; then
+                        for sys in nes snes; do
+                            if [ -d "${BUNDLED}/${sys}" ]; then
+                                cp -n "${BUNDLED}/${sys}"/* "${SHARE_MOUNT}/roms/${sys}/" 2>/dev/null || true
+                            fi
+                        done
+                        echo ">>> 번들 게임 복사 완료"
+                    fi
+                    BGMUSIC="/usr/share/retropangui/bundled-bgmusic"
+                    if [ -d "${BGMUSIC}" ]; then
+                        cp -n "${BGMUSIC}"/* "${SHARE_MOUNT}/music/" 2>/dev/null || true
+                        echo ">>> 번들 배경음악 복사 완료"
+                    fi
+                    touch "${SENTINEL}"
                 fi
                 echo ">>> Share 마운트 완료: ${SHARE_MOUNT} (${SHARE_PART})"
             fi
