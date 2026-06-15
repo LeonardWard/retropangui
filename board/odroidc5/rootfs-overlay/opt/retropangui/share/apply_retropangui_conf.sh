@@ -166,7 +166,7 @@ while IFS='=' read -r raw_key raw_val; do
             esac
             ;;
         system.volume)
-            amixer -q sset Master "${val}%" 2>/dev/null || true
+            amixer -q sset 'Master' "${val}%" 2>/dev/null || true
             ;;
         system.*)
             # 미처리 system.* 항목은 무시

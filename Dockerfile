@@ -12,7 +12,7 @@ RUN apt-get update && apt-get install -y \
     wget ca-certificates cpio rsync unzip file python3 python3-pip python3-dev \
     mtools dosfstools parted fdisk \
     qemu-user-static debootstrap \
-    libarchive-zip-perl xxd imagemagick \
+    libarchive-zip-perl xxd imagemagick ffmpeg \
     pkg-config libfl-dev libacl1-dev libarchive-dev \
     locales \
     default-jre-headless && \

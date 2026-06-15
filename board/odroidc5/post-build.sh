@@ -144,4 +144,25 @@ python3 "${BOARD_DIR}/generate_es_systems.py" \
     --retroarch "/opt/retropangui/bin/retroarch" \
     --config    "/retropangui/share/system/retroarch/retroarch.cfg"
 
+# 스플래시 비디오 생성 (PNG → MP4, softvol ALSA 초기화용)
+SPLASH_SRC="${BOARD_DIR}/splash/splash-src.png"
+SPLASH_DST="${TARGET_DIR}/opt/retropangui/splash/splash.mp4"
+if [ -f "${SPLASH_SRC}" ] && command -v ffmpeg >/dev/null 2>&1; then
+    echo ">>> 스플래시 비디오 생성 중..."
+    mkdir -p "$(dirname "${SPLASH_DST}")"
+    ffmpeg -y -loop 1 -i "${SPLASH_SRC}" \
+        -f lavfi -i anullsrc=r=44100:cl=stereo \
+        -t 4 \
+        -vf "scale=1920:1080:force_original_aspect_ratio=decrease,pad=1920:1080:(ow-iw)/2:(oh-ih)/2:color=white,fade=t=in:st=0:d=0.5,fade=t=out:st=3.2:d=0.5" \
+        -c:v libx264 -preset fast -crf 23 -pix_fmt yuv420p \
+        -c:a aac -ar 44100 -ac 2 \
+        -shortest \
+        "${SPLASH_DST}" 2>/dev/null
+    echo ">>> 스플래시 비디오 완료: ${SPLASH_DST}"
+elif [ ! -f "${SPLASH_SRC}" ]; then
+    echo ">>> WARNING: 스플래시 소스 이미지 없음 (${SPLASH_SRC}), 스킵"
+else
+    echo ">>> WARNING: ffmpeg 없음, 스플래시 비디오 생성 스킵 (Dockerfile에 ffmpeg 추가 필요)"
+fi
+
 echo ">>> post-build.sh 완료"
