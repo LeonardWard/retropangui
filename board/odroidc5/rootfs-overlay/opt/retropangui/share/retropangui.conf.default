@@ -67,9 +67,10 @@ emulationstation.AudioDevice=AED master volume
 # [하드웨어 고정] input_driver=udev 는 KMS/DRM 환경 필수값.
 # S95retropangui가 부팅 시 강제 적용하므로 여기서 설정하지 않음.
 
-# 조이패드 드라이버: linuxraw = /dev/input/jsX 인덱스 순서 사용 (가상 패드 슬롯 보장)
-# udev 로 변경 시 jsX 번호 대신 evdev 번호로 열거되어 순서가 달라질 수 있음
-global.input_joypad_driver=linuxraw
+# 조이패드 드라이버: udev = evdev(/dev/input/eventX) 직접 접근 → EV_FF rumble 지원
+# linuxraw(/dev/input/jsX)는 FF 이벤트를 전송하지 않아 진동이 동작하지 않음
+# joypad_index는 eventX 번호 순 열거 기준 (물리 패드 event6 → idx 0, P1 event12 → idx 1)
+global.input_joypad_driver=udev
 
 # 조이패드로 RetroArch 메뉴(RGUI) 탐색 허용
 global.menu_unified_controls=true
