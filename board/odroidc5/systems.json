@@ -10,6 +10,16 @@
     ]
   },
   {
+    "name": "fds",
+    "fullname": "Famicom Disk System",
+    "extensions": ".fds .zip .7z",
+    "platform": "fds",
+    "theme": "fds",
+    "cores": [
+      { "name": "nestopia", "fullname": "Nestopia", "module_id": "lr-nestopia", "priority": 1 }
+    ]
+  },
+  {
     "name": "snes",
     "fullname": "Super Nintendo Entertainment System",
     "extensions": ".bin .smc .sfc .fig .swc .mgd .zip .7z",
