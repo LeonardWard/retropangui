@@ -9,13 +9,13 @@
 menus:
   - id: system_settings
     label: "SYSTEM SETTINGS"
-    parent: system   # ES SYSTEM SETTINGS 메뉴에 항목으로 삽입됨
+    parent: system
     items:
       - id: rp.locale
         label: "LOCALE"
         type: list
         conf_key: system.language
-        restart: system
+        restart: none
         options:
           - value: ko_KR
             label: "한국어 (Korean)"
@@ -26,11 +26,17 @@ menus:
           - value: zh_CN
             label: "中文简体 (Chinese)"
 
+      - id: rp.hostname
+        label: "HOSTNAME"
+        type: input
+        conf_key: system.hostname
+        restart: none
+
       - id: rp.timezone
         label: "TIMEZONE"
         type: list
         conf_key: system.timezone
-        restart: system
+        restart: none
         options:
           - value: Asia/Seoul
             label: "Seoul (KST)"
@@ -40,6 +46,25 @@ menus:
             label: "Paris (CET)"
           - value: America/Los_Angeles
             label: "Los Angeles (PST)"
+
+  - id: ui_settings
+    label: "UI SETTINGS"
+    parent: ui
+    items:
+      - id: rp.language
+        label: "LANGUAGE"
+        type: list
+        conf_key: emulationstation.Language
+        restart: es
+        options:
+          - value: en_US
+            label: "English (US)"
+          - value: ko_KR
+            label: "한국어 (Korean)"
+          - value: ja_JP
+            label: "日本語 (Japanese)"
+          - value: zh_CN
+            label: "中文简体 (Chinese)"
 
   - id: network_settings
     label: "NETWORK SETTINGS"
@@ -53,7 +78,7 @@ menus:
 
   - id: video_settings
     label: "VIDEO SETTINGS"
-    parent: game     # ES GAME SETTINGS 메뉴에 항목으로 삽입됨
+    parent: game
     items:
       - id: rp.video_smooth
         label: "SMOOTH SCALING"
@@ -91,7 +116,7 @@ menus:
 
   - id: advanced_settings
     label: "ADVANCED SETTINGS"
-    parent: controller   # ES CONTROLLER SETTINGS 메뉴에 항목으로 삽입됨
+    parent: controller
     items:
       - id: rp.input_joypad_driver
         label: "JOYPAD DRIVER"
