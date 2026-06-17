@@ -34,7 +34,12 @@ system.hostname=retropangui
 system.ssh=true
 
 # Samba 파일 공유 활성화
-system.samba=false
+system.samba=true
+
+# Wi-Fi (미구현, 향후 지원 예정)
+# system.wifi.enabled=false
+# system.wifi.ssid=
+# system.wifi.key=
 
 
 ## Section C - Audio ##
