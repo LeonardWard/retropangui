@@ -20,7 +20,7 @@ case "$1" in
         # 2. Google HTTPS Date 헤더로 즉시 시각 보정 — ntpd 시작 전 포그라운드 실행
         # openntpd는 오프셋이 수십 일 이상이면 step을 거부하므로
         # ntpd 시작 전에 반드시 현재 시각에 가깝게 맞춰야 한다.
-        HTTPDATE=$(wget --no-check-certificate --timeout=10 --server-response \
+        HTTPDATE=$(wget --no-check-certificate --timeout=2 --server-response \
             -O /dev/null https://www.google.com 2>&1 \
             | grep -i "Date:" | head -1 | sed "s/.*Date: //")
         if [ -n "$HTTPDATE" ]; then
