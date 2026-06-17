@@ -11,21 +11,6 @@ menus:
     label: "SYSTEM SETTINGS"
     parent: system
     items:
-      - id: rp.locale
-        label: "LOCALE"
-        type: list
-        conf_key: system.language
-        restart: none
-        options:
-          - value: ko_KR
-            label: "한국어 (Korean)"
-          - value: en_US
-            label: "English (US)"
-          - value: ja_JP
-            label: "日本語 (Japanese)"
-          - value: zh_CN
-            label: "中文简体 (Chinese)"
-
       - id: rp.hostname
         label: "HOSTNAME"
         type: input
