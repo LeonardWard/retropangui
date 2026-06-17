@@ -81,9 +81,6 @@ global.menu_unified_controls=true
 
 ## Section E - EmulationStation ##
 
-# ES 메뉴 언어 (en_US, ko_KR) — 부팅 시 주입, 메뉴에서 변경 시 역기록됨
-emulationstation.Language=ko_KR
-
 # UI 테마 (Settings 맵 키 이름: ThemeSet)
 emulationstation.ThemeSet=retropangui-slate
 

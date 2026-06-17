@@ -39,7 +39,7 @@ menus:
       - id: rp.language
         label: "LANGUAGE"
         type: list
-        conf_key: emulationstation.Language
+        conf_key: system.language
         restart: es
         options:
           - value: en_US
