@@ -66,7 +66,7 @@ case "$1" in
                 esac
                 def_key="$(echo "${def_key}" | sed 's/[[:space:]]*$//')"
                 [ -z "${def_key}" ] && continue
-                if ! grep -q "^${def_key}=" "${CONF_USER}" 2>/dev/null; then
+                if ! grep -q "^${def_key}[[:space:]]*=" "${CONF_USER}" 2>/dev/null; then
                     echo "${def_key}=${def_val}" >> "${CONF_USER}"
                     echo "[retropangui] conf 병합: ${def_key}"
                 fi
