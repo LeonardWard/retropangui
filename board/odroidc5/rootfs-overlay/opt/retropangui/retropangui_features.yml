@@ -32,6 +32,16 @@ menus:
           - value: America/Los_Angeles
             label: "Los Angeles (PST)"
 
+  - id: audio_settings
+    label: "AUDIO SETTINGS"
+    parent: sound
+    items:
+      - id: rp.audio_enable
+        label: "AUDIO"
+        type: toggle
+        conf_key: global.audio_enable
+        restart: none
+
   - id: ui_settings
     label: "UI SETTINGS"
     parent: ui
