@@ -30,11 +30,11 @@ system.hostname=retropangui
 
 ## Section B - Network ##
 
-# SSH 활성화 (0=비활성, 1=활성)
-system.ssh=false
+# SSH 활성화
+system.ssh=true
 
 # Samba (파일 공유) 활성화
-# system.samba=0
+system.samba=false
 
 # Wi-Fi (해당 기기에서 미지원 시 무시됨)
 # system.wifi.enabled=0
