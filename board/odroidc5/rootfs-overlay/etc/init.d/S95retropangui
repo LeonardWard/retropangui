@@ -58,6 +58,19 @@ case "$1" in
                 echo "[retropangui] 기본 설정 파일 없음: ${CONF_DEFAULT}"
                 exit 0
             fi
+        elif [ -f "${CONF_DEFAULT}" ]; then
+            # conf.default에 새로 추가된 키가 user conf에 없으면 병합
+            while IFS='=' read -r def_key def_val || [ -n "${def_key}" ]; do
+                case "${def_key}" in
+                    '#'*|'') continue ;;
+                esac
+                def_key="$(echo "${def_key}" | sed 's/[[:space:]]*$//')"
+                [ -z "${def_key}" ] && continue
+                if ! grep -q "^${def_key}=" "${CONF_USER}" 2>/dev/null; then
+                    echo "${def_key}=${def_val}" >> "${CONF_USER}"
+                    echo "[retropangui] conf 병합: ${def_key}"
+                fi
+            done < "${CONF_DEFAULT}"
         fi
 
         # 첫 부팅: retroarch.cfg 없으면 기본값에서 복사
