@@ -42,6 +42,84 @@ menus:
         conf_key: global.audio_enable
         restart: none
 
+      - id: rp.volume
+        label: "SYSTEM VOLUME"
+        type: slider
+        conf_key: system.volume
+        min: 0
+        max: 100
+        step: 1
+        unit: "%"
+        restart: none
+
+      - id: rp.audio_card
+        label: "AUDIO CARD"
+        type: list
+        conf_key: global.audio_device
+        restart: none
+        options:
+          - value: default
+            label: "default"
+          - value: sysdefault
+            label: "sysdefault"
+          - value: dmix
+            label: "dmix"
+          - value: hw
+            label: "hw"
+          - value: plughw
+            label: "plughw"
+          - value: "null"
+            label: "null"
+
+      - id: rp.audio_device
+        label: "AUDIO DEVICE"
+        type: list
+        conf_key: emulationstation.AudioDevice
+        restart: none
+        options:
+          - value: PCM
+            label: "PCM"
+          - value: HDMI
+            label: "HDMI"
+          - value: Headphone
+            label: "Headphone"
+          - value: Speaker
+            label: "Speaker"
+          - value: Master
+            label: "Master"
+          - value: Digital
+            label: "Digital"
+          - value: Analogue
+            label: "Analogue"
+
+      - id: rp.enable_sounds
+        label: "ENABLE NAVIGATION SOUNDS"
+        type: toggle
+        conf_key: emulationstation.EnableSounds
+        restart: none
+
+      - id: rp.video_audio
+        label: "ENABLE VIDEO AUDIO"
+        type: toggle
+        conf_key: emulationstation.VideoAudio
+        restart: none
+
+      - id: rp.bgm
+        label: "FRONTEND MUSIC"
+        type: toggle
+        conf_key: emulationstation.BackgroundMusic
+        restart: none
+
+      - id: rp.audio_latency
+        label: "RA AUDIO LATENCY"
+        type: slider
+        conf_key: global.audio_latency
+        min: 16
+        max: 256
+        step: 8
+        unit: "ms"
+        restart: none
+
   - id: ui_settings
     label: "UI SETTINGS"
     parent: ui
