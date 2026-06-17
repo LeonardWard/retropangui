@@ -75,6 +75,7 @@ menus:
         type: toggle
         conf_key: system.ssh
         restart: system
+        default: "1"
 
   - id: video_settings
     label: "VIDEO SETTINGS"
