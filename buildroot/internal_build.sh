@@ -190,6 +190,10 @@ rm -f output/build/mali-ddk-r44p0/.stamp_built \
 echo "  - gamepad-mgr 강제 재빌드 (로컬 소스 변경 반영)..."
 rm -rf output/build/gamepad-mgr-*/
 
+# bundled-bgmusic: .mid 파일 변경이 stamp로 감지 안 되므로 install stamp만 삭제
+echo "  - bundled-bgmusic 재설치 (BGM 파일 변경 반영)..."
+rm -f output/build/bundled-bgmusic-1.0/.stamp_target_installed
+
 JOBS="${BUILD_JOBS:-$(nproc)}"
 echo "  - 전체 빌드 시작 (병렬 작업 수: ${JOBS})"
 echo "  - 로그: /home/builder/output/build.log"
