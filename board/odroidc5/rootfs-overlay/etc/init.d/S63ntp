@@ -1,9 +1,11 @@
 #!/bin/sh
-# S49ntp - 시각 초기화 및 NTP 동기화
+# S63ntp - 시각 초기화 및 NTP 동기화
+# S61share(마운트) 이후 실행 → fake-hwclock을 share 파티션에 영구 보존 가능
 # fake-hwclock: RTC 없는 시스템에서 에폭(1970) 기동 방지
 DAEMON=/usr/sbin/ntpd
 PIDFILE=/run/ntpd.pid
-FAKEHWCLOCK=/etc/fake-hwclock
+# share 파티션에 저장 — 플래시 후에도 시각 유지
+FAKEHWCLOCK=/retropangui/share/system/fake-hwclock
 
 [ -x "${DAEMON}" ] || exit 0
 
@@ -13,7 +15,7 @@ case "$1" in
         if [ -f "${FAKEHWCLOCK}" ]; then
             date -u -s "$(cat ${FAKEHWCLOCK})" 2>/dev/null
         else
-            date -u -s "2026-05-01 00:00:00" 2>/dev/null
+            date -u -s "2026-06-17 00:00:00" 2>/dev/null
         fi
 
         echo "Starting NTP..."
@@ -46,6 +48,7 @@ case "$1" in
     stop)
         echo "Stopping NTP..."
         # 종료 전 현재 시각 저장 (다음 부팅을 위한 fake-hwclock)
+        mkdir -p "$(dirname ${FAKEHWCLOCK})"
         date -u +"%Y-%m-%d %H:%M:%S" > "${FAKEHWCLOCK}" 2>/dev/null
         kill $(cat "${PIDFILE}" 2>/dev/null) 2>/dev/null || true
         rm -f "${PIDFILE}"
