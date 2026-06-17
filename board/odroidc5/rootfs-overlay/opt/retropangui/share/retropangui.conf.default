@@ -48,8 +48,8 @@ system.samba=true
 # 예: default, hw:0,0, hw:1,0
 global.audio_device=default
 
-# 오디오 활성화 (0=비활성, 1=활성)
-global.audio_enable=1
+# 오디오 활성화
+global.audio_enable=true
 
 # 오디오 레이턴시 (ms) - 낮을수록 반응 빠르나 끊김 위험
 global.audio_latency=32
