@@ -9,11 +9,11 @@ FAKEHWCLOCK=/etc/fake-hwclock
 
 case "$1" in
     start)
-        # 저장된 시각 복원 (없으면 빌드 근사 날짜로 초기화)
+        # 저장된 시각 복원 (UTC로 저장됐으므로 -u 명시)
         if [ -f "${FAKEHWCLOCK}" ]; then
-            date -s "$(cat ${FAKEHWCLOCK})" 2>/dev/null
+            date -u -s "$(cat ${FAKEHWCLOCK})" 2>/dev/null
         else
-            date -s "2026-05-01 00:00:00" 2>/dev/null
+            date -u -s "2026-05-01 00:00:00" 2>/dev/null
         fi
 
         echo "Starting NTP..."
@@ -37,9 +37,10 @@ case "$1" in
                     for(i=1;i<=12;i++) if(m[i]==$3) mon=sprintf("%02d",i)
                     printf "%s-%s-%s %s\n", $4, mon, $2, $5
                 }')
-                date -s "$SETDATE" 2>/dev/null
+                date -u -s "$SETDATE" 2>/dev/null
             fi
-            "${DAEMON}" -p "${PIDFILE}"
+            # -s: 첫 동기화 시 큰 오차도 즉각 step 보정 (slew 대기 없음)
+            "${DAEMON}" -s -p "${PIDFILE}"
         } &
         ;;
     stop)
