@@ -3,6 +3,7 @@
 # libretro-cores - NES, SNES, PSX, DOS, ScummVM libretro cores for RetroArch
 #
 # 버전 관리:
+#   fceumm       : 커밋 6d5a9e59 (2025-04, libretro/libretro-fceumm, FDS BIOS 불필요)
 #   nestopia     : 커밋 b0fd87dd (2024-01, libretro/nestopia, 별도 릴리즈 태그 없음)
 #   snes9x       : 커밋 e755ae51 (2025-04, libretro/snes9x, 별도 릴리즈 태그 없음)
 #   pcsx_rearmed : 릴리즈 태그 r26l (libretro/pcsx_rearmed)
@@ -33,6 +34,23 @@ LIBRETRO_CROSS_OPTS = \
 	RANLIB="$(TARGET_RANLIB)" \
 	STRIP="$(TARGET_STRIP)" \
 	OBJCOPY="$(TARGET_OBJCOPY)"
+
+################################################################################
+# fceumm - NES/Famicom/FDS (BIOS 불필요, FDS 내장 에뮬레이션 지원)
+################################################################################
+
+FCEUMM_SITE = https://github.com/libretro/libretro-fceumm
+FCEUMM_VERSION = 6d5a9e59e79aded79e3d1e3945f01a82b399de8b
+
+define LIBRETRO_CORES_BUILD_FCEUMM
+	test -d $(@D)/libretro-fceumm/.git || \
+		git clone --filter=blob:none $(FCEUMM_SITE) $(@D)/libretro-fceumm
+	git -C $(@D)/libretro-fceumm checkout $(FCEUMM_VERSION)
+	$(TARGET_MAKE_ENV) $(MAKE) -C $(@D)/libretro-fceumm \
+		-f Makefile.libretro \
+		$(LIBRETRO_CROSS_OPTS) \
+		platform=unix
+endef
 
 ################################################################################
 # nestopia - NES/Famicom
@@ -146,6 +164,7 @@ endef
 
 define LIBRETRO_CORES_BUILD_CMDS
 	mkdir -p $(@D)
+	$(call LIBRETRO_CORES_BUILD_FCEUMM)
 	$(call LIBRETRO_CORES_BUILD_NESTOPIA)
 	$(call LIBRETRO_CORES_BUILD_SNES9X)
 	$(call LIBRETRO_CORES_BUILD_PCSX)
@@ -155,6 +174,11 @@ endef
 
 define LIBRETRO_CORES_INSTALL_TARGET_CMDS
 	mkdir -p $(CORES_INSTALL_DIR)
+
+	mkdir -p $(CORES_INSTALL_DIR)/lr-fceumm
+	$(INSTALL) -m 0644 $(@D)/libretro-fceumm/fceumm_libretro.so \
+		$(CORES_INSTALL_DIR)/lr-fceumm/
+	echo "fceumm_libretro.so" > $(CORES_INSTALL_DIR)/lr-fceumm/.installed_so_name
 
 	mkdir -p $(CORES_INSTALL_DIR)/lr-nestopia
 	$(INSTALL) -m 0644 $(@D)/nestopia/libretro/nestopia_libretro.so \

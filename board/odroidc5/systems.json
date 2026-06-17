@@ -6,7 +6,8 @@
     "platform": "nes",
     "theme": "nes",
     "cores": [
-      { "name": "nestopia", "fullname": "Nestopia", "module_id": "lr-nestopia", "priority": 1 }
+      { "name": "fceumm", "fullname": "FCEUmm", "module_id": "lr-fceumm", "priority": 1 },
+      { "name": "nestopia", "fullname": "Nestopia", "module_id": "lr-nestopia", "priority": 2 }
     ]
   },
   {
@@ -16,7 +17,8 @@
     "platform": "fds",
     "theme": "fds",
     "cores": [
-      { "name": "nestopia", "fullname": "Nestopia", "module_id": "lr-nestopia", "priority": 1 }
+      { "name": "fceumm", "fullname": "FCEUmm", "module_id": "lr-fceumm", "priority": 1 },
+      { "name": "nestopia", "fullname": "Nestopia", "module_id": "lr-nestopia", "priority": 2 }
     ]
   },
   {

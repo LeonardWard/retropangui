@@ -110,6 +110,9 @@ define MALI_DDK_INSTALL_TARGET_CMDS
 	ln -sf libMali.so $(TARGET_DIR)/usr/lib/libGLESv1_CM.so.1
 	ln -sf libMali.so $(TARGET_DIR)/usr/lib/libGLESv1_CM.so.1.1.0
 
+	# Vulkan ICD 호환 symlink — mali.json이 libMaliVulkan.so.1을 참조하는 버전에서도 동작하도록
+	ln -sf libMali.so $(TARGET_DIR)/usr/lib/libMaliVulkan.so.1
+
 	# 빈 디렉토리 정리
 	rmdir $(TARGET_DIR)/usr/lib/aarch64-linux-gnu 2>/dev/null || true
 endef
