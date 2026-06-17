@@ -40,7 +40,7 @@ case "$1" in
                 # 이전 RA가 kill되면 VT1 키보드가 K_MEDIUMRAW에 묶여 linuxraw 재초기화 실패
                 # 매 ES 실행 전 K_XLATE(ASCII)로 리셋해서 linuxraw가 깨끗하게 초기화되도록 함
                 kbd_mode -a 2>/dev/null || true
-                openvt -c 1 -s -w -- sh -c "emulationstation --no-splash >> /var/log/es-launcher.log 2>&1"
+                openvt -c 1 -s -w -- sh -c "emulationstation --no-splash --debug >> /var/log/es-launcher.log 2>&1"
                 if [ -f /tmp/es-sysrestart ]; then
                     reboot
                 fi
