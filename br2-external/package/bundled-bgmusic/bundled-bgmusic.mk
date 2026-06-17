@@ -28,6 +28,7 @@ endef
 define BUNDLED_BGMUSIC_INSTALL_TARGET_CMDS
 	mkdir -p $(TARGET_DIR)/usr/share/soundfonts
 	$(INSTALL) -m 0644 $(@D)/MT32.sf2 $(TARGET_DIR)/usr/share/soundfonts/MT32.sf2
+	rm -rf $(TARGET_DIR)/usr/share/retropangui/bundled-bgmusic
 	mkdir -p $(TARGET_DIR)/usr/share/retropangui/bundled-bgmusic
 	$(INSTALL) -m 0644 $(BUNDLED_BGMUSIC_PKGDIR)/*.mid \
 		$(TARGET_DIR)/usr/share/retropangui/bundled-bgmusic/
