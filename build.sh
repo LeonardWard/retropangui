@@ -29,7 +29,7 @@ DEVICE="${1:-${DEVICE:-odroidc5}}"
 if [ -z "${VERSION}" ]; then
     # 현재 커밋에 붙은 태그가 있으면 가져오고, 없으면 가장 가까운 태그 기반으로 이름 생성
     # (Git 저장소가 아니거나 태그가 하나도 없으면 에러 방지를 위해 기본값 1.0.0 사용)
-    VERSION=$(git describe --tags --always 2>/dev/null || echo "1.0.0")
+    VERSION=$(git describe --tags --long --always 2>/dev/null || echo "1.0.0")
 fi
 
 echo "============================================"
