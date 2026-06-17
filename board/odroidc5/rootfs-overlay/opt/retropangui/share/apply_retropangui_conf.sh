@@ -117,6 +117,28 @@ while IFS='=' read -r raw_key raw_val; do
                 *)
                     es_set "string" "${es_key}" "${val}" ;;
             esac
+            # emulationstation.Language → RA user_language 동기화
+            if [ "${es_key}" = "Language" ]; then
+                case "${val}" in
+                    ko*) ra_lang=10 ;;
+                    ja*) ra_lang=1  ;;
+                    fr*) ra_lang=2  ;;
+                    es*) ra_lang=3  ;;
+                    de*) ra_lang=4  ;;
+                    it*) ra_lang=5  ;;
+                    nl*) ra_lang=6  ;;
+                    pt_BR*) ra_lang=7 ;;
+                    pt*) ra_lang=8  ;;
+                    ru*) ra_lang=9  ;;
+                    zh_TW*|zh_HK*) ra_lang=11 ;;
+                    zh*) ra_lang=12 ;;
+                    pl*) ra_lang=14 ;;
+                    tr*) ra_lang=18 ;;
+                    uk*) ra_lang=26 ;;
+                    *)   ra_lang=0  ;;
+                esac
+                ra_set "user_language" "${ra_lang}"
+            fi
             ;;
 
         # ---------------------------------------------------------------
@@ -135,27 +157,8 @@ while IFS='=' read -r raw_key raw_val; do
             fi
             ;;
         system.language)
+            # OS 로케일만 변경 (RA 언어는 emulationstation.Language 기준)
             echo "LANG=${val}.UTF-8" > /etc/locale.conf
-            # system.language → RA user_language 자동 매핑
-            case "${val}" in
-                ko*) ra_lang=10 ;;
-                ja*) ra_lang=1  ;;
-                fr*) ra_lang=2  ;;
-                es*) ra_lang=3  ;;
-                de*) ra_lang=4  ;;
-                it*) ra_lang=5  ;;
-                nl*) ra_lang=6  ;;
-                pt_BR*) ra_lang=7 ;;
-                pt*) ra_lang=8  ;;
-                ru*) ra_lang=9  ;;
-                zh_TW*|zh_HK*) ra_lang=11 ;;
-                zh*) ra_lang=12 ;;
-                pl*) ra_lang=14 ;;
-                tr*) ra_lang=18 ;;
-                uk*) ra_lang=26 ;;
-                *)   ra_lang=0  ;;
-            esac
-            ra_set "user_language" "${ra_lang}"
             ;;
         system.ssh)
             case "${val}" in
