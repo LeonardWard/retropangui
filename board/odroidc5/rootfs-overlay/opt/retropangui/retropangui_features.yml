@@ -59,7 +59,13 @@ menus:
         label: "SSH"
         type: toggle
         conf_key: system.ssh
-        restart: system
+        restart: none
+
+      - id: rp.samba
+        label: "SAMBA"
+        type: toggle
+        conf_key: system.samba
+        restart: none
 
   - id: video_settings
     label: "VIDEO SETTINGS"

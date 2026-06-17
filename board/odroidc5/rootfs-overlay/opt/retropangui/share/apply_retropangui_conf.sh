@@ -168,6 +168,14 @@ while IFS='=' read -r raw_key raw_val; do
                     [ -f /etc/init.d/S50sshd ] && /etc/init.d/S50sshd stop 2>/dev/null ;;
             esac
             ;;
+        system.samba)
+            case "${val}" in
+                1|yes|true)
+                    [ -f /etc/init.d/S91ksmbd ] && /etc/init.d/S91ksmbd start 2>/dev/null ;;
+                0|no|false)
+                    [ -f /etc/init.d/S91ksmbd ] && /etc/init.d/S91ksmbd stop 2>/dev/null ;;
+            esac
+            ;;
         system.volume)
             amixer -q sset 'Master' "${val}%" 2>/dev/null || true
             ;;
