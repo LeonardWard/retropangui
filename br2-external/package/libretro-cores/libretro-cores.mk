@@ -3,7 +3,7 @@
 # libretro-cores - NES, SNES, PSX, DOS, ScummVM libretro cores for RetroArch
 #
 # 버전 관리:
-#   fceumm       : 커밋 6d5a9e59 (2025-04, libretro/libretro-fceumm, FDS BIOS 불필요)
+#   fceumm       : 커밋 c0c52ad0 (2026-06, libretro/libretro-fceumm, FDS BIOS 불필요)
 #   nestopia     : 커밋 b0fd87dd (2024-01, libretro/nestopia, 별도 릴리즈 태그 없음)
 #   snes9x       : 커밋 e755ae51 (2025-04, libretro/snes9x, 별도 릴리즈 태그 없음)
 #   pcsx_rearmed : 릴리즈 태그 r26l (libretro/pcsx_rearmed)
@@ -40,7 +40,7 @@ LIBRETRO_CROSS_OPTS = \
 ################################################################################
 
 FCEUMM_SITE = https://github.com/libretro/libretro-fceumm
-FCEUMM_VERSION = 6d5a9e59e79aded79e3d1e3945f01a82b399de8b
+FCEUMM_VERSION = c0c52ad0eb36cdbfc66e9bdb72efc83103e85e22
 
 define LIBRETRO_CORES_BUILD_FCEUMM
 	test -d $(@D)/libretro-fceumm/.git || \
