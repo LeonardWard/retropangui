@@ -53,7 +53,7 @@ menus:
 
   - id: network_settings
     label: "NETWORK SETTINGS"
-    parent: system
+    parent: network
     items:
       - id: rp.ssh
         label: "SSH"
