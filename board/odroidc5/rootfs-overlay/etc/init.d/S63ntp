@@ -14,7 +14,7 @@ case "$1" in
         if [ -f "${FAKEHWCLOCK}" ]; then
             date -u -s "$(cat ${FAKEHWCLOCK})" 2>/dev/null
         else
-            date -u -s "2026-06-17 00:00:00" 2>/dev/null
+            date -u -s "2026-06-18 00:00:00" 2>/dev/null
         fi
 
         # 2. Google HTTPS Date 헤더로 즉시 시각 보정 — ntpd 시작 전 포그라운드 실행

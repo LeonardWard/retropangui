@@ -1,0 +1,3 @@
+#!/bin/sh
+# disabled — S63ntp가 NTP를 담당함 (share 파티션 마운트 이후)
+exit 0
