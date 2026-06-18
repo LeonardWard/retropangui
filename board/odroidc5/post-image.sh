@@ -8,9 +8,8 @@ BINARIES_DIR="${BINARIES_DIR:-output/images}"
 
 echo ">>> RETROPANGUI-C5 post-image script 실행"
 
-# u-boot, boot.ini를 images 디렉토리로 복사
+# u-boot를 images 디렉토리로 복사
 cp "${BOARD_DIR}/u-boot.bin.sd.bin" "${BINARIES_DIR}/"
-cp "${BOARD_DIR}/boot.ini" "${BINARIES_DIR}/"
 
 # boot.scr 생성 (boot.cmd 소스에서 mkimage로 컴파일)
 MKIMAGE=$(find "${HOST_DIR}" -name mkimage -type f 2>/dev/null | head -1)
