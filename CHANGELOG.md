@@ -10,17 +10,8 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Todo (미구현 — 우선순위 순)
 
-- **[ ] FDS 시스템 ES 인식** — Famicom Disk System 폴더 추가 후 ES 캐러셀에 미표시.
-  es_systems.cfg 항목 + 코어(Nestopia/Mesen) 매핑 필요.
-
-- **[ ] 사운드 볼륨 조절 작동 안 함** — ES 사운드 설정의 볼륨 슬라이더가 실제 볼륨 미반영.
-  apply_retropangui_conf.sh 또는 ES amixer 호출 점검 필요.
-
-- **[ ] ES 현재 재생 중 BGM 표시** — BGM 재생 시 우측 하단 footer에 곡 제목 표시.
-  긴 제목은 가로 스크롤. MusicManager에 현재 트랙명 노출 API 추가 + footer UI 수정.
-
-- **[ ] NTP 시각/시간대 정확도** — 부팅 후 현재 시각 부정확, retropangui.conf 시간대 값
-  미반영 가능성. apply_retropangui_conf.sh 시간대 처리 + chrony/ntpd 동작 점검.
+- **[ ] ES BGM 현재 재생 곡 제목 footer 표시** — BGM 재생 시 우측 하단 footer에 곡 제목 표시.
+  긴 제목은 가로 스크롤. MusicManager에 현재 트랙명 노출 API 추가 + footer UI 수정 (ES C++).
 
 - **[ ] ES 스크린샷 시스템 메뉴** — 리코박스/바토세라처럼 캐러셀에 "Screenshots" 항목
   추가, 촬영된 스크린샷을 시스템별로 분류하여 브라우징 가능하도록.
@@ -28,8 +19,50 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - **[ ] 스크린샷 → slate 테마 배경** — 스크린샷을 시스템별 폴더에 저장하고,
   retropangui-slate 테마에서 해당 시스템 스크린샷을 배경 이미지로 사용.
 
-- **[ ] ES ROM 목록 비디오 미리보기 재생 안 됨** — 미리보기 비디오 있는 항목에서 재생
-  불가. libVLC 또는 ffmpeg/mpv 플레이어 연동 점검 필요.
+---
+
+## [0.11] — 2026-06-18
+
+### Fixed
+
+- **SSH/SAMBA 토글이 항상 OFF로 표시되던 문제** (ES SwitchComponent 생성자 버그)
+
+  `SwitchComponent(Window*, bool state)` 생성자가 `state` 파라미터를 무시하고
+  항상 `off.svg`로 초기화하여 conf에 `true`가 저장되어 있어도 UI에 OFF로 표시됨.
+  → 생성자에서 `mState ? ":/on.svg" : ":/off.svg"` 로 수정.
+
+- **Language 등 ES 설정이 부팅 후 반영되지 않던 문제** (Settings::loadFile `<config>` 래퍼)
+
+  `apply_retropangui_conf.sh`의 `es_set()`은 `<config>…</config>` 래퍼 안에 저장하는데
+  ES의 `Settings::loadFile()`은 루트 레벨에서만 읽어 Language 등 설정이 무시됨.
+  → `doc.child("config")` 유무를 감지해 래퍼 안팎 모두 읽도록 수정.
+
+- **S95 conf 병합: `key = value` 형식도 매칭** — 이전에는 `key=value`만 인식하여
+  공백 있는 형식을 누락하던 문제 수정.
+
+- **S95 conf.default 누락 키 자동 보완** — 업데이트로 conf.default에 새 키가 추가됐을 때
+  기존 retropangui.conf에 자동으로 보충.
+
+- **SSH 토글 기본값 ON** (`system.ssh=true`)
+
+### Added
+
+- **SOUND SETTINGS YAML 전환** — AUDIO on/off 토글 포함. conf `global.audio_enable`에 기록.
+
+- **NETWORK SETTINGS에 SAMBA 토글 추가** — conf `system.samba` 연동.
+
+- **ES 디버그 로그 상시 활성화** — `S99emulationstation`에서 `--debug` 플래그 추가.
+  ES 로그는 `/root/.emulationstation/es_log.txt`에 기록됨.
+
+- **번들 BGM 교체** — FF5/LossOfMoral 제거, 6곡 추가.
+
+### Changed
+
+- **NTP 스크립트 순서 변경** — `S49ntp` → `S63ntp` (share 파티션 마운트 이후 실행으로 순서 보장).
+  네트워크 없으면 즉시 건너뜀 (wget timeout 2s, 루프 제거).
+
+- **LOCALE/LANGUAGE 역할 분리** — `system.language` → OS locale (`/etc/locale.conf`) 전용.
+  ES UI + RA 언어는 `emulationstation.Language` 기준으로 분리.
 
 ## [0.7] — 2026-06-14
 
