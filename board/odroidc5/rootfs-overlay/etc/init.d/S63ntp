@@ -17,31 +17,34 @@ case "$1" in
             date -u -s "2026-06-18 00:00:00" 2>/dev/null
         fi
 
-        # 2. Google HTTPS Date 헤더로 즉시 시각 보정 — ntpd 시작 전 포그라운드 실행
-        # openntpd는 오프셋이 수십 일 이상이면 step을 거부하므로
-        # ntpd 시작 전에 반드시 현재 시각에 가깝게 맞춰야 한다.
-        if route -n 2>/dev/null | grep -q "^0\.0\.0\.0"; then
-            HTTPDATE=$(wget --no-check-certificate --server-response \
-                -O /dev/null https://www.google.com 2>&1 \
-                | grep -i "Date:" | head -1 | sed "s/.*Date: //")
-        fi
-        if [ -n "$HTTPDATE" ]; then
-            SETDATE=$(echo "$HTTPDATE" | awk '{
-                split("Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec", m, " ")
-                for(i=1;i<=12;i++) if(m[i]==$3) mon=sprintf("%02d",i)
-                printf "%s-%s-%s %s\n", $4, mon, $2, $5
-            }')
-            if [ -n "$SETDATE" ]; then
-                date -u -s "$SETDATE" 2>/dev/null
-                echo "NTP: Google Date 시각 설정: $SETDATE UTC"
-            fi
-        fi
-
-        # 4. ntpd 시작 — 이미 시각이 맞으므로 소폭 오프셋만 slew/step 처리
+        # 2. 네트워크 대기 + Google Date 보정 + ntpd 시작 — 부팅 지연 방지로 백그라운드
+        # openntpd -s 옵션이 제거됐으므로 ntpd 시작 전 반드시 시각을 맞춰야 함
         echo "Starting NTP..."
         kill $(cat "${PIDFILE}" 2>/dev/null) 2>/dev/null || true
         rm -f "${PIDFILE}"
-        "${DAEMON}" -s -p "${PIDFILE}"
+        {
+            i=0
+            while [ $i -lt 30 ]; do
+                route -n 2>/dev/null | grep -q "^0\.0\.0\.0" && break
+                sleep 1
+                i=$((i + 1))
+            done
+            HTTPDATE=$(wget --no-check-certificate --server-response \
+                -O /dev/null https://www.google.com 2>&1 \
+                | grep -i "Date:" | head -1 | sed "s/.*Date: //")
+            if [ -n "$HTTPDATE" ]; then
+                SETDATE=$(echo "$HTTPDATE" | awk '{
+                    split("Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec", m, " ")
+                    for(i=1;i<=12;i++) if(m[i]==$3) mon=sprintf("%02d",i)
+                    printf "%s-%s-%s %s\n", $4, mon, $2, $5
+                }')
+                if [ -n "$SETDATE" ]; then
+                    date -u -s "$SETDATE" 2>/dev/null
+                    echo "NTP: Google Date 시각 설정: $SETDATE UTC"
+                fi
+            fi
+            "${DAEMON}" -p "${PIDFILE}"
+        } &
         ;;
     stop)
         echo "Stopping NTP..."
