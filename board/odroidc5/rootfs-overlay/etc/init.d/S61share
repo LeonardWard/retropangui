@@ -3,14 +3,18 @@
 # 1단계: 파티션 생성 후 재부팅
 # 2단계: 재부팅 후 포맷 및 마운트
 
-# 현재 루트 파티션에서 장치 경로를 동적으로 탐지 (SD/eMMC 모두 대응)
-# findmnt 대신 busybox awk 사용 — findmnt(util-linux)는 이미지에 미포함
-ROOT_PART=$(awk '$2 == "/" && $1 != "rootfs" {print $1; exit}' /proc/mounts)
-# 폴백: /proc/mounts가 /dev/root(커널 앨리어스)를 반환하거나 비어있으면 /proc/cmdline 사용
-if [ -z "${ROOT_PART}" ] || [ "${ROOT_PART}" = "/dev/root" ]; then
-    ROOT_PART=$(tr ' ' '\n' < /proc/cmdline | grep '^root=' | sed 's/root=//')
+# 장치 경로 탐지 (SD/eMMC 모두 대응)
+# overlayfs 루트에서는 / = "overlay"이므로 루트 파티션으로 탐지 불가.
+# initramfs가 boot 파티션(p1)을 /boot에 마운트해두므로 거기서 역추적.
+BOOT_PART=$(awk '$2 == "/boot" {print $1; exit}' /proc/mounts)
+if [ -n "${BOOT_PART}" ]; then
+    DEVICE=$(echo "${BOOT_PART}" | sed 's/p[0-9]*$//')
+else
+    # 폴백: 예전 ext4 루트 방식 (squashfs 전환 전 이미지 호환)
+    ROOT_PART=$(awk '$2 == "/" && $1 != "rootfs" && $1 != "overlay" {print $1; exit}' /proc/mounts)
+    [ -z "${ROOT_PART}" ] && ROOT_PART=$(tr ' ' '\n' < /proc/cmdline | grep '^root=' | sed 's/root=//')
+    DEVICE=$(echo "${ROOT_PART}" | sed 's/p[0-9]*$//')
 fi
-DEVICE=$(echo "${ROOT_PART}" | sed 's/p[0-9]*$//')
 SHARE_MOUNT="/retropangui/share"
 PHASE_FLAG="/etc/.share_format_needed"
 

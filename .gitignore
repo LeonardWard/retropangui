@@ -22,6 +22,9 @@ output/
 build_*.log
 *.log
 
+# boot.scr 은 post-image.sh 가 boot.cmd 에서 자동 생성
+board/odroidc5/boot.scr
+
 # fetch-blobs.sh 임시 다운로드 파일
 Packages.gz
 *.deb

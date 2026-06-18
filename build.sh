@@ -7,20 +7,23 @@
 #   VERSION=1.1.0 ./build.sh odroidc5 # 버전 지정
 #   ./build.sh --partial              # 부분 빌드: gamepad-mgr + board 파일 + 이미지 재패킹만
 #   ./build.sh odroidc5 --partial     # 기기 지정 + 부분 빌드
+#   ./build.sh --ota                  # OTA 빌드: squashfs 파일만 생성 (img 생성 없음)
+#   ./build.sh odroidc5 --ota         # 기기 지정 + OTA 빌드
 
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 
-# --partial 옵션 파싱
+# 옵션 파싱
 PARTIAL=0
+OTA=0
 ARGS=()
 for arg in "$@"; do
-    if [ "$arg" = "--partial" ] || [ "$arg" = "-p" ]; then
-        PARTIAL=1
-    else
-        ARGS+=("$arg")
-    fi
+    case "$arg" in
+        --partial|-p) PARTIAL=1 ;;
+        --ota|-o)     OTA=1 ;;
+        *)            ARGS+=("$arg") ;;
+    esac
 done
 set -- "${ARGS[@]}"
 
@@ -36,7 +39,7 @@ echo "============================================"
 echo "  RETROPANGUI 빌드 시작"
 echo "  기기: ${DEVICE}"
 echo "  버전: ${VERSION}"
-echo "  모드: $([ $PARTIAL -eq 1 ] && echo '부분 빌드 (gamepad-mgr + 이미지)' || echo '전체 빌드')"
+  echo "  모드: $([ $OTA -eq 1 ] && echo OTA빌드 || { [ $PARTIAL -eq 1 ] && echo 부분빌드 || echo 전체빌드; })"
 echo "  defconfig: retropangui-${DEVICE}_defconfig"
 echo "============================================"
 
@@ -123,6 +126,7 @@ docker run --rm \
     -e VERSION="${VERSION}" \
     -e BUILD_JOBS="$(nproc)" \
     -e PARTIAL="${PARTIAL}" \
+    -e OTA="${OTA}" \
     -v "${SCRIPT_DIR}/buildroot:/home/builder/buildroot" \
     -v "${SCRIPT_DIR}/configs:/home/builder/configs" \
     -v "${SCRIPT_DIR}/board:/home/builder/board" \
@@ -132,12 +136,19 @@ docker run --rm \
     retropangui-builder \
     bash /home/builder/buildroot/internal_build.sh
 
+
 echo "[3/3] 빌드 완료!"
 echo "============================================"
-echo "최종 이미지: ${SCRIPT_DIR}/output/retropangui-${DEVICE}-${VERSION}.img"
+if [ $OTA -eq 1 ]; then
+    echo "OTA squashfs: ${SCRIPT_DIR}/output/retropangui-${DEVICE}-${VERSION}.squashfs"
+    echo "SHA256:       ${SCRIPT_DIR}/output/retropangui-${DEVICE}-${VERSION}.squashfs.sha256"
+    echo ""
+    echo "파일서버에 배포하려면:"
+    echo "  bash scripts/push-ota.sh output/retropangui-${DEVICE}-${VERSION}.squashfs"
+else
+    echo "최종 이미지: ${SCRIPT_DIR}/output/retropangui-${DEVICE}-${VERSION}.img"
+    echo ""
+    echo "SD 카드에 플래싱하려면:"
+    echo "  bash scripts/flash-sd.sh output/retropangui-${DEVICE}-${VERSION}.img"
+fi
 echo "============================================"
-echo ""
-echo "SD 카드에 플래싱하려면:"
-echo "  bash scripts/flash-sd.sh output/retropangui-${DEVICE}-${VERSION}.img"
-
-

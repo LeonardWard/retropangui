@@ -8,7 +8,7 @@ BINARIES_DIR="${BINARIES_DIR:-output/images}"
 
 echo ">>> RETROPANGUI-C5 post-image script 실행"
 
-# u-boot, boot.ini를 images 디렉토리로 복사 (extlinux.conf 제거: boot.scr가 SD/eMMC 모두 처리)
+# u-boot, boot.ini를 images 디렉토리로 복사
 cp "${BOARD_DIR}/u-boot.bin.sd.bin" "${BINARIES_DIR}/"
 cp "${BOARD_DIR}/boot.ini" "${BINARIES_DIR}/"
 
@@ -19,6 +19,16 @@ if [ -z "${MKIMAGE}" ]; then
 fi
 ${MKIMAGE} -A arm64 -O linux -T script -C none -n "RETROPANGUI-C5 Boot Script" \
     -d "${BOARD_DIR}/boot.cmd" "${BINARIES_DIR}/boot.scr"
+
+# squashfs → retropangui.squashfs (genimage.cfg가 이 이름으로 참조)
+cp "${BINARIES_DIR}/rootfs.squashfs" "${BINARIES_DIR}/retropangui.squashfs"
+
+# overlay 파티션 이미지 생성 (ext4, 1GB) — genimage가 ext4 타입을 미지원할 수 있으므로 직접 생성
+if [ ! -f "${BINARIES_DIR}/overlay.ext4" ]; then
+    echo ">>> overlay.ext4 생성 중 (1GB)..."
+    dd if=/dev/zero of="${BINARIES_DIR}/overlay.ext4" bs=1M count=1024 status=progress
+    mkfs.ext4 -L overlay -F "${BINARIES_DIR}/overlay.ext4"
+fi
 
 # genimage를 사용하여 SD 카드 이미지 조립
 rm -rf "${BINARIES_DIR}/genimage.tmp"

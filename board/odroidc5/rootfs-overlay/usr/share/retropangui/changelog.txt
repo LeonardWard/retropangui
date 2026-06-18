@@ -1,0 +1,28 @@
+RetroPangUI 업데이트 내역
+========================
+
+[v0.1] 2026-06-18
+-----------------
+OTA 무선 업데이트 시스템 도입
+  - EmulationStation 메뉴에서 업데이트 확인 및 설치 가능
+  - SHA256 무결성 검증으로 안전한 업데이트 보장
+  - 이전 버전 자동 백업 (retropangui.squashfs.old)
+  - 업데이트 실패 시 자동 롤백
+
+overlayfs 기반 루트 파일시스템 적용
+  - squashfs 읽기 전용 루트 (빠른 부팅, 손상 방지)
+  - ext4 overlay 파티션으로 설정 영구 보존
+  - initramfs를 통한 안전한 마운트 순서 보장
+
+컨트롤러 지원 개선
+  - RetroPangUI 가상 패드 P1-P4 지원
+  - Twin USB Joystick 어댑터 자동 인식
+  - RetroArch 포트 매핑 자동 구성
+
+파티션 구성 변경
+  - p1: boot (FAT32, 3GB) — 커널, squashfs, uInitrd
+  - p2: overlay (ext4, 1GB) — 설정, 저장 데이터
+  - p3: share (exFAT) — ROMs, BIOS, 세이브 파일
+
+
+이 창을 닫으려면 [A] 또는 [Start] 버튼을 누르세요.

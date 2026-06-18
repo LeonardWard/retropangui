@@ -1,0 +1,173 @@
+#!/bin/ash
+
+[ -c /dev/console ] || mknod -m 600 /dev/console c 5 1
+exec >/dev/console 2>&1
+
+echo "RetroPangUI initramfs v0.5"
+
+panic() {
+    echo "!!! INITRAMFS PANIC: $1"
+    if [ -n "$LOGF" ]; then
+        echo "PANIC: $1" >> "$LOGF" 2>/dev/null
+        sync; sleep 2; sync
+    fi
+    while true; do sleep 60; done
+}
+
+LOGF=""
+log() { echo "$1"; [ -n "$LOGF" ] && echo "$1" >> "$LOGF" 2>/dev/null; }
+
+# ─── [1/7] 기본 마운트 ───────────────────────────────────────────
+echo ">>> [1/7] proc/sys/dev 마운트"
+mount -t proc none /proc     && echo "  proc OK" || { echo "  proc FAIL"; panic "proc 마운트 실패"; }
+mount -t sysfs none /sys     && echo "  sys OK"  || { echo "  sys FAIL";  panic "sys 마운트 실패"; }
+mount -t devtmpfs none /dev  && echo "  devtmpfs OK" || {
+    echo "  devtmpfs 실패 — mdev 사용"
+    echo /bin/mdev > /proc/sys/kernel/hotplug 2>/dev/null
+    mdev -s && echo "  mdev OK" || echo "  mdev FAIL"
+}
+
+# ─── [DIAG] 장치 확인 ────────────────────────────────────────────
+echo ">>> [DIAG] 블록 장치:"
+ls /dev/mmcblk* 2>/dev/null || echo "  없음 (devtmpfs 준비 전일 수 있음)"
+
+# ─── [DIAG] ext4 p2에 조기 로그 (FAT32 전, 파일시스템 독립) ────
+mkdir -p /dbg
+for D in /dev/mmcblk0p2 /dev/mmcblk1p2 /dev/mmcblk2p2; do
+    [ -b "$D" ] || continue
+    if mount -t ext4 -o rw "$D" /dbg 2>/dev/null; then
+        printf "v0.5 started uptime=%s\ndevs=%s\n" \
+            "$(cat /proc/uptime)" \
+            "$(ls /dev/mmcblk* 2>/dev/null | tr '\n' ' ')" \
+            > /dbg/.retropangui_init_debug 2>/dev/null
+        sync; sleep 1; sync
+        umount /dbg 2>/dev/null
+        echo "  ext4 조기 로그 → $D"
+        break
+    fi
+done
+
+# ─── [2/7] boot 파티션 탐색 (FAT32, p1) ─────────────────────────
+echo ">>> [2/7] boot 파티션 탐색 (최대 30초)..."
+mkdir -p /boot_root
+BOOT_DEV=""
+i=0
+while [ $i -lt 30 ]; do
+    i=$((i+1))
+    mdev -s 2>/dev/null
+    for DEV in /dev/mmcblk0p1 /dev/mmcblk1p1 /dev/mmcblk2p1 /dev/mmcblk3p1; do
+        [ -b "$DEV" ] || continue
+        # 오류 메시지를 숨기지 않음 (화면에 보임)
+        if mount -t vfat -o rw "$DEV" /boot_root; then
+            if [ -f /boot_root/retropangui.squashfs ]; then
+                BOOT_DEV="$DEV"
+                echo "  → boot: $DEV"
+                break 2
+            fi
+            echo "  $DEV: squashfs 없음, 건너뜀"
+            umount /boot_root 2>/dev/null
+        fi
+    done
+    [ $((i % 5)) -eq 0 ] && echo "  대기 중... ${i}s"
+    sleep 1
+done
+
+if [ -z "$BOOT_DEV" ]; then
+    echo "!!! 최종 블록 장치 목록:"
+    ls -la /dev/mmcblk* 2>/dev/null || echo "  없음"
+    panic "boot 파티션 마운트 실패 (30초 대기 후)"
+fi
+
+LOGF="/boot_root/init.log"
+{
+    echo "=== RetroPangUI initramfs v0.5 ==="
+    echo "boot: $BOOT_DEV"
+    ls /dev/mmcblk* 2>/dev/null
+} > "$LOGF"
+sync; sleep 1; sync
+echo "  init.log 기록 완료"
+
+OTA_APPLIED=0
+
+# ─── [3/7] OTA 확인 ──────────────────────────────────────────────
+echo ">>> [3/7] OTA 확인..."
+if [ -f /boot_root/update/retropangui.update ]; then
+    SHA256_FILE="/boot_root/update/retropangui.update.sha256"
+    VALID=0
+    if [ -f "$SHA256_FILE" ]; then
+        EXPECTED=$(awk '{print $1}' "$SHA256_FILE")
+        ACTUAL=$(sha256sum /boot_root/update/retropangui.update | awk '{print $1}')
+        [ "$EXPECTED" = "$ACTUAL" ] && VALID=1
+    fi
+    if [ "$VALID" = "1" ]; then
+        log "    OTA 적용 중..."
+        cp /boot_root/retropangui.squashfs /boot_root/retropangui.squashfs.old 2>/dev/null || true
+        mv /boot_root/update/retropangui.update /boot_root/retropangui.squashfs
+        rm -f "$SHA256_FILE"
+        sync
+        OTA_APPLIED=1
+        log "    OTA 완료"
+    else
+        log "    OTA 검증 실패 — 기존 squashfs 사용"
+        rm -rf /boot_root/update/ 2>/dev/null
+        sync
+    fi
+fi
+
+# ─── [4/7] squashfs 마운트 ───────────────────────────────────────
+echo ">>> [4/7] squashfs 마운트..."
+mkdir -p /new_root
+if mount -t squashfs -o loop /boot_root/retropangui.squashfs /new_root; then
+    echo "  squashfs OK"
+    log "squashfs OK"
+else
+    echo "  squashfs 실패 — .old 롤백 시도..."
+    mount -t squashfs -o loop /boot_root/retropangui.squashfs.old /new_root \
+        && { echo "  .old 롤백 성공"; log "squashfs rollback OK"; } \
+        || panic "squashfs 마운트 실패 (현재 + .old 모두)"
+fi
+
+# ─── [5/7] overlay ext4 마운트 ──────────────────────────────────
+echo ">>> [5/7] overlay ext4 마운트..."
+OVERLAY_DEV="${BOOT_DEV%p1}p2"
+echo "  overlay 장치: $OVERLAY_DEV"
+mkdir -p /overlay
+if mount -t ext4 "$OVERLAY_DEV" /overlay; then
+    echo "  overlay OK"
+    log "overlay OK: $OVERLAY_DEV"
+else
+    panic "overlay 마운트 실패: $OVERLAY_DEV"
+fi
+mkdir -p /overlay/upper /overlay/work
+
+# ─── [6/7] overlayfs ─────────────────────────────────────────────
+echo ">>> [6/7] overlayfs..."
+mkdir -p /merged
+if mount -t overlay overlay \
+    -o lowerdir=/new_root,upperdir=/overlay/upper,workdir=/overlay/work \
+    /merged; then
+    echo "  overlayfs OK"
+    log "overlayfs OK"
+else
+    panic "overlayfs 마운트 실패"
+fi
+
+if [ "$OTA_APPLIED" = "1" ]; then
+    NEW_VER=$(cat /merged/etc/retropangui-version 2>/dev/null || echo "unknown")
+    echo "$NEW_VER" > /merged/etc/.ota-changelog-pending 2>/dev/null || true
+fi
+
+# ─── [7/7] switch_root ───────────────────────────────────────────
+echo ">>> [7/7] switch_root..."
+log "switch_root 직전"
+sync; sleep 1; sync
+
+mkdir -p /merged/proc /merged/sys /merged/dev /merged/boot /merged/overlay
+mount --move /proc    /merged/proc
+mount --move /sys     /merged/sys
+mount --move /dev     /merged/dev
+mount --move /boot_root /merged/boot
+mount --move /overlay /merged/overlay
+
+exec switch_root /merged /sbin/init
+panic "switch_root 실패"

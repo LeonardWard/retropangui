@@ -1,0 +1,7 @@
+config BR2_PACKAGE_RETROPANGUI_INITRAMFS
+	bool "retropangui-initramfs"
+	help
+	  Builds a minimal busybox static binary and packages it with the
+	  initramfs init script as a uInitrd image. The initramfs mounts
+	  the squashfs root, overlayfs, and performs OTA update handling
+	  before switch_root.
