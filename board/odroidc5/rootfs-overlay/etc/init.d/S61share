@@ -1,7 +1,5 @@
 #!/bin/sh
-# S61share - Share 파티션(exFAT) 생성 및 마운트
-# 1단계: 파티션 생성 후 재부팅
-# 2단계: 재부팅 후 포맷 및 마운트
+# S61share - Share 파티션(exFAT) 생성, 포맷, 마운트 (재부팅 없이 1회 부팅에서 처리)
 
 # 장치 경로 탐지 (SD/eMMC 모두 대응)
 # overlayfs 루트에서는 / = "overlay"이므로 루트 파티션으로 탐지 불가.
@@ -39,8 +37,8 @@ case "$1" in
         [ -n "${SHARE_PART}" ] && [ -b "${SHARE_PART}" ] && HAVE_PART=1
         [ -f "${PHASE_FLAG}" ] && HAVE_FLAG=1
 
-        if [ "${HAVE_PART}" = "0" ] && [ "${HAVE_FLAG}" = "0" ]; then
-            # 1단계: p2 끝 다음 섹터부터 파티션 생성 후 재부팅
+        if [ "${HAVE_PART}" = "0" ]; then
+            # p3 없음: fdisk로 생성 후 partprobe로 즉시 반영 (재부팅 불필요)
             echo ">>> Share 파티션 생성 중..."
             DEV_NAME=$(basename "${DEVICE}")
             P2_START=$(cat /sys/block/${DEV_NAME}/${DEV_NAME}p2/start)
@@ -48,25 +46,30 @@ case "$1" in
             P3_START=$((P2_START + P2_SIZE))
             echo ">>> p3 시작 섹터: ${P3_START}"
             printf "n\np\n3\n%s\n\nw\n" "${P3_START}" | fdisk "${DEVICE}"
-            # 커널 파티션 테이블 갱신 후 쓰기 완전히 마치고 재부팅
-            partprobe "${DEVICE}" 2>/dev/null || true
             sync
-            sync
-            touch "${PHASE_FLAG}"
-            echo ">>> 재부팅합니다..."
-            sleep 3
-            reboot
+            partprobe "${DEVICE}" 2>/dev/null || blockdev --rereadpt "${DEVICE}" 2>/dev/null || true
+            # 커널이 새 파티션을 인식할 때까지 대기 (최대 10초)
+            i=0
+            while [ $i -lt 10 ]; do
+                SHARE_PART=$(find_share_part)
+                [ -n "${SHARE_PART}" ] && [ -b "${SHARE_PART}" ] && break
+                sleep 1; i=$((i+1))
+            done
+            echo ">>> 파티션 생성 완료: $(find_share_part)"
         fi
 
         SHARE_PART=$(find_share_part)
 
-        if [ "${HAVE_FLAG}" = "1" ] && [ -n "${SHARE_PART}" ] && [ -b "${SHARE_PART}" ]; then
-            # 2단계: exFAT 포맷
-            echo ">>> Share 파티션 exFAT 포맷 중... (${SHARE_PART})"
-            mkfs.exfat -n "share" "${SHARE_PART}"
-            rm -f "${PHASE_FLAG}"
-            echo ">>> 포맷 완료"
+        if [ -n "${SHARE_PART}" ] && [ -b "${SHARE_PART}" ]; then
+            # exFAT 포맷 여부 확인: blkid로 타입 체크, 없으면 포맷
+            FS_TYPE=$(blkid -o value -s TYPE "${SHARE_PART}" 2>/dev/null || true)
+            if [ "${FS_TYPE}" != "exfat" ]; then
+                echo ">>> Share 파티션 exFAT 포맷 중... (${SHARE_PART})"
+                mkfs.exfat -n "share" "${SHARE_PART}"
+                echo ">>> 포맷 완료"
+            fi
         fi
+        rm -f "${PHASE_FLAG}"
 
         # 마운트
         SHARE_PART=$(find_share_part)
