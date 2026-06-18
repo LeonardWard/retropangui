@@ -1,3 +1,4 @@
+source "$BR2_EXTERNAL_C5_PANGUI_PATH/package/retropangui-initramfs/Config.in"
 source "$BR2_EXTERNAL_C5_PANGUI_PATH/package/gamepad-mgr/Config.in"
 source "$BR2_EXTERNAL_C5_PANGUI_PATH/package/mali-ddk/Config.in"
 source "$BR2_EXTERNAL_C5_PANGUI_PATH/package/freeimage/Config.in"

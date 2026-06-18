@@ -7,6 +7,7 @@ BUILDROOT_VERSION="${BUILDROOT_VERSION:-2024.02.1}"
 DEVICE="${DEVICE:-odroidc5}"
 VERSION="${VERSION:-1.0.0}"
 PARTIAL="${PARTIAL:-0}"
+OTA="${OTA:-0}"
 DEFCONFIG="retropangui-${DEVICE}_defconfig"
 
 cd /home/builder/buildroot
@@ -20,9 +21,49 @@ echo "  Buildroot 내부 빌드 스크립트"
 echo "  Buildroot 버전: ${BUILDROOT_VERSION}"
 echo "  기기: ${DEVICE}"
 echo "  프로젝트 버전: ${VERSION}"
-echo "  모드: $([ "$PARTIAL" = "1" ] && echo '부분 빌드' || echo '전체 빌드')"
+echo "  모드: $([ "$OTA" = "1" ] && echo OTA빌드 || { [ "$PARTIAL" = "1" ] && echo 부분빌드 || echo 전체빌드; })"
 echo "  defconfig: ${DEFCONFIG}"
 echo "============================================"
+
+# OTA 빌드: emulationstation 재빌드 + squashfs만 생성 (img 없음)
+if [ "$OTA" = "1" ]; then
+    BR2_EXTERNAL_PATH=/home/builder/br2-external
+    echo "[OTA 빌드] board 파일 복사 중..."
+    mkdir -p board/${DEVICE}
+    rsync -a --delete /home/builder/board/${DEVICE}/ board/${DEVICE}/
+    mkdir -p board/${DEVICE}/rootfs-overlay/etc
+    echo "${VERSION}" > board/${DEVICE}/rootfs-overlay/etc/retropangui-version
+
+    echo "[OTA 빌드] emulationstation 소스 최신화 중..."
+    if [ -d "output/build/emulationstation-main/.git" ]; then
+        git -C output/build/emulationstation-main fetch --depth=1 origin main 2>&1 || true
+        git -C output/build/emulationstation-main reset --hard origin/main 2>&1 || true
+    fi
+
+    echo "[OTA 빌드] emulationstation 재빌드 중..."
+    rm -f output/build/emulationstation-main/.stamp_built           output/build/emulationstation-main/.stamp_target_installed
+    JOBS="${BUILD_JOBS:-$(nproc)}"
+    make BR2_EXTERNAL="${BR2_EXTERNAL_PATH}" -j${JOBS} emulationstation 2>&1 | tee /home/builder/output/build-ota.log
+
+    echo "[OTA 빌드] squashfs 재생성 중..."
+    make BR2_EXTERNAL="${BR2_EXTERNAL_PATH}" rootfs-squashfs 2>&1 | tee -a /home/builder/output/build-ota.log
+
+    OUTPUT_SQ="retropangui-${DEVICE}-${VERSION}.squashfs"
+    if [ -f output/images/rootfs.squashfs ]; then
+        cp output/images/rootfs.squashfs /home/builder/output/${OUTPUT_SQ}
+        sha256sum /home/builder/output/${OUTPUT_SQ} | awk '{print $1}'             > /home/builder/output/${OUTPUT_SQ}.sha256
+        echo "============================================"
+        echo "  OTA 빌드 성공!"
+        echo "  squashfs: ${OUTPUT_SQ}"
+        echo "  크기:     $(du -h /home/builder/output/${OUTPUT_SQ} | cut -f1)"
+        echo "  SHA256:   $(cat /home/builder/output/${OUTPUT_SQ}.sha256)"
+        echo "============================================"
+    else
+        echo "ERROR: rootfs.squashfs 생성 실패!"
+        exit 1
+    fi
+    exit 0
+fi
 
 # 부분 빌드: board 파일 복사 + gamepad-mgr 재빌드 + 이미지 재패킹만 수행
 if [ "$PARTIAL" = "1" ]; then
@@ -193,6 +234,14 @@ rm -rf output/build/gamepad-mgr-*/
 # bundled-bgmusic: .mid 파일 변경이 stamp로 감지 안 되므로 install stamp만 삭제
 echo "  - bundled-bgmusic 재설치 (BGM 파일 변경 반영)..."
 rm -f output/build/bundled-bgmusic-1.0/.stamp_target_installed
+
+echo "  - emulationstation 소스 최신화 중..."
+if [ -d "output/build/emulationstation-main/.git" ]; then
+    git -C output/build/emulationstation-main fetch --depth=1 origin main 2>&1 || true
+    git -C output/build/emulationstation-main reset --hard origin/main 2>&1 || true
+    rm -f output/build/emulationstation-main/.stamp_built \
+          output/build/emulationstation-main/.stamp_target_installed
+fi
 
 JOBS="${BUILD_JOBS:-$(nproc)}"
 echo "  - 전체 빌드 시작 (병렬 작업 수: ${JOBS})"
