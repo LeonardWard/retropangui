@@ -57,24 +57,37 @@ fi
 OTA_APPLIED=0
 
 # ─── share 파티션(p3) 초기 생성 ──────────────────────────────────
-# boot 파티션 탐색 후 BOOT_DEV가 확정된 시점에서 실행.
-# [1/7] 직후 실행하면 블록 디바이스가 아직 미준비 상태라 /dev/mmcblk1p2를 못 찾음.
 DISK="${BOOT_DEV%p1}"
 DB=$(basename "$DISK")
+LOG=/boot/p3-debug.log
+{
+    echo "=== p3 debug: $(cat /proc/uptime) ==="
+    echo "DISK=$DISK  DB=$DB"
+    echo "/proc/partitions:"
+    cat /proc/partitions
+    echo "fdisk -l output:"
+    fdisk -l "${DISK}" 2>&1
+    echo "sentinel exists: $(ls -la /boot/.p3-creating 2>&1)"
+} >> "$LOG"
+sync
+
 if ! grep -q "${DB}p3" /proc/partitions 2>/dev/null; then
     if [ -f /boot/.p3-creating ]; then
-        # 이전 부팅에서 fdisk를 했지만 p3 미인식 — 무한 reboot 방지, 그냥 통과
-        echo "  p3 fdisk 후에도 미인식 — 건너뜀"
+        echo "  p3 fdisk 후에도 미인식 — 건너뜀" | tee -a "$LOG"
         rm -f /boot/.p3-creating
         sync
     else
-        # fdisk -l 파싱으로 p2 EndLBA를 구해 P3_START 계산
         P3_START=$(fdisk -l "${DISK}" 2>/dev/null | awk -v p="${DISK}p2" '$1==p {print $6+1; exit}')
+        echo "  P3_START=$P3_START" | tee -a "$LOG"
         if [ -n "$P3_START" ]; then
             touch /boot/.p3-creating && sync
-            echo "  p3 생성: ${DISK} 섹터 ${P3_START}"
-            printf "n\np\n3\n%s\n\nw\n" "${P3_START}" | fdisk "${DISK}" 2>/dev/null
+            echo "  fdisk 실행 중..." | tee -a "$LOG"
+            printf "n\np\n3\n%s\n\nw\n" "${P3_START}" | fdisk "${DISK}" >> "$LOG" 2>&1
+            echo "  fdisk 종료: $?" | tee -a "$LOG"
             sync; sync
+            echo "  MBR 후 /proc/partitions:" >> "$LOG"
+            cat /proc/partitions >> "$LOG"
+            sync
             echo ""
             echo "======================================"
             echo "  SD 카드 초기 설정 완료 — 재부팅합니다."
@@ -82,11 +95,11 @@ if ! grep -q "${DB}p3" /proc/partitions 2>/dev/null; then
             sleep 3
             reboot -f
         else
-            echo "  p3 생성 실패: fdisk -l 파싱 불가"
+            echo "  p3 생성 실패: fdisk -l 파싱 불가" | tee -a "$LOG"
         fi
     fi
 else
-    echo "  p3 이미 있음: ${DISK}"
+    echo "  p3 이미 있음: ${DISK}" | tee -a "$LOG"
 fi
 
 # ─── [3/7] OTA 확인 ──────────────────────────────────────────────
