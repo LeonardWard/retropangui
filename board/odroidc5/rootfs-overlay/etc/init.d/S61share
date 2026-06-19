@@ -1,22 +1,18 @@
 #!/bin/sh
-# S61share - Share 파티션(exFAT) 생성, 포맷, 마운트 (재부팅 없이 1회 부팅에서 처리)
+# S61share - Share 파티션(exFAT) 포맷 및 마운트
 
-# 장치 경로 탐지 (SD/eMMC 모두 대응)
-# overlayfs 루트에서는 / = "overlay"이므로 루트 파티션으로 탐지 불가.
-# initramfs가 boot 파티션(p1)을 /boot에 마운트해두므로 거기서 역추적.
+TAG="S61share"
+
 BOOT_PART=$(awk '$2 == "/boot" {print $1; exit}' /proc/mounts)
 if [ -n "${BOOT_PART}" ]; then
     DEVICE=$(echo "${BOOT_PART}" | sed 's/p[0-9]*$//')
 else
-    # 폴백: 예전 ext4 루트 방식 (squashfs 전환 전 이미지 호환)
     ROOT_PART=$(awk '$2 == "/" && $1 != "rootfs" && $1 != "overlay" {print $1; exit}' /proc/mounts)
     [ -z "${ROOT_PART}" ] && ROOT_PART=$(tr ' ' '\n' < /proc/cmdline | grep '^root=' | sed 's/root=//')
     DEVICE=$(echo "${ROOT_PART}" | sed 's/p[0-9]*$//')
 fi
 SHARE_MOUNT="/retropangui/share"
-PHASE_FLAG="/etc/.share_format_needed"
 
-# p1, p2 외 파티션 탐색
 find_share_part() {
     local dev_name
     dev_name=$(basename "${DEVICE}")
@@ -32,83 +28,48 @@ case "$1" in
         mkdir -p "${SHARE_MOUNT}"
 
         SHARE_PART=$(find_share_part)
-        HAVE_PART=0
-        HAVE_FLAG=0
-        [ -n "${SHARE_PART}" ] && [ -b "${SHARE_PART}" ] && HAVE_PART=1
-        [ -f "${PHASE_FLAG}" ] && HAVE_FLAG=1
-
-        if [ "${HAVE_PART}" = "0" ]; then
-            # p3 없음: fdisk로 생성 후 partprobe로 즉시 반영 (재부팅 불필요)
-            echo ">>> Share 파티션 생성 중..."
-            DEV_NAME=$(basename "${DEVICE}")
-            P2_START=$(cat /sys/block/${DEV_NAME}/${DEV_NAME}p2/start)
-            P2_SIZE=$(cat /sys/block/${DEV_NAME}/${DEV_NAME}p2/size)
-            P3_START=$((P2_START + P2_SIZE))
-            echo ">>> p3 시작 섹터: ${P3_START}"
-            printf "n\np\n3\n%s\n\nw\n" "${P3_START}" | fdisk "${DEVICE}"
-            sync
-            partprobe "${DEVICE}" 2>/dev/null || blockdev --rereadpt "${DEVICE}" 2>/dev/null || true
-            # 커널이 새 파티션을 인식할 때까지 대기 (최대 10초)
-            i=0
-            while [ $i -lt 10 ]; do
-                SHARE_PART=$(find_share_part)
-                [ -n "${SHARE_PART}" ] && [ -b "${SHARE_PART}" ] && break
-                sleep 1; i=$((i+1))
-            done
-            echo ">>> 파티션 생성 완료: $(find_share_part)"
+        if [ -z "${SHARE_PART}" ] || [ ! -b "${SHARE_PART}" ]; then
+            logger -t "${TAG}" "p3 없음 — initramfs에서 생성 실패"
+            exit 1
         fi
 
-        SHARE_PART=$(find_share_part)
-
-        if [ -n "${SHARE_PART}" ] && [ -b "${SHARE_PART}" ]; then
-            # exFAT 포맷 여부 확인: blkid로 타입 체크, 없으면 포맷
-            FS_TYPE=$(blkid -o value -s TYPE "${SHARE_PART}" 2>/dev/null || true)
-            if [ "${FS_TYPE}" != "exfat" ]; then
-                echo ">>> Share 파티션 exFAT 포맷 중... (${SHARE_PART})"
-                mkfs.exfat -n "share" "${SHARE_PART}"
-                echo ">>> 포맷 완료"
-            fi
+        FS_TYPE=$(blkid -o value -s TYPE "${SHARE_PART}" 2>/dev/null || true)
+        if [ "${FS_TYPE}" != "exfat" ]; then
+            logger -t "${TAG}" "exFAT 포맷 중: ${SHARE_PART}"
+            mkfs.exfat -n "share" "${SHARE_PART}"
+            logger -t "${TAG}" "포맷 완료"
         fi
-        rm -f "${PHASE_FLAG}"
 
-        # 마운트
-        SHARE_PART=$(find_share_part)
-        if [ -n "${SHARE_PART}" ] && [ -b "${SHARE_PART}" ]; then
-            if ! grep -q "${SHARE_MOUNT}" /proc/mounts; then
-                mount -t exfat -o uid=0,gid=0,fmask=0022,dmask=0022 \
-                    "${SHARE_PART}" "${SHARE_MOUNT}"
-                mkdir -p \
-                    "${SHARE_MOUNT}/roms/nes" \
-                    "${SHARE_MOUNT}/roms/snes" \
-                    "${SHARE_MOUNT}/roms/psx" \
-                    "${SHARE_MOUNT}/bios" \
-                    "${SHARE_MOUNT}/saves" \
-                    "${SHARE_MOUNT}/screenshots" \
-                    "${SHARE_MOUNT}/music" \
-                    "${SHARE_MOUNT}/system/emulationstation"
-                # 번들 콘텐츠 복사 — sentinel이 없을 때만 (첫 포맷 시 1회)
-                # 재부팅마다 실행하면 사용자가 지운 파일이 복구되므로 sentinel로 보호
-                # factory reset: sentinel 삭제 후 재부팅하면 재복사됨
-                SENTINEL="${SHARE_MOUNT}/.bundled_initialized"
-                if [ ! -f "${SENTINEL}" ]; then
-                    BUNDLED="/usr/share/retropangui/bundled-roms"
-                    if [ -d "${BUNDLED}" ]; then
-                        for sys in nes snes; do
-                            if [ -d "${BUNDLED}/${sys}" ]; then
-                                cp -n "${BUNDLED}/${sys}"/* "${SHARE_MOUNT}/roms/${sys}/" 2>/dev/null || true
-                            fi
-                        done
-                        echo ">>> 번들 게임 복사 완료"
-                    fi
-                    BGMUSIC="/usr/share/retropangui/bundled-bgmusic"
-                    if [ -d "${BGMUSIC}" ]; then
-                        cp -n "${BGMUSIC}"/* "${SHARE_MOUNT}/music/" 2>/dev/null || true
-                        echo ">>> 번들 배경음악 복사 완료"
-                    fi
-                    touch "${SENTINEL}"
+        if ! grep -q "${SHARE_MOUNT}" /proc/mounts; then
+            mount -t exfat -o uid=0,gid=0,fmask=0022,dmask=0022 \
+                "${SHARE_PART}" "${SHARE_MOUNT}" || {
+                logger -t "${TAG}" "마운트 실패: ${SHARE_PART}"
+                exit 1
+            }
+            mkdir -p \
+                "${SHARE_MOUNT}/roms/nes" \
+                "${SHARE_MOUNT}/roms/snes" \
+                "${SHARE_MOUNT}/roms/psx" \
+                "${SHARE_MOUNT}/bios" \
+                "${SHARE_MOUNT}/saves" \
+                "${SHARE_MOUNT}/screenshots" \
+                "${SHARE_MOUNT}/music" \
+                "${SHARE_MOUNT}/system/emulationstation"
+            SENTINEL="${SHARE_MOUNT}/.bundled_initialized"
+            if [ ! -f "${SENTINEL}" ]; then
+                BUNDLED="/usr/share/retropangui/bundled-roms"
+                if [ -d "${BUNDLED}" ]; then
+                    for sys in nes snes; do
+                        [ -d "${BUNDLED}/${sys}" ] && \
+                            cp -n "${BUNDLED}/${sys}"/* "${SHARE_MOUNT}/roms/${sys}/" 2>/dev/null || true
+                    done
                 fi
-                echo ">>> Share 마운트 완료: ${SHARE_MOUNT} (${SHARE_PART})"
+                BGMUSIC="/usr/share/retropangui/bundled-bgmusic"
+                [ -d "${BGMUSIC}" ] && \
+                    cp -n "${BGMUSIC}"/* "${SHARE_MOUNT}/music/" 2>/dev/null || true
+                touch "${SENTINEL}"
             fi
+            logger -t "${TAG}" "마운트 완료: ${SHARE_MOUNT} (${SHARE_PART})"
         fi
         ;;
     stop)

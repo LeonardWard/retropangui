@@ -1,7 +1,5 @@
 #!/bin/sh
-# S95retropangui - RetroPangui 설정 초기화 및 적용
-# S61share(마운트) 이후, S99emulationstation(ES 실행) 이전에 실행
-
+TAG="S95retropangui"
 CONF_DEFAULT="/opt/retropangui/share/retropangui.conf.default"
 CONF_USER="/retropangui/share/system/retropangui.conf"
 RA_CFG_DEFAULT="/opt/retropangui/retroarch.cfg"
@@ -20,7 +18,7 @@ case "$1" in
         done
 
         if ! grep -q " /retropangui/share " /proc/mounts; then
-            echo "[retropangui] /retropangui/share 파티션이 마운트되지 않았습니다. 설정 적용 건너뜀."
+            logger -t "${TAG}" "/retropangui/share 마운트 안 됨 — 설정 적용 건너뜀"
             exit 0
         fi
 
@@ -51,11 +49,11 @@ case "$1" in
         # 첫 부팅: retropangui.conf 없으면 기본값에서 복사
         if [ ! -f "${CONF_USER}" ]; then
             if [ -f "${CONF_DEFAULT}" ]; then
-                echo "[retropangui] 첫 부팅: 기본 설정 파일 복사 중..."
+                logger -t "${TAG}" "첫 부팅: 기본 설정 파일 복사 중..."
                 cp "${CONF_DEFAULT}" "${CONF_USER}"
-                echo "[retropangui] ${CONF_USER} 생성 완료"
+                logger -t "${TAG}" "${CONF_USER} 생성 완료"
             else
-                echo "[retropangui] 기본 설정 파일 없음: ${CONF_DEFAULT}"
+                logger -t "${TAG}" "기본 설정 파일 없음: ${CONF_DEFAULT}"
                 exit 0
             fi
         elif [ -f "${CONF_DEFAULT}" ]; then
@@ -68,21 +66,21 @@ case "$1" in
                 [ -z "${def_key}" ] && continue
                 if ! grep -q "^${def_key}[[:space:]]*=" "${CONF_USER}" 2>/dev/null; then
                     echo "${def_key}=${def_val}" >> "${CONF_USER}"
-                    echo "[retropangui] conf 병합: ${def_key}"
+                    logger -t "${TAG}" "conf 병합: ${def_key}"
                 fi
             done < "${CONF_DEFAULT}"
         fi
 
         # 첫 부팅: retroarch.cfg 없으면 기본값에서 복사
         if [ ! -f "${RA_CFG_USER}" ]; then
-            echo "[retropangui] 첫 부팅: retroarch.cfg 복사 중..."
+            logger -t "${TAG}" "첫 부팅: retroarch.cfg 복사 중..."
             cp "${RA_CFG_DEFAULT}" "${RA_CFG_USER}"
         fi
 
         # 첫 부팅: es_settings.cfg 없으면 최소 XML 골격 생성
         # (빈 파일이면 EmulationStation이 "No document element found" 에러 발생)
         if [ ! -f "${ES_CFG_USER}" ] || ! grep -q "<config" "${ES_CFG_USER}" 2>/dev/null; then
-            echo "[retropangui] es_settings.cfg XML 골격 생성 중..."
+            logger -t "${TAG}" "es_settings.cfg XML 골격 생성"
             printf '<?xml version="1.0"?>\n<config>\n</config>\n' > "${ES_CFG_USER}"
         fi
 
@@ -90,7 +88,7 @@ case "$1" in
         RA_CORE_OPTS_SRC="/opt/retropangui/retroarch-core-options.cfg"
         RA_CORE_OPTS_DST="/retropangui/share/system/retroarch/retroarch-core-options.cfg"
         if [ ! -f "${RA_CORE_OPTS_DST}" ] && [ -f "${RA_CORE_OPTS_SRC}" ]; then
-            echo "[retropangui] 첫 부팅: retroarch-core-options.cfg 복사 중..."
+            logger -t "${TAG}" "첫 부팅: retroarch-core-options.cfg 복사"
             cp "${RA_CORE_OPTS_SRC}" "${RA_CORE_OPTS_DST}"
         fi
 
@@ -98,7 +96,7 @@ case "$1" in
         ES_INPUT_SRC="/opt/retropangui/share/es_input.cfg"
         ES_INPUT_DST="/retropangui/share/system/emulationstation/es_input.cfg"
         if [ ! -f "${ES_INPUT_DST}" ] && [ -f "${ES_INPUT_SRC}" ]; then
-            echo "[retropangui] 첫 부팅: es_input.cfg 복사 중..."
+            logger -t "${TAG}" "첫 부팅: es_input.cfg 복사"
             cp "${ES_INPUT_SRC}" "${ES_INPUT_DST}"
         fi
 
@@ -106,7 +104,7 @@ case "$1" in
         THEMES_SRC="/opt/retropangui/themes"
         THEMES_DST="/retropangui/share/system/emulationstation/themes"
         if [ ! -d "${THEMES_DST}" ] && [ -d "${THEMES_SRC}" ]; then
-            echo "[retropangui] 첫 부팅: 테마 복사 중..."
+            logger -t "${TAG}" "첫 부팅: 테마 복사"
             mkdir -p "${THEMES_DST}"
             cp -r "${THEMES_SRC}/." "${THEMES_DST}/"
         fi
@@ -115,7 +113,7 @@ case "$1" in
         if [ -x "${APPLY_SCRIPT}" ]; then
             "${APPLY_SCRIPT}" "${CONF_USER}"
         else
-            echo "[retropangui] apply 스크립트 없음: ${APPLY_SCRIPT}"
+            logger -t "${TAG}" "apply 스크립트 없음: ${APPLY_SCRIPT}"
         fi
 
         # gamepad-daemon이 vdev를 생성할 때까지 대기 (최대 10초)
@@ -125,7 +123,7 @@ case "$1" in
             sleep 0.5; i=$((i+1))
         done
         if ! grep -q "RetroPangUI P1" /proc/bus/input/devices; then
-            echo "[retropangui] WARNING: RetroPangUI P1 not found in /proc/bus/input/devices (timeout)" | tee -a /var/log/joypad-setup.log
+            logger -t "${TAG}" "WARNING: RetroPangUI P1 vdev 없음 (timeout)"
         fi
 
         # [하드웨어 고정] input_driver=udev, input_joypad_driver=udev 강제 적용.
@@ -159,9 +157,9 @@ case "$1" in
                 done
                 if [ -n "$idx" ]; then
                     echo "input_player${p}_joypad_index = \"${idx}\"" >> "${RA_CFG_USER}"
-                    echo "[retropangui] RetroPangUI P${p} → joypad index ${idx} (udev/js${idx})" | tee -a /var/log/joypad-setup.log
+                    logger -t "${TAG}" "RetroPangUI P${p} → joypad index ${idx} (udev/js${idx})"
                 else
-                    echo "[retropangui] WARNING: RetroPangUI P${p} jsX not found" | tee -a /var/log/joypad-setup.log
+                    logger -t "${TAG}" "WARNING: RetroPangUI P${p} jsX not found"
                 fi
             done
         fi

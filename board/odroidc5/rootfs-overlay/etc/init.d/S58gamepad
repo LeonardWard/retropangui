@@ -1,20 +1,13 @@
 #!/bin/sh
-# S58gamepad — gamepad-mgr 가상 패드 데몬
-# S57 이후, S60display(HDMI) 이전에 시작
-
+TAG="S58gamepad"
 PIDFILE=/var/run/gamepad-daemon.pid
 DAEMON=gamepad-daemon
-LOGFILE=/var/log/gamepad.log
 
 case "$1" in
     start)
-        printf "Starting gamepad daemon: "
-        SDL_JOYSTICK_HIDAPI=0 $DAEMON >> "$LOGFILE" 2>&1 &
+        logger -t "${TAG}" "Starting gamepad daemon"
+        SDL_JOYSTICK_HIDAPI=0 $DAEMON > /dev/null 2>&1 &
         echo $! > "$PIDFILE"
-        echo "OK"
-
-        # vdev 생성이 완료될 때까지 대기한 뒤 xpad 로드
-        # (xpad가 built-in이면 js0을 선점하므로 반드시 모듈로 빌드해야 함)
         i=0
         while [ $i -lt 20 ]; do
             grep -q "RetroPangUI P1" /proc/bus/input/devices && break
@@ -22,27 +15,18 @@ case "$1" in
         done
         if grep -q "RetroPangUI P1" /proc/bus/input/devices; then
             modprobe xpad 2>/dev/null || true
-            echo "[gamepad] xpad loaded after vdev creation" >> "$LOGFILE"
+            logger -t "${TAG}" "xpad loaded after vdev creation"
         else
-            echo "[gamepad] WARNING: vdev not ready, loading xpad anyway" >> "$LOGFILE"
+            logger -t "${TAG}" "WARNING: vdev not ready, loading xpad anyway"
             modprobe xpad 2>/dev/null || true
         fi
         ;;
     stop)
-        printf "Stopping gamepad daemon: "
-        if [ -f "$PIDFILE" ]; then
-            kill "$(cat "$PIDFILE")" 2>/dev/null
-            rm -f "$PIDFILE"
-        fi
-        echo "OK"
+        logger -t "${TAG}" "Stopping gamepad daemon"
+        [ -f "$PIDFILE" ] && kill "$(cat "$PIDFILE")" 2>/dev/null
+        rm -f "$PIDFILE"
         ;;
-    restart|reload)
-        "$0" stop
-        "$0" start
-        ;;
-    *)
-        echo "Usage: $0 {start|stop|restart}"
-        exit 1
-        ;;
+    restart|reload) "$0" stop; "$0" start ;;
+    *) echo "Usage: $0 {start|stop|restart}"; exit 1 ;;
 esac
 exit 0

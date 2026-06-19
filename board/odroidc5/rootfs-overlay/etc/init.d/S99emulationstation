@@ -1,9 +1,9 @@
 #!/bin/sh
-# S99emulationstation - Launch EmulationStation as retro gaming frontend
+TAG="S99emulationstation"
 
 case "$1" in
     start)
-        echo "Starting EmulationStation..."
+        logger -t "${TAG}" "Starting EmulationStation"
         # /dev/dri/card0 준비 대기 (최대 15초, S60display 이미 포그라운드 완료 후이므로 보통 즉시)
         i=0
         while [ $i -lt 30 ]; do
@@ -18,6 +18,8 @@ case "$1" in
             export SDL_GAMECONTROLLERCONFIG_FILE=/etc/gamepad/gamecontrollerdb.txt
             export HOME=/root
             export RETROPANGUI_SHARE=/retropangui/share
+            # shutdown 신호 시 루프 종료 — stop 섹션이 SIGTERM을 보내면 클린 exit
+            trap "exit 0" TERM INT
             while true; do
                 rm -f /tmp/es-restart /tmp/es-shutdown /tmp/es-sysrestart /tmp/es-kodi
                 # HDMI 연결 대기 (최대 60초) — 뽑혀있으면 PHY/DRM 초기화가 실패함
@@ -63,9 +65,18 @@ case "$1" in
                 sleep 2
             done
         ' > /var/log/es-launcher.log 2>&1 &
+        echo $! > /var/run/es-launcher.pid
         ;;
     stop)
-        killall emulationstation 2>/dev/null
+        # launcher 루프(nohup sh) 종료 — SIGTERM으로 trap 실행 후 clean exit
+        if [ -f /var/run/es-launcher.pid ]; then
+            kill "$(cat /var/run/es-launcher.pid)" 2>/dev/null || true
+            rm -f /var/run/es-launcher.pid
+        fi
+        killall emulationstation 2>/dev/null || true
+        killall openvt 2>/dev/null || true
+        # VT 키보드를 ASCII 모드로 복원 — DRM 상태 클린업
+        kbd_mode -a 2>/dev/null || true
         ;;
     restart|reload)
         "$0" stop

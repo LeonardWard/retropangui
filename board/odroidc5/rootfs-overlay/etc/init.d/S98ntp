@@ -1,7 +1,5 @@
 #!/bin/sh
-# S63ntp - 시각 초기화 및 NTP 동기화
-# S61share(마운트) 이후 실행 → fake-hwclock을 share 파티션에 영구 보존 가능
-# fake-hwclock: RTC 없는 시스템에서 에폭(1970) 기동 방지
+TAG="S98ntp"
 DAEMON=/usr/sbin/ntpd
 PIDFILE=/run/ntpd.pid
 FAKEHWCLOCK=/retropangui/share/system/fake-hwclock
@@ -10,24 +8,18 @@ FAKEHWCLOCK=/retropangui/share/system/fake-hwclock
 
 case "$1" in
     start)
-        # 1. fake-hwclock 복원 (UTC)
         if [ -f "${FAKEHWCLOCK}" ]; then
             date -u -s "$(cat ${FAKEHWCLOCK})" 2>/dev/null
         else
             date -u -s "2026-06-18 00:00:00" 2>/dev/null
         fi
-
-        # 2. 네트워크 대기 + Google Date 보정 + ntpd 시작 — 부팅 지연 방지로 백그라운드
-        # openntpd -s 옵션이 제거됐으므로 ntpd 시작 전 반드시 시각을 맞춰야 함
-        echo "Starting NTP..."
         kill $(cat "${PIDFILE}" 2>/dev/null) 2>/dev/null || true
         rm -f "${PIDFILE}"
         {
             i=0
             while [ $i -lt 30 ]; do
                 route -n 2>/dev/null | grep -q "^0\.0\.0\.0" && break
-                sleep 1
-                i=$((i + 1))
+                sleep 1; i=$((i + 1))
             done
             HTTPDATE=$(wget --no-check-certificate --server-response \
                 -O /dev/null https://www.google.com 2>&1 \
@@ -38,27 +30,19 @@ case "$1" in
                     for(i=1;i<=12;i++) if(m[i]==$3) mon=sprintf("%02d",i)
                     printf "%s-%s-%s %s\n", $4, mon, $2, $5
                 }')
-                if [ -n "$SETDATE" ]; then
-                    date -u -s "$SETDATE" 2>/dev/null
-                    echo "NTP: Google Date 시각 설정: $SETDATE UTC"
-                fi
+                [ -n "$SETDATE" ] && date -u -s "$SETDATE" 2>/dev/null && \
+                    logger -t "${TAG}" "Google Date: $SETDATE UTC"
             fi
             "${DAEMON}" -p "${PIDFILE}"
         } &
         ;;
     stop)
-        echo "Stopping NTP..."
-        # 종료 전 현재 시각 저장 (다음 부팅을 위한 fake-hwclock)
         mkdir -p "$(dirname ${FAKEHWCLOCK})"
         date -u +"%Y-%m-%d %H:%M:%S" > "${FAKEHWCLOCK}" 2>/dev/null
         kill $(cat "${PIDFILE}" 2>/dev/null) 2>/dev/null || true
         rm -f "${PIDFILE}"
         ;;
-    restart|reload)
-        "$0" stop; sleep 1; "$0" start
-        ;;
-    *)
-        echo "Usage: $0 {start|stop|restart}"; exit 1
-        ;;
+    restart|reload) "$0" stop; sleep 1; "$0" start ;;
+    *) echo "Usage: $0 {start|stop|restart}"; exit 1 ;;
 esac
 exit 0

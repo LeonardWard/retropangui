@@ -19,11 +19,11 @@ define RETROPANGUI_INITRAMFS_INSTALL_IMAGES_CMDS
 	    mkdir -p $(@D)/initramfs_root/bin && \
 	    mkdir -p $(@D)/initramfs_root/proc $(@D)/initramfs_root/sys $(@D)/initramfs_root/dev && \
 	    mkdir -p $(@D)/initramfs_root/tmp && \
-	    mkdir -p $(@D)/initramfs_root/boot_root $(@D)/initramfs_root/new_root && \
+	    mkdir -p $(@D)/initramfs_root/boot $(@D)/initramfs_root/squashfs && \
 	    mkdir -p $(@D)/initramfs_root/overlay $(@D)/initramfs_root/merged && \
 	    mkdir -p $(@D)/initramfs_root/dbg && \
 	    install -m 755 $(@D)/busybox $(@D)/initramfs_root/bin/busybox && \
-	    for applet in sh ash mount umount switch_root mkdir mknod ln cat echo sleep printf sha256sum cp mv rm sync mdev awk grep ls tr; do \
+	    for applet in sh ash mount umount switch_root mkdir mknod ln cat echo sleep printf sha256sum cp mv rm sync mdev awk grep ls tr fdisk partprobe blkid poweroff reboot; do \
 	        ln -sf /bin/busybox $(@D)/initramfs_root/bin/\$$applet; \
 	    done && \
 	    mknod $(@D)/initramfs_root/dev/console c 5 1 && \
