@@ -161,16 +161,19 @@ _check_space() {
     mkdir -p "$dir" 2>/dev/null
     local avail_gb
     avail_gb=$(df -k "$dir" 2>/dev/null | awk 'NR==2{printf "%d", $4/1024/1024}')
-    [ -z "$avail_gb" ] && return
-    [ "$avail_gb" -lt "$min_gb" ] && \
+    [ -z "$avail_gb" ] && return 0
+    if [ "$avail_gb" -lt "$min_gb" ]; then
         _pf_warn "${label} 여유 공간 ${avail_gb}GB (권장 ${min_gb}GB 이상)"
+    fi
 }
 _check_space "${SCRIPT_DIR}/output"    10  "output"
 _check_space "${SCRIPT_DIR}/buildroot" 40  "buildroot"
 
 # RAM (경고만)
 _ram_gb=$(awk '/MemTotal/{printf "%d", $2/1024/1024}' /proc/meminfo 2>/dev/null || echo 0)
-[ "$_ram_gb" -lt 4 ] && _pf_warn "RAM ${_ram_gb}GB — 빌드에 최소 4GB 권장"
+if [ "$_ram_gb" -lt 4 ]; then
+    _pf_warn "RAM ${_ram_gb}GB — 빌드에 최소 4GB 권장"
+fi
 
 if [ "$_PREFLIGHT_OK" -eq 0 ]; then
     echo ""
