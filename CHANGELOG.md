@@ -6,6 +6,27 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [0.14] — 2026-06-20
+
+### Added
+
+- **ES OTA 업데이트 UI** (retropangui-emulationstation)
+
+  "업데이트 확인" 메뉴 항목 완전 재구현:
+  - USB 드라이브 우선 스캔 (`/media/` 하위에서 `retropangui-odroidc5.squashfs` 탐색)
+  - USB 파일 발견 시 `usb-ota-install.sh` 호출 → `/boot/update/retropangui.update` 스테이징 → 재부팅
+  - USB 없으면 네트워크 버전 체크 폴백 (현재 버전 / 최신 버전 비교 다이얼로그)
+  - ES 시작 시 백그라운드 자동 버전 체크 (`std::async`), 새 버전 발견 시 팝업
+  - `GuiOtaCheck` 클래스 추가 — 비동기 버전 확인 대기 화면 (블로킹 제거)
+  - 기존 HTTP 체크의 메인 스레드 5초 블로킹 수정
+
+- **usb-ota-install.sh 추가**
+
+  USB 드라이브의 squashfs를 `/boot/update/retropangui.update`로 복사.
+  `.sha256` 파일이 있으면 SHA256 검증 후 복사, 없으면 검증 생략.
+
+---
+
 ## [0.13] — 2026-06-20
 
 ### Added
