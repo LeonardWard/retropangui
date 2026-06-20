@@ -40,20 +40,64 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
----
+## [0.12] — 2026-06-19
 
-## [Unreleased]
+### Added
 
-### Todo (미구현 — 우선순위 순)
+- **squashfs + initramfs + overlayfs 부팅 아키텍처 도입**
 
-- **[ ] ES BGM 현재 재생 곡 제목 footer 표시** — BGM 재생 시 우측 하단 footer에 곡 제목 표시.
-  긴 제목은 가로 스크롤. MusicManager에 현재 트랙명 노출 API 추가 + footer UI 수정 (ES C++).
+  기존 ext4 단일 rootfs에서 3단계 구조로 전환:
+  - p1(FAT32): 커널 + `initramfs.cpio.gz` + `retropangui.squashfs`
+  - p2(ext4): overlay upper/work (설정 영구 보존)
+  - p3(exFAT): share (ROMs, BIOS, 세이브)
 
-- **[ ] ES 스크린샷 시스템 메뉴** — 리코박스/바토세라처럼 캐러셀에 "Screenshots" 항목
-  추가, 촬영된 스크린샷을 시스템별로 분류하여 브라우징 가능하도록.
+  initramfs init 7단계 플로우:
+  1. proc/sys/dev 마운트
+  2. boot 파티션(p1 FAT32) 탐색 및 마운트 (`/boot`)
+  3. p3 share 파티션 초기 생성 (없으면 fdisk → 재부팅)
+  4. OTA 확인 및 squashfs 교체
+  5. squashfs 마운트 (`/squashfs`)
+  6. overlay ext4 마운트 + overlayfs 구성 (`/merged`)
+  7. switch_root → busybox `/sbin/init`
 
-- **[ ] 스크린샷 → slate 테마 배경** — 스크린샷을 시스템별 폴더에 저장하고,
-  retropangui-slate 테마에서 해당 시스템 스크린샷을 배경 이미지로 사용.
+  S61share 역할 분리: 파티션 생성은 initramfs, exFAT 포맷 + 마운트는 S61share 담당.
+
+- **OTA 무선 업데이트 인프라**
+
+  `build.sh --ota`: squashfs만 생성 (img 없음).
+  `scripts/push-ota.sh`: squashfs를 로컬 파일서버 디렉토리에 배포.
+  `scripts/serve-ota.sh`: Python HTTP 서버로 기기에 파일 제공.
+  initramfs가 부팅 시 `/boot/update/retropangui.update` + `.sha256` 확인,
+  SHA256 검증 통과 시 `retropangui.squashfs` 교체 → OTA 완료 후 정상 부팅.
+  실패 시 `.squashfs.old`로 자동 롤백.
+
+### Fixed
+
+- **NTP 이중 실행 충돌 수정**
+
+  `S49ntp`(Buildroot 자동 설치)와 `S63ntp`가 동시 실행되어
+  fake-hwclock 저장 경로 불일치 및 ntpd 충돌 발생.
+  `S49ntp`를 더미로 교체해 비활성화, `S63ntp`가 NTP 전담.
+
+- **S63ntp: 부팅 시 시각 보정 안정화**
+
+  S63 시점 네트워크 미준비로 Google Date 보정이 건너뛰어지던 문제 수정.
+  네트워크 대기 루프(최대 30초) 추가, Google Date 보정 후 ntpd 시작을
+  백그라운드 블록으로 묶어 부팅 지연 없이 처리.
+
+### Removed
+
+- **boot.ini 제거**
+
+  C5 U-Boot는 `boot.scr`만 지원하고 `boot.ini`를 인식하지 않음.
+  `genimage.cfg`, `post-image.sh`의 참조도 함께 제거.
+
+### Changed
+
+- **S63ntp → S98ntp 순서 변경**
+
+  NTP는 ES 시작 후 실행되어도 무방하므로 순서를 S63 → S98로 이동.
+  부팅 시간에서 NTP 대기 구간 영향 최소화.
 
 ---
 
