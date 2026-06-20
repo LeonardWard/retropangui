@@ -221,7 +221,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
-## [0.7] — 2026-06-13
+## [0.7] — 2026-06-14
 
 ### Fixed
 
@@ -245,6 +245,22 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - **SSH 토글 기본값 ON** (`system.ssh=true`)
 
+- **RetroArch 메뉴 입력 불가 — `all_users_control_menu = "true"` 적용**
+
+  `all_users_control_menu = "false"` 상태에서 vdev 포트 매핑이 어긋나면
+  port 1이 아닌 포트의 패드는 RA 메뉴를 조작할 수 없어 패드 입력 불응 현상 발생.
+  `"true"`로 변경해 모든 포트의 패드가 메뉴를 조작하도록 허용.
+
+- **gamepad-mgr: 핫스왑 시 스테일 fd로 인한 EVIOCGRAB 실패**
+
+  패드 A를 뽑고 패드 B를 꽂으면 커널이 같은 event 번호를 재사용하는데,
+  st_rdev가 동일해 옛 장치의 스테일 fd와 구분되지 않아 스테일 fd에 grab을
+  시도 → `No such device` 실패 → 물리 패드가 grab되지 않아 가상 패드와
+  이중 노출되던 문제. `/proc/self/fd`의 "(deleted)" 표시로 판별:
+  - `find_sdl_evdev_fd` / `find_phys_evdev`: 삭제된 fd 후보 제외
+  - `find_phys_evdev`: is_sdl 매칭 시 기존 후보 fd 누수 수정
+  - 메인 루프: 1초 주기 슬롯 phys_fd 위생 점검 (SDL REMOVED 유실 대비)
+
 ### Added
 
 - **SOUND SETTINGS YAML 전환** — AUDIO on/off 토글 포함. conf `global.audio_enable`에 기록.
@@ -255,38 +271,6 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
   ES 로그는 `/root/.emulationstation/es_log.txt`에 기록됨.
 
 - **번들 BGM 교체** — FF5/LossOfMoral 제거, 6곡 추가.
-
-### Changed
-
-- **NTP 스크립트 순서 변경** — `S49ntp` → `S63ntp` (share 파티션 마운트 이후 실행으로 순서 보장).
-  네트워크 없으면 즉시 건너뜀 (wget timeout 2s, 루프 제거).
-
-- **LOCALE/LANGUAGE 역할 분리** — `system.language` → OS locale (`/etc/locale.conf`) 전용.
-  ES UI + RA 언어는 `emulationstation.Language` 기준으로 분리.
-
-## [0.7] — 2026-06-14
-
-### Fixed
-
-- **RetroArch 메뉴 입력 불가 — `all_users_control_menu = "true"` 적용**
-
-  `all_users_control_menu = "false"` 상태에서 vdev 포트 매핑이 어긋나면
-  port 1이 아닌 포트의 패드는 RA 메뉴를 조작할 수 없어 패드 입력 불응 현상 발생.
-  `"true"`로 변경해 모든 포트의 패드가 메뉴를 조작하도록 허용.
-  (근본 원인: RA 1.22에서 `input_player_num` autoconf 키가 무시됨 →
-  vdev가 원하는 포트가 아닌 번호에 배정될 수 있음)
-
-- **gamepad-mgr: 핫스왑 시 스테일 fd로 인한 EVIOCGRAB 실패** (실기기 진단 2026-06-13)
-
-  패드 A를 뽑고 패드 B를 꽂으면 커널이 같은 event 번호를 재사용하는데,
-  st_rdev가 동일해 옛 장치의 스테일 fd와 구분되지 않아 스테일 fd에 grab을
-  시도 → `No such device` 실패 → 물리 패드가 grab되지 않아 가상 패드와
-  **이중 노출**되던 문제. `/proc/self/fd`의 "(deleted)" 표시로 판별:
-  - `find_sdl_evdev_fd` / `find_phys_evdev`: 삭제된 fd 후보 제외
-  - `find_phys_evdev`: is_sdl 매칭 시 기존 후보 fd 누수 수정
-  - 메인 루프: 1초 주기 슬롯 phys_fd 위생 점검 (SDL REMOVED 유실 대비)
-
-### Added
 
 - **RetroArch 메뉴 드라이버 ozone / xmb / materialui 빌드 활성화**
 
@@ -300,9 +284,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
   `BR2_PACKAGE_RETROARCH_ASSETS=y`, 설치 경로 `/opt/retropangui/share/retroarch/`.
   `build.sh`에 `retroarch-assets` shallow clone 추가.
 
-- **RetroArch 추가 언어 빌드 (`HAVE_LANGEXTRA=1`)**
-
-  한국어 포함 추가 언어 번역 파일 빌드 활성화.
+- **RetroArch 추가 언어 빌드 (`HAVE_LANGEXTRA=1`)** — 한국어 포함 번역 파일 빌드 활성화.
 
 - **GC 매핑 수정 — Xbox 360 추가, P1-P4 vdev 버튼/축 인덱스 수정**
 
@@ -316,15 +298,19 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
   `apply_retropangui_conf.sh`에서 시스템 언어 설정 변경 시
   RetroArch `user_language` 값도 자동 동기화 (ko→10, ja→1 등 18개 언어).
 
-- **키보드 PageUp/PageDown ES 입력 추가**
-
-  `es_input.cfg`에 PageUp(pageup) / PageDown(pagedown) 키 매핑 추가.
+- **키보드 PageUp/PageDown ES 입력 추가** — `es_input.cfg`에 매핑 추가.
 
 ### Changed
 
-- **메뉴 구조 재정비와 동기 — retropangui_features.yml parent 재배치** (실기기 검증 완료)
+- **NTP 스크립트 순서 변경** — `S49ntp` → `S63ntp` (share 파티션 마운트 이후 실행으로 순서 보장).
+  네트워크 없으면 즉시 건너뜀 (wget timeout 2s, 루프 제거).
 
-  ES 메인 메뉴가 8개 카테고리로 재편됨에 따라(ES 레포 참고) YAML 메뉴들이
+- **LOCALE/LANGUAGE 역할 분리** — `system.language` → OS locale (`/etc/locale.conf`) 전용.
+  ES UI + RA 언어는 `emulationstation.Language` 기준으로 분리.
+
+- **메뉴 구조 재정비 — retropangui_features.yml parent 재배치** (실기기 검증 완료)
+
+  ES 메인 메뉴가 8개 카테고리로 재편됨에 따라 YAML 메뉴들이
   독립 메뉴(parent: main)에서 카테고리 안 항목으로 흡수됨:
   - system_settings(시간대) / network_settings(SSH) → `parent: system`
   - video_settings(스무딩/정수) / game_settings(되감기/자동저장) → `parent: game`
