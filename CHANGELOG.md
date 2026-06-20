@@ -103,6 +103,126 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [0.11] — 2026-06-18
 
+### Added
+
+- **SOUND SETTINGS YAML 전환** — AUDIO on/off 토글 포함. `conf global.audio_enable`에 기록.
+
+- **NETWORK SETTINGS에 SAMBA 토글 추가** — `conf system.samba` 연동.
+
+- **ES 디버그 로그 상시 활성화** — `S99emulationstation`에서 `--debug` 플래그 추가.
+  ES 로그는 `/root/.emulationstation/es_log.txt`에 기록됨.
+
+- **번들 BGM 교체** — FF5/LossOfMoral 제거, 6곡 추가.
+
+### Fixed
+
+- **SSH/SAMBA 토글이 항상 OFF로 표시되던 문제** (ES SwitchComponent 생성자 버그)
+
+  `SwitchComponent(Window*, bool state)` 생성자가 `state` 파라미터를 무시하고
+  항상 `off.svg`로 초기화하여 conf에 `true`가 저장되어 있어도 UI에 OFF로 표시됨.
+  → 생성자에서 `mState ? ":/on.svg" : ":/off.svg"` 로 수정.
+
+- **Language 등 ES 설정이 부팅 후 반영되지 않던 문제** (Settings::loadFile `<config>` 래퍼)
+
+  `apply_retropangui_conf.sh`의 `es_set()`은 `<config>…</config>` 래퍼 안에 저장하는데
+  ES의 `Settings::loadFile()`은 루트 레벨에서만 읽어 Language 등 설정이 무시됨.
+  → `doc.child("config")` 유무를 감지해 래퍼 안팎 모두 읽도록 수정.
+
+- **S95 conf 병합: `key = value` 형식도 매칭** — 이전에는 `key=value`만 인식하여
+  공백 있는 형식을 누락하던 문제 수정.
+
+- **S95 conf.default 누락 키 자동 보완** — 업데이트로 conf.default에 새 키가 추가됐을 때
+  기존 retropangui.conf에 자동으로 보충.
+
+- **SSH 토글 기본값 ON** (`system.ssh=true`)
+
+### Changed
+
+- **NTP 스크립트 순서 변경** — `S49ntp` → `S63ntp` (share 파티션 마운트 이후 실행으로 순서 보장).
+  네트워크 없으면 즉시 건너뜀 (wget timeout 2s, 루프 제거).
+
+- **LOCALE/LANGUAGE 역할 분리** — `system.language` → OS locale (`/etc/locale.conf`) 전용.
+  ES UI + RA 언어는 `emulationstation.Language` 기준으로 분리.
+
+---
+
+## [0.10] — 2026-06-17
+
+### Added
+
+- **부팅 스플래시** — `S99emulationstation`에서 mpv로 스플래시 재생.
+  ALSA softvol 초기화 목적 겸용. `asound.conf`에 softvol Master 컨트롤 추가.
+
+- **볼륨 실시간 조정** (retropangui-emulationstation)
+
+  ES 볼륨 슬라이더에 `setChangedCallback` 적용, 슬라이더 이동 즉시 ALSA 볼륨 반영.
+
+- **mpv 패키지 추가** (`BR2_PACKAGE_MPV=y`, `BR2_PACKAGE_FFMPEG_SWSCALE=y`)
+
+- **fceumm NES 코어 추가**
+
+  FDS BIOS 없이도 패미컴 디스크 시스템 구동 가능.
+  `systems.json`: fceumm priority 1, Nestopia priority 2로 설정.
+
+### Fixed
+
+- **NTP fake-hwclock UTC 오차 9시간 수정**
+
+  `S49ntp`에서 `date -s`로 저장값을 복원 시 TZ 해석 오차 발생 (KST 환경에서 9시간 틀림).
+  → `date -u -s`(UTC 명시)로 수정. `ntpd -s` 플래그 추가로 첫 동기화 즉각 step 보정.
+
+- **Mali Vulkan symlink 추가**
+
+  `mali.json` 신버전이 `libMaliVulkan.so.1`을 참조할 때 Vulkan 초기화 실패하던 문제 수정.
+  `mali-ddk.mk`에서 `libMaliVulkan.so.1 → libMali.so` symlink 생성.
+
+---
+
+## [0.9] — 2026-06-16
+
+### Fixed
+
+- **RetroArch 진동(rumble) 미동작 수정**
+
+  `input_joypad_driver = "linuxraw"`는 `/dev/input/jsX`를 사용해 `EV_FF`를 전송하지 않아
+  gamepad-mgr FF 패스스루가 동작하지 않았다.
+  → `udev`(`/dev/input/eventX`)로 전환 시 FF 패스스루 정상 동작 확인.
+
+- **autoconfig D-pad 표기 수정**
+
+  udev 드라이버는 `ABS_HAT0X/Y`를 axis가 아닌 Hat으로 처리하므로
+  autoconfig P1~P4의 D-pad 표기를 axis→ `h0up/h0down/h0left/h0right`로 변경.
+
+### Changed
+
+- **joypad 드라이버 linuxraw → udev 전환**
+
+  `retroarch.cfg`, `retropangui.conf.default`, autoconfig P1~P4 모두 `udev`로 변경.
+  `S95retropangui`: `apply_retropangui_conf.sh` 이후에도 udev 강제 적용
+  (conf 값과 무관하게 항상 udev로 덮어씀).
+
+---
+
+## [0.8] — 2026-06-15
+
+### Fixed
+
+- **Xbox 360 무선 연결 직후 LS 최대 좌/상 고정 문제**
+
+  패드 연결 초기 SDL2 axis를 `-32768`로 보고하는 현상으로
+  RetroArch Ozone 진입 시 LS가 최대 좌/상으로 고정됨.
+  → `gamepad_daemon`: 패드 연결 직후 center 상태(0) 강제 emit으로 수정.
+
+- **재부팅마다 삭제한 BGM/ROM이 복구되던 문제**
+
+  `S61share`가 매 부팅마다 번들 콘텐츠를 share로 복사하여
+  사용자가 삭제한 파일이 재부팅 시 복구되었다.
+  → sentinel 파일(`~/.bundled-content-init`)로 보호, 첫 포맷 시 1회만 복사.
+
+---
+
+## [0.7] — 2026-06-13
+
 ### Fixed
 
 - **SSH/SAMBA 토글이 항상 OFF로 표시되던 문제** (ES SwitchComponent 생성자 버그)
