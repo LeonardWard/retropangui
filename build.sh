@@ -233,6 +233,8 @@ if [ $PARTIAL -eq 0 ]; then
     rm -rf "${SCRIPT_DIR}/dl/emulationstation" \
            "${SCRIPT_DIR}/buildroot/dl/emulationstation" \
            "${SCRIPT_DIR}/buildroot/output/build/emulationstation-main"
+    # target에 설치된 바이너리도 삭제해야 재설치됨 (build만 지우면 target은 그대로)
+    rm -f  "${SCRIPT_DIR}/buildroot/output/target/usr/bin/emulationstation"
 fi
 
 _shallow_clone uboot             https://git.odroid.com/yocto/uboot                             odroidc5-v2023.01
