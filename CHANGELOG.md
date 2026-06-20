@@ -6,6 +6,37 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [0.15] — 2026-06-21
+
+### Fixed
+
+- **배경음악(BGM) on/off 설정이 시간 지나면 무시되는 버그 수정** (retropangui-emulationstation)
+
+  `MusicManager::update()`가 매 루프마다 `BackgroundMusic` 설정을 체크하지 않아
+  off 상태에서 곡이 끝나면 자동으로 다음 곡이 재생되던 문제 수정.
+  `update()` 진입 시 설정이 off면 즉시 `stop()` 호출.
+
+  추가로 `SwitchComponent`에 `setChangedCallback()` 추가 — 배경음악 toggle 변경 시
+  메뉴를 닫기 전에도 즉시 적용되도록 개선.
+
+- **push-ota.sh 버전 추출 버그 수정**
+
+  `git describe`가 항상 최신 태그를 반환해 파일명과 무관하게 버전이 덮어씌워지던 문제.
+  파일명에서 버전 추출을 우선하고, 실패 시 `git describe` 폴백으로 변경.
+
+### Added
+
+- **push-ota.sh `--serve` 플래그 추가**
+
+  배포 완료 후 즉시 파일서버를 실행하는 옵션 추가.
+  `bash scripts/push-ota.sh <파일> --serve` 한 번으로 스테이징과 서버 실행을 한 번에 처리.
+
+### Changed
+
+- **YAML 메뉴 "FRONTEND MUSIC" → "배경음악" 한국어 레이블로 변경**
+
+---
+
 ## [0.14] — 2026-06-20
 
 ### Added
