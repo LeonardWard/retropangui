@@ -131,23 +131,26 @@ fi
 # fetch-blobs.sh
 [ -f "${SCRIPT_DIR}/scripts/fetch-blobs.sh" ] || _pf_err "scripts/fetch-blobs.sh 없음"
 
-# buildroot 서브모듈
+# buildroot (gitignore 제외 대상 — Docker 내부에서 자동 다운로드됨)
 [ -f "${SCRIPT_DIR}/buildroot/Makefile" ] || \
-    _pf_err "buildroot 서브모듈 미초기화 — 실행: git submodule update --init"
+    echo "  [INFO]  buildroot 소스 없음 — 첫 빌드 시 Docker 내부에서 자동 다운로드됩니다."
 
 # Docker 접근 (미설치 / daemon 미실행 / 권한 없음 구분)
 if command -v docker &>/dev/null; then
     if ! docker info >/dev/null 2>&1; then
-        _DOCKER_ERR=$(docker info 2>&1 | head -3)
+        _DOCKER_ERR=$(docker info 2>&1)
         if echo "$_DOCKER_ERR" | grep -qi "permission denied"; then
             _pf_err "Docker 소켓 권한 없음"
             echo "       해결: sudo usermod -aG docker \$USER && newgrp docker"
-        elif echo "$_DOCKER_ERR" | grep -qi "cannot connect\|connection refused\|No such file"; then
+        elif echo "$_DOCKER_ERR" | grep -qi "cannot connect\|connection refused\|No such file\|Is the docker daemon running"; then
             _pf_err "Docker 데몬이 실행되지 않았습니다"
-            echo "       해결 (Linux):  sudo systemctl start docker"
-            echo "       해결 (WSL2):   Docker Desktop을 먼저 실행하세요"
+            if [ "$_IS_WSL2" -eq 1 ]; then
+                echo "       해결: sudo service docker start"
+            else
+                echo "       해결: sudo systemctl start docker"
+            fi
         else
-            _pf_err "Docker 오류: $(echo "$_DOCKER_ERR" | head -1)"
+            _pf_err "Docker 오류: $(echo "$_DOCKER_ERR" | grep -i 'error\|cannot\|failed' | head -1)"
         fi
     fi
 fi
