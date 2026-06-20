@@ -58,7 +58,7 @@ OTA_APPLIED=0
 
 # ─── share 파티션(p3) 초기 생성 ──────────────────────────────────
 DISK="${BOOT_DEV%p1}"
-DB=$(basename "$DISK")
+DB="${DISK##*/}"
 LOG=/boot/p3-debug.log
 {
     echo "=== p3 debug: $(cat /proc/uptime) ==="
@@ -77,7 +77,7 @@ if ! grep -q "${DB}p3" /proc/partitions 2>/dev/null; then
         rm -f /boot/.p3-creating
         sync
     else
-        P3_START=$(fdisk -l "${DISK}" 2>/dev/null | awk -v p="${DISK}p2" '$1==p {print $6+1; exit}')
+        P3_START=$(fdisk -l "${DISK}" 2>/dev/null | awk -v p="${DISK}p2" '$1==p {print $5+1; exit}')
         echo "  P3_START=$P3_START" | tee -a "$LOG"
         if [ -n "$P3_START" ]; then
             touch /boot/.p3-creating && sync
