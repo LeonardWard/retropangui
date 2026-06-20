@@ -1,9 +1,42 @@
 # Changelog
 
-> **v0.13 이후**부터는 각 `git tag` 어노테이션에 변경 내역이 포함됩니다.
-> `git tag -l` 또는 [GitHub Releases](../../releases)에서 확인하세요.
-> 이 파일은 v0.12까지의 히스토리를 보존하기 위해 유지합니다.
-> 상세 기술 문서는 [Wiki](../../wiki)로 이관 중입니다.
+All notable changes to RetroPangui are documented in this file.
+
+Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
+
+---
+
+## [0.13] — 2026-06-20
+
+### Added
+
+- **changelog.txt 태그 어노테이션 자동 생성**
+
+  `build.sh`가 빌드 시 현재 `git tag` 어노테이션을 읽어
+  `rootfs-overlay/usr/share/retropangui/changelog.txt`를 자동 생성.
+  annotated tag(`git tag -a`)가 없으면 기존 파일 유지.
+
+### Fixed
+
+- **build.sh 사전 조건 체크 강화**
+
+  OS/환경 자동 감지 (Ubuntu, Fedora, Arch, macOS, WSL2 등).
+  미설치 도구마다 패키지 매니저에 맞는 설치 명령 안내.
+  Docker 오류를 미설치 / 데몬 미실행 / 권한 없음으로 세분화.
+  WSL2에서 `sudo service docker start` 안내.
+  `set -e` 환경에서 `&&` 패턴으로 스크립트가 조용히 종료되던 버그 다수 수정.
+
+- **initramfs p3 파티션 생성 안정화**
+
+  fdisk 후 파티션 미인식 시 `.p3-creating` 플래그로 무한 재시도 방지.
+  디버그 로그 제거 (안정 확인 후 클린업).
+
+- **OTA 업데이트 완료 창 개선** (retropangui-emulationstation)
+
+  텍스트 색상을 밝은 배경(`frame.png`)에 맞게 수정
+  (제목 `0xFFFFFF→0x555555`, 본문 `0xDDDDDD→0x444444`).
+  수동 텍스트 `[A / Start] 닫기` 제거, ES 표준 `getHelpPrompts()`로
+  하단 버튼 아이콘(`button_a.svg`) 표시로 교체.
 
 ---
 
