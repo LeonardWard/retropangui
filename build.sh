@@ -43,21 +43,68 @@ echo "  모드: $([ $OTA -eq 1 ] && echo OTA빌드 || { [ $PARTIAL -eq 1 ] && ec
 echo "  defconfig: retropangui-${DEVICE}_defconfig"
 echo "============================================"
 
+# ─── 환경 감지 ───────────────────────────────────────────────────
+_IS_WSL2=0
+grep -qi "microsoft" /proc/version 2>/dev/null && _IS_WSL2=1
+
+_DISTRO=""
+_PKG_MGR="unknown"
+if [ -f /etc/os-release ]; then
+    _DISTRO=$(. /etc/os-release && echo "${ID:-}")
+fi
+case "${_DISTRO}" in
+    ubuntu|debian|linuxmint|pop)     _PKG_MGR="apt" ;;
+    fedora|rhel|centos|rocky|almalinux) _PKG_MGR="dnf" ;;
+    arch|manjaro|endeavouros)        _PKG_MGR="pacman" ;;
+    opensuse*|sles)                  _PKG_MGR="zypper" ;;
+    *)  command -v brew &>/dev/null  && _PKG_MGR="brew" ;;
+esac
+
 # ─── 사전 조건 확인 ──────────────────────────────────────────────
 _PREFLIGHT_OK=1
 _pf_err()  { echo "  [ERROR] $*"; _PREFLIGHT_OK=0; }
 _pf_warn() { echo "  [WARN]  $*"; }
 
 echo ">>> 사전 조건 확인 중..."
+[ "$_IS_WSL2" -eq 1 ] && echo "  환경: WSL2 (${_DISTRO})" || echo "  환경: ${_DISTRO:-unknown} / pkg: ${_PKG_MGR}"
 
 # 필수 CLI 도구
 _tool_hint() {
-    case "$1" in
-        docker) echo "       설치 (Ubuntu/Debian): curl -fsSL https://get.docker.com | sh"
-                echo "       설치 (WSL2):           https://docs.docker.com/desktop/wsl/" ;;
-        git)    echo "       설치: sudo apt-get install -y git" ;;
-        awk)    echo "       설치: sudo apt-get install -y gawk" ;;
-        nproc)  echo "       설치: sudo apt-get install -y coreutils" ;;
+    local tool="$1"
+    case "${_PKG_MGR}" in
+        apt)
+            case "$tool" in
+                docker) echo "       설치: sudo apt install -y docker.io && sudo systemctl enable --now docker" ;;
+                git)    echo "       설치: sudo apt install -y git" ;;
+                awk)    echo "       설치: sudo apt install -y gawk" ;;
+                nproc)  echo "       설치: sudo apt install -y coreutils" ;;
+            esac ;;
+        dnf)
+            case "$tool" in
+                docker) echo "       설치: sudo dnf install -y docker && sudo systemctl enable --now docker" ;;
+                git)    echo "       설치: sudo dnf install -y git" ;;
+                awk)    echo "       설치: sudo dnf install -y gawk" ;;
+                nproc)  echo "       설치: sudo dnf install -y coreutils" ;;
+            esac ;;
+        pacman)
+            case "$tool" in
+                docker) echo "       설치: sudo pacman -S docker && sudo systemctl enable --now docker" ;;
+                git)    echo "       설치: sudo pacman -S git" ;;
+                awk)    echo "       설치: sudo pacman -S gawk" ;;
+                nproc)  echo "       설치: sudo pacman -S coreutils" ;;
+            esac ;;
+        brew)
+            case "$tool" in
+                docker) echo "       설치: brew install --cask docker" ;;
+                git)    echo "       설치: brew install git" ;;
+                awk)    echo "       설치: brew install gawk" ;;
+                nproc)  echo "       설치: brew install coreutils" ;;
+            esac ;;
+        *)
+            case "$tool" in
+                docker) echo "       설치: https://docs.docker.com/engine/install/" ;;
+                *)      echo "       패키지 매니저를 감지하지 못했습니다. $tool 을 수동 설치하세요." ;;
+            esac ;;
     esac
 }
 for _tool in git awk nproc docker; do
