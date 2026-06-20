@@ -137,8 +137,7 @@ fi
 
 # Docker 접근 (미설치 / daemon 미실행 / 권한 없음 구분)
 if command -v docker &>/dev/null; then
-    if ! docker info >/dev/null 2>&1; then
-        _DOCKER_ERR=$(docker info 2>&1)
+    _DOCKER_ERR=$(docker info 2>&1) || {
         if echo "$_DOCKER_ERR" | grep -qi "permission denied"; then
             _pf_err "Docker 소켓 권한 없음"
             echo "       해결: sudo usermod -aG docker \$USER && newgrp docker"
@@ -150,9 +149,9 @@ if command -v docker &>/dev/null; then
                 echo "       해결: sudo systemctl start docker"
             fi
         else
-            _pf_err "Docker 오류: $(echo "$_DOCKER_ERR" | grep -i 'error\|cannot\|failed' | head -1)"
+            _pf_err "Docker 오류: $(echo "$_DOCKER_ERR" | grep -i 'error\|cannot\|failed' | head -1 || echo '알 수 없는 오류')"
         fi
-    fi
+    }
 fi
 
 # 디스크 여유 공간 (경고만)
