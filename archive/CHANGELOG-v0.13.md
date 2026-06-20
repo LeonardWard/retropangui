@@ -1,11 +1,8 @@
 # Changelog
 
-> **v0.13 이후**부터는 각 `git tag` 어노테이션에 변경 내역이 포함됩니다.
-> `git tag -l` 또는 [GitHub Releases](../../releases)에서 확인하세요.
-> 이 파일은 v0.12까지의 히스토리를 보존하기 위해 유지합니다.
-> 상세 기술 문서는 [Wiki](../../wiki)로 이관 중입니다.
+All notable changes to RetroPangui are documented in this file.
 
----
+Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
