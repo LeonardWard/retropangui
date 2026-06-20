@@ -59,35 +59,18 @@ OTA_APPLIED=0
 # ─── share 파티션(p3) 초기 생성 ──────────────────────────────────
 DISK="${BOOT_DEV%p1}"
 DB="${DISK##*/}"
-LOG=/boot/p3-debug.log
-{
-    echo "=== p3 debug: $(cat /proc/uptime) ==="
-    echo "DISK=$DISK  DB=$DB"
-    echo "/proc/partitions:"
-    cat /proc/partitions
-    echo "fdisk -l output:"
-    fdisk -l "${DISK}" 2>&1
-    echo "sentinel exists: $(ls -la /boot/.p3-creating 2>&1)"
-} >> "$LOG"
-sync
 
 if ! grep -q "${DB}p3" /proc/partitions 2>/dev/null; then
     if [ -f /boot/.p3-creating ]; then
-        echo "  p3 fdisk 후에도 미인식 — 건너뜀" | tee -a "$LOG"
+        echo "  p3 fdisk 후에도 미인식 — 건너뜀"
         rm -f /boot/.p3-creating
         sync
     else
         P3_START=$(fdisk -l "${DISK}" 2>/dev/null | awk -v p="${DISK}p2" '$1==p {print $5+1; exit}')
-        echo "  P3_START=$P3_START" | tee -a "$LOG"
         if [ -n "$P3_START" ]; then
             touch /boot/.p3-creating && sync
-            echo "  fdisk 실행 중..." | tee -a "$LOG"
-            printf "n\np\n3\n%s\n\nw\n" "${P3_START}" | fdisk "${DISK}" >> "$LOG" 2>&1
-            echo "  fdisk 종료: $?" | tee -a "$LOG"
+            printf "n\np\n3\n%s\n\nw\n" "${P3_START}" | fdisk "${DISK}" >/dev/null 2>&1
             sync; sync
-            echo "  MBR 후 /proc/partitions:" >> "$LOG"
-            cat /proc/partitions >> "$LOG"
-            sync
             echo ""
             echo "======================================"
             echo "  SD 카드 초기 설정 완료 — 재부팅합니다."
@@ -95,11 +78,11 @@ if ! grep -q "${DB}p3" /proc/partitions 2>/dev/null; then
             sleep 3
             reboot -f
         else
-            echo "  p3 생성 실패: fdisk -l 파싱 불가" | tee -a "$LOG"
+            echo "  p3 생성 실패: fdisk -l 파싱 불가"
         fi
     fi
 else
-    echo "  p3 이미 있음: ${DISK}" | tee -a "$LOG"
+    echo "  p3 이미 있음"
 fi
 
 # ─── [3/7] OTA 확인 ──────────────────────────────────────────────
