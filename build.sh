@@ -45,7 +45,7 @@ echo "============================================"
 
 # ─── 환경 감지 ───────────────────────────────────────────────────
 _IS_WSL2=0
-grep -qi "microsoft" /proc/version 2>/dev/null && _IS_WSL2=1
+grep -qi "microsoft" /proc/version 2>/dev/null && _IS_WSL2=1 || true
 
 _DISTRO=""
 _PKG_MGR="unknown"
@@ -57,7 +57,7 @@ case "${_DISTRO}" in
     fedora|rhel|centos|rocky|almalinux) _PKG_MGR="dnf" ;;
     arch|manjaro|endeavouros)        _PKG_MGR="pacman" ;;
     opensuse*|sles)                  _PKG_MGR="zypper" ;;
-    *)  command -v brew &>/dev/null  && _PKG_MGR="brew" ;;
+    *)  command -v brew &>/dev/null  && _PKG_MGR="brew" || true ;;
 esac
 
 # ─── 사전 조건 확인 ──────────────────────────────────────────────
@@ -161,7 +161,7 @@ _check_space() {
     mkdir -p "$dir" 2>/dev/null
     local avail_gb
     avail_gb=$(df -k "$dir" 2>/dev/null | awk 'NR==2{printf "%d", $4/1024/1024}')
-    [ -z "$avail_gb" ] && return 0
+    if [ -z "$avail_gb" ]; then return 0; fi
     if [ "$avail_gb" -lt "$min_gb" ]; then
         _pf_warn "${label} 여유 공간 ${avail_gb}GB (권장 ${min_gb}GB 이상)"
     fi
