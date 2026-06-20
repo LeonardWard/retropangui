@@ -28,48 +28,97 @@ done
 set -- "${ARGS[@]}"
 
 DEVICE="${1:-${DEVICE:-odroidc5}}"
-# 사용자가 주입한 VERSION이 없다면 Git 태그를 조회
 if [ -z "${VERSION}" ]; then
-    # 현재 커밋에 붙은 태그가 있으면 가져오고, 없으면 가장 가까운 태그 기반으로 이름 생성
-    # (Git 저장소가 아니거나 태그가 하나도 없으면 에러 방지를 위해 기본값 1.0.0 사용)
     VERSION=$(git describe --tags --long --always 2>/dev/null || echo "1.0.0")
 fi
+
+DEFCONFIG="${SCRIPT_DIR}/configs/retropangui-${DEVICE}_defconfig"
+BOARD_DIR="${SCRIPT_DIR}/board/${DEVICE}"
 
 echo "============================================"
 echo "  RETROPANGUI 빌드 시작"
 echo "  기기: ${DEVICE}"
 echo "  버전: ${VERSION}"
-  echo "  모드: $([ $OTA -eq 1 ] && echo OTA빌드 || { [ $PARTIAL -eq 1 ] && echo 부분빌드 || echo 전체빌드; })"
+echo "  모드: $([ $OTA -eq 1 ] && echo OTA빌드 || { [ $PARTIAL -eq 1 ] && echo 부분빌드 || echo 전체빌드; })"
 echo "  defconfig: retropangui-${DEVICE}_defconfig"
 echo "============================================"
 
-# defconfig 존재 확인
-DEFCONFIG="${SCRIPT_DIR}/configs/retropangui-${DEVICE}_defconfig"
+# ─── 사전 조건 확인 ──────────────────────────────────────────────
+_PREFLIGHT_OK=1
+_pf_err()  { echo "  [ERROR] $*"; _PREFLIGHT_OK=0; }
+_pf_warn() { echo "  [WARN]  $*"; }
+
+echo ">>> 사전 조건 확인 중..."
+
+# 필수 CLI 도구
+for _tool in git awk nproc docker; do
+    command -v "$_tool" &>/dev/null || _pf_err "$_tool 가 설치되어 있지 않습니다."
+done
+
+# defconfig
 if [ ! -f "${DEFCONFIG}" ]; then
-    echo "ERROR: defconfig 파일이 없습니다: ${DEFCONFIG}"
+    _pf_err "defconfig 없음: ${DEFCONFIG}"
+    echo "       사용 가능한 기기:"
     ls "${SCRIPT_DIR}/configs/retropangui-"*"_defconfig" 2>/dev/null \
-        | sed 's|.*/retropangui-||; s|_defconfig||' \
-        | sed 's/^/  - /'
-    exit 1
+        | sed 's|.*/retropangui-||; s|_defconfig||; s/^/         - /'
 fi
 
-# board 디렉토리 존재 확인
-BOARD_DIR="${SCRIPT_DIR}/board/${DEVICE}"
-if [ ! -d "${BOARD_DIR}" ]; then
-    echo "ERROR: board 디렉토리가 없습니다: ${BOARD_DIR}"
+# board 디렉토리
+[ -d "${BOARD_DIR}" ] || _pf_err "board 디렉토리 없음: ${BOARD_DIR}"
+
+# Dockerfile
+[ -f "${SCRIPT_DIR}/Dockerfile" ] || _pf_err "Dockerfile 없음: ${SCRIPT_DIR}/Dockerfile"
+
+# fetch-blobs.sh
+[ -f "${SCRIPT_DIR}/scripts/fetch-blobs.sh" ] || _pf_err "scripts/fetch-blobs.sh 없음"
+
+# buildroot 서브모듈
+[ -f "${SCRIPT_DIR}/buildroot/Makefile" ] || \
+    _pf_err "buildroot 서브모듈 미초기화 — 실행: git submodule update --init"
+
+# Docker 접근 (미설치 / daemon 미실행 / 권한 없음 구분)
+if command -v docker &>/dev/null; then
+    if ! docker info >/dev/null 2>&1; then
+        _DOCKER_ERR=$(docker info 2>&1 | head -3)
+        if echo "$_DOCKER_ERR" | grep -qi "permission denied"; then
+            _pf_err "Docker 소켓 권한 없음"
+            echo "       해결: sudo usermod -aG docker \$USER && newgrp docker"
+        elif echo "$_DOCKER_ERR" | grep -qi "cannot connect\|connection refused\|No such file"; then
+            _pf_err "Docker 데몬이 실행되지 않았습니다"
+            echo "       해결 (Linux):  sudo systemctl start docker"
+            echo "       해결 (WSL2):   Docker Desktop을 먼저 실행하세요"
+        else
+            _pf_err "Docker 오류: $(echo "$_DOCKER_ERR" | head -1)"
+        fi
+    fi
+fi
+
+# 디스크 여유 공간 (경고만)
+_check_space() {
+    local dir="$1" min_gb="$2" label="$3"
+    mkdir -p "$dir" 2>/dev/null
+    local avail_gb
+    avail_gb=$(df -k "$dir" 2>/dev/null | awk 'NR==2{printf "%d", $4/1024/1024}')
+    [ -z "$avail_gb" ] && return
+    [ "$avail_gb" -lt "$min_gb" ] && \
+        _pf_warn "${label} 여유 공간 ${avail_gb}GB (권장 ${min_gb}GB 이상)"
+}
+_check_space "${SCRIPT_DIR}/output"    10  "output"
+_check_space "${SCRIPT_DIR}/buildroot" 40  "buildroot"
+
+# RAM (경고만)
+_ram_gb=$(awk '/MemTotal/{printf "%d", $2/1024/1024}' /proc/meminfo 2>/dev/null || echo 0)
+[ "$_ram_gb" -lt 4 ] && _pf_warn "RAM ${_ram_gb}GB — 빌드에 최소 4GB 권장"
+
+if [ "$_PREFLIGHT_OK" -eq 0 ]; then
+    echo ""
+    echo ">>> 사전 조건 미충족으로 빌드를 중단합니다."
     exit 1
 fi
+echo "  OK"
 
 # 볼륨 마운트 디렉터리 사전 생성 (Docker가 root로 자동생성하면 권한 오류)
-mkdir -p "${SCRIPT_DIR}/dl"
-mkdir -p "${SCRIPT_DIR}/output"
-
-# Docker 접근 권한 확인 — 빌드 시작 전 실패해야 긴 빌드 도중 멈추지 않음
-if ! docker info >/dev/null 2>&1; then
-    echo "ERROR: Docker에 접근할 수 없습니다. 다음 명령어로 권한을 추가하세요:"
-    echo "  sudo usermod -aG docker \$USER && newgrp docker"
-    exit 1
-fi
+mkdir -p "${SCRIPT_DIR}/dl" "${SCRIPT_DIR}/output"
 
 # 전용 바이너리 블롭 확인 (Mali DDK 등)
 # (테마는 post-build.sh에서 GitHub에서 자동 다운로드됨)
