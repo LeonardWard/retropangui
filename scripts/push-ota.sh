@@ -2,12 +2,13 @@
 # push-ota.sh - OTA squashfs를 로컬 파일서버 디렉토리에 배포
 #
 # 사용법:
-#   bash scripts/push-ota.sh <squashfs 파일경로> [버전]
+#   bash scripts/push-ota.sh <squashfs 파일경로> [--serve] [버전]
 #
-# 버전 미지정 시 git describe 자동 감지
+# --serve: 배포 완료 후 파일서버 즉시 실행 (Ctrl+C로 종료)
+# 버전 미지정 시 파일명 > git describe 순으로 자동 감지
 # 예:
-#   bash scripts/push-ota.sh buildroot/output/images/retropangui.squashfs 0.12
-#   bash scripts/push-ota.sh buildroot/output/images/retropangui.squashfs
+#   bash scripts/push-ota.sh output/retropangui-odroidc5-0.14.squashfs
+#   bash scripts/push-ota.sh output/retropangui-odroidc5-0.14.squashfs --serve
 #
 # 파일서버 디렉토리: ~/scripts/ota-server/
 # 파일서버 실행:     bash scripts/serve-ota.sh
@@ -17,10 +18,21 @@ set -e
 SCRIPT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 OTA_SERVER_DIR="${HOME}/scripts/ota-server"
 DEVICE="${DEVICE:-odroidc5}"
+SERVE=0
+
+# 인자 파싱
+POSITIONAL=()
+for arg in "$@"; do
+    case "$arg" in
+        --serve|-s) SERVE=1 ;;
+        *) POSITIONAL+=("$arg") ;;
+    esac
+done
+set -- "${POSITIONAL[@]}"
 
 if [ -z "$1" ]; then
-    echo "사용법: $0 <squashfs 파일경로> [버전]"
-    echo "예:     $0 buildroot/output/images/retropangui.squashfs 0.12"
+    echo "사용법: $0 <squashfs 파일경로> [--serve] [버전]"
+    echo "예:     $0 output/retropangui-odroidc5-0.14.squashfs --serve"
     exit 1
 fi
 
@@ -74,6 +86,12 @@ echo "  버전: ${VERSION}"
 echo "  크기: $(du -h "${OTA_SERVER_DIR}/retropangui-${DEVICE}.squashfs" | cut -f1)"
 echo "  SHA256: $(cat "${OTA_SERVER_DIR}/retropangui-${DEVICE}.squashfs.sha256")"
 echo ""
-echo "  파일서버가 실행 중이 아니면:"
-echo "    bash scripts/serve-ota.sh"
-echo "============================================"
+if [ "${SERVE}" -eq 1 ]; then
+    echo "  파일서버 시작 중..."
+    echo "============================================"
+    exec bash "${SCRIPT_DIR}/scripts/serve-ota.sh"
+else
+    echo "  파일서버가 실행 중이 아니면:"
+    echo "    bash scripts/serve-ota.sh"
+    echo "============================================"
+fi
