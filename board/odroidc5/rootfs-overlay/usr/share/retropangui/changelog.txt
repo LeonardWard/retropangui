@@ -35,6 +35,3 @@ overlayfs 기반 루트 파일시스템 적용
   - p1: boot (FAT32, 3GB) — 커널, squashfs, initramfs
   - p2: overlay (ext4, 1GB) — 설정, 저장 데이터
   - p3: share (exFAT) — ROMs, BIOS, 세이브 파일
-
-
-이 창을 닫으려면 [A] 또는 [Start] 버튼을 누르세요.
