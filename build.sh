@@ -182,6 +182,21 @@ if [ "$_PREFLIGHT_OK" -eq 0 ]; then
 fi
 echo "  OK"
 
+# changelog.txt를 현재 태그 어노테이션에서 자동 생성
+_CHANGELOG_DEST="${SCRIPT_DIR}/board/${DEVICE}/rootfs-overlay/usr/share/retropangui/changelog.txt"
+_BASE_TAG=$(git describe --tags --abbrev=0 2>/dev/null || true)
+if [ -n "$_BASE_TAG" ]; then
+    _TAG_BODY=$(git for-each-ref "refs/tags/${_BASE_TAG}" --format='%(contents)' 2>/dev/null)
+    if [ -n "$_TAG_BODY" ]; then
+        printf '%s\n' "$_TAG_BODY" > "$_CHANGELOG_DEST"
+        echo ">>> changelog.txt: ${_BASE_TAG} 태그 어노테이션으로 생성"
+    else
+        echo ">>> changelog.txt: ${_BASE_TAG} 는 경량 태그 — 기존 파일 유지"
+    fi
+else
+    echo ">>> changelog.txt: git 태그 없음 — 기존 파일 유지"
+fi
+
 # 볼륨 마운트 디렉터리 사전 생성 (Docker가 root로 자동생성하면 권한 오류)
 mkdir -p "${SCRIPT_DIR}/dl" "${SCRIPT_DIR}/output"
 
