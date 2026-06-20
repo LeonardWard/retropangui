@@ -105,7 +105,7 @@ menus:
         restart: none
 
       - id: rp.bgm
-        label: "FRONTEND MUSIC"
+        label: "배경음악"
         type: toggle
         conf_key: emulationstation.BackgroundMusic
         restart: none
