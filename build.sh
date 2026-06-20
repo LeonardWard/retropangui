@@ -51,8 +51,20 @@ _pf_warn() { echo "  [WARN]  $*"; }
 echo ">>> 사전 조건 확인 중..."
 
 # 필수 CLI 도구
+_tool_hint() {
+    case "$1" in
+        docker) echo "       설치 (Ubuntu/Debian): curl -fsSL https://get.docker.com | sh"
+                echo "       설치 (WSL2):           https://docs.docker.com/desktop/wsl/" ;;
+        git)    echo "       설치: sudo apt-get install -y git" ;;
+        awk)    echo "       설치: sudo apt-get install -y gawk" ;;
+        nproc)  echo "       설치: sudo apt-get install -y coreutils" ;;
+    esac
+}
 for _tool in git awk nproc docker; do
-    command -v "$_tool" &>/dev/null || _pf_err "$_tool 가 설치되어 있지 않습니다."
+    if ! command -v "$_tool" &>/dev/null; then
+        _pf_err "$_tool 가 설치되어 있지 않습니다."
+        _tool_hint "$_tool"
+    fi
 done
 
 # defconfig
