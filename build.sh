@@ -140,7 +140,8 @@ if command -v docker &>/dev/null; then
     _DOCKER_ERR=$(docker info 2>&1) || {
         if echo "$_DOCKER_ERR" | grep -qi "permission denied"; then
             _pf_err "Docker 소켓 권한 없음"
-            echo "       해결: sudo usermod -aG docker \$USER && newgrp docker"
+            echo "       해결: sudo usermod -aG docker \$USER"
+            echo "             그 후 터미널을 닫고 다시 열거나: newgrp docker"
         elif echo "$_DOCKER_ERR" | grep -qi "cannot connect\|connection refused\|No such file\|Is the docker daemon running"; then
             _pf_err "Docker 데몬이 실행되지 않았습니다"
             if [ "$_IS_WSL2" -eq 1 ]; then
