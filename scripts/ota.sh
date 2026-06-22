@@ -97,7 +97,8 @@ if [ ! -f "${SQ_FILE}" ]; then
 fi
 
 # 버전: 2번째 인자 > 파일명에서 추출 > git describe 순으로 결정
-if [ -n "${2:-}" ]; then
+# $2가 --로 시작하면 플래그 오타이므로 VERSION으로 쓰지 않음
+if [ -n "${2:-}" ] && [ "${2#--}" = "${2}" ]; then
     VERSION="$2"
 else
     BASENAME="$(basename "${SQ_FILE}" .squashfs)"
