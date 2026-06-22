@@ -46,18 +46,23 @@ case "$1" in
         # $HOME/share 폴백 우회책이 더 이상 필요 없음. 잔존 링크는 정리.
         [ -L /root/share ] && rm -f /root/share
 
+        # apply_retropangui_conf.sh 실행 여부: 최초 부팅이거나 새 키가 병합된 경우에만 실행
+        APPLY_NEEDED=false
+
         # 첫 부팅: retropangui.conf 없으면 기본값에서 복사
         if [ ! -f "${CONF_USER}" ]; then
             if [ -f "${CONF_DEFAULT}" ]; then
                 logger -t "${TAG}" "첫 부팅: 기본 설정 파일 복사 중..."
                 cp "${CONF_DEFAULT}" "${CONF_USER}"
                 logger -t "${TAG}" "${CONF_USER} 생성 완료"
+                APPLY_NEEDED=true
             else
                 logger -t "${TAG}" "기본 설정 파일 없음: ${CONF_DEFAULT}"
                 exit 0
             fi
         elif [ -f "${CONF_DEFAULT}" ]; then
             # conf.default에 새로 추가된 키가 user conf에 없으면 병합
+            # (펌웨어 업데이트로 새 키가 추가된 경우)
             while IFS='=' read -r def_key def_val || [ -n "${def_key}" ]; do
                 case "${def_key}" in
                     '#'*|'') continue ;;
@@ -67,6 +72,7 @@ case "$1" in
                 if ! grep -q "^${def_key}[[:space:]]*=" "${CONF_USER}" 2>/dev/null; then
                     echo "${def_key}=${def_val}" >> "${CONF_USER}"
                     logger -t "${TAG}" "conf 병합: ${def_key}"
+                    APPLY_NEEDED=true
                 fi
             done < "${CONF_DEFAULT}"
         fi
@@ -79,7 +85,8 @@ case "$1" in
 
         # 첫 부팅: es_settings.cfg 없으면 최소 XML 골격 생성
         # (빈 파일이면 EmulationStation이 "No document element found" 에러 발생)
-        if [ ! -f "${ES_CFG_USER}" ] || ! grep -q "<config" "${ES_CFG_USER}" 2>/dev/null; then
+        # 주의: 파일이 이미 존재하면 덮어쓰지 않는다. ES가 saveFile()로 직접 관리한다.
+        if [ ! -f "${ES_CFG_USER}" ]; then
             logger -t "${TAG}" "es_settings.cfg XML 골격 생성"
             printf '<?xml version="1.0"?>\n<config>\n</config>\n' > "${ES_CFG_USER}"
         fi
@@ -110,10 +117,14 @@ case "$1" in
         fi
 
         # 설정 적용 (retropangui.conf → retroarch.cfg, es_settings.cfg)
-        if [ -x "${APPLY_SCRIPT}" ]; then
-            "${APPLY_SCRIPT}" "${CONF_USER}"
-        else
-            logger -t "${TAG}" "apply 스크립트 없음: ${APPLY_SCRIPT}"
+        # 최초 부팅이거나 conf.default에서 새 키가 병합된 경우에만 실행한다.
+        # 매 부팅마다 실행하면 사용자가 ES/RA에서 직접 변경한 설정이 덮어씌워진다.
+        if [ "${APPLY_NEEDED}" = "true" ]; then
+            if [ -x "${APPLY_SCRIPT}" ]; then
+                "${APPLY_SCRIPT}" "${CONF_USER}"
+            else
+                logger -t "${TAG}" "apply 스크립트 없음: ${APPLY_SCRIPT}"
+            fi
         fi
 
         # gamepad-daemon이 vdev를 생성할 때까지 대기 (최대 10초)
