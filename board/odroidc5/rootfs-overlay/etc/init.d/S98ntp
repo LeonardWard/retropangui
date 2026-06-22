@@ -1,3 +1,0 @@
-#!/bin/sh
-# disabled — S63ntp가 NTP 및 시각 동기화를 담당함
-exit 0
