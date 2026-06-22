@@ -1,0 +1,77 @@
+#!/bin/sh
+# S63ntp - 시각 초기화 (S61share 이후 실행 — share 파티션에 fake-hwclock 보존)
+# RTC 없는 기기: fake-hwclock으로 기동 직후 에폭(1970) 방지
+# 네트워크 준비 후 Google Date로 보정 → ntpd 정밀 유지
+DAEMON=/usr/sbin/ntpd
+PIDFILE=/run/ntpd.pid
+FAKEHWCLOCK=/retropangui/share/system/fake-hwclock
+TAG=S63ntp
+
+[ -x "${DAEMON}" ] || exit 0
+
+case "$1" in
+    start)
+        # 1. fake-hwclock 복원 (에폭 기동 방지)
+        if [ -f "${FAKEHWCLOCK}" ]; then
+            date -u -s "$(cat "${FAKEHWCLOCK}")" 2>/dev/null
+            logger -t "${TAG}" "fake-hwclock 복원: $(cat "${FAKEHWCLOCK}")"
+        else
+            date -u -s "2026-06-22 00:00:00" 2>/dev/null
+            logger -t "${TAG}" "fake-hwclock 없음 — 기본값으로 설정"
+        fi
+
+        # 2. 백그라운드: 네트워크 대기 → Google Date 보정 → ntpd 시작
+        {
+            # 네트워크 라우팅 대기 (최대 60초)
+            i=0
+            while [ $i -lt 60 ]; do
+                route -n 2>/dev/null | grep -q "^0\.0\.0\.0" && break
+                sleep 1; i=$((i + 1))
+            done
+
+            # Google HTTPS Date 헤더로 시각 보정 (최대 3회 시도)
+            SYNCED=0
+            for attempt in 1 2 3; do
+                HTTPDATE=$(wget --no-check-certificate --server-response \
+                    -O /dev/null https://www.google.com 2>&1 \
+                    | grep -i "Date:" | head -1 | sed "s/.*Date: //")
+                SETDATE=$(echo "$HTTPDATE" | awk '{
+                    split("Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec", m, " ")
+                    for(i=1;i<=12;i++) if(m[i]==$3) mon=sprintf("%02d",i)
+                    if($4 && mon && $2 && $5) printf "%s-%s-%s %s\n", $4, mon, $2, $5
+                }')
+                if [ -n "$SETDATE" ]; then
+                    date -u -s "$SETDATE" 2>/dev/null
+                    mkdir -p "$(dirname "${FAKEHWCLOCK}")"
+                    date -u +"%Y-%m-%d %H:%M:%S" > "${FAKEHWCLOCK}"
+                    logger -t "${TAG}" "시각 동기화 완료: $SETDATE UTC"
+                    SYNCED=1
+                    break
+                fi
+                logger -t "${TAG}" "Google Date 시도 ${attempt} 실패 — 5초 후 재시도"
+                sleep 5
+            done
+            [ $SYNCED -eq 0 ] && logger -t "${TAG}" "경고: Google Date 동기화 실패"
+
+            # ntpd 시작 (소폭 오프셋 정밀 유지)
+            kill $(cat "${PIDFILE}" 2>/dev/null) 2>/dev/null || true
+            rm -f "${PIDFILE}"
+            "${DAEMON}" -p "${PIDFILE}"
+        } &
+        ;;
+    stop)
+        # 셧다운 시 현재 시각 저장 (다음 부팅의 fake-hwclock)
+        mkdir -p "$(dirname "${FAKEHWCLOCK}")"
+        date -u +"%Y-%m-%d %H:%M:%S" > "${FAKEHWCLOCK}"
+        logger -t "${TAG}" "fake-hwclock 저장: $(cat "${FAKEHWCLOCK}")"
+        kill $(cat "${PIDFILE}" 2>/dev/null) 2>/dev/null || true
+        rm -f "${PIDFILE}"
+        ;;
+    restart|reload)
+        "$0" stop; sleep 1; "$0" start
+        ;;
+    *)
+        echo "Usage: $0 {start|stop|restart}"; exit 1
+        ;;
+esac
+exit 0

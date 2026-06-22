@@ -275,7 +275,7 @@ if [ $OTA -eq 1 ]; then
     echo "SHA256:       ${SCRIPT_DIR}/output/retropangui-${DEVICE}-${VERSION}.squashfs.sha256"
     echo ""
     echo "파일서버에 배포하려면:"
-    echo "  bash scripts/push-ota.sh output/retropangui-${DEVICE}-${VERSION}.squashfs"
+    echo "  scripts/ota.sh push output/retropangui-${DEVICE}-${VERSION}.squashfs --serve"
 else
     echo "최종 이미지: ${SCRIPT_DIR}/output/retropangui-${DEVICE}-${VERSION}.img"
     echo ""

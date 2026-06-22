@@ -36,10 +36,10 @@ menus:
     label: "AUDIO SETTINGS"
     parent: sound
     items:
-      - id: rp.audio_enable
-        label: "AUDIO"
+      - id: rp.bgm
+        label: "배경음악"
         type: toggle
-        conf_key: global.audio_enable
+        conf_key: emulationstation.BackgroundMusic
         restart: none
 
       - id: rp.volume
@@ -102,12 +102,6 @@ menus:
         label: "ENABLE VIDEO AUDIO"
         type: toggle
         conf_key: emulationstation.VideoAudio
-        restart: none
-
-      - id: rp.bgm
-        label: "배경음악"
-        type: toggle
-        conf_key: emulationstation.BackgroundMusic
         restart: none
 
       - id: rp.audio_latency
