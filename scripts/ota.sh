@@ -7,7 +7,7 @@
 #
 # 예:
 #   ota.sh push retropangui-odroidc5-0.15.squashfs
-#   ota.sh push retropangui-odroidc5-0.15.squashfs --serve
+#   ota.sh push retropangui-odroidc5-0.15.squashfs --serve  (또는 -s)
 #   ota.sh serve
 #   ota.sh serve --port 9000
 #

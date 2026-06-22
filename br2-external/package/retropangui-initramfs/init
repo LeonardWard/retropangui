@@ -87,18 +87,19 @@ fi
 
 # ─── [3/7] OTA 확인 ──────────────────────────────────────────────
 echo ">>> [3/7] OTA 확인..."
-if [ -f /boot/update/retropangui.update ]; then
-    SHA256_FILE="/boot/update/retropangui.update.sha256"
+UPDATE_FILE=$(ls /boot/update/*.squashfs 2>/dev/null | head -1)
+if [ -n "$UPDATE_FILE" ]; then
+    SHA256_FILE="${UPDATE_FILE}.sha256"
     VALID=0
     if [ -f "$SHA256_FILE" ]; then
         EXPECTED=$(awk '{print $1}' "$SHA256_FILE")
-        ACTUAL=$(sha256sum /boot/update/retropangui.update | awk '{print $1}')
+        ACTUAL=$(sha256sum "$UPDATE_FILE" | awk '{print $1}')
         [ "$EXPECTED" = "$ACTUAL" ] && VALID=1
     fi
     if [ "$VALID" = "1" ]; then
-        echo "    OTA 적용 중..."
+        echo "    OTA 적용 중: $(basename $UPDATE_FILE)"
         cp /boot/retropangui.squashfs /boot/retropangui.squashfs.old 2>/dev/null || true
-        mv /boot/update/retropangui.update /boot/retropangui.squashfs
+        mv "$UPDATE_FILE" /boot/retropangui.squashfs
         rm -f "$SHA256_FILE"
         sync
         OTA_APPLIED=1
