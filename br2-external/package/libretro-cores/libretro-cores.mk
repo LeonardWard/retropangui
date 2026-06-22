@@ -1,12 +1,13 @@
 ################################################################################
 #
-# libretro-cores - NES, SNES, PSX, DOS, ScummVM libretro cores for RetroArch
+# libretro-cores - NES, SNES, PSX, MD, DOS, ScummVM libretro cores for RetroArch
 #
 # 버전 관리:
 #   fceumm       : 커밋 c0c52ad0 (2026-06, libretro/libretro-fceumm, FDS BIOS 불필요)
 #   nestopia     : 커밋 b0fd87dd (2024-01, libretro/nestopia, 별도 릴리즈 태그 없음)
 #   snes9x       : 커밋 e755ae51 (2025-04, libretro/snes9x, 별도 릴리즈 태그 없음)
 #   pcsx_rearmed : 릴리즈 태그 r26l (libretro/pcsx_rearmed)
+#   picodrive    : 커밋 f0d4a011 (2026-06, libretro/picodrive, 메가드라이브/32X/MCD)
 #   dosbox_pure  : 커밋 f587236b (2025-04, schellingb/dosbox-pure, 별도 릴리즈 태그 없음)
 #   scummvm      : 릴리즈 태그 libretro-v3.1.0.1 (libretro/scummvm)
 #
@@ -103,6 +104,24 @@ define LIBRETRO_CORES_BUILD_PCSX
 endef
 
 ################################################################################
+# picodrive - Sega Mega Drive / Genesis / 32X / Mega-CD
+################################################################################
+
+PICODRIVE_SITE = https://github.com/libretro/picodrive
+PICODRIVE_VERSION = f0d4a0118a9733a1f10bce5a4ac772c474f9300d
+
+define LIBRETRO_CORES_BUILD_PICODRIVE
+	test -d $(@D)/picodrive/.git || \
+		git clone --filter=blob:none $(PICODRIVE_SITE) $(@D)/picodrive
+	git -C $(@D)/picodrive checkout $(PICODRIVE_VERSION)
+	git -C $(@D)/picodrive submodule update --init
+	$(TARGET_MAKE_ENV) $(MAKE) -C $(@D)/picodrive \
+		-f Makefile.libretro \
+		$(LIBRETRO_CROSS_OPTS) \
+		platform=unix
+endef
+
+################################################################################
 # dosbox-pure - DOS
 ################################################################################
 
@@ -168,6 +187,7 @@ define LIBRETRO_CORES_BUILD_CMDS
 	$(call LIBRETRO_CORES_BUILD_NESTOPIA)
 	$(call LIBRETRO_CORES_BUILD_SNES9X)
 	$(call LIBRETRO_CORES_BUILD_PCSX)
+	$(call LIBRETRO_CORES_BUILD_PICODRIVE)
 	$(call LIBRETRO_CORES_BUILD_DOSBOX_PURE)
 	$(call LIBRETRO_CORES_BUILD_SCUMMVM)
 endef
@@ -194,6 +214,11 @@ define LIBRETRO_CORES_INSTALL_TARGET_CMDS
 	$(INSTALL) -m 0644 $(@D)/pcsx_rearmed/pcsx_rearmed_libretro.so \
 		$(CORES_INSTALL_DIR)/lr-pcsx-rearmed/
 	echo "pcsx_rearmed_libretro.so" > $(CORES_INSTALL_DIR)/lr-pcsx-rearmed/.installed_so_name
+
+	mkdir -p $(CORES_INSTALL_DIR)/lr-picodrive
+	$(INSTALL) -m 0644 $(@D)/picodrive/picodrive_libretro.so \
+		$(CORES_INSTALL_DIR)/lr-picodrive/
+	echo "picodrive_libretro.so" > $(CORES_INSTALL_DIR)/lr-picodrive/.installed_so_name
 
 	mkdir -p $(CORES_INSTALL_DIR)/lr-dosbox-pure
 	$(INSTALL) -m 0644 $(@D)/dosbox-pure/dosbox_pure_libretro.so \
