@@ -8,6 +8,7 @@
 #   snes9x       : 커밋 e755ae51 (2025-04, libretro/snes9x, 별도 릴리즈 태그 없음)
 #   pcsx_rearmed : 릴리즈 태그 r26l (libretro/pcsx_rearmed)
 #   picodrive    : 커밋 f0d4a011 (2026-06, libretro/picodrive, 메가드라이브/32X/MCD)
+#   bluemsx      : 커밋 b76f2795 (2026-06, libretro/bluemsx-libretro, MSX/MSX2/MSX2+/turboR)
 #   dosbox_pure  : 커밋 f587236b (2025-04, schellingb/dosbox-pure, 별도 릴리즈 태그 없음)
 #   scummvm      : 릴리즈 태그 libretro-v3.1.0.1 (libretro/scummvm)
 #
@@ -122,6 +123,23 @@ define LIBRETRO_CORES_BUILD_PICODRIVE
 endef
 
 ################################################################################
+# blueMSX - MSX / MSX2 / MSX2+ / MSX turbo R
+################################################################################
+
+BLUEMSX_SITE = https://github.com/libretro/bluemsx-libretro
+BLUEMSX_VERSION = b76f27959a32e18aa04c619273152178fd0cf03b
+
+define LIBRETRO_CORES_BUILD_BLUEMSX
+	test -d $(@D)/bluemsx-libretro/.git || \
+		git clone --filter=blob:none $(BLUEMSX_SITE) $(@D)/bluemsx-libretro
+	git -C $(@D)/bluemsx-libretro checkout $(BLUEMSX_VERSION)
+	$(TARGET_MAKE_ENV) $(MAKE) -C $(@D)/bluemsx-libretro \
+		-f Makefile.libretro \
+		$(LIBRETRO_CROSS_OPTS) \
+		platform=unix
+endef
+
+################################################################################
 # dosbox-pure - DOS
 ################################################################################
 
@@ -188,6 +206,7 @@ define LIBRETRO_CORES_BUILD_CMDS
 	$(call LIBRETRO_CORES_BUILD_SNES9X)
 	$(call LIBRETRO_CORES_BUILD_PCSX)
 	$(call LIBRETRO_CORES_BUILD_PICODRIVE)
+	$(call LIBRETRO_CORES_BUILD_BLUEMSX)
 	$(call LIBRETRO_CORES_BUILD_DOSBOX_PURE)
 	$(call LIBRETRO_CORES_BUILD_SCUMMVM)
 endef
@@ -219,6 +238,11 @@ define LIBRETRO_CORES_INSTALL_TARGET_CMDS
 	$(INSTALL) -m 0644 $(@D)/picodrive/picodrive_libretro.so \
 		$(CORES_INSTALL_DIR)/lr-picodrive/
 	echo "picodrive_libretro.so" > $(CORES_INSTALL_DIR)/lr-picodrive/.installed_so_name
+
+	mkdir -p $(CORES_INSTALL_DIR)/lr-bluemsx
+	$(INSTALL) -m 0644 $(@D)/bluemsx-libretro/bluemsx_libretro.so \
+		$(CORES_INSTALL_DIR)/lr-bluemsx/
+	echo "bluemsx_libretro.so" > $(CORES_INSTALL_DIR)/lr-bluemsx/.installed_so_name
 
 	mkdir -p $(CORES_INSTALL_DIR)/lr-dosbox-pure
 	$(INSTALL) -m 0644 $(@D)/dosbox-pure/dosbox_pure_libretro.so \
