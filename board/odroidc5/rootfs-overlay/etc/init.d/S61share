@@ -41,7 +41,7 @@ case "$1" in
         fi
 
         if ! grep -q "${SHARE_MOUNT}" /proc/mounts; then
-            mount -t exfat -o uid=0,gid=0,fmask=0022,dmask=0022,sync \
+            mount -t exfat -o uid=0,gid=0,fmask=0022,dmask=0022,sync,dirsync \
                 "${SHARE_PART}" "${SHARE_MOUNT}" || {
                 logger -t "${TAG}" "마운트 실패: ${SHARE_PART}"
                 exit 1

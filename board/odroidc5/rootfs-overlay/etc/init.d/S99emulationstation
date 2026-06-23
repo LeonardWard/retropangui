@@ -30,7 +30,7 @@ case "$1" in
                 # HDMI PHY 활성화 — HPD 이벤트 후 드라이버가 자동 복구하지 않음
                 echo 1 > /sys/class/amhdmitx/amhdmitx0/phy 2>/dev/null || true
                 killall odroid-drm-fbset 2>/dev/null || true
-                odroid-drm-fbset -outputmode 1080p60hz
+                odroid-drm-fbset -outputmode preferred
                 # 스플래시 비디오 재생 — ALSA softvol "Master" 컨트롤 초기화 목적
                 # mpv가 오디오 디바이스를 열면 softvol 컨트롤이 등록되어 ES VolumeControl이 정상 작동함
                 SPLASH="/opt/retropangui/splash/splash.mp4"
@@ -42,29 +42,47 @@ case "$1" in
                 # 이전 RA가 kill되면 VT1 키보드가 K_MEDIUMRAW에 묶여 linuxraw 재초기화 실패
                 # 매 ES 실행 전 K_XLATE(ASCII)로 리셋해서 linuxraw가 깨끗하게 초기화되도록 함
                 kbd_mode -a 2>/dev/null || true
-                openvt -c 1 -s -w -- sh -c "emulationstation --no-splash --debug >> /var/log/es-launcher.log 2>&1"
-                # exFAT lazy write-back: ES 종료 후 dirty page를 eMMC에 flush
-                # 하지 않으면 재부팅 시 conf 변경값이 유실된다.
-                sync
-                # exFAT은 lazy write-back이라 sync만으로는 flush 보장이 안 됨.
-                # reboot/poweroff 전에 파티션을 명시적으로 umount해야 dirty page가 disk에 보장됨.
+                openvt -c 1 -s -w -- sh -c "
+                    emulationstation --no-splash --debug >> /var/log/es-launcher.log 2>&1 &
+                    echo \$! > /tmp/es.pid
+                    wait \$!
+                    rm -f /tmp/es.pid
+                "
                 if [ -f /tmp/es-sysrestart ]; then
-                    umount /retropangui/share 2>/dev/null || true
+                    umount /retropangui/share 2>/dev/null || sync
                     reboot
                 fi
                 if [ -f /tmp/es-shutdown ]; then
-                    umount /retropangui/share 2>/dev/null || true
+                    umount /retropangui/share 2>/dev/null || sync
                     poweroff
                 fi
                 if [ -f /tmp/es-kodi ]; then
                     rm -f /tmp/es-kodi
                     if command -v kodi >/dev/null 2>&1; then
                         killall odroid-drm-fbset 2>/dev/null; sleep 1
-                        odroid-drm-fbset -outputmode 1080p60hz
+                        odroid-drm-fbset -outputmode preferred
+                        # Kodi GBM이 dummy_l 등 무효 DRM 모드를 선택하는 버그 우회:
+                        # odroid-drm-fbset preferred 결과로 guisettings.xml 해상도를 미리 고정.
+                        KODI_GUI=/root/.kodi/userdata/guisettings.xml
+                        if [ -f "$KODI_GUI" ]; then
+                            PREF_MODE=$(odroid-drm-fbset -outputmode preferred 2>&1 | grep -oE "[0-9]+x[0-9]+" | head -1)
+                            KW=$(echo "$PREF_MODE" | cut -dx -f1)
+                            KH=$(echo "$PREF_MODE" | cut -dx -f2)
+                            KHZ=$(odroid-drm-fbset -outputmode preferred 2>&1 | grep -oE "@[0-9]+" | tr -d '@' | head -1)
+                            [ -z "$KW" ] && KW=1920
+                            [ -z "$KH" ] && KH=1080
+                            [ -z "$KHZ" ] && KHZ=60
+                            KSCREENMODE="${KW}:${KH}:${KHZ}.00"
+                            sed -i \
+                                -e "s|<setting id=\"window.width\"[^>]*>[^<]*</setting>|<setting id=\"window.width\" default=\"true\">${KW}</setting>|" \
+                                -e "s|<setting id=\"window.height\"[^>]*>[^<]*</setting>|<setting id=\"window.height\" default=\"true\">${KH}</setting>|" \
+                                -e "s|<setting id=\"videoscreen.screenmode\"[^>]*>[^<]*</setting>|<setting id=\"videoscreen.screenmode\">${KSCREENMODE}</setting>|" \
+                                "$KODI_GUI"
+                        fi
                         env -u SDL_VIDEODRIVER -u MESA_LOADER_DRIVER_OVERRIDE \
                             LD_PRELOAD=/usr/lib64/libEGL.so.1 \
                             kodi --standalone >> /var/log/kodi.log 2>&1 || true
-                        odroid-drm-fbset -outputmode 1080p60hz
+                        odroid-drm-fbset -outputmode preferred
                     fi
                     continue
                 fi
@@ -84,6 +102,15 @@ case "$1" in
         killall openvt 2>/dev/null || true
         # VT 키보드를 ASCII 모드로 복원 — DRM 상태 클린업
         kbd_mode -a 2>/dev/null || true
+        # ES PID 기반 종료 대기 — umount 성공을 위해 ES가 파일 핸들을 닫을 때까지 대기
+        i=0
+        while [ $i -lt 15 ]; do
+            [ ! -f /tmp/es.pid ] && break
+            kill -0 "$(cat /tmp/es.pid 2>/dev/null)" 2>/dev/null || break
+            sleep 1; i=$((i+1))
+        done
+        sleep 1
+        umount /retropangui/share 2>/dev/null || sync
         ;;
     restart|reload)
         "$0" stop
