@@ -116,6 +116,10 @@ case "$1" in
             cp -r "${THEMES_SRC}/." "${THEMES_DST}/"
         fi
 
+        # exFAT는 새 파일 생성 시 디렉토리 메타데이터가 즉시 디스크에 기록되지 않아
+        # 재부팅 후 파일이 사라질 수 있음. 첫 부팅 파일 복사 후 전체 sync로 flush.
+        sync
+
         # 설정 적용 (retropangui.conf → retroarch.cfg, es_settings.cfg)
         # 최초 부팅이거나 conf.default에서 새 키가 병합된 경우에만 실행한다.
         # 매 부팅마다 실행하면 사용자가 ES/RA에서 직접 변경한 설정이 덮어씌워진다.
