@@ -1,0 +1,14 @@
+config BR2_PACKAGE_KODI_PERIPHERAL_JOYSTICK_PANGUI
+	bool "kodi-peripheral-joystick-pangui"
+	depends on BR2_PACKAGE_KODI_PANGUI
+	depends on BR2_PACKAGE_HAS_UDEV
+	select BR2_PACKAGE_TINYXML
+	help
+	  Kodi joystick peripheral addon (Omega 21.x).
+	  Provides joystick/gamepad support for Kodi including
+	  button mapping and controller profiles.
+
+	  https://github.com/xbmc/peripheral.joystick
+
+comment "kodi-peripheral-joystick-pangui needs kodi-pangui and udev"
+	depends on !BR2_PACKAGE_KODI_PANGUI || !BR2_PACKAGE_HAS_UDEV

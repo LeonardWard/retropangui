@@ -103,6 +103,7 @@ KODI_PANGUI_CONF_ENV = \
 	PKG_CONFIG_LIBDIR="$(STAGING_DIR)/usr/lib/pkgconfig:$(STAGING_DIR)/usr/share/pkgconfig" \
 	PKG_CONFIG_SYSROOT_DIR="$(STAGING_DIR)"
 
+KODI_PANGUI_INSTALL_STAGING = YES
 KODI_PANGUI_SUPPORTS_IN_SOURCE_BUILD = NO
 
 # cmake FetchContent tries to download Groovy/Apache Commons JARs at configure time.
