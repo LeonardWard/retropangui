@@ -111,9 +111,12 @@ KODI_PANGUI_SUPPORTS_IN_SOURCE_BUILD = NO
 # peripheral.joystick 빌드에 필요한 헤더/cmake는 같은 cmake --install로 설치되므로
 # 빈 파일을 미리 만들어 cmake install이 통과하도록 한다.
 define KODI_PANGUI_INSTALL_STAGING_CMDS
-	mkdir -p $(@D)/buildroot-build/addons/skin.estuary/media
-	test -f $(@D)/buildroot-build/addons/skin.estuary/media/Textures.xbt || \
-		touch $(@D)/buildroot-build/addons/skin.estuary/media/Textures.xbt
+	find $(@D)/buildroot-build -name "cmake_install.cmake" \
+		-exec grep -h '\.xbt"' {} \; 2>/dev/null | \
+		grep -o '"[^"]*\.xbt"' | tr -d '"' | sort -u | \
+		while read -r f; do \
+			[ -f "$$f" ] || { mkdir -p "$$(dirname "$$f")"; touch "$$f"; }; \
+		done; \
 	DESTDIR=$(STAGING_DIR) $(HOST_DIR)/bin/cmake --install $(@D)/buildroot-build
 endef
 
