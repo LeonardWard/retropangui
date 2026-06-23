@@ -46,7 +46,8 @@ case "$1" in
         # $HOME/share 폴백 우회책이 더 이상 필요 없음. 잔존 링크는 정리.
         [ -L /root/share ] && rm -f /root/share
 
-        # apply_retropangui_conf.sh 실행 여부: 최초 부팅이거나 새 키가 병합된 경우에만 실행
+        # apply_retropangui_conf.sh 실행 여부: 최초 부팅(retropangui.conf 없음)에만 실행
+        # conf.default 키 병합 시에는 실행하지 않는다 — apply는 초기 세팅 목적이므로 1회만
         APPLY_NEEDED=false
 
         # 첫 부팅: retropangui.conf 없으면 기본값에서 복사
@@ -72,7 +73,6 @@ case "$1" in
                 if ! grep -q "^${def_key}[[:space:]]*=" "${CONF_USER}" 2>/dev/null; then
                     echo "${def_key}=${def_val}" >> "${CONF_USER}"
                     logger -t "${TAG}" "conf 병합: ${def_key}"
-                    APPLY_NEEDED=true
                 fi
             done < "${CONF_DEFAULT}"
         fi
