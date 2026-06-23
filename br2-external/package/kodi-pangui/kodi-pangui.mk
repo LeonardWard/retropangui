@@ -106,6 +106,17 @@ KODI_PANGUI_CONF_ENV = \
 KODI_PANGUI_INSTALL_STAGING = YES
 KODI_PANGUI_SUPPORTS_IN_SOURCE_BUILD = NO
 
+# staging install 시 Textures.xbt가 없으면 cmake --install이 실패한다.
+# TexturePacker는 클린 빌드 시에만 실행되므로 incremental 빌드에서 이 파일이 없다.
+# peripheral.joystick 빌드에 필요한 헤더/cmake는 같은 cmake --install로 설치되므로
+# 빈 파일을 미리 만들어 cmake install이 통과하도록 한다.
+define KODI_PANGUI_INSTALL_STAGING_CMDS
+	mkdir -p $(@D)/buildroot-build/addons/skin.estuary/media
+	test -f $(@D)/buildroot-build/addons/skin.estuary/media/Textures.xbt || \
+		touch $(@D)/buildroot-build/addons/skin.estuary/media/Textures.xbt
+	cmake --install $(@D)/buildroot-build --prefix $(STAGING_DIR)/usr
+endef
+
 # cmake FetchContent tries to download Groovy/Apache Commons JARs at configure time.
 # Pre-download them so cmake finds them in TARBALL_DIR and skips network access.
 KODI_PANGUI_GROOVY_VER = 4.0.26
