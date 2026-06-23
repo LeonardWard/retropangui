@@ -46,10 +46,14 @@ case "$1" in
                 # exFAT lazy write-back: ES 종료 후 dirty page를 eMMC에 flush
                 # 하지 않으면 재부팅 시 conf 변경값이 유실된다.
                 sync
+                # exFAT은 lazy write-back이라 sync만으로는 flush 보장이 안 됨.
+                # reboot/poweroff 전에 파티션을 명시적으로 umount해야 dirty page가 disk에 보장됨.
                 if [ -f /tmp/es-sysrestart ]; then
+                    umount /retropangui/share 2>/dev/null || true
                     reboot
                 fi
                 if [ -f /tmp/es-shutdown ]; then
+                    umount /retropangui/share 2>/dev/null || true
                     poweroff
                 fi
                 if [ -f /tmp/es-kodi ]; then
