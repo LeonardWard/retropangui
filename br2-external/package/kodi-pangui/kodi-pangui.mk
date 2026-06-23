@@ -114,7 +114,7 @@ define KODI_PANGUI_INSTALL_STAGING_CMDS
 	mkdir -p $(@D)/buildroot-build/addons/skin.estuary/media
 	test -f $(@D)/buildroot-build/addons/skin.estuary/media/Textures.xbt || \
 		touch $(@D)/buildroot-build/addons/skin.estuary/media/Textures.xbt
-	cmake --install $(@D)/buildroot-build --prefix $(STAGING_DIR)/usr
+	$(HOST_DIR)/bin/cmake --install $(@D)/buildroot-build --prefix $(STAGING_DIR)/usr
 endef
 
 # cmake FetchContent tries to download Groovy/Apache Commons JARs at configure time.
