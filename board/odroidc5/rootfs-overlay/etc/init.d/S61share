@@ -33,19 +33,18 @@ case "$1" in
             exit 1
         fi
 
-        FS_TYPE=$(blkid -o value -s TYPE "${SHARE_PART}" 2>/dev/null || true)
-        if [ "${FS_TYPE}" != "exfat" ]; then
-            logger -t "${TAG}" "exFAT 포맷 중: ${SHARE_PART}"
-            mkfs.exfat -n "share" "${SHARE_PART}"
-            logger -t "${TAG}" "포맷 완료"
-        fi
-
         if ! grep -q "${SHARE_MOUNT}" /proc/mounts; then
-            mount -t exfat -o uid=0,gid=0,fmask=0022,dmask=0022,sync,dirsync \
-                "${SHARE_PART}" "${SHARE_MOUNT}" || {
-                logger -t "${TAG}" "마운트 실패: ${SHARE_PART}"
-                exit 1
-            }
+            if ! mount -t exfat -o uid=0,gid=0,fmask=0022,dmask=0022,sync,dirsync \
+                "${SHARE_PART}" "${SHARE_MOUNT}" 2>/dev/null; then
+                logger -t "${TAG}" "exFAT 포맷 중: ${SHARE_PART}"
+                mkfs.exfat -n "share" "${SHARE_PART}"
+                logger -t "${TAG}" "포맷 완료"
+                mount -t exfat -o uid=0,gid=0,fmask=0022,dmask=0022,sync,dirsync \
+                    "${SHARE_PART}" "${SHARE_MOUNT}" || {
+                    logger -t "${TAG}" "마운트 실패: ${SHARE_PART}"
+                    exit 1
+                }
+            fi
             mkdir -p \
                 "${SHARE_MOUNT}/roms/nes" \
                 "${SHARE_MOUNT}/roms/snes" \

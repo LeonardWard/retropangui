@@ -56,7 +56,13 @@ case "$1" in
                 logger -t "${TAG}" "첫 부팅: 기본 설정 파일 복사 중..."
                 cp "${CONF_DEFAULT}" "${CONF_USER}"
                 logger -t "${TAG}" "${CONF_USER} 생성 완료"
-                APPLY_NEEDED=true
+                # es_settings.cfg가 이미 있으면 사용자가 이전에 설정한 값이므로 apply 건너뜀
+                # (retropangui.conf만 없어진 경우 — apply하면 사용자 설정이 conf.default로 덮어씌워짐)
+                if [ ! -f "${ES_CFG_USER}" ]; then
+                    APPLY_NEEDED=true
+                else
+                    logger -t "${TAG}" "es_settings.cfg 존재 — apply 건너뜀 (사용자 설정 보존)"
+                fi
             else
                 logger -t "${TAG}" "기본 설정 파일 없음: ${CONF_DEFAULT}"
                 exit 0
