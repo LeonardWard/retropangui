@@ -1,21 +1,33 @@
 #!/bin/sh
-# S61share - Share 파티션(exFAT) 포맷 및 마운트
+# S61share - Share 파티션 마운트
+#
+# /boot/retropangui-boot.conf 의 sharedevice로 파티션 결정:
+#   sharedevice=INTERNAL          → 내부 eMMC p3
+#   sharedevice=DEV UUID=xxxx     → UUID로 특정 파티션
+# 설정 없음 → 첫 부팅으로 간주, 내부 p3 exFAT 포맷 후 INTERNAL 기록
+#
+# 첫 부팅 이후에는 포맷 절대 없음. 마운트 실패 시 내부 p3 fallback.
 
 TAG="S61share"
-
-BOOT_PART=$(awk '$2 == "/boot" {print $1; exit}' /proc/mounts)
-if [ -n "${BOOT_PART}" ]; then
-    DEVICE=$(echo "${BOOT_PART}" | sed 's/p[0-9]*$//')
-else
-    ROOT_PART=$(awk '$2 == "/" && $1 != "rootfs" && $1 != "overlay" {print $1; exit}' /proc/mounts)
-    [ -z "${ROOT_PART}" ] && ROOT_PART=$(tr ' ' '\n' < /proc/cmdline | grep '^root=' | sed 's/root=//')
-    DEVICE=$(echo "${ROOT_PART}" | sed 's/p[0-9]*$//')
-fi
 SHARE_MOUNT="/retropangui/share"
+BOOT_CONF="/boot/retropangui-boot.conf"
+MOUNT_OPTS="uid=0,gid=0,fmask=0022,dmask=0022,sync,dirsync"
 
-find_share_part() {
+# 내부 eMMC 디바이스 경로 반환 (예: /dev/mmcblk0)
+get_internal_device() {
+    local part
+    part=$(awk '$2 == "/boot" {print $1; exit}' /proc/mounts)
+    if [ -z "${part}" ]; then
+        part=$(awk '$2 == "/" && $1 != "rootfs" && $1 != "overlay" {print $1; exit}' /proc/mounts)
+        [ -z "${part}" ] && part=$(tr ' ' '\n' < /proc/cmdline | grep '^root=' | sed 's/root=//')
+    fi
+    echo "${part}" | sed 's/p[0-9]*$//'
+}
+
+# 내부 eMMC p3 파티션 경로 반환 (예: /dev/mmcblk0p3)
+find_internal_part() {
     local dev_name
-    dev_name=$(basename "${DEVICE}")
+    dev_name=$(basename "$(get_internal_device)")
     awk '{print $4}' /proc/partitions | \
         grep "^${dev_name}p" | \
         grep -vE "p1$|p2$" | \
@@ -23,61 +35,131 @@ find_share_part() {
         sed 's|^|/dev/|'
 }
 
+# UUID로 블록 디바이스 경로 반환
+find_dev_by_uuid() {
+    local uuid="$1"
+    local link="/dev/disk/by-uuid/${uuid}"
+    [ -L "${link}" ] && readlink -f "${link}" || true
+}
+
+# boot.conf에서 sharedevice 값 읽기
+read_sharedevice() {
+    grep "^sharedevice=" "${BOOT_CONF}" 2>/dev/null | cut -d= -f2- | tr -d ' \r'
+}
+
+# boot.conf에 sharedevice 기록
+write_sharedevice() {
+    local val="$1"
+    if grep -q "^sharedevice=" "${BOOT_CONF}" 2>/dev/null; then
+        sed -i "s|^sharedevice=.*|sharedevice=${val}|" "${BOOT_CONF}"
+    else
+        echo "sharedevice=${val}" >> "${BOOT_CONF}"
+    fi
+    sync
+}
+
+# exFAT 마운트 시도
+try_mount() {
+    local dev="$1"
+    mount -t exfat -o "${MOUNT_OPTS}" "${dev}" "${SHARE_MOUNT}" 2>/dev/null
+}
+
+# 폴더 구조 초기화 + bundled 파일 복사 (sentinel로 최초 1회만)
+init_share_dirs() {
+    mkdir -p \
+        "${SHARE_MOUNT}/roms/nes" \
+        "${SHARE_MOUNT}/roms/snes" \
+        "${SHARE_MOUNT}/roms/psx" \
+        "${SHARE_MOUNT}/bios" \
+        "${SHARE_MOUNT}/saves" \
+        "${SHARE_MOUNT}/screenshots" \
+        "${SHARE_MOUNT}/music" \
+        "${SHARE_MOUNT}/system/emulationstation"
+
+    local sentinel="${SHARE_MOUNT}/.bundled_initialized"
+    if [ ! -f "${sentinel}" ]; then
+        local bundled="/usr/share/retropangui/bundled-roms"
+        if [ -d "${bundled}" ]; then
+            for sys in nes snes; do
+                [ -d "${bundled}/${sys}" ] && \
+                    cp -n "${bundled}/${sys}"/* "${SHARE_MOUNT}/roms/${sys}/" 2>/dev/null || true
+            done
+        fi
+        local bgmusic="/usr/share/retropangui/bundled-bgmusic"
+        [ -d "${bgmusic}" ] && \
+            cp -n "${bgmusic}"/* "${SHARE_MOUNT}/music/" 2>/dev/null || true
+        touch "${sentinel}"
+    fi
+}
+
 case "$1" in
     start)
         mkdir -p "${SHARE_MOUNT}"
+        grep -q " ${SHARE_MOUNT} " /proc/mounts && exit 0
 
-        SHARE_PART=$(find_share_part)
-        if [ -z "${SHARE_PART}" ] || [ ! -b "${SHARE_PART}" ]; then
-            logger -t "${TAG}" "p3 없음 — initramfs에서 생성 실패"
-            exit 1
+        SHAREDEV=$(read_sharedevice)
+        INTERNAL_PART=$(find_internal_part)
+        MOUNTED=false
+
+        if [ -z "${SHAREDEV}" ]; then
+            # ── 첫 부팅: boot.conf 없음 → 내부 p3 포맷 후 INTERNAL 기록 ──
+            if [ -b "${INTERNAL_PART}" ]; then
+                logger -t "${TAG}" "첫 부팅 — 내부 p3 exFAT 포맷 중: ${INTERNAL_PART}"
+                mkfs.exfat -n "share" "${INTERNAL_PART}"
+                if try_mount "${INTERNAL_PART}"; then
+                    MOUNTED=true
+                    write_sharedevice "INTERNAL"
+                    logger -t "${TAG}" "첫 부팅 마운트 완료: ${INTERNAL_PART}"
+                else
+                    logger -t "${TAG}" "첫 부팅 마운트 실패: ${INTERNAL_PART}"
+                fi
+            else
+                logger -t "${TAG}" "내부 p3 없음"
+            fi
+
+        elif [ "${SHAREDEV}" = "INTERNAL" ]; then
+            # ── 내부 p3 마운트 ──
+            if [ -b "${INTERNAL_PART}" ] && try_mount "${INTERNAL_PART}"; then
+                MOUNTED=true
+                logger -t "${TAG}" "마운트 완료 (내부): ${INTERNAL_PART}"
+            else
+                logger -t "${TAG}" "내부 p3 마운트 실패 — share 없이 계속"
+            fi
+
+        else
+            # ── 외부 장치: DEV UUID=xxxx ──
+            UUID=$(echo "${SHAREDEV}" | sed 's/^DEV UUID=//')
+            EXT_DEV=$(find_dev_by_uuid "${UUID}")
+
+            if [ -b "${EXT_DEV}" ] && try_mount "${EXT_DEV}"; then
+                MOUNTED=true
+                logger -t "${TAG}" "마운트 완료 (UUID=${UUID}): ${EXT_DEV}"
+            else
+                # 외부 장치 없음/실패 → 내부 fallback
+                logger -t "${TAG}" "외부 장치 마운트 실패 (UUID=${UUID}), 내부 fallback"
+                if [ -b "${INTERNAL_PART}" ] && try_mount "${INTERNAL_PART}"; then
+                    MOUNTED=true
+                    logger -t "${TAG}" "Fallback 마운트 완료 (내부): ${INTERNAL_PART}"
+                else
+                    logger -t "${TAG}" "Fallback 마운트 실패 — share 없이 계속"
+                fi
+            fi
         fi
 
-        if ! grep -q "${SHARE_MOUNT}" /proc/mounts; then
-            if ! mount -t exfat -o uid=0,gid=0,fmask=0022,dmask=0022,sync,dirsync \
-                "${SHARE_PART}" "${SHARE_MOUNT}" 2>/dev/null; then
-                logger -t "${TAG}" "exFAT 포맷 중: ${SHARE_PART}"
-                mkfs.exfat -n "share" "${SHARE_PART}"
-                logger -t "${TAG}" "포맷 완료"
-                mount -t exfat -o uid=0,gid=0,fmask=0022,dmask=0022,sync,dirsync \
-                    "${SHARE_PART}" "${SHARE_MOUNT}" || {
-                    logger -t "${TAG}" "마운트 실패: ${SHARE_PART}"
-                    exit 1
-                }
-            fi
-            mkdir -p \
-                "${SHARE_MOUNT}/roms/nes" \
-                "${SHARE_MOUNT}/roms/snes" \
-                "${SHARE_MOUNT}/roms/psx" \
-                "${SHARE_MOUNT}/bios" \
-                "${SHARE_MOUNT}/saves" \
-                "${SHARE_MOUNT}/screenshots" \
-                "${SHARE_MOUNT}/music" \
-                "${SHARE_MOUNT}/system/emulationstation"
-            SENTINEL="${SHARE_MOUNT}/.bundled_initialized"
-            if [ ! -f "${SENTINEL}" ]; then
-                BUNDLED="/usr/share/retropangui/bundled-roms"
-                if [ -d "${BUNDLED}" ]; then
-                    for sys in nes snes; do
-                        [ -d "${BUNDLED}/${sys}" ] && \
-                            cp -n "${BUNDLED}/${sys}"/* "${SHARE_MOUNT}/roms/${sys}/" 2>/dev/null || true
-                    done
-                fi
-                BGMUSIC="/usr/share/retropangui/bundled-bgmusic"
-                [ -d "${BGMUSIC}" ] && \
-                    cp -n "${BGMUSIC}"/* "${SHARE_MOUNT}/music/" 2>/dev/null || true
-                touch "${SENTINEL}"
-            fi
-            logger -t "${TAG}" "마운트 완료: ${SHARE_MOUNT} (${SHARE_PART})"
+        if [ "${MOUNTED}" = "true" ]; then
+            init_share_dirs
         fi
         ;;
+
     stop)
         umount "${SHARE_MOUNT}" 2>/dev/null || true
         ;;
+
     restart|reload)
         "$0" stop
         "$0" start
         ;;
+
     *)
         echo "Usage: $0 {start|stop|restart}"
         exit 1

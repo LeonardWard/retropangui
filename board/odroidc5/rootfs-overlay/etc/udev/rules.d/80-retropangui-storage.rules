@@ -1,0 +1,9 @@
+# 외부 저장장치(USB/SD카드) 파티션 삽입 감지
+# 내부 eMMC(mmcblk0) 제외, 파티션 단위 감지
+# ES가 /tmp/retropangui-new-storage 파일을 읽어 GUI 팝업 표시
+
+ACTION=="add", SUBSYSTEM=="block", DEVTYPE=="partition", KERNEL!="mmcblk0p*", \
+    RUN+="/bin/sh -c 'echo %k >> /tmp/retropangui-new-storage'"
+
+ACTION=="remove", SUBSYSTEM=="block", DEVTYPE=="partition", KERNEL!="mmcblk0p*", \
+    RUN+="/bin/sh -c 'sed -i \"/^%k$/d\" /tmp/retropangui-new-storage 2>/dev/null || true'"
