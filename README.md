@@ -32,8 +32,8 @@ Buildroot 기반, EmulationStation + RetroArch + Kodi.
 ## 플래싱
 
 ```bash
-bash scripts/flash-sd.sh                              # 자동 탐지
-bash scripts/flash-sd.sh output/retropangui-*.img     # 직접 지정
+scripts/flash-sd.sh                              # 자동 탐지
+scripts/flash-sd.sh output/retropangui-*.img     # 직접 지정
 ```
 
 ## 접속
@@ -50,11 +50,8 @@ bash scripts/flash-sd.sh output/retropangui-*.img     # 직접 지정
 # OTA 빌드
 ./build.sh --ota
 
-# 로컬 파일서버에 배포
-bash scripts/push-ota.sh output/retropangui-odroidc5-<version>.squashfs
-
-# 파일서버 실행
-bash scripts/serve-ota.sh
+# 로컬 파일서버에 배포하고 실행
+scripts/ota.sh push output/retropangui-odroidc5-<version>.squashfs --serve
 ```
 
 ## 릴리즈 노트
