@@ -1,1 +1,10 @@
-OTA 업데이트 UI 완료 — USB 감지 + 네트워크 폴백 + ES 시작 시 자동 체크
+fix: BGM 설정 유실 버그 수정 (S61share exFAT 매부팅 포맷)
+
+S61share: blkid TYPE probe가 이 환경에서 동작하지 않아 매 부팅마다
+mkfs.exfat이 실행되어 share 파티션 전체가 초기화되는 버그 수정.
+maount 시도 방식으로 변경하여 실패 시에만 포맷하도록 처리.
+
+S95retropangui: retropangui.conf 없어도 es_settings.cfg가 이미 존재하면
+apply를 건너뜀. 사용자 설정이 conf.default 값으로 덮어씌워지는 문제 방지.
+
+Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>

@@ -106,18 +106,33 @@ KODI_PANGUI_CONF_ENV = \
 KODI_PANGUI_INSTALL_STAGING = YES
 KODI_PANGUI_SUPPORTS_IN_SOURCE_BUILD = NO
 
-# staging install 시 Textures.xbt가 없으면 cmake --install이 실패한다.
-# TexturePacker는 클린 빌드 시에만 실행되므로 incremental 빌드에서 이 파일이 없다.
-# peripheral.joystick 빌드에 필요한 헤더/cmake는 같은 cmake --install로 설치되므로
-# 빈 파일을 미리 만들어 cmake install이 통과하도록 한다.
-define KODI_PANGUI_INSTALL_STAGING_CMDS
+# cmake --install 시 .xbt가 없으면 실패한다. TexturePacker는 클린 빌드 시에만 실행되므로
+# incremental 빌드에서 .xbt가 없을 수 있다. 빈 더미를 만들어 cmake install을 통과시키고,
+# 설치 후 build dir에서 더미를 지운다 (target install이 빈 파일을 복사하는 것을 방지).
+define KODI_PANGUI_XBT_DUMMY_CREATE
 	find $(@D)/buildroot-build -name "cmake_install.cmake" \
 		-exec grep -h '\.xbt"' {} \; 2>/dev/null | \
 		grep -o '"[^"]*\.xbt"' | tr -d '"' | sort -u | \
 		while read -r f; do \
 			[ -f "$$f" ] || { mkdir -p "$$(dirname "$$f")"; touch "$$f"; }; \
-		done; \
+		done
+endef
+
+define KODI_PANGUI_XBT_DUMMY_CLEAN
+	find $(@D)/buildroot-build -name "*.xbt" -empty -delete
+endef
+
+define KODI_PANGUI_INSTALL_STAGING_CMDS
+	$(KODI_PANGUI_XBT_DUMMY_CREATE)
 	DESTDIR=$(STAGING_DIR) $(HOST_DIR)/bin/cmake --install $(@D)/buildroot-build
+	$(KODI_PANGUI_XBT_DUMMY_CLEAN)
+endef
+
+define KODI_PANGUI_INSTALL_TARGET_CMDS
+	$(KODI_PANGUI_XBT_DUMMY_CREATE)
+	DESTDIR=$(TARGET_DIR) $(HOST_DIR)/bin/cmake --install $(@D)/buildroot-build
+	find $(TARGET_DIR)/usr/share/kodi -name "*.xbt" -empty -delete
+	$(KODI_PANGUI_XBT_DUMMY_CLEAN)
 endef
 
 # cmake FetchContent tries to download Groovy/Apache Commons JARs at configure time.

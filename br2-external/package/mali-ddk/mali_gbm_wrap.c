@@ -78,9 +78,6 @@ static void *(*real_gbm_surface_create_with_modifiers)(void *, unsigned int, uns
                                                          unsigned int, const uint64_t *,
                                                          unsigned int);
 
-/* Translate XRGB/ARGB → ABGR and pass through original modifiers.
- * The same AFBC modifier is valid for ABGR8888; keeping modifiers avoids the
- * LINEAR fallback that caused eglCreateWindowSurface EGL_BAD_MATCH on Mali r44p0. */
 __attribute__((visibility("default")))
 void *gbm_surface_create_with_modifiers(void *gbm, unsigned int w, unsigned int h,
                                          unsigned int format, const uint64_t *modifiers,
