@@ -264,9 +264,9 @@ docker run --rm \
     -v "${SCRIPT_DIR}/dl:/home/builder/dl" \
     -v "${SCRIPT_DIR}/output:/home/builder/output" \
     -v "${SCRIPT_DIR}/br2-external:/home/builder/br2-external" \
-    -v "${SCRIPT_DIR}/scripts:/home/builder/scripts" \
+    -v "${SCRIPT_DIR}/docker:/home/builder/docker" \
     retropangui-builder \
-    bash /home/builder/scripts/internal_build.sh
+    bash /home/builder/docker/internal_build.sh
 
 
 echo "[3/3] 빌드 완료!"
