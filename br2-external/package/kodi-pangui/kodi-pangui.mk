@@ -113,6 +113,7 @@ define KODI_PANGUI_XBT_DUMMY_CREATE
 	find $(@D)/buildroot-build -name "cmake_install.cmake" \
 		-exec grep -h '\.xbt"' {} \; 2>/dev/null | \
 		grep -o '"[^"]*\.xbt"' | tr -d '"' | sort -u | \
+		grep "^$(@D)/buildroot-build/" | \
 		while read -r f; do \
 			[ -f "$$f" ] || { mkdir -p "$$(dirname "$$f")"; touch "$$f"; }; \
 		done
