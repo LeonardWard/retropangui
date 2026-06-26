@@ -76,19 +76,22 @@ init_share_dirs() {
         "${SHARE_MOUNT}/music" \
         "${SHARE_MOUNT}/system/emulationstation"
 
-    local sentinel="${SHARE_MOUNT}/.bundled_initialized"
-    if [ ! -f "${sentinel}" ]; then
-        local bundled="/usr/share/retropangui/bundled-roms"
-        if [ -d "${bundled}" ]; then
-            for sys in nes snes psx; do
-                [ -d "${bundled}/${sys}" ] && \
-                    cp -n "${bundled}/${sys}"/* "${SHARE_MOUNT}/roms/${sys}/" 2>/dev/null || true
-            done
-        fi
+    local bundled="/usr/share/retropangui/bundled-roms"
+    if [ -d "${bundled}" ]; then
+        for sys in nes snes psx; do
+            local sys_sentinel="${SHARE_MOUNT}/.bundled_${sys}_initialized"
+            if [ -d "${bundled}/${sys}" ] && [ ! -f "${sys_sentinel}" ]; then
+                cp -n "${bundled}/${sys}"/* "${SHARE_MOUNT}/roms/${sys}/" 2>/dev/null || true
+                touch "${sys_sentinel}"
+            fi
+        done
+    fi
+    local bgmusic_sentinel="${SHARE_MOUNT}/.bundled_bgmusic_initialized"
+    if [ ! -f "${bgmusic_sentinel}" ]; then
         local bgmusic="/usr/share/retropangui/bundled-bgmusic"
         [ -d "${bgmusic}" ] && \
             cp -n "${bgmusic}"/* "${SHARE_MOUNT}/music/" 2>/dev/null || true
-        touch "${sentinel}"
+        touch "${bgmusic_sentinel}"
     fi
 }
 
