@@ -42,3 +42,6 @@ project_analysis_report.html
 # 로컬 작업 문서 (GitHub 비공개)
 docs/
 arcguve/
+
+# 사용 안 하는 파일 보관소 (git 미추적, 로컬에만 유지)
+archive/
