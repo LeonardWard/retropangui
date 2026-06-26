@@ -53,6 +53,14 @@ void gp_slot_on_device_added(int sdl_device_idx) {
         return;
     }
 
+    /* 이미 같은 instance_id가 등록된 경우 중복 무시
+     * (init 루프 + SDL_JOYDEVICEADDED 이벤트가 동일 장치를 두 번 알릴 때) */
+    SDL_JoystickID iid = SDL_JoystickInstanceID(js);
+    if (find_slot_by_instance(iid) >= 0) {
+        SDL_JoystickClose(js);
+        return;
+    }
+
     SDL_JoystickGUID guid        = SDL_JoystickGetGUID(js);
     SDL_JoystickID   instance_id = SDL_JoystickInstanceID(js);
     GP_SlotState     state       = detect_state(js);

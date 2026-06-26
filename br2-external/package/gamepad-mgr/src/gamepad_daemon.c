@@ -76,51 +76,39 @@ static int fd_is_deleted(int fd)
     return strstr(tgt, "(deleted)") != NULL;
 }
 
-/* ── is_joystick_by_udev ─────────────────────────────────────── */
+/* ── is_joystick_by_caps ─────────────────────────────────────── */
 /*
- * devpath = "/dev/input/eventX"
- * 1. evname = "eventX"
- * 2. readlink /sys/class/input/eventX/device → 상대 심볼릭 링크 (예: ../../input/inputN)
- * 3. 링크 타깃의 마지막 컴포넌트 = "inputN"
- * 4. /run/udev/data/+input:inputN 에서 E:ID_INPUT_JOYSTICK=1 탐색
+ * udev DB 대신 커널 EVIOCGBIT ioctl로 즉시 판단한다.
+ * 조건: EV_ABS + EV_KEY 존재 AND BTN_JOYSTICK~BTN_DIGI 범위 버튼 하나 이상.
+ * udev DB 업데이트를 기다릴 필요가 없으므로 드라이버 전환(hid-generic→xpad) 직후에도 동작한다.
  */
-static int is_joystick_by_udev(const char *devpath)
+#define CAPS_BITS(max) (((max) + 8*sizeof(unsigned long) - 1) / (8*sizeof(unsigned long)))
+#define CAPS_TEST(bit, arr) ((arr)[(bit)/(8*sizeof(unsigned long))] & (1UL<<((bit)%(8*sizeof(unsigned long)))))
+
+static int is_joystick_by_caps(const char *devpath)
 {
-    /* evname 추출 */
-    const char *evname = strrchr(devpath, '/');
-    if (!evname) return 0;
-    evname++; /* skip '/' */
+    int fd = open(devpath, O_RDONLY | O_NONBLOCK);
+    if (fd < 0) return 0;
 
-    /* readlink /sys/class/input/<evname>/device */
-    char syslink[128];
-    snprintf(syslink, sizeof(syslink), "/sys/class/input/%s/device", evname);
-
-    /* realpath로 완전 해석: "/sys/class/input/event11/device"의
-     * device 심볼릭 링크가 ".."(상대 경로)이므로 readlink만으로는 inputN을 얻을 수 없다 */
-    char resolved[PATH_MAX];
-    if (!realpath(syslink, resolved)) return 0;
-
-    /* 마지막 컴포넌트 (inputN) */
-    const char *inputname = strrchr(resolved, '/');
-    if (!inputname) return 0;
-    inputname++; /* skip '/' */
-
-    /* /run/udev/data/+input:inputN 스캔 */
-    char udevpath[128];
-    snprintf(udevpath, sizeof(udevpath), "/run/udev/data/+input:%s", inputname);
-
-    FILE *f = fopen(udevpath, "r");
-    if (!f) return 0;
-
-    char line[256];
-    int found = 0;
-    while (fgets(line, sizeof(line), f)) {
-        if (strncmp(line, "E:ID_INPUT_JOYSTICK=1", 21) == 0) {
-            found = 1;
-            break;
-        }
+    unsigned long evbits[CAPS_BITS(EV_MAX)] = {0};
+    if (ioctl(fd, EVIOCGBIT(0, sizeof(evbits)), evbits) < 0 ||
+        !CAPS_TEST(EV_ABS, evbits) || !CAPS_TEST(EV_KEY, evbits)) {
+        close(fd);
+        return 0;
     }
-    fclose(f);
+
+    unsigned long keybits[CAPS_BITS(KEY_MAX)] = {0};
+    if (ioctl(fd, EVIOCGBIT(EV_KEY, sizeof(keybits)), keybits) < 0) {
+        close(fd);
+        return 0;
+    }
+
+    int found = 0;
+    for (int k = BTN_JOYSTICK; k <= BTN_DIGI; k++) {
+        if (CAPS_TEST(k, keybits)) { found = 1; break; }
+    }
+
+    close(fd);
     return found;
 }
 
@@ -245,7 +233,7 @@ static void startup_scan(void)
         snprintf(path, sizeof(path), "/dev/input/%s", de->d_name);
 
         if (is_our_vdev(path)) continue;
-        if (!is_joystick_by_udev(path)) continue;
+        if (!is_joystick_by_caps(path)) continue;
 
         int fd = open(path, O_RDONLY | O_NONBLOCK);
         if (fd < 0) continue;
@@ -286,7 +274,7 @@ static void process_inotify(void)
                 strncpy(g_pending[g_n_pending].path, path,
                         sizeof(g_pending[g_n_pending].path) - 1);
                 g_pending[g_n_pending].path[sizeof(g_pending[g_n_pending].path) - 1] = '\0';
-                g_pending[g_n_pending].ready_ms = mono_ms() + 200;
+                g_pending[g_n_pending].ready_ms = mono_ms() + 50;
                 g_n_pending++;
             }
         } else if (ev->mask & IN_DELETE) {
@@ -322,7 +310,7 @@ static void process_pending(void)
         g_n_pending--;
 
         if (is_our_vdev(path)) continue;
-        if (!is_joystick_by_udev(path)) continue;
+        if (!is_joystick_by_caps(path)) continue;
 
         int fd = open(path, O_RDONLY | O_NONBLOCK);
         if (fd < 0) continue;
@@ -709,8 +697,15 @@ int main(void)
     /* 메인루프 (~125 Hz) */
     GP_State cur;
     int hygiene_tick = 0;
+    int rescan_tick = 0;
     while (g_running) {
         gp_update();
+
+        /* 5초마다 전체 재스캔 — 부팅 후 늦게 연결되는 무선 패드를 잡기 위해 */
+        if (++rescan_tick >= 625) {
+            rescan_tick = 0;
+            startup_scan();
+        }
 
         /* 1초마다 슬롯 phys_fd 위생 점검 — unplug 시 SDL REMOVED 이벤트가
          * 유실된 슬롯(다중 인터페이스 패드 등)의 스테일 fd를 정리한다 */
