@@ -4,6 +4,7 @@
 #
 # NES : retrobrews/nes-games (~83종) + 2048 (retrobrews 미포함)
 # SNES: retrobrews/snes-games (~14종) + Super-Apocalux (retrobrews 미포함)
+# PSX : 240p Test Suite (filipalac fork, GPL-2.0) - EMU 버전
 #
 ################################################################################
 
@@ -23,11 +24,13 @@ RETROBREWS_SNES_URL = https://github.com/retrobrews/snes-games/archive/refs/head
 NES2048_URL  = https://raw.githubusercontent.com/mmuszkow/2048-nes/master/2048.nes
 # SNES: Super-Apocalux - action (GPL-3.0)
 APOCALUX_URL = https://github.com/DanielTheSilly/Super-Apocalux/releases/download/V1.0b/Super-Apocalux_V1.0b.smc
+# PSX: 240p Test Suite (filipalac, GPL-2.0) - EMU 버전 (.bin/.cue)
+PS240P_URL   = https://github.com/filipalac/240pTestSuite-PS1/releases/download/19122020/240pTestSuitePS1-EMU.zip
 
 BUNDLED_ROMS_TARGET_DIR = $(TARGET_DIR)/usr/share/retropangui/bundled-roms
 
 define BUNDLED_ROMS_BUILD_CMDS
-	mkdir -p $(@D)/nes $(@D)/snes
+	mkdir -p $(@D)/nes $(@D)/snes $(@D)/psx
 
 	# retrobrews NES 컬렉션 (캐시 있으면 스킵)
 	if [ ! -d $(@D)/nes-games-master ]; then \
@@ -51,13 +54,23 @@ define BUNDLED_ROMS_BUILD_CMDS
 	# 개별 다운로드 (retrobrews 미포함)
 	test -f $(@D)/nes/2048.nes       || wget -q -O $(@D)/nes/2048.nes       $(NES2048_URL)
 	test -f $(@D)/snes/Super-Apocalux.smc || wget -q -O $(@D)/snes/Super-Apocalux.smc $(APOCALUX_URL)
+
+	# 240p Test Suite PSX EMU 버전 (캐시 있으면 스킵)
+	if [ ! -f $(@D)/psx/240pTestSuitePS1-EMU.bin ]; then \
+		echo "[bundled-roms] 240p Test Suite PS1 다운로드 중..."; \
+		wget -q -O $(@D)/240pTestSuitePS1-EMU.zip $(PS240P_URL) && \
+		unzip -q -o $(@D)/240pTestSuitePS1-EMU.zip -d $(@D)/psx && \
+		rm -f $(@D)/240pTestSuitePS1-EMU.zip; \
+	fi
 endef
 
 define BUNDLED_ROMS_INSTALL_TARGET_CMDS
-	mkdir -p $(BUNDLED_ROMS_TARGET_DIR)/nes $(BUNDLED_ROMS_TARGET_DIR)/snes
+	mkdir -p $(BUNDLED_ROMS_TARGET_DIR)/nes $(BUNDLED_ROMS_TARGET_DIR)/snes $(BUNDLED_ROMS_TARGET_DIR)/psx
 	cp $(@D)/nes/*.nes   $(BUNDLED_ROMS_TARGET_DIR)/nes/
 	cp $(@D)/snes/*.smc  $(BUNDLED_ROMS_TARGET_DIR)/snes/ 2>/dev/null || true
 	cp $(@D)/snes/*.sfc  $(BUNDLED_ROMS_TARGET_DIR)/snes/ 2>/dev/null || true
+	cp $(@D)/psx/*.bin   $(BUNDLED_ROMS_TARGET_DIR)/psx/ 2>/dev/null || true
+	cp $(@D)/psx/*.cue   $(BUNDLED_ROMS_TARGET_DIR)/psx/ 2>/dev/null || true
 endef
 
 $(eval $(generic-package))

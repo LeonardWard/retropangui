@@ -80,7 +80,7 @@ init_share_dirs() {
     if [ ! -f "${sentinel}" ]; then
         local bundled="/usr/share/retropangui/bundled-roms"
         if [ -d "${bundled}" ]; then
-            for sys in nes snes; do
+            for sys in nes snes psx; do
                 [ -d "${bundled}/${sys}" ] && \
                     cp -n "${bundled}/${sys}"/* "${SHARE_MOUNT}/roms/${sys}/" 2>/dev/null || true
             done
