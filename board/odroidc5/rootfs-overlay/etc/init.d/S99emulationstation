@@ -54,7 +54,12 @@ case "$1" in
                 fi
                 if [ -f /tmp/es-shutdown ]; then
                     umount /retropangui/share 2>/dev/null || sync
-                    poweroff
+                    # S905X5M BL31이 PSCI SYSTEM_OFF 미구현 — poweroff는 do_aml_poweroff()
+                    # 실패 후 커널 패닉→재부팅으로 이어진다.
+                    # halt -f는 machine_halt()→while(1) 루프로 패닉 없이 정상 정지.
+                    # 워치독 정지 필수 — 멈춘 후 타임아웃 재부팅 방지.
+                    printf 'V' > /dev/watchdog0 2>/dev/null || true
+                    halt -f
                 fi
                 if [ -f /tmp/es-kodi ]; then
                     rm -f /tmp/es-kodi
