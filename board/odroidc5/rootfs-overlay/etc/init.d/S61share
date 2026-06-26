@@ -76,33 +76,19 @@ init_share_dirs() {
         "${SHARE_MOUNT}/music" \
         "${SHARE_MOUNT}/system/emulationstation"
 
-    # 구버전 단일 센티넬 → 시스템별 센티넬 마이그레이션
-    # (OTA 업데이트 후 기존 기기에서 nes/snes가 재복사되지 않도록)
-    local old_sentinel="${SHARE_MOUNT}/.bundled_initialized"
-    if [ -f "${old_sentinel}" ]; then
-        for sys in nes snes; do
-            touch "${SHARE_MOUNT}/.bundled_${sys}_initialized" 2>/dev/null || true
-        done
-        touch "${SHARE_MOUNT}/.bundled_bgmusic_initialized" 2>/dev/null || true
-        rm -f "${old_sentinel}"
-    fi
-
-    local bundled="/usr/share/retropangui/bundled-roms"
-    if [ -d "${bundled}" ]; then
-        for sys in nes snes psx; do
-            local sys_sentinel="${SHARE_MOUNT}/.bundled_${sys}_initialized"
-            if [ -d "${bundled}/${sys}" ] && [ ! -f "${sys_sentinel}" ]; then
-                cp -n "${bundled}/${sys}"/* "${SHARE_MOUNT}/roms/${sys}/" 2>/dev/null || true
-                touch "${sys_sentinel}"
-            fi
-        done
-    fi
-    local bgmusic_sentinel="${SHARE_MOUNT}/.bundled_bgmusic_initialized"
-    if [ ! -f "${bgmusic_sentinel}" ]; then
+    local sentinel="${SHARE_MOUNT}/.bundled_initialized"
+    if [ ! -f "${sentinel}" ]; then
+        local bundled="/usr/share/retropangui/bundled-roms"
+        if [ -d "${bundled}" ]; then
+            for sys in nes snes psx; do
+                [ -d "${bundled}/${sys}" ] && \
+                    cp -n "${bundled}/${sys}"/* "${SHARE_MOUNT}/roms/${sys}/" 2>/dev/null || true
+            done
+        fi
         local bgmusic="/usr/share/retropangui/bundled-bgmusic"
         [ -d "${bgmusic}" ] && \
             cp -n "${bgmusic}"/* "${SHARE_MOUNT}/music/" 2>/dev/null || true
-        touch "${bgmusic_sentinel}"
+        touch "${sentinel}"
     fi
 }
 
