@@ -7,7 +7,6 @@
 #   nestopia        : 커밋 b0fd87dd (2024-01, libretro/nestopia, 별도 릴리즈 태그 없음)
 #   snes9x          : 커밋 e755ae51 (2025-04, libretro/snes9x, 별도 릴리즈 태그 없음)
 #   pcsx_rearmed    : 릴리즈 태그 r26l (libretro/pcsx_rearmed)
-#   beetle_psx_hw   : 커밋 d460f834 (2026-06, libretro/beetle-psx-libretro, Vulkan+OpenGL HW)
 #   picodrive       : 커밋 f0d4a011 (2026-06, libretro/picodrive, 메가드라이브/32X/MCD)
 #   bluemsx         : 커밋 b76f2795 (2026-06, libretro/bluemsx-libretro, MSX/MSX2/MSX2+/turboR)
 #   dosbox_pure     : 커밋 f587236b (2025-04, schellingb/dosbox-pure, 별도 릴리즈 태그 없음)
@@ -23,7 +22,7 @@
 ################################################################################
 
 LIBRETRO_CORES_VERSION = 1.0
-LIBRETRO_CORES_LICENSE = GPL-2.0 (nestopia, snes9x, pcsx_rearmed, dosbox_pure, scummvm)
+LIBRETRO_CORES_LICENSE = GPL-2.0 (nestopia, snes9x, pcsx_rearmed, picodrive, dosbox_pure, scummvm)
 # 자체 git clone으로 다운로드하므로 Buildroot 자동 소스 다운로드 비활성화
 LIBRETRO_CORES_SOURCE =
 
@@ -102,24 +101,6 @@ define LIBRETRO_CORES_BUILD_PCSX
 	$(TARGET_MAKE_ENV) $(MAKE) -C $(@D)/pcsx_rearmed \
 		-f Makefile.libretro \
 		$(LIBRETRO_CROSS_OPTS) \
-		platform=unix
-endef
-
-################################################################################
-# beetle-psx-hw - PlayStation 1 (Vulkan + OpenGL HW renderer)
-################################################################################
-
-BEETLE_PSX_HW_SITE = https://github.com/libretro/beetle-psx-libretro
-BEETLE_PSX_HW_VERSION = d460f8342060526678e7fd8222048324c2a80d86
-
-define LIBRETRO_CORES_BUILD_BEETLE_PSX_HW
-	test -d $(@D)/beetle-psx-libretro/.git || \
-		git clone --filter=blob:none $(BEETLE_PSX_HW_SITE) $(@D)/beetle-psx-libretro
-	git -C $(@D)/beetle-psx-libretro checkout $(BEETLE_PSX_HW_VERSION)
-	$(TARGET_MAKE_ENV) $(MAKE) -C $(@D)/beetle-psx-libretro \
-		$(LIBRETRO_CROSS_OPTS) \
-		HAVE_HW=1 \
-		LINK_STATIC_LIBCPLUSPLUS=0 \
 		platform=unix
 endef
 
@@ -224,7 +205,6 @@ define LIBRETRO_CORES_BUILD_CMDS
 	$(call LIBRETRO_CORES_BUILD_NESTOPIA)
 	$(call LIBRETRO_CORES_BUILD_SNES9X)
 	$(call LIBRETRO_CORES_BUILD_PCSX)
-	$(call LIBRETRO_CORES_BUILD_BEETLE_PSX_HW)
 	$(call LIBRETRO_CORES_BUILD_PICODRIVE)
 	$(call LIBRETRO_CORES_BUILD_BLUEMSX)
 	$(call LIBRETRO_CORES_BUILD_DOSBOX_PURE)
@@ -253,11 +233,6 @@ define LIBRETRO_CORES_INSTALL_TARGET_CMDS
 	$(INSTALL) -m 0644 $(@D)/pcsx_rearmed/pcsx_rearmed_libretro.so \
 		$(CORES_INSTALL_DIR)/lr-pcsx-rearmed/
 	echo "pcsx_rearmed_libretro.so" > $(CORES_INSTALL_DIR)/lr-pcsx-rearmed/.installed_so_name
-
-	mkdir -p $(CORES_INSTALL_DIR)/lr-beetle-psx-hw
-	$(INSTALL) -m 0644 $(@D)/beetle-psx-libretro/mednafen_psx_hw_libretro.so \
-		$(CORES_INSTALL_DIR)/lr-beetle-psx-hw/
-	echo "mednafen_psx_hw_libretro.so" > $(CORES_INSTALL_DIR)/lr-beetle-psx-hw/.installed_so_name
 
 	mkdir -p $(CORES_INSTALL_DIR)/lr-picodrive
 	$(INSTALL) -m 0644 $(@D)/picodrive/picodrive_libretro.so \
