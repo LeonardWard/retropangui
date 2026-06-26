@@ -28,6 +28,9 @@ static GP_VDev         *g_vdev[GP_MAX_SLOTS];
 static GP_State         g_prev[GP_MAX_SLOTS];
 static int              g_phys_fd[GP_MAX_SLOTS]; /* daemon 소유 evdev fd */
 static volatile int     g_running = 1;
+/* 연결 직후 동글 "탐색 중" 쓰레기 축 값이 P1에 포워딩되는 것을 막기 위해
+ * 첫 버튼 입력이 있을 때까지 P1을 center 상태로 강제 유지한다. */
+static bool             g_needs_first_input[GP_MAX_SLOTS];
 
 /* ── Passive grab 구조체 및 상태 ─────────────────────────────── */
 typedef struct {
@@ -41,7 +44,9 @@ typedef struct {
     uint64_t ready_ms;  /* monotonic ms — grab after this if SDL didn't connect */
 } GP_PendingGrab;
 
-static GP_PassiveGrab g_passive[GP_MAX_SLOTS];
+/* 컨트롤러 1개당 최대 ~5개 인터페이스 (조이스틱+마우스+키+소비자+시스템) */
+#define GP_MAX_PASSIVE 32
+static GP_PassiveGrab g_passive[GP_MAX_PASSIVE];
 static int            g_n_passive = 0;
 static GP_PendingGrab g_pending[GP_MAX_SLOTS];
 static int            g_n_pending = 0;
@@ -140,7 +145,7 @@ static int is_sdl_managed(dev_t rdev)
 /* ── passive_grab ────────────────────────────────────────────── */
 static void passive_grab(const char *devpath)
 {
-    if (g_n_passive >= GP_MAX_SLOTS) {
+    if (g_n_passive >= GP_MAX_PASSIVE) {
         fprintf(stderr, "gamepad_daemon: passive grab list full, skipping %s\n", devpath);
         return;
     }
@@ -216,6 +221,95 @@ static void passive_release_by_path(const char *devpath)
     }
 }
 
+/* ── passive_grab_if_sibling ─────────────────────────────────── */
+/* devpath가 조이스틱 형제 인터페이스인 경우에만 passive grab.
+ * 같은 USB 장치(/inputN 접미사 앞 경로 동일) 중 조이스틱 caps를 가진
+ * 인터페이스가 하나라도 있으면 "형제"로 판단한다. */
+static void passive_grab_if_sibling(const char *devpath)
+{
+    int fd = open(devpath, O_RDONLY | O_NONBLOCK);
+    if (fd < 0) return;
+    char phys[128] = {0};
+    int got = ioctl(fd, EVIOCGPHYS(sizeof(phys)), phys);
+    close(fd);
+    if (got < 0) return;
+    char *slash = strrchr(phys, '/');
+    if (!slash) return;
+    *slash = '\0'; /* USB 장치 식별자 (예: "usb-...-1.2") */
+
+    DIR *dir = opendir("/dev/input");
+    if (!dir) return;
+    struct dirent *de;
+    int found = 0;
+    while ((de = readdir(dir)) != NULL) {
+        if (strncmp(de->d_name, "event", 5) != 0) continue;
+        char other[64];
+        snprintf(other, sizeof(other), "/dev/input/%s", de->d_name);
+        if (!is_joystick_by_caps(other)) continue;
+        int fd2 = open(other, O_RDONLY | O_NONBLOCK);
+        if (fd2 < 0) continue;
+        char other_phys[128] = {0};
+        ioctl(fd2, EVIOCGPHYS(sizeof(other_phys)), other_phys);
+        close(fd2);
+        char *p = strrchr(other_phys, '/');
+        if (p) *p = '\0';
+        if (strcmp(phys, other_phys) == 0) { found = 1; break; }
+    }
+    closedir(dir);
+    if (found) passive_grab(devpath);
+}
+
+/* ── grab_siblings_by_phys_fd ────────────────────────────────── */
+/* 조이스틱 grab 후, 같은 USB 장치의 비-조이스틱 인터페이스(키보드/마우스 등)도
+ * passive grab해서 ES가 직접 읽지 못하게 막는다.
+ * 컨트롤러 미연결 상태에서 동글이 보내는 garbage HID 리포트가 커서를 움직이는
+ * 문제를 방지한다. */
+static void grab_siblings_by_phys_fd(int ref_fd)
+{
+    char our_phys[128] = {0};
+    if (ioctl(ref_fd, EVIOCGPHYS(sizeof(our_phys)), our_phys) < 0) return;
+
+    /* "/inputN" 접미사 제거 → "usb-...-1.2" 형태의 USB 장치 식별자만 남김 */
+    char *slash = strrchr(our_phys, '/');
+    if (!slash) return;
+    *slash = '\0';
+
+    DIR *dir = opendir("/dev/input");
+    if (!dir) return;
+
+    struct dirent *de;
+    while ((de = readdir(dir)) != NULL) {
+        if (strncmp(de->d_name, "event", 5) != 0) continue;
+        char path[64];
+        snprintf(path, sizeof(path), "/dev/input/%s", de->d_name);
+
+        if (is_our_vdev(path)) continue;
+        if (is_joystick_by_caps(path)) continue; /* 조이스틱 인터페이스는 SDL이 처리 */
+
+        int fd = open(path, O_RDONLY | O_NONBLOCK);
+        if (fd < 0) continue;
+        char phys[128] = {0};
+        int got = ioctl(fd, EVIOCGPHYS(sizeof(phys)), phys);
+        close(fd);
+        if (got < 0) continue;
+
+        char *p = strrchr(phys, '/');
+        if (p) *p = '\0';
+
+        if (strcmp(phys, our_phys) == 0)
+            passive_grab(path);
+    }
+    closedir(dir);
+}
+
+static void grab_siblings_by_path(const char *source_path)
+{
+    int fd = open(source_path, O_RDONLY | O_NONBLOCK);
+    if (fd < 0) return;
+    grab_siblings_by_phys_fd(fd);
+    close(fd);
+}
+
 /* ── startup_scan ────────────────────────────────────────────── */
 static void startup_scan(void)
 {
@@ -244,7 +338,11 @@ static void startup_scan(void)
         }
         close(fd);
 
-        passive_grab(path);
+        /* 조이스틱 자체는 SDL에게 맡김 — 여기서 passive_grab하면 SDL이
+         * 자신의 EVIOCGRAB에 EBUSY를 받아 fd를 닫고 GP_EV_CONNECTED 경로에서
+         * "SDL evdev fd not found" 오류가 나는 부작용이 있다.
+         * 형제 인터페이스(키보드/마우스 등)만 바로 grab. */
+        grab_siblings_by_path(path);
     }
     closedir(dir);
 }
@@ -310,18 +408,17 @@ static void process_pending(void)
         g_n_pending--;
 
         if (is_our_vdev(path)) continue;
-        if (!is_joystick_by_caps(path)) continue;
 
-        int fd = open(path, O_RDONLY | O_NONBLOCK);
-        if (fd < 0) continue;
-        struct stat st;
-        if (fstat(fd, &st) == 0 && is_sdl_managed(st.st_rdev)) {
-            close(fd);
-            continue;
+        if (is_joystick_by_caps(path)) {
+            /* 조이스틱 자체는 SDL에게 맡김 — passive_grab하면 SDL의 EVIOCGRAB가
+             * EBUSY로 실패해 "SDL evdev fd not found" 오류로 이어진다.
+             * 형제 비-조이스틱 인터페이스만 여기서 grab. */
+            grab_siblings_by_path(path);
+        } else {
+            /* 비-조이스틱 장치: 같은 USB 장치에 조이스틱 형제가 있으면 grab
+             * (Gamesir 키보드/마우스 인터페이스가 ES에 garbage 이벤트 보내는 것 방지) */
+            passive_grab_if_sibling(path);
         }
-        close(fd);
-
-        passive_grab(path);
     }
 }
 
@@ -612,6 +709,10 @@ static void on_gamepad_event(const GP_Event *ev, void *userdata)
             }
         }
 
+        /* 같은 USB 장치의 비-조이스틱 인터페이스도 grab — ES 직접 접근 차단 */
+        if (phys_fd >= 0)
+            grab_siblings_by_phys_fd(phys_fd);
+
         /* vdev는 미리 생성된 것을 재사용 — phys_fd만 교체 */
         if (g_vdev[slot]) {
             gp_vdev_rebind_phys(g_vdev[slot], phys_fd);
@@ -628,6 +729,7 @@ static void on_gamepad_event(const GP_Event *ev, void *userdata)
             }
         }
         memset(&g_prev[slot], 0, sizeof(GP_State));
+        g_needs_first_input[slot] = true; /* 첫 버튼 입력 전까지 쓰레기 축 값 차단 */
         /* 무선 컨트롤러는 연결 직후 SDL2 axis가 -32768로 보고될 수 있음.
          * RA가 vdev를 열었을 때 "LS 최대 좌/상 고정" 상태로 인식하는 것을 방지하기 위해
          * center 상태(all axes=0, all buttons=0)를 즉시 emit한다. */
@@ -647,8 +749,13 @@ static void on_gamepad_event(const GP_Event *ev, void *userdata)
             g_phys_fd[slot] = -1;
         }
         if (g_vdev[slot]) {
+            /* 연결 해제 시 가상 장치를 center 상태로 리셋 — 마지막 축 값이
+             * 남아있으면 ES 커서가 계속 움직이는 stuck-axis 현상 방지 */
+            GP_State center = {0};
+            gp_vdev_write_state(g_vdev[slot], &center, NULL);
             gp_vdev_rebind_phys(g_vdev[slot], -1);
         }
+        g_needs_first_input[slot] = false;
         fprintf(stderr, "gamepad_daemon: slot %d disconnected\n", slot);
         break;
     }
@@ -734,6 +841,20 @@ int main(void)
             if (!g_vdev[slot]) continue;
             if (g_phys_fd[slot] < 0) continue; /* 물리 패드 없는 슬롯 무시 */
             if (!gp_get_state(slot, &cur)) continue;
+
+            if (g_needs_first_input[slot]) {
+                /* 버튼 입력이 있을 때까지 쓰레기 축 값을 P1에 포워딩하지 않는다.
+                 * 동글이 "페어링 탐색 중" 상태에서 비-0 HID 리포트를 보내도
+                 * ES 커서가 움직이지 않게 한다. */
+                bool any_btn = false;
+                for (int b = 0; b < GP_BTN_COUNT; b++) {
+                    if (cur.buttons[b]) { any_btn = true; break; }
+                }
+                if (!any_btn) continue;
+                g_needs_first_input[slot] = false;
+                fprintf(stderr, "gamepad_daemon: slot %d first input — 포워딩 시작\n", slot);
+            }
+
             gp_vdev_write_state(g_vdev[slot], &cur, &g_prev[slot]);
             gp_vdev_poll_ff(g_vdev[slot]);
             g_prev[slot] = cur;
