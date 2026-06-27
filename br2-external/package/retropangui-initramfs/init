@@ -87,7 +87,8 @@ fi
 
 # ─── [3/7] OTA 확인 ──────────────────────────────────────────────
 echo ">>> [3/7] OTA 확인..."
-UPDATE_FILE=$(ls /boot/update/*.squashfs 2>/dev/null | head -1)
+UPDATE_FILE=""
+[ -f /boot/update/retropangui.update ] && UPDATE_FILE=/boot/update/retropangui.update
 if [ -n "$UPDATE_FILE" ]; then
     SHA256_FILE="${UPDATE_FILE}.sha256"
     VALID=0
