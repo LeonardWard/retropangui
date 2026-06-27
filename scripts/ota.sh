@@ -96,6 +96,15 @@ if [ ! -f "${SQ_FILE}" ]; then
     exit 1
 fi
 
+# squashfs 유효성 검증 (magic bytes: 73717368 또는 68737173)
+_SQ_MAGIC=$(od -An -N4 -tx1 "${SQ_FILE}" 2>/dev/null | tr -d ' \n')
+if [ "${_SQ_MAGIC}" != "73717368" ] && [ "${_SQ_MAGIC}" != "68737173" ]; then
+    echo "ERROR: squashfs 파일이 아닙니다: ${SQ_FILE}"
+    echo "       예상 magic: 73717368 또는 68737173"
+    echo "       실제 magic: ${_SQ_MAGIC:-읽기 실패}"
+    exit 1
+fi
+
 # 버전: 2번째 인자 > 파일명에서 추출 > git describe 순으로 결정
 # $2가 --로 시작하면 플래그 오타이므로 VERSION으로 쓰지 않음
 if [ -n "${2:-}" ] && [ "${2#--}" = "${2}" ]; then
