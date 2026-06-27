@@ -22,10 +22,11 @@ RETROBREWS_SNES_URL = https://github.com/retrobrews/snes-games/archive/refs/head
 # retrobrews에 없는 게임 (개별 다운로드)
 # NES: 2048 - puzzle (open source)
 NES2048_URL  = https://raw.githubusercontent.com/mmuszkow/2048-nes/master/2048.nes
-# SNES: Super-Apocalux - action (GPL-3.0)
-APOCALUX_URL = https://github.com/DanielTheSilly/Super-Apocalux/releases/download/V1.0b/Super-Apocalux_V1.0b.smc
 # PSX: 240p Test Suite (filipalac, GPL-2.0) - EMU 버전 (.bin/.cue)
 PS240P_URL   = https://github.com/filipalac/240pTestSuite-PS1/releases/download/19122020/240pTestSuitePS1-EMU.zip
+
+# SNES 번들 목록 (retrobrews에서 선별)
+BUNDLED_SNES_ROMS = jetpilotrising.sfc questformoney.sfc saf.smc superbossgaiden.sfc
 
 BUNDLED_ROMS_TARGET_DIR = $(TARGET_DIR)/usr/share/retropangui/bundled-roms
 
@@ -53,7 +54,6 @@ define BUNDLED_ROMS_BUILD_CMDS
 
 	# 개별 다운로드 (retrobrews 미포함)
 	test -f $(@D)/nes/2048.nes       || wget -q -O $(@D)/nes/2048.nes       $(NES2048_URL)
-	test -f $(@D)/snes/Super-Apocalux.smc || wget -q -O $(@D)/snes/Super-Apocalux.smc $(APOCALUX_URL)
 
 	# 240p Test Suite PSX EMU 버전 (캐시 있으면 스킵)
 	if [ ! -f $(@D)/psx/240pTestSuitePS1-EMU.bin ]; then \
@@ -67,8 +67,9 @@ endef
 define BUNDLED_ROMS_INSTALL_TARGET_CMDS
 	mkdir -p $(BUNDLED_ROMS_TARGET_DIR)/nes $(BUNDLED_ROMS_TARGET_DIR)/snes $(BUNDLED_ROMS_TARGET_DIR)/psx
 	cp $(@D)/nes/*.nes   $(BUNDLED_ROMS_TARGET_DIR)/nes/
-	cp $(@D)/snes/*.smc  $(BUNDLED_ROMS_TARGET_DIR)/snes/ 2>/dev/null || true
-	cp $(@D)/snes/*.sfc  $(BUNDLED_ROMS_TARGET_DIR)/snes/ 2>/dev/null || true
+	for rom in $(BUNDLED_SNES_ROMS); do \
+		cp $(@D)/snes/$$rom $(BUNDLED_ROMS_TARGET_DIR)/snes/ 2>/dev/null || true; \
+	done
 	cp $(@D)/psx/*.bin   $(BUNDLED_ROMS_TARGET_DIR)/psx/ 2>/dev/null || true
 	cp $(@D)/psx/*.cue   $(BUNDLED_ROMS_TARGET_DIR)/psx/ 2>/dev/null || true
 endef
