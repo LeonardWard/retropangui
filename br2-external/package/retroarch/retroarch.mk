@@ -19,7 +19,8 @@ RETROARCH_DEPENDENCIES = \
 	libcurl \
 	freetype \
 	zlib \
-	vulkan-loader
+	vulkan-loader \
+	ffmpeg
 
 RETROARCH_CONF_OPTS = \
 	--disable-cg \
@@ -33,6 +34,7 @@ RETROARCH_CONF_OPTS = \
 	--disable-al \
 	--disable-x11 \
 	--disable-wayland \
+	--enable-rgui \
 	--enable-xmb \
 	--enable-ozone \
 	--enable-materialui \
@@ -49,11 +51,17 @@ RETROARCH_CONF_OPTS = \
 	--enable-alsa \
 	--enable-freetype \
 	--enable-zlib \
+	--enable-threads \
+	--enable-dylib \
+	--enable-udev \
+	--enable-neon \
+	--enable-7zip \
 	--enable-networking \
-	--disable-ffmpeg \
+	--enable-translate \
+	--enable-ffmpeg \
+	--enable-builtinflac \
 	--disable-v4l2 \
 	--disable-discord \
-	--disable-builtinflac \
 	--disable-builtinzlib \
 	--disable-update_assets \
 	--disable-update_cores \
