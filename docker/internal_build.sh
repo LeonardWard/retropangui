@@ -51,6 +51,9 @@ if [ "$BUILD_OTA" = "1" ] && [ "$BUILD_IMG" = "0" ]; then
     JOBS="${BUILD_JOBS:-$(nproc)}"
     make BR2_EXTERNAL="${BR2_EXTERNAL_PATH}" -j${JOBS} emulationstation 2>&1 | tee /home/builder/output/build-ota.log
 
+    echo "[OTA 빌드] rootfs-overlay 적용 중..."
+    rsync -a board/${DEVICE}/rootfs-overlay/ output/target/
+
     echo "[OTA 빌드] squashfs 재생성 중..."
     make BR2_EXTERNAL="${BR2_EXTERNAL_PATH}" rootfs-squashfs 2>&1 | tee -a /home/builder/output/build-ota.log
 
