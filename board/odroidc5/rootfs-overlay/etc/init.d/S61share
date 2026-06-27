@@ -109,38 +109,36 @@ download_extra_roms() {
     _rp_dl "${m2}/The Sword of Ianna (Retroworks).rom" \
         "${base}/msx2/init/roms/The%20Sword%20of%20Ianna%20(Retroworks).rom"
 
-    # ScummVM — 공식 freeware (디렉토리명.scummvm 구조, 리콜박스 동일 방식)
+    # ScummVM — 공식 freeware (.scummvm 파일 + 게임 데이터 플랫 구조)
+    # lr-scummvm은 게임ID가 담긴 .scummvm 텍스트 파일을 ROM으로 받고,
+    # 같은 디렉토리에서 게임 데이터를 검색함
     local sc="${roms}/scummvm"
 
     # Beneath a Steel Sky
-    mkdir -p "${sc}/Beneath a Steel Sky (English).scummvm"
-    _rp_dl "${sc}/Beneath a Steel Sky (English).scummvm/sky.dnr" \
+    _rp_dl "${sc}/sky.dnr" \
         "${base}/scummvm/init/roms/Beneath%20a%20Steel%20Sky%20(English).scummvm/sky.dnr"
-    _rp_dl "${sc}/Beneath a Steel Sky (English).scummvm/sky.dsk" \
+    _rp_dl "${sc}/sky.dsk" \
         "${base}/scummvm/init/roms/Beneath%20a%20Steel%20Sky%20(English).scummvm/sky.dsk"
-    printf 'sky' > "${sc}/Beneath a Steel Sky (English).scummvm/sky.scummvm"
+    [ -s "${sc}/sky.dnr" ] && printf 'sky' > "${sc}/Beneath a Steel Sky (English).scummvm"
 
     # Flight of the Amazon Queen
-    mkdir -p "${sc}/Flight of the Amazon Queen (English).scummvm"
-    _rp_dl "${sc}/Flight of the Amazon Queen (English).scummvm/queen.1" \
+    _rp_dl "${sc}/queen.1" \
         "${base}/scummvm/init/roms/Flight%20of%20the%20Amazon%20Queen%20(English).scummvm/queen.1"
-    printf 'queen' > "${sc}/Flight of the Amazon Queen (English).scummvm/queen.scummvm"
+    [ -s "${sc}/queen.1" ] && printf 'queen' > "${sc}/Flight of the Amazon Queen (English).scummvm"
 
     # Soltys
-    mkdir -p "${sc}/Soltys (English).scummvm"
-    _rp_dl "${sc}/Soltys (English).scummvm/vol.cat" \
+    _rp_dl "${sc}/vol.cat" \
         "${base}/scummvm/init/roms/Soltys%20(English).scummvm/vol.cat"
-    _rp_dl "${sc}/Soltys (English).scummvm/vol.dat" \
+    _rp_dl "${sc}/vol.dat" \
         "${base}/scummvm/init/roms/Soltys%20(English).scummvm/vol.dat"
-    printf 'soltys' > "${sc}/Soltys (English).scummvm/soltys.scummvm"
+    [ -s "${sc}/vol.cat" ] && printf 'soltys' > "${sc}/Soltys (English).scummvm"
 
     # Lure of the Temptress
-    mkdir -p "${sc}/Lure of the Tempress (English).scummvm"
     for f in Disk1.vga Disk2.vga Disk3.vga Disk4.vga Lure.exe; do
-        _rp_dl "${sc}/Lure of the Tempress (English).scummvm/${f}" \
+        _rp_dl "${sc}/${f}" \
             "${base}/scummvm/init/roms/Lure%20of%20the%20Tempress%20(English).scummvm/${f}"
     done
-    printf 'lure' > "${sc}/Lure of the Tempress (English).scummvm/lure.scummvm"
+    [ -s "${sc}/Disk1.vga" ] && printf 'lure' > "${sc}/Lure of the Tempress (English).scummvm"
 }
 
 # 폴더 구조 초기화 + bundled 파일 복사 (sentinel로 최초 1회만)
