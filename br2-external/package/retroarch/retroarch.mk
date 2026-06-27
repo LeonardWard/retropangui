@@ -54,7 +54,6 @@ RETROARCH_CONF_OPTS = \
 	--enable-threads \
 	--enable-dylib \
 	--enable-udev \
-	--enable-neon \
 	--enable-7zip \
 	--enable-networking \
 	--enable-translate \
