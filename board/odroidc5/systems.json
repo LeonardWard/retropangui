@@ -32,6 +32,56 @@
     ]
   },
   {
+    "name": "megadrive",
+    "fullname": "Sega Mega Drive / Genesis",
+    "extensions": ".md .bin .gen .smd .zip .7z",
+    "platform": "megadrive",
+    "theme": "megadrive",
+    "cores": [
+      { "name": "picodrive", "fullname": "PicoDrive", "module_id": "lr-picodrive", "priority": 1 }
+    ]
+  },
+  {
+    "name": "sega32x",
+    "fullname": "Sega 32X",
+    "extensions": ".32x .zip .7z",
+    "platform": "sega32x",
+    "theme": "sega32x",
+    "cores": [
+      { "name": "picodrive", "fullname": "PicoDrive", "module_id": "lr-picodrive", "priority": 1 }
+    ]
+  },
+  {
+    "name": "segacd",
+    "fullname": "Sega CD / Mega-CD",
+    "extensions": ".bin .cue .iso .chd .zip",
+    "platform": "segacd",
+    "theme": "segacd",
+    "cores": [
+      { "name": "picodrive", "fullname": "PicoDrive", "module_id": "lr-picodrive", "priority": 1 }
+    ]
+  },
+  {
+    "name": "msx1",
+    "fullname": "MSX1",
+    "extensions": ".rom .mx1 .zip .7z",
+    "platform": "msx",
+    "theme": "msx",
+    "cores": [
+      { "name": "bluemsx", "fullname": "blueMSX", "module_id": "lr-bluemsx", "priority": 1 }
+    ]
+  },
+  {
+    "name": "msx2",
+    "fullname": "MSX2",
+    "extensions": ".rom .mx2 .zip .7z",
+    "platform": "msx2",
+    "theme": "msx2",
+    "cores": [
+      { "name": "bluemsx", "fullname": "blueMSX", "module_id": "lr-bluemsx", "priority": 1 }
+    ]
+  },
+  {
     "name": "psx",
     "fullname": "Sony PlayStation",
     "extensions": ".bin .cue .img .iso .pbp .chd .zip",
