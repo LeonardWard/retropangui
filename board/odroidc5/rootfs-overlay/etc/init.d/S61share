@@ -163,6 +163,12 @@ init_share_dirs() {
         "${SHARE_MOUNT}/music" \
         "${SHARE_MOUNT}/system/emulationstation"
 
+    # bundled-bios: 파일 단위로 없는 것만 복사 (sentinel 무관, OTA로 추가되면 자동 반영)
+    local bundled_bios="/usr/share/retropangui/bundled-bios"
+    if [ -d "${bundled_bios}" ]; then
+        cp -rn "${bundled_bios}/." "${SHARE_MOUNT}/bios/" 2>/dev/null || true
+    fi
+
     local sentinel="${SHARE_MOUNT}/.bundled_initialized"
     if [ ! -f "${sentinel}" ]; then
         local bundled="/usr/share/retropangui/bundled-roms"
