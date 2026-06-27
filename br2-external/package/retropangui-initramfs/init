@@ -134,6 +134,23 @@ mount -t ext4 "$OVERLAY_DEV" /overlay || panic "overlay 마운트 실패: $OVERL
 echo "  overlay OK: $OVERLAY_DEV"
 mkdir -p /overlay/upper /overlay/work
 
+# OTA 적용 시: upper 레이어의 시스템 스크립트 정리
+# upper에 남은 구버전 init.d 파일이 새 squashfs 버전을 가리는 것을 방지
+if [ "$OTA_APPLIED" = "1" ]; then
+    echo "  OTA: upper/etc/init.d 정리 중..."
+    rm -rf /overlay/upper/etc/init.d
+fi
+
+# 공장 초기화 플래그 확인
+if [ -f /boot/.factory-reset ]; then
+    echo "  공장 초기화: upper 레이어 전체 삭제 중..."
+    rm -rf /overlay/upper
+    mkdir -p /overlay/upper /overlay/work
+    rm -f /boot/.factory-reset
+    sync
+    echo "  공장 초기화 완료"
+fi
+
 # ─── [6/7] overlayfs ─────────────────────────────────────────────
 echo ">>> [6/7] overlayfs..."
 mkdir -p /merged
