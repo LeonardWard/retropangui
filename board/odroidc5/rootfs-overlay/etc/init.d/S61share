@@ -66,7 +66,7 @@ try_mount() {
 
 # 단일 파일 묵묵히 다운로드 (실패 시 스킵)
 _rp_dl() {
-    wget -q -T 20 -O "$1" "$2" 2>/dev/null || true
+    wget -q -T 20 --no-check-certificate -O "$1" "$2" 2>/dev/null || true
 }
 
 # 추가 ROM 백그라운드 다운로드 — 최초 부팅 1회, 실패 시 묵묵히 스킵
