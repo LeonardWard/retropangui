@@ -2,13 +2,12 @@
 # build.sh - 호스트에서 실행하는 빌드 진입점
 #
 # 사용법:
-#   ./build.sh [DEVICE]               # 기기 지정 (기본: odroidc5, 버전은 Git 태그 자동 인식)
-#   DEVICE=odroidc5 ./build.sh        # 환경변수로 지정
-#   VERSION=1.1.0 ./build.sh odroidc5 # 버전 지정
+#   ./build.sh [DEVICE]               # img + OTA squashfs 둘 다 생성 (기본)
+#   ./build.sh --img                  # img만 생성 (전체 빌드)
+#   ./build.sh --ota                  # OTA squashfs만 생성 (빠른 빌드: ES만 재빌드)
 #   ./build.sh --partial              # 부분 빌드: gamepad-mgr + board 파일 + 이미지 재패킹만
-#   ./build.sh odroidc5 --partial     # 기기 지정 + 부분 빌드
-#   ./build.sh --ota                  # OTA 빌드: squashfs 파일만 생성 (img 생성 없음)
-#   ./build.sh odroidc5 --ota         # 기기 지정 + OTA 빌드
+#   DEVICE=odroidc5 ./build.sh        # 환경변수로 기기 지정
+#   VERSION=1.1.0 ./build.sh odroidc5 # 버전 지정
 
 set -e
 
@@ -16,16 +15,24 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 
 # 옵션 파싱
 PARTIAL=0
-OTA=0
+BUILD_IMG=0
+BUILD_OTA=0
 ARGS=()
 for arg in "$@"; do
     case "$arg" in
         --partial|-p) PARTIAL=1 ;;
-        --ota|-o)     OTA=1 ;;
+        --img|-i)     BUILD_IMG=1 ;;
+        --ota|-o)     BUILD_OTA=1 ;;
         *)            ARGS+=("$arg") ;;
     esac
 done
 set -- "${ARGS[@]}"
+
+# 플래그 미지정 시 기본값: 둘 다
+if [ $BUILD_IMG -eq 0 ] && [ $BUILD_OTA -eq 0 ]; then
+    BUILD_IMG=1
+    BUILD_OTA=1
+fi
 
 DEVICE="${1:-${DEVICE:-odroidc5}}"
 if [ -z "${VERSION}" ]; then
@@ -35,11 +42,20 @@ fi
 DEFCONFIG="${SCRIPT_DIR}/configs/retropangui-${DEVICE}_defconfig"
 BOARD_DIR="${SCRIPT_DIR}/board/${DEVICE}"
 
+if [ $BUILD_IMG -eq 1 ] && [ $BUILD_OTA -eq 1 ]; then
+    _MODE="전체빌드 (img + squashfs)"
+elif [ $BUILD_IMG -eq 1 ]; then
+    _MODE="전체빌드 (img만)"
+elif [ $BUILD_OTA -eq 1 ]; then
+    _MODE="OTA 빠른빌드 (squashfs만)"
+fi
+[ $PARTIAL -eq 1 ] && _MODE="부분빌드"
+
 echo "============================================"
 echo "  RETROPANGUI 빌드 시작"
 echo "  기기: ${DEVICE}"
 echo "  버전: ${VERSION}"
-echo "  모드: $([ $OTA -eq 1 ] && echo OTA빌드 || { [ $PARTIAL -eq 1 ] && echo 부분빌드 || echo 전체빌드; })"
+echo "  모드: ${_MODE}"
 echo "  defconfig: retropangui-${DEVICE}_defconfig"
 echo "============================================"
 
@@ -257,7 +273,8 @@ docker run --rm \
     -e VERSION="${VERSION}" \
     -e BUILD_JOBS="$(nproc)" \
     -e PARTIAL="${PARTIAL}" \
-    -e OTA="${OTA}" \
+    -e BUILD_IMG="${BUILD_IMG}" \
+    -e BUILD_OTA="${BUILD_OTA}" \
     -v "${SCRIPT_DIR}/buildroot:/home/builder/buildroot" \
     -v "${SCRIPT_DIR}/configs:/home/builder/configs" \
     -v "${SCRIPT_DIR}/board:/home/builder/board" \
@@ -271,16 +288,13 @@ docker run --rm \
 
 echo "[3/3] 빌드 완료!"
 echo "============================================"
-if [ $OTA -eq 1 ]; then
+if [ $BUILD_IMG -eq 1 ]; then
+    echo "최종 이미지: ${SCRIPT_DIR}/output/retropangui-${DEVICE}-${VERSION}.img"
+    echo "  플래싱:  bash scripts/flash-sd.sh output/retropangui-${DEVICE}-${VERSION}.img"
+fi
+if [ $BUILD_OTA -eq 1 ]; then
     echo "OTA squashfs: ${SCRIPT_DIR}/output/retropangui-${DEVICE}-${VERSION}.squashfs"
     echo "SHA256:       ${SCRIPT_DIR}/output/retropangui-${DEVICE}-${VERSION}.squashfs.sha256"
-    echo ""
-    echo "파일서버에 배포하려면:"
-    echo "  scripts/ota.sh push output/retropangui-${DEVICE}-${VERSION}.squashfs --serve"
-else
-    echo "최종 이미지: ${SCRIPT_DIR}/output/retropangui-${DEVICE}-${VERSION}.img"
-    echo ""
-    echo "SD 카드에 플래싱하려면:"
-    echo "  bash scripts/flash-sd.sh output/retropangui-${DEVICE}-${VERSION}.img"
+    echo "  배포:    scripts/ota.sh push output/retropangui-${DEVICE}-${VERSION}.squashfs --serv"
 fi
 echo "============================================"

@@ -7,7 +7,8 @@ BUILDROOT_VERSION="${BUILDROOT_VERSION:-2024.02.1}"
 DEVICE="${DEVICE:-odroidc5}"
 VERSION="${VERSION:-1.0.0}"
 PARTIAL="${PARTIAL:-0}"
-OTA="${OTA:-0}"
+BUILD_IMG="${BUILD_IMG:-1}"
+BUILD_OTA="${BUILD_OTA:-0}"
 DEFCONFIG="retropangui-${DEVICE}_defconfig"
 
 cd /home/builder/buildroot
@@ -21,12 +22,17 @@ echo "  Buildroot 내부 빌드 스크립트"
 echo "  Buildroot 버전: ${BUILDROOT_VERSION}"
 echo "  기기: ${DEVICE}"
 echo "  프로젝트 버전: ${VERSION}"
-echo "  모드: $([ "$OTA" = "1" ] && echo OTA빌드 || { [ "$PARTIAL" = "1" ] && echo 부분빌드 || echo 전체빌드; })"
+if   [ "$BUILD_IMG" = "1" ] && [ "$BUILD_OTA" = "1" ]; then _MODE="전체빌드 (img + squashfs)"
+elif [ "$BUILD_IMG" = "1" ]; then _MODE="전체빌드 (img만)"
+elif [ "$BUILD_OTA" = "1" ]; then _MODE="OTA 빠른빌드 (squashfs만)"
+fi
+[ "$PARTIAL" = "1" ] && _MODE="부분빌드"
+echo "  모드: ${_MODE}"
 echo "  defconfig: ${DEFCONFIG}"
 echo "============================================"
 
-# OTA 빌드: emulationstation 재빌드 + squashfs만 생성 (img 없음)
-if [ "$OTA" = "1" ]; then
+# OTA 빠른빌드: ES 재빌드 + squashfs만 생성 (img 없음)
+if [ "$BUILD_OTA" = "1" ] && [ "$BUILD_IMG" = "0" ]; then
     BR2_EXTERNAL_PATH=/home/builder/br2-external
     echo "[OTA 빌드] board 파일 복사 중..."
     mkdir -p board/${DEVICE}
@@ -252,18 +258,35 @@ echo "  - 전체 빌드 시작 (병렬 작업 수: ${JOBS})"
 echo "  - 로그: /home/builder/output/build.log"
 make BR2_EXTERNAL="${BR2_EXTERNAL_PATH}" -j${JOBS} 2>&1 | tee /home/builder/output/build.log
 
-# 최종 이미지 복사
-echo "[6/6] 최종 이미지 생성..."
+# 최종 결과물 복사
+echo "[6/6] 최종 결과물 생성..."
 OUTPUT_IMG="retropangui-${DEVICE}-${VERSION}.img"
-if [ -f output/images/sdcard.img ]; then
-    cp output/images/sdcard.img /home/builder/output/${OUTPUT_IMG}
-    echo ""
-    echo "============================================"
-    echo "  빌드 성공!"
-    echo "  이미지: ${OUTPUT_IMG}"
-    echo "  크기: $(du -h /home/builder/output/${OUTPUT_IMG} | cut -f1)"
-    echo "============================================"
-else
-    echo "ERROR: sdcard.img 생성 실패!"
-    exit 1
+OUTPUT_SQ="retropangui-${DEVICE}-${VERSION}.squashfs"
+
+if [ "$BUILD_IMG" = "1" ]; then
+    if [ -f output/images/sdcard.img ]; then
+        cp output/images/sdcard.img /home/builder/output/${OUTPUT_IMG}
+        echo "  이미지: ${OUTPUT_IMG} ($(du -h /home/builder/output/${OUTPUT_IMG} | cut -f1))"
+    else
+        echo "ERROR: sdcard.img 생성 실패!"
+        exit 1
+    fi
 fi
+
+if [ "$BUILD_OTA" = "1" ]; then
+    if [ -f output/images/rootfs.squashfs ]; then
+        cp output/images/rootfs.squashfs /home/builder/output/${OUTPUT_SQ}
+        sha256sum /home/builder/output/${OUTPUT_SQ} | awk '{print $1}' \
+            > /home/builder/output/${OUTPUT_SQ}.sha256
+        echo "  squashfs: ${OUTPUT_SQ} ($(du -h /home/builder/output/${OUTPUT_SQ} | cut -f1))"
+        echo "  SHA256:   $(cat /home/builder/output/${OUTPUT_SQ}.sha256)"
+    else
+        echo "ERROR: rootfs.squashfs 생성 실패!"
+        exit 1
+    fi
+fi
+
+echo ""
+echo "============================================"
+echo "  빌드 성공!"
+echo "============================================"

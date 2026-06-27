@@ -2,12 +2,12 @@
 # ota.sh - OTA squashfs 배포 및 파일서버
 #
 # 사용법:
-#   ota.sh push <squashfs> [--serve] [버전]  # 배포 (+ 서버 시작)
-#   ota.sh serve [--port N]                   # 서버 시작
+#   ota.sh push <squashfs> [--serv] [버전]  # 배포 (+ 서버 시작)
+#   ota.sh serve [--port N]                  # 서버 시작
 #
 # 예:
 #   ota.sh push retropangui-odroidc5-0.15.squashfs
-#   ota.sh push retropangui-odroidc5-0.15.squashfs --serve  (또는 -s)
+#   ota.sh push retropangui-odroidc5-0.15.squashfs --serv  (또는 -s)
 #   ota.sh serve
 #   ota.sh serve --port 9000
 #
@@ -29,7 +29,7 @@ shift || true
 POSITIONAL=()
 for arg in "$@"; do
     case "$arg" in
-        --serve|-s)  SERVE=1 ;;
+        --serv|-s)   SERVE=1 ;;
         --port)      shift; PORT="$1" ;;
         --port=*)    PORT="${arg#*=}" ;;
         *)           POSITIONAL+=("$arg") ;;
