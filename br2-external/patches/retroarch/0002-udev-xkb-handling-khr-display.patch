@@ -1,0 +1,29 @@
+From: retropangui <retropangui@odroidc5>
+Date: Sat, 28 Jun 2026 00:00:00 +0000
+Subject: [PATCH] udev_input: enable xkb_handling for khr_display context
+
+VK_KHR_display (khr_display) context driver is used on KMS/DRM with
+Vulkan, but udev_input_init() only enables xkb_handling when the
+context ident is "kms" (which is the EGL/DRM context). As a result,
+keyboard text input is broken when using the Vulkan renderer on KMS:
+input_keyboard_event() is called with character=0 and mod=0, making
+text entry in the menu (search, etc.) non-functional.
+
+Fix by also enabling xkb_handling for "khr_display".
+---
+ input/drivers/udev_input.c | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/input/drivers/udev_input.c b/input/drivers/udev_input.c
+index 1111111..2222222 100644
+--- a/input/drivers/udev_input.c
++++ b/input/drivers/udev_input.c
+@@ -4097,7 +4097,8 @@
+    /* Force xkb_handling on Lakka */
+    udev->xkb_handling = true;
+ #else
+-   udev->xkb_handling = string_is_equal(ctx_ident.ident, "kms");
++   udev->xkb_handling = string_is_equal(ctx_ident.ident, "kms") ||
++                        string_is_equal(ctx_ident.ident, "khr_display");
+ #endif /* HAVE_LAKKA */
+ #endif
