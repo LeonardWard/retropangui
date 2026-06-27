@@ -161,27 +161,30 @@ case "$1" in
                 echo 'input_joypad_driver = "udev"' >> "${RA_CFG_USER}"
         fi
 
-        # udev 조이패드 드라이버는 /dev/input/eventX를 사용한다.
-        # 물리 컨트롤러가 낮은 eventX를 선점할 수 있으므로
-        # vdev 이름으로 실제 jsX 번호를 동적으로 탐색한다.
-        # (udev 드라이버 joypad_index = eventX 번호 순 열거 위치 = jsX 번호와 일치)
+        # RA udev 드라이버는 udev syspath 알파벳 순으로 joystick을 열거한다.
+        # USB 물리 장치(/devices/platform/...)는 가상 장치(/devices/virtual/...)보다
+        # 알파벳 순으로 앞에 오므로 더 낮은 index를 차지한다.
+        # syspath 정렬로 RA enumerate 순서를 재현해 정확한 index를 설정한다.
         if [ -f "${RA_CFG_USER}" ]; then
             sed -i '/^input_player[0-9]*_joypad_index /d' "${RA_CFG_USER}"
-            for p in 1 2 3 4; do
-                idx=""
-                for js in /dev/input/js*; do
-                    name=$(cat /sys/class/input/$(basename "$js")/device/name 2>/dev/null)
+            pad_idx=0
+            for ev_path in $(
+                for ev in /dev/input/event*; do
+                    is_joy=$(udevadm info -q property "$ev" 2>/dev/null | grep 'ID_INPUT_JOYSTICK=1')
+                    [ -z "$is_joy" ] && continue
+                    syspath=$(udevadm info -q path "$ev" 2>/dev/null)
+                    printf '%s %s\n' "$syspath" "$ev"
+                done | sort | awk '{print $2}'
+            ); do
+                ev=$(basename "$ev_path")
+                name=$(cat "/sys/class/input/${ev}/device/name" 2>/dev/null)
+                for p in 1 2 3 4; do
                     if [ "$name" = "RetroPangUI P${p}" ]; then
-                        idx=$(echo "$js" | sed 's|/dev/input/js||')
-                        break
+                        echo "input_player${p}_joypad_index = \"${pad_idx}\"" >> "${RA_CFG_USER}"
+                        logger -t "${TAG}" "RetroPangUI P${p} → joypad index ${pad_idx} (udev order)"
                     fi
                 done
-                if [ -n "$idx" ]; then
-                    echo "input_player${p}_joypad_index = \"${idx}\"" >> "${RA_CFG_USER}"
-                    logger -t "${TAG}" "RetroPangUI P${p} → joypad index ${idx} (udev/js${idx})"
-                else
-                    logger -t "${TAG}" "WARNING: RetroPangUI P${p} jsX not found"
-                fi
+                pad_idx=$((pad_idx + 1))
             done
         fi
         ;;
