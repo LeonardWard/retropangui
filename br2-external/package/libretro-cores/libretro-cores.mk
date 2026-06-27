@@ -271,6 +271,10 @@ define LIBRETRO_CORES_INSTALL_TARGET_CMDS
 	$(INSTALL) -m 0644 $(@D)/bluemsx-libretro/bluemsx_libretro.so \
 		$(CORES_INSTALL_DIR)/lr-bluemsx/
 	echo "bluemsx_libretro.so" > $(CORES_INSTALL_DIR)/lr-bluemsx/.installed_so_name
+	cp -r $(@D)/bluemsx-libretro/system/bluemsx/Machines \
+		$(TARGET_DIR)/usr/share/retropangui/bios/
+	cp -r $(@D)/bluemsx-libretro/system/bluemsx/Databases \
+		$(TARGET_DIR)/usr/share/retropangui/bios/
 
 	mkdir -p $(CORES_INSTALL_DIR)/lr-dosbox-pure
 	$(INSTALL) -m 0644 $(@D)/dosbox-pure/dosbox_pure_libretro.so \
@@ -281,6 +285,13 @@ define LIBRETRO_CORES_INSTALL_TARGET_CMDS
 	$(INSTALL) -m 0644 $(@D)/scummvm/backends/platform/libretro/scummvm_libretro.so \
 		$(CORES_INSTALL_DIR)/lr-scummvm/
 	echo "scummvm_libretro.so" > $(CORES_INSTALL_DIR)/lr-scummvm/.installed_so_name
+	mkdir -p $(TARGET_DIR)/usr/share/retropangui/bios/scummvm
+	$(INSTALL) -m 0644 $(@D)/scummvm/gui/themes/gui-icons.dat \
+		$(TARGET_DIR)/usr/share/retropangui/bios/scummvm/
+	$(INSTALL) -m 0644 $(@D)/scummvm/gui/themes/scummclassic.zip \
+		$(TARGET_DIR)/usr/share/retropangui/bios/scummvm/
+	$(INSTALL) -m 0644 $(@D)/scummvm/gui/themes/scummmodern.zip \
+		$(TARGET_DIR)/usr/share/retropangui/bios/scummvm/
 endef
 
 $(eval $(generic-package))
