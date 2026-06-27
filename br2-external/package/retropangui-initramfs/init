@@ -101,6 +101,12 @@ if [ -n "$UPDATE_FILE" ]; then
         cp /boot/retropangui.squashfs /boot/retropangui.squashfs.old 2>/dev/null || true
         mv "$UPDATE_FILE" /boot/retropangui.squashfs
         rm -f "$SHA256_FILE"
+        if [ -f /boot/update/initramfs.update.cpio.gz ]; then
+            echo "    initramfs 업데이트 중..."
+            cp /boot/initramfs.cpio.gz /boot/initramfs.cpio.gz.old 2>/dev/null || true
+            mv /boot/update/initramfs.update.cpio.gz /boot/initramfs.cpio.gz
+            echo "    initramfs 업데이트 완료 (다음 부팅 시 적용)"
+        fi
         sync
         OTA_APPLIED=1
         echo "    OTA 완료"

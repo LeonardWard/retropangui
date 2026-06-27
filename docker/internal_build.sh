@@ -54,18 +54,28 @@ if [ "$BUILD_OTA" = "1" ] && [ "$BUILD_IMG" = "0" ]; then
     echo "[OTA 빌드] rootfs-overlay 적용 중..."
     rsync -a board/${DEVICE}/rootfs-overlay/ output/target/
 
+    echo "[OTA 빌드] initramfs 재빌드 중..."
+    rm -rf output/build/retropangui-initramfs-*/
+    make BR2_EXTERNAL="${BR2_EXTERNAL_PATH}" retropangui-initramfs 2>&1 | tee -a /home/builder/output/build-ota.log
+
     echo "[OTA 빌드] squashfs 재생성 중..."
     make BR2_EXTERNAL="${BR2_EXTERNAL_PATH}" rootfs-squashfs 2>&1 | tee -a /home/builder/output/build-ota.log
 
     OUTPUT_SQ="retropangui-${DEVICE}-${VERSION}.squashfs"
+    OUTPUT_INITRAMFS="retropangui-${DEVICE}-${VERSION}.initramfs.cpio.gz"
     if [ -f output/images/rootfs.squashfs ]; then
         cp output/images/rootfs.squashfs /home/builder/output/${OUTPUT_SQ}
-        sha256sum /home/builder/output/${OUTPUT_SQ} | awk '{print $1}'             > /home/builder/output/${OUTPUT_SQ}.sha256
+        sha256sum /home/builder/output/${OUTPUT_SQ} | awk '{print $1}' \
+            > /home/builder/output/${OUTPUT_SQ}.sha256
+        cp output/images/initramfs.cpio.gz /home/builder/output/${OUTPUT_INITRAMFS}
+        sha256sum /home/builder/output/${OUTPUT_INITRAMFS} | awk '{print $1}' \
+            > /home/builder/output/${OUTPUT_INITRAMFS}.sha256
         echo "============================================"
         echo "  OTA 빌드 성공!"
-        echo "  squashfs: ${OUTPUT_SQ}"
-        echo "  크기:     $(du -h /home/builder/output/${OUTPUT_SQ} | cut -f1)"
-        echo "  SHA256:   $(cat /home/builder/output/${OUTPUT_SQ}.sha256)"
+        echo "  squashfs:  ${OUTPUT_SQ} ($(du -h /home/builder/output/${OUTPUT_SQ} | cut -f1))"
+        echo "  initramfs: ${OUTPUT_INITRAMFS} ($(du -h /home/builder/output/${OUTPUT_INITRAMFS} | cut -f1))"
+        echo "  SHA256 squashfs:  $(cat /home/builder/output/${OUTPUT_SQ}.sha256)"
+        echo "  SHA256 initramfs: $(cat /home/builder/output/${OUTPUT_INITRAMFS}.sha256)"
         echo "============================================"
     else
         echo "ERROR: rootfs.squashfs 생성 실패!"

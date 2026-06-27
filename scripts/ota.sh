@@ -140,6 +140,23 @@ else
         > "${OTA_SERVER_DIR}/retropangui-${DEVICE}.squashfs.sha256"
 fi
 
+# initramfs: squashfs와 같은 디렉토리에 있으면 함께 배포
+INITRAMFS_FILE="${SQ_FILE%.squashfs}.initramfs.cpio.gz"
+if [ -f "${INITRAMFS_FILE}" ]; then
+    echo "    initramfs: $(basename "${INITRAMFS_FILE}")"
+    cp "${INITRAMFS_FILE}" "${OTA_SERVER_DIR}/retropangui-${DEVICE}.initramfs.cpio.gz"
+    INITRAMFS_SHA256="${INITRAMFS_FILE}.sha256"
+    if [ -f "${INITRAMFS_SHA256}" ]; then
+        cp "${INITRAMFS_SHA256}" "${OTA_SERVER_DIR}/retropangui-${DEVICE}.initramfs.cpio.gz.sha256"
+    else
+        sha256sum "${OTA_SERVER_DIR}/retropangui-${DEVICE}.initramfs.cpio.gz" \
+            | awk '{print $1}' \
+            > "${OTA_SERVER_DIR}/retropangui-${DEVICE}.initramfs.cpio.gz.sha256"
+    fi
+else
+    echo "    initramfs: 없음 (squashfs만 배포)"
+fi
+
 echo "${VERSION}" > "${OTA_SERVER_DIR}/version"
 printf 'version=%s\nsource=%s\npushed=%s\n' \
     "${VERSION}" "${SQ_FILE}" "$(date '+%Y-%m-%d %H:%M:%S')" \
@@ -149,8 +166,9 @@ echo ""
 echo "============================================"
 echo "  OTA 배포 완료"
 echo "  버전: ${VERSION}"
-echo "  크기: $(du -h "${OTA_SERVER_DIR}/retropangui-${DEVICE}.squashfs" | cut -f1)"
-echo "  SHA256: $(cat "${OTA_SERVER_DIR}/retropangui-${DEVICE}.squashfs.sha256")"
+echo "  squashfs:  $(du -h "${OTA_SERVER_DIR}/retropangui-${DEVICE}.squashfs" | cut -f1)"
+[ -f "${OTA_SERVER_DIR}/retropangui-${DEVICE}.initramfs.cpio.gz" ] && \
+    echo "  initramfs: $(du -h "${OTA_SERVER_DIR}/retropangui-${DEVICE}.initramfs.cpio.gz" | cut -f1)"
 echo "============================================"
 
 if [ "${SERVE}" -eq 1 ]; then
