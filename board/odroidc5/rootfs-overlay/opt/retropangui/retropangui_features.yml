@@ -169,6 +169,18 @@ menus:
     label: "GAME SETTINGS"
     parent: game
     items:
+      - id: rp.video_driver
+        label: "VIDEO DRIVER"
+        type: list
+        conf_key: global.video_driver
+        default: vulkan
+        restart: none
+        options:
+          - value: vulkan
+            label: "Vulkan (권장)"
+          - value: gl
+            label: "OpenGL ES (호환성 폴백)"
+
       - id: rp.rewind
         label: "REWIND"
         type: toggle

@@ -64,12 +64,85 @@ try_mount() {
     mount -t exfat -o "${MOUNT_OPTS}" "${dev}" "${SHARE_MOUNT}" 2>/dev/null
 }
 
+# 단일 파일 묵묵히 다운로드 (실패 시 스킵)
+_rp_dl() {
+    wget -q -T 20 -O "$1" "$2" 2>/dev/null || true
+}
+
+# 추가 ROM 백그라운드 다운로드 — 최초 부팅 1회, 실패 시 묵묵히 스킵
+# 소스: 리콜박스 GitLab raw (CC BY-NC-SA / GPL / 공식 freeware)
+download_extra_roms() {
+    local roms="${SHARE_MOUNT}/roms"
+    local base="https://gitlab.com/recalbox/recalbox/-/raw/master/package/recalbox-romfs2/systems"
+
+    # Mega Drive — Retrosouls (CC BY-NC-SA 4.0)
+    local md="${roms}/megadrive"
+    _rp_dl "${md}/Yazzie (Retrosouls).bin"       "${base}/megadrive/init/roms/Yazzie%20(Retrosouls).bin"
+    _rp_dl "${md}/Gluf (Retrosouls).bin"         "${base}/megadrive/init/roms/Gluf%20(Retrosouls).bin"
+    _rp_dl "${md}/Old Towers (Retrosouls).bin"   "${base}/megadrive/init/roms/Old%20Towers%20(Retrosouls).bin"
+    _rp_dl "${md}/Misplaced (Retrosouls).bin"    "${base}/megadrive/init/roms/Misplaced%20(Retrosouls).bin"
+
+    # MSX1 — GPL + CC BY-NC-SA
+    local m1="${roms}/msx1"
+    _rp_dl "${m1}/xracing.rom"        "${base}/msx1/init/roms/xracing.rom"
+    _rp_dl "${m1}/xspelunker-en.rom"  "${base}/msx1/init/roms/xspelunker-en.rom"
+    _rp_dl "${m1}/Yazzie.rom"         "${base}/msx1/init/roms/Yazzie.rom"
+
+    # MSX2 — Retroworks (비상업 재배포 가능)
+    local m2="${roms}/msx2"
+    _rp_dl "${m2}/Brunilda [v1.1] (Retroworks).rom" \
+        "${base}/msx2/init/roms/Brunilda%20%5Bv1.1%5D%20(Retroworks).rom"
+    _rp_dl "${m2}/The Sword of Ianna (Retroworks).rom" \
+        "${base}/msx2/init/roms/The%20Sword%20of%20Ianna%20(Retroworks).rom"
+
+    # ScummVM — 공식 freeware (디렉토리명.scummvm 구조, 리콜박스 동일 방식)
+    local sc="${roms}/scummvm"
+
+    # Beneath a Steel Sky
+    mkdir -p "${sc}/Beneath a Steel Sky (English).scummvm"
+    _rp_dl "${sc}/Beneath a Steel Sky (English).scummvm/sky.dnr" \
+        "${base}/scummvm/init/roms/Beneath%20a%20Steel%20Sky%20(English).scummvm/sky.dnr"
+    _rp_dl "${sc}/Beneath a Steel Sky (English).scummvm/sky.dsk" \
+        "${base}/scummvm/init/roms/Beneath%20a%20Steel%20Sky%20(English).scummvm/sky.dsk"
+    printf 'sky' > "${sc}/Beneath a Steel Sky (English).scummvm/sky.scummvm"
+
+    # Flight of the Amazon Queen
+    mkdir -p "${sc}/Flight of the Amazon Queen (English).scummvm"
+    _rp_dl "${sc}/Flight of the Amazon Queen (English).scummvm/queen.1" \
+        "${base}/scummvm/init/roms/Flight%20of%20the%20Amazon%20Queen%20(English).scummvm/queen.1"
+    printf 'queen' > "${sc}/Flight of the Amazon Queen (English).scummvm/queen.scummvm"
+
+    # Soltys
+    mkdir -p "${sc}/Soltys (English).scummvm"
+    _rp_dl "${sc}/Soltys (English).scummvm/vol.cat" \
+        "${base}/scummvm/init/roms/Soltys%20(English).scummvm/vol.cat"
+    _rp_dl "${sc}/Soltys (English).scummvm/vol.dat" \
+        "${base}/scummvm/init/roms/Soltys%20(English).scummvm/vol.dat"
+    printf 'soltys' > "${sc}/Soltys (English).scummvm/soltys.scummvm"
+
+    # Lure of the Temptress
+    mkdir -p "${sc}/Lure of the Tempress (English).scummvm"
+    for f in Disk1.vga Disk2.vga Disk3.vga Disk4.vga Lure.exe; do
+        _rp_dl "${sc}/Lure of the Tempress (English).scummvm/${f}" \
+            "${base}/scummvm/init/roms/Lure%20of%20the%20Tempress%20(English).scummvm/${f}"
+    done
+    printf 'lure' > "${sc}/Lure of the Tempress (English).scummvm/lure.scummvm"
+}
+
 # 폴더 구조 초기화 + bundled 파일 복사 (sentinel로 최초 1회만)
 init_share_dirs() {
     mkdir -p \
         "${SHARE_MOUNT}/roms/nes" \
         "${SHARE_MOUNT}/roms/snes" \
         "${SHARE_MOUNT}/roms/psx" \
+        "${SHARE_MOUNT}/roms/megadrive" \
+        "${SHARE_MOUNT}/roms/sega32x" \
+        "${SHARE_MOUNT}/roms/segacd" \
+        "${SHARE_MOUNT}/roms/msx1" \
+        "${SHARE_MOUNT}/roms/msx2" \
+        "${SHARE_MOUNT}/roms/fds" \
+        "${SHARE_MOUNT}/roms/scummvm" \
+        "${SHARE_MOUNT}/roms/pc" \
         "${SHARE_MOUNT}/bios" \
         "${SHARE_MOUNT}/saves" \
         "${SHARE_MOUNT}/screenshots" \
@@ -89,6 +162,7 @@ init_share_dirs() {
         [ -d "${bgmusic}" ] && \
             cp -n "${bgmusic}"/* "${SHARE_MOUNT}/music/" 2>/dev/null || true
         touch "${sentinel}"
+        download_extra_roms &
     fi
 }
 
