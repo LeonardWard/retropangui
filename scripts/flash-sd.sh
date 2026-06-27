@@ -127,9 +127,9 @@ fi
 # ── 최종 확인 ─────────────────────────────────────────────
 echo -e "${RED}경고: ${DEVICE} 의 모든 데이터가 삭제됩니다!${NC}"
 echo ""
-echo -n "  계속하려면 'yes' 입력: "
+echo -n "  계속하려면 'yes' 또는 'y' 입력: "
 read -r CONFIRM
-if [ "${CONFIRM}" != "yes" ]; then
+if [ "${CONFIRM}" != "yes" ] && [ "${CONFIRM}" != "y" ]; then
     echo "취소됐습니다."
     exit 0
 fi
