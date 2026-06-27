@@ -58,6 +58,9 @@ if [ "$BUILD_OTA" = "1" ] && [ "$BUILD_IMG" = "0" ]; then
     rm -rf output/build/retropangui-initramfs-*/
     make BR2_EXTERNAL="${BR2_EXTERNAL_PATH}" retropangui-initramfs 2>&1 | tee -a /home/builder/output/build-ota.log
 
+    echo "[OTA 빌드] bundled-roms 재설치 중..."
+    make BR2_EXTERNAL="${BR2_EXTERNAL_PATH}" bundled-roms 2>&1 | tee -a /home/builder/output/build-ota.log
+
     echo "[OTA 빌드] squashfs 재생성 중..."
     make BR2_EXTERNAL="${BR2_EXTERNAL_PATH}" rootfs-squashfs 2>&1 | tee -a /home/builder/output/build-ota.log
 
