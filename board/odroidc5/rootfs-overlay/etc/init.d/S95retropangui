@@ -122,6 +122,25 @@ case "$1" in
             cp -r "${THEMES_SRC}/." "${THEMES_DST}/"
         fi
 
+        # 시스템별 스크린샷 디렉토리 및 .retroarch.cfg 초기화
+        # es_systems.xml에서 시스템 이름 추출 → 없을 때만 생성 (사용자 커스텀 보존)
+        SYSTEMS_XML="/etc/emulationstation/es_systems.xml"
+        ROMS_ROOT="/retropangui/share/roms"
+        SCREENSHOTS_ROOT="/retropangui/share/screenshots"
+        if [ -f "${SYSTEMS_XML}" ]; then
+            grep '<name>' "${SYSTEMS_XML}" | sed 's/.*<name>\(.*\)<\/name>.*/\1/' | \
+            while read -r sys; do
+                [ -z "$sys" ] && continue
+                mkdir -p "${SCREENSHOTS_ROOT}/${sys}"
+                CFG="${ROMS_ROOT}/${sys}/.retroarch.cfg"
+                if [ ! -f "${CFG}" ]; then
+                    mkdir -p "${ROMS_ROOT}/${sys}"
+                    printf 'screenshot_directory = %s/%s\n' "${SCREENSHOTS_ROOT}" "${sys}" > "${CFG}"
+                    logger -t "${TAG}" "screenshot cfg 생성: ${sys}"
+                fi
+            done
+        fi
+
         # exFAT는 새 파일 생성 시 디렉토리 메타데이터가 즉시 디스크에 기록되지 않아
         # 재부팅 후 파일이 사라질 수 있음. 첫 부팅 파일 복사 후 전체 sync로 flush.
         sync
