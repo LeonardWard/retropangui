@@ -12,6 +12,8 @@
 #   bluemsx         : 커밋 b76f2795 (2026-06, libretro/bluemsx-libretro, MSX/MSX2/MSX2+/turboR)
 #   dosbox_pure     : 커밋 f587236b (2025-04, schellingb/dosbox-pure, 별도 릴리즈 태그 없음)
 #   scummvm         : 릴리즈 태그 libretro-v3.1.0.1 (libretro/scummvm)
+#   quasi88         : 커밋 520e0a37 (2026-06, libretro/quasi88-libretro, PC-88)
+#   np2kai          : 커밋 54ec39f5 (2026-06, libretro/np2kai, PC-98)
 #
 # 빌드 방식:
 #   libretro 코어 Makefile은 크로스컴파일러 툴체인만 받고
@@ -218,6 +220,39 @@ define LIBRETRO_CORES_BUILD_SCUMMVM
 endef
 
 ################################################################################
+# quasi88 - PC-88
+################################################################################
+
+QUASI88_SITE = https://github.com/libretro/quasi88-libretro
+QUASI88_VERSION = 520e0a37ac0e9cf8b0536fe83fda3aacc9ba73bb
+
+define LIBRETRO_CORES_BUILD_QUASI88
+	test -d $(@D)/quasi88-libretro/.git || \
+		git clone --filter=blob:none $(QUASI88_SITE) $(@D)/quasi88-libretro
+	git -C $(@D)/quasi88-libretro checkout $(QUASI88_VERSION)
+	$(TARGET_MAKE_ENV) $(MAKE) -C $(@D)/quasi88-libretro \
+		$(LIBRETRO_CROSS_OPTS) \
+		platform=unix
+endef
+
+################################################################################
+# np2kai - PC-98
+################################################################################
+
+NP2KAI_SITE = https://github.com/libretro/np2kai
+NP2KAI_VERSION = 54ec39f50d197cc02909cd4fd2a8591bb38651b0
+
+define LIBRETRO_CORES_BUILD_NP2KAI
+	test -d $(@D)/np2kai/.git || \
+		git clone --filter=blob:none $(NP2KAI_SITE) $(@D)/np2kai
+	git -C $(@D)/np2kai checkout $(NP2KAI_VERSION)
+	$(TARGET_MAKE_ENV) $(MAKE) -C $(@D)/np2kai \
+		-f Makefile.libretro \
+		$(LIBRETRO_CROSS_OPTS) \
+		platform=unix
+endef
+
+################################################################################
 # Build / Install
 ################################################################################
 
@@ -232,6 +267,8 @@ define LIBRETRO_CORES_BUILD_CMDS
 	$(call LIBRETRO_CORES_BUILD_BLUEMSX)
 	$(call LIBRETRO_CORES_BUILD_DOSBOX_PURE)
 	$(call LIBRETRO_CORES_BUILD_SCUMMVM)
+	$(call LIBRETRO_CORES_BUILD_QUASI88)
+	$(call LIBRETRO_CORES_BUILD_NP2KAI)
 endef
 
 define LIBRETRO_CORES_INSTALL_TARGET_CMDS
@@ -293,6 +330,16 @@ define LIBRETRO_CORES_INSTALL_TARGET_CMDS
 		$(TARGET_DIR)/usr/share/retropangui/bundled-bios/scummvm/
 	$(INSTALL) -m 0644 $(@D)/scummvm/gui/themes/scummmodern.zip \
 		$(TARGET_DIR)/usr/share/retropangui/bundled-bios/scummvm/
+
+	mkdir -p $(CORES_INSTALL_DIR)/lr-quasi88
+	$(INSTALL) -m 0644 $(@D)/quasi88-libretro/quasi88_libretro.so \
+		$(CORES_INSTALL_DIR)/lr-quasi88/
+	echo "quasi88_libretro.so" > $(CORES_INSTALL_DIR)/lr-quasi88/.installed_so_name
+
+	mkdir -p $(CORES_INSTALL_DIR)/lr-np2kai
+	$(INSTALL) -m 0644 $(@D)/np2kai/np2kai_libretro.so \
+		$(CORES_INSTALL_DIR)/lr-np2kai/
+	echo "np2kai_libretro.so" > $(CORES_INSTALL_DIR)/lr-np2kai/.installed_so_name
 endef
 
 $(eval $(generic-package))

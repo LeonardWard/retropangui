@@ -110,5 +110,25 @@
     "cores": [
       { "name": "scummvm", "fullname": "ScummVM", "module_id": "lr-scummvm", "priority": 1 }
     ]
+  },
+  {
+    "name": "pc88",
+    "fullname": "NEC PC-8801",
+    "extensions": ".d88 .u88 .m3u .zip .7z",
+    "platform": "pc88",
+    "theme": "pc88",
+    "cores": [
+      { "name": "quasi88", "fullname": "QUASI88", "module_id": "lr-quasi88", "priority": 1 }
+    ]
+  },
+  {
+    "name": "pc98",
+    "fullname": "NEC PC-9801",
+    "extensions": ".d98 .d88 .88d .fdi .xdf .hdm .hdi .thd .nhd .hdd .m3u .zip .7z",
+    "platform": "pc98",
+    "theme": "pc98",
+    "cores": [
+      { "name": "np2kai", "fullname": "Neko Project II Kai", "module_id": "lr-np2kai", "priority": 1 }
+    ]
   }
 ]
