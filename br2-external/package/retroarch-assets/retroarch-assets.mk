@@ -13,11 +13,11 @@ RETROARCH_ASSETS_SITE_METHOD = git
 RETROARCH_ASSETS_LICENSE = CC-BY-4.0
 
 define RETROARCH_ASSETS_INSTALL_TARGET_CMDS
-	mkdir -p $(TARGET_DIR)/opt/retropangui/share/retroarch
+	mkdir -p $(TARGET_DIR)/usr/share/retroarch
 	# ozone: UI 텍스처·시스템 아이콘 (png/), 폰트 (fonts/)
-	cp -r $(@D)/ozone $(TARGET_DIR)/opt/retropangui/share/retroarch/
+	cp -r $(@D)/ozone $(TARGET_DIR)/usr/share/retroarch/
 	# xmb: XMB 메뉴 테마 리소스 (빌드 옵션 --enable-xmb 대응)
-	cp -r $(@D)/xmb $(TARGET_DIR)/opt/retropangui/share/retroarch/
+	cp -r $(@D)/xmb $(TARGET_DIR)/usr/share/retroarch/
 endef
 
 $(eval $(generic-package))

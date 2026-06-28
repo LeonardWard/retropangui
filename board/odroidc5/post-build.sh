@@ -109,9 +109,9 @@ if [ ! -s "${KSMBD_PWDB}" ]; then
     fi
 fi
 
-# 테마 다운로드 (GitHub → /opt/retropangui/themes/)
+# 테마 다운로드 (GitHub → /usr/share/retropangui/themes/)
 # S95retropangui 부팅 시 /retropangui/share/system/emulationstation/themes/ 로 복사됨
-THEMES_DST="${TARGET_DIR}/opt/retropangui/themes"
+THEMES_DST="${TARGET_DIR}/usr/share/retropangui/themes"
 SLATE_REPO="https://github.com/LeonardWard/retropangui-slate"
 SLATE_THEME_NAME="retropangui-slate"
 
@@ -141,12 +141,12 @@ python3 "${BOARD_DIR}/generate_es_systems.py" \
     --systems   "${BOARD_DIR}/systems.json" \
     --output    "${TARGET_DIR}/etc/emulationstation/es_systems.xml" \
     --roms-path "/retropangui/share/roms" \
-    --retroarch "/opt/retropangui/bin/retroarch" \
+    --retroarch "/usr/bin/retroarch" \
     --config    "/retropangui/share/system/retroarch/retroarch.cfg"
 
 # 스플래시 비디오 생성 (PNG → MP4, softvol ALSA 초기화용)
 SPLASH_SRC="${BOARD_DIR}/splash/splash-src.png"
-SPLASH_DST="${TARGET_DIR}/opt/retropangui/splash/splash.mp4"
+SPLASH_DST="${TARGET_DIR}/usr/share/retropangui/splash/splash.mp4"
 if [ -f "${SPLASH_SRC}" ] && command -v ffmpeg >/dev/null 2>&1; then
     echo ">>> 스플래시 비디오 생성 중..."
     mkdir -p "$(dirname "${SPLASH_DST}")"

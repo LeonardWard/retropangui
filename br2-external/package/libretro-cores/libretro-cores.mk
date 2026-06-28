@@ -27,7 +27,7 @@ LIBRETRO_CORES_LICENSE = GPL-2.0 (nestopia, snes9x, pcsx_rearmed, dosbox_pure, s
 # 자체 git clone으로 다운로드하므로 Buildroot 자동 소스 다운로드 비활성화
 LIBRETRO_CORES_SOURCE =
 
-CORES_INSTALL_DIR = $(TARGET_DIR)/opt/retropangui/libretrocores
+CORES_INSTALL_DIR = $(TARGET_DIR)/usr/lib/libretro
 
 # libretro 코어용 크로스컴파일 변수 (툴체인만, CFLAGS/CXXFLAGS/LD 제외)
 LIBRETRO_CROSS_OPTS = \

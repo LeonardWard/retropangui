@@ -1,11 +1,11 @@
 #!/bin/sh
 TAG="S95retropangui"
-CONF_DEFAULT="/opt/retropangui/share/retropangui.conf.default"
+CONF_DEFAULT="/usr/share/retropangui/retropangui.conf.default"
 CONF_USER="/retropangui/share/system/retropangui.conf"
-RA_CFG_DEFAULT="/opt/retropangui/retroarch.cfg"
+RA_CFG_DEFAULT="/etc/retroarch.cfg"
 RA_CFG_USER="/retropangui/share/system/retroarch/retroarch.cfg"
 ES_CFG_USER="/retropangui/share/system/emulationstation/es_settings.cfg"
-APPLY_SCRIPT="/opt/retropangui/share/apply_retropangui_conf.sh"
+APPLY_SCRIPT="/usr/share/retropangui/apply_retropangui_conf.sh"
 
 case "$1" in
     start)
@@ -98,7 +98,7 @@ case "$1" in
         fi
 
         # 첫 부팅: retroarch-core-options.cfg 없으면 기본값에서 복사
-        RA_CORE_OPTS_SRC="/opt/retropangui/retroarch-core-options.cfg"
+        RA_CORE_OPTS_SRC="/usr/share/retropangui/retroarch-core-options.cfg"
         RA_CORE_OPTS_DST="/retropangui/share/system/retroarch/retroarch-core-options.cfg"
         if [ ! -f "${RA_CORE_OPTS_DST}" ] && [ -f "${RA_CORE_OPTS_SRC}" ]; then
             logger -t "${TAG}" "첫 부팅: retroarch-core-options.cfg 복사"
@@ -106,7 +106,7 @@ case "$1" in
         fi
 
         # 첫 부팅: es_input.cfg 없으면 기본값에서 복사
-        ES_INPUT_SRC="/opt/retropangui/share/es_input.cfg"
+        ES_INPUT_SRC="/usr/share/retropangui/es_input.cfg"
         ES_INPUT_DST="/retropangui/share/system/emulationstation/es_input.cfg"
         if [ ! -f "${ES_INPUT_DST}" ] && [ -f "${ES_INPUT_SRC}" ]; then
             logger -t "${TAG}" "첫 부팅: es_input.cfg 복사"
@@ -114,7 +114,7 @@ case "$1" in
         fi
 
         # 첫 부팅: 테마 없으면 기본값에서 복사
-        THEMES_SRC="/opt/retropangui/themes"
+        THEMES_SRC="/usr/share/retropangui/themes"
         THEMES_DST="/retropangui/share/system/emulationstation/themes"
         if [ ! -d "${THEMES_DST}" ] && [ -d "${THEMES_SRC}" ]; then
             logger -t "${TAG}" "첫 부팅: 테마 복사"

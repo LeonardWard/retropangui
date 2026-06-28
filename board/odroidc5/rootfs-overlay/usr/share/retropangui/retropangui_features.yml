@@ -1,0 +1,221 @@
+# retropangui_features.yml
+# ES 시작 시 이 파일을 읽어 메뉴 항목을 자동 생성한다.
+# 값은 retropangui.conf 에 저장된다.
+# restart: none | es | system
+# parent: 항목이 삽입될 위치
+#   - game | controller | system : 해당 ES 카테고리 메뉴 안에 항목으로 직접 삽입
+#   - main                       : 메인 메뉴에 독립 서브메뉴로 추가 (확장용)
+
+menus:
+  - id: system_settings
+    label: "SYSTEM SETTINGS"
+    parent: system
+    items:
+      - id: rp.hostname
+        label: "HOSTNAME"
+        type: input
+        conf_key: system.hostname
+        restart: none
+
+      - id: rp.timezone
+        label: "TIMEZONE"
+        type: list
+        conf_key: system.timezone
+        restart: none
+        options:
+          - value: Asia/Seoul
+            label: "Seoul (KST)"
+          - value: America/New_York
+            label: "New York (EST)"
+          - value: Europe/Paris
+            label: "Paris (CET)"
+          - value: America/Los_Angeles
+            label: "Los Angeles (PST)"
+
+  - id: audio_settings
+    label: "AUDIO SETTINGS"
+    parent: sound
+    items:
+      - id: rp.bgm
+        label: "배경음악"
+        type: toggle
+        conf_key: emulationstation.BackgroundMusic
+        restart: none
+
+      - id: rp.volume
+        label: "SYSTEM VOLUME"
+        type: slider
+        conf_key: system.volume
+        min: 0
+        max: 100
+        step: 1
+        unit: "%"
+        restart: none
+
+      - id: rp.audio_card
+        label: "AUDIO CARD"
+        type: list
+        conf_key: global.audio_device
+        restart: none
+        options:
+          - value: default
+            label: "default"
+          - value: sysdefault
+            label: "sysdefault"
+          - value: dmix
+            label: "dmix"
+          - value: hw
+            label: "hw"
+          - value: plughw
+            label: "plughw"
+          - value: "null"
+            label: "null"
+
+      - id: rp.audio_device
+        label: "AUDIO DEVICE"
+        type: list
+        conf_key: emulationstation.AudioDevice
+        restart: none
+        options:
+          - value: PCM
+            label: "PCM"
+          - value: HDMI
+            label: "HDMI"
+          - value: Headphone
+            label: "Headphone"
+          - value: Speaker
+            label: "Speaker"
+          - value: Master
+            label: "Master"
+          - value: Digital
+            label: "Digital"
+          - value: Analogue
+            label: "Analogue"
+
+      - id: rp.enable_sounds
+        label: "ENABLE NAVIGATION SOUNDS"
+        type: toggle
+        conf_key: emulationstation.EnableSounds
+        restart: none
+
+      - id: rp.video_audio
+        label: "ENABLE VIDEO AUDIO"
+        type: toggle
+        conf_key: emulationstation.VideoAudio
+        restart: none
+
+      - id: rp.audio_latency
+        label: "RA AUDIO LATENCY"
+        type: slider
+        conf_key: global.audio_latency
+        min: 16
+        max: 256
+        step: 8
+        unit: "ms"
+        restart: none
+
+  - id: ui_settings
+    label: "UI SETTINGS"
+    parent: ui
+    items:
+      - id: rp.language
+        label: "LANGUAGE"
+        type: list
+        conf_key: system.language
+        restart: es
+        options:
+          - value: en_US
+            label: "English (US)"
+          - value: ko_KR
+            label: "한국어 (Korean)"
+          - value: ja_JP
+            label: "日本語 (Japanese)"
+          - value: zh_CN
+            label: "中文简体 (Chinese)"
+
+  - id: network_settings
+    label: "NETWORK SETTINGS"
+    parent: system
+    items:
+      - id: rp.ssh
+        label: "SSH"
+        type: toggle
+        conf_key: system.ssh
+        restart: none
+
+      - id: rp.samba
+        label: "SAMBA"
+        type: toggle
+        conf_key: system.samba
+        restart: none
+
+  - id: video_settings
+    label: "VIDEO SETTINGS"
+    parent: game
+    items:
+      - id: rp.video_smooth
+        label: "SMOOTH SCALING"
+        type: toggle
+        conf_key: global.video_smooth
+        restart: none
+
+      - id: rp.video_scale_integer
+        label: "INTEGER SCALING"
+        type: toggle
+        conf_key: global.video_scale_integer
+        restart: none
+
+  - id: game_settings
+    label: "GAME SETTINGS"
+    parent: game
+    items:
+      - id: rp.video_driver
+        label: "VIDEO DRIVER"
+        type: list
+        conf_key: global.video_driver
+        default: vulkan
+        restart: none
+        options:
+          - value: vulkan
+            label: "Vulkan (권장)"
+          - value: gl
+            label: "OpenGL ES (호환성 폴백)"
+
+      - id: rp.rewind
+        label: "REWIND"
+        type: toggle
+        conf_key: global.rewind_enable
+        restart: none
+
+      - id: rp.savestate_auto_save
+        label: "AUTO SAVE STATE"
+        type: toggle
+        conf_key: global.savestate_auto_save
+        restart: none
+
+      - id: rp.savestate_auto_load
+        label: "AUTO LOAD STATE"
+        type: toggle
+        conf_key: global.savestate_auto_load
+        restart: none
+
+  - id: advanced_settings
+    label: "ADVANCED SETTINGS"
+    parent: controller
+    items:
+      - id: rp.input_joypad_driver
+        label: "JOYPAD DRIVER"
+        type: list
+        conf_key: global.input_joypad_driver
+        restart: system
+        options:
+          - value: linuxraw
+            label: "linuxraw (기본)"
+          - value: udev
+            label: "udev"
+
+      - id: rp.menu_unified_controls
+        label: "UNIFIED CONTROLS"
+        type: toggle
+        conf_key: global.menu_unified_controls
+        restart: none

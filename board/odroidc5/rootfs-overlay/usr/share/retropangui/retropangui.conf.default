@@ -1,0 +1,171 @@
+# retropangui.conf - RetroPangui Unified Configuration
+# =====================================================
+# 이 파일은 /share/system/retropangui.conf 의 기본값 템플릿입니다.
+# 첫 부팅 시 /share/system/retropangui.conf 가 없으면 이 파일에서 복사됩니다.
+#
+# 적용 방식:
+#   global.*         → /opt/retropangui/retroarch.cfg 에 반영
+#   emulationstation.* → ~/.emulationstation/es_settings.cfg 에 반영
+#   system.*         → OS 설정 (hostname, timezone 등)
+#
+# 값 변경 후 재부팅하거나 apply_retropangui_conf.sh 를 실행하면 적용됩니다.
+# =====================================================
+
+
+## Section A - System Settings ##
+
+# 시스템 언어 (ko_KR, en_US, ja_JP, ...)
+system.language=ko_KR
+
+# 시스템 시간대
+# 예: Asia/Seoul, America/New_York, Europe/Paris
+system.timezone=Asia/Seoul
+
+# 호스트명
+system.hostname=retropangui
+
+# 자동 업데이트 여부 (0=비활성, 1=활성)
+# system.autoupdate=0
+
+
+## Section B - Network ##
+
+# SSH 원격 접속 활성화
+system.ssh=true
+
+# Samba 파일 공유 활성화
+system.samba=true
+
+# Wi-Fi (미구현, 향후 지원 예정)
+# system.wifi.enabled=false
+# system.wifi.ssid=
+# system.wifi.key=
+
+
+## Section C - Audio ##
+
+# 오디오 출력 디바이스 (ALSA 디바이스명)
+# 예: default, hw:0,0, hw:1,0
+global.audio_device=default
+
+# 오디오 활성화
+global.audio_enable=true
+
+# 오디오 레이턴시 (ms) - 낮을수록 반응 빠르나 끊김 위험
+global.audio_latency=32
+
+# 볼륨 (0-100)
+system.volume=80
+
+# ES 볼륨 컨트롤 ALSA mixer element
+# C5 (AML-AUGESOUND) 에는 "Master" simple element가 없으므로 명시 필요
+emulationstation.AudioDevice=Master
+
+
+## Section D - Controllers ##
+
+# [하드웨어 고정] input_driver=udev 는 KMS/DRM 환경 필수값.
+# S95retropangui가 부팅 시 강제 적용하므로 여기서 설정하지 않음.
+
+# 조이패드 드라이버: udev = evdev(/dev/input/eventX) 직접 접근 → EV_FF rumble 지원
+# linuxraw(/dev/input/jsX)는 FF 이벤트를 전송하지 않아 진동이 동작하지 않음
+# joypad_index는 eventX 번호 순 열거 기준 (물리 패드 event6 → idx 0, P1 event12 → idx 1)
+global.input_joypad_driver=udev
+
+# 조이패드로 RetroArch 메뉴(RGUI) 탐색 허용
+global.menu_unified_controls=true
+
+# 조이스틱 HIDAPI 비활성화 (PS2 USB 어댑터 아날로그 모드 유지용)
+# SDL_JOYSTICK_HIDAPI=0 는 /etc/profile.d/retropangui-sdl.sh 에서 별도 관리됨
+
+
+## Section E - EmulationStation ##
+
+# UI 테마 (Settings 맵 키 이름: ThemeSet)
+emulationstation.ThemeSet=retropangui-slate
+
+# 화면 전환 효과 (instant, fade, slide) — fade는 시스템 전환 시 블랙 플래시 발생
+emulationstation.TransitionStyle=instant
+
+# 버튼 방식 (xbox: A=확인/B=취소, nintendo: B=확인/A=취소, sony)
+emulationstation.ButtonLayout=xbox
+
+# 스크린세이버 딜레이 (초, 0=비활성)
+emulationstation.ScreenSaverTime=300
+
+# 스크린세이버 동작 (dim, black, slideshow, video)
+emulationstation.ScreenSaverBehavior=dim
+
+# 게임 목록 정렬 기준 (filename, name, rating, releasedate, ...)
+# emulationstation.SortSystems=name
+
+# 게임 목록 뷰 스타일 (automatic, basic, detailed, video, grid)
+emulationstation.GamelistViewStyle=detailed
+
+# gamelist.xml 저장 시점 (always: 메타데이터 변경 즉시, on exit: ES 종료 시, never)
+# 전원을 바로 끄는 기기 특성상 always 권장
+emulationstation.SaveGamelistsMode=always
+
+# 배경 음악 — /retropangui/share/music 의 mp3/ogg/flac/wav/m4a 셔플 재생
+emulationstation.BackgroundMusic=true
+
+# 즐겨찾기 컬렉션 표시 여부
+# emulationstation.FavoritesFirst=1
+
+
+## Section F - Global RetroArch Settings ##
+
+# 비디오 드라이버 (vulkan, gl, ...) — C5(Mali-G310)는 Vulkan 지원 (VK_KHR_display)
+global.video_driver=vulkan
+
+# 화면 비율 자동 조정
+global.video_aspect_ratio_auto=true
+
+# 정수 스케일링 (픽셀 퍼펙트, false=비율 유지 꽉찬 화면)
+global.video_scale_integer=false
+
+# 비디오 스무딩 (안티앨리어싱, false=픽셀 선명)
+global.video_smooth=false
+
+# 수직 동기화
+global.video_vsync=true
+
+# 되감기 기능 (성능 영향 큼)
+global.rewind_enable=false
+
+# 자동 저장/불러오기 (게임 종료/시작 시 자동 세이브스테이트)
+global.savestate_auto_save=false
+global.savestate_auto_load=false
+
+# RetroAchievements (업적 시스템)
+# global.cheevos_enable=false
+# global.cheevos_username=
+# global.cheevos_password=
+
+# 셰이더 (성능 영향. 경로 지정 시 활성화)
+# global.video_shader=
+# global.video_shader_enable=false
+
+# 메뉴 드라이버 (ozone=현대적, rgui=가벼움/구형)
+global.menu_driver=ozone
+
+# Ozone/XMB 폰트·텍스처 경로 (한국어 폰트 포함)
+global.assets_directory=/opt/retropangui/share/retroarch
+
+
+## Section G - Per-System Core Selection ##
+
+# 각 시스템의 기본 libretro 코어 디렉토리명 지정
+# 값은 /opt/retropangui/libretrocores/ 하위 디렉토리명과 일치해야 함
+# (해당 디렉토리 내 .installed_so_name 파일에서 실제 .so 파일명을 읽음)
+
+system.nes.core=lr-nestopia
+system.snes.core=lr-snes9x
+system.psx.core=lr-pcsx-rearmed
+system.pc.core=lr-dosbox-pure
+system.scummvm.core=lr-scummvm
+
+
+## Section H - Kodi (미지원, 향후 확장용) ##
+
+# kodi.enabled=0

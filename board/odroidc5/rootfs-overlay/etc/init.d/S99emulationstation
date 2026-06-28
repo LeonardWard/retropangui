@@ -33,7 +33,7 @@ case "$1" in
                 odroid-drm-fbset -outputmode preferred
                 # 스플래시 비디오 재생 — ALSA softvol "Master" 컨트롤 초기화 목적
                 # mpv가 오디오 디바이스를 열면 softvol 컨트롤이 등록되어 ES VolumeControl이 정상 작동함
-                SPLASH="/opt/retropangui/splash/splash.mp4"
+                SPLASH="/usr/share/retropangui/splash/splash.mp4"
                 if [ -f "${SPLASH}" ]; then
                     mpv --vo=drm --drm-device=/dev/dri/card0 \
                         --ao=alsa --audio-device=alsa/default \
