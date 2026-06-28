@@ -4,6 +4,8 @@ Odroid C5 (Amlogic S905X5M)용 레트로 게이밍 OS.
 
 Buildroot 기반, EmulationStation + RetroArch + Kodi.
 
+![screenshot](screenshot.png)
+
 > 상세 문서는 [Wiki](../../wiki)를 참고하세요.
 
 ---
