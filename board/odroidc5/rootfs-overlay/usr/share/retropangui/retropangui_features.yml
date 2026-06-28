@@ -40,6 +40,7 @@ menus:
         label: "배경음악"
         type: toggle
         conf_key: emulationstation.BackgroundMusic
+        default: "true"
         restart: none
 
       - id: rp.volume
