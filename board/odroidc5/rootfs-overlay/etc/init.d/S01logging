@@ -1,0 +1,24 @@
+#!/bin/sh
+
+case "$1" in
+    start)
+        modprobe snd_seq 2>/dev/null || true
+        syslogd -O /var/log/messages
+        klogd
+        ;;
+    stop)
+        kill "$(cat /var/run/syslogd.pid)" 2>/dev/null || true
+        kill "$(cat /var/run/klogd.pid)" 2>/dev/null || true
+        ;;
+    restart|reload)
+        "$0" stop
+        sleep 1
+        "$0" start
+        ;;
+    *)
+        echo "Usage: $0 {start|stop|restart}"
+        exit 1
+        ;;
+esac
+
+exit 0
