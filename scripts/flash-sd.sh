@@ -172,7 +172,7 @@ if [ "${PRESERVE_SHARE}" = "true" ]; then
     sync
 else
     echo -e "${YLW}[1/2] 카드 전체 초기화 중...${NC}"
-    sudo dd if=/dev/zero of="${DEVICE}" bs=4M status=progress 2>/dev/null || true
+    sudo dd if=/dev/zero of="${DEVICE}" bs=4M status=progress || true
     sync
 
     echo ""
