@@ -163,6 +163,23 @@ static void build_device(Device *d, const char *base, const char *part)
 static void scan_devices(void)
 {
     g_ndev = 0;
+
+    /* INTERNAL: 부트 디바이스의 p3(share) 파티션을 첫 번째 항목으로 추가 */
+    if (g_boot_dev[0]) {
+        char partname[64];
+        snprintf(partname, sizeof(partname), "%sp3", g_boot_dev);
+        char pcheck[192];
+        snprintf(pcheck, sizeof(pcheck), "/sys/block/%s/%s/partition",
+                 g_boot_dev, partname);
+        if (access(pcheck, F_OK) == 0) {
+            build_device(&g_dev[0], g_boot_dev, partname);
+            strncpy(g_dev[0].id, "INTERNAL", sizeof(g_dev[0].id)-1);
+            fprintf(stderr, "[storage-mgr] internal: %s %dGB\n",
+                    g_dev[0].dev, g_dev[0].size_gb);
+            g_ndev = 1;
+        }
+    }
+
     DIR *bd = opendir("/sys/block");
     if (!bd) return;
 
