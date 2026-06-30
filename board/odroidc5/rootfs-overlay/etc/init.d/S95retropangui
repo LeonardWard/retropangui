@@ -6,6 +6,10 @@ RA_CFG_DEFAULT="/etc/retroarch.cfg"
 RA_CFG_USER="/retropangui/share/system/retroarch/retroarch.cfg"
 ES_CFG_USER="/retropangui/share/system/emulationstation/es_settings.cfg"
 APPLY_SCRIPT="/usr/share/retropangui/apply_retropangui_conf.sh"
+RA_LIBRETRO_DIR="/usr/lib/libretro"
+RA_LIBRETRO_INFO="/usr/share/libretro/info"
+RA_ASSETS_DIR="/usr/share/retroarch"
+RA_BIOS_DIR="/retropangui/share/bios"
 
 case "$1" in
     start)
@@ -135,7 +139,7 @@ case "$1" in
                 CFG="${ROMS_ROOT}/${sys}/.retroarch.cfg"
                 if [ ! -f "${CFG}" ]; then
                     mkdir -p "${ROMS_ROOT}/${sys}"
-                    printf 'screenshot_directory = %s/%s\n' "${SCREENSHOTS_ROOT}" "${sys}" > "${CFG}"
+                    printf 'screenshot_directory = "%s/%s"\n' "${SCREENSHOTS_ROOT}" "${sys}" > "${CFG}"
                     logger -t "${TAG}" "screenshot cfg 생성: ${sys}"
                 fi
             done

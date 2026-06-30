@@ -7,8 +7,8 @@ Usage:
         --systems  board/odroidc5/systems.json \
         --output   TARGET_DIR/etc/emulationstation/es_systems.xml \
         --roms-path    /share/roms \
-        --retroarch    /opt/retropangui/bin/retroarch \
-        --config       /opt/retropangui/retroarch.cfg
+        --retroarch    /usr/bin/retroarch \
+        --config       /etc/retroarch.cfg
 """
 
 import argparse
@@ -59,7 +59,7 @@ def main():
     parser.add_argument('--systems',      required=True)
     parser.add_argument('--output',       required=True)
     parser.add_argument('--roms-path',    default='/share/roms')
-    parser.add_argument('--retroarch',    default='/opt/retropangui/bin/retroarch')
+    parser.add_argument('--retroarch',    default='/usr/bin/retroarch')
     parser.add_argument('--config',       default='/share/system/retroarch/retroarch.cfg')
     args = parser.parse_args()
 

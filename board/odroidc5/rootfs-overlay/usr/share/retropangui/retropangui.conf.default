@@ -4,7 +4,7 @@
 # 첫 부팅 시 /share/system/retropangui.conf 가 없으면 이 파일에서 복사됩니다.
 #
 # 적용 방식:
-#   global.*         → /opt/retropangui/retroarch.cfg 에 반영
+#   global.*         → /retropangui/share/system/retroarch/retroarch.cfg 에 반영
 #   emulationstation.* → ~/.emulationstation/es_settings.cfg 에 반영
 #   system.*         → OS 설정 (hostname, timezone 등)
 #
@@ -150,13 +150,13 @@ global.savestate_auto_load=false
 global.menu_driver=ozone
 
 # Ozone/XMB 폰트·텍스처 경로 (한국어 폰트 포함)
-global.assets_directory=/opt/retropangui/share/retroarch
+global.assets_directory=/usr/share/retroarch
 
 
 ## Section G - Per-System Core Selection ##
 
 # 각 시스템의 기본 libretro 코어 디렉토리명 지정
-# 값은 /opt/retropangui/libretrocores/ 하위 디렉토리명과 일치해야 함
+# 값은 /usr/lib/libretro/ 하위 디렉토리명과 일치해야 함
 # (해당 디렉토리 내 .installed_so_name 파일에서 실제 .so 파일명을 읽음)
 
 system.nes.core=lr-nestopia
