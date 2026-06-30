@@ -7,12 +7,12 @@
 #   bash scripts/flash-sd.sh foo.img    # 이미지 지정, share 초기화
 #   bash scripts/flash-sd.sh -k foo.img # 이미지 지정 + share 보존
 #
-# 기본 동작 (share 초기화):
-#   이미지를 쓴 뒤 p3 시작 지점의 앞 16MB를 0으로 채워 exFAT 헤더를 제거한다.
+# 기본 동작 (전체 초기화):
+#   카드 전체를 0으로 비운 뒤 이미지를 쓴다.
 #   첫 부팅 시 S61share가 마운트 실패 → mkfs.exfat으로 새 share 파티션 생성.
 #
 # -k:
-#   이미지만 쓰고 p3 영역을 건드리지 않는다. 기존 ROM/세이브 데이터가 보존된다.
+#   이미지만 쓰고 나머지를 건드리지 않는다. 기존 ROM/세이브 데이터가 보존된다.
 
 set -e
 
@@ -167,21 +167,17 @@ echo ""
 
 # ── 이미지 플래싱 ─────────────────────────────────────────
 if [ "${PRESERVE_SHARE}" = "true" ]; then
-    echo -e "${YLW}[1/1] 이미지 플래싱 중 (share 영역 건드리지 않음)...${NC}"
+    echo -e "${YLW}[1/1] 이미지 플래싱 중 (기존 데이터 보존)...${NC}"
     sudo dd if="${IMAGE}" of="${DEVICE}" bs=4M status=progress conv=fsync
     sync
 else
-    echo -e "${YLW}[1/2] 이미지 플래싱 중...${NC}"
-    sudo dd if="${IMAGE}" of="${DEVICE}" bs=4M status=progress conv=fsync
+    echo -e "${YLW}[1/2] 카드 전체 초기화 중...${NC}"
+    sudo dd if=/dev/zero of="${DEVICE}" bs=4M status=progress 2>/dev/null || true
     sync
 
-    # 이미지 이후 영역(p3 시작 지점)의 앞 16MB를 0으로 채워 기존 exFAT 헤더 제거
-    # → 첫 부팅 시 S61share가 마운트 실패 → mkfs.exfat으로 새로 포맷
     echo ""
-    echo -e "${YLW}[2/2] share 영역 초기화 (기존 exFAT 헤더 제거)...${NC}"
-    IMAGE_BYTES="$(stat -c%s "${IMAGE}")"
-    SEEK_MB="$(( IMAGE_BYTES / 1024 / 1024 ))"
-    sudo dd if=/dev/zero of="${DEVICE}" bs=1M count=16 seek="${SEEK_MB}" status=none 2>/dev/null || true
+    echo -e "${YLW}[2/2] 이미지 플래싱 중...${NC}"
+    sudo dd if="${IMAGE}" of="${DEVICE}" bs=4M status=progress conv=fsync
     sync
 fi
 
