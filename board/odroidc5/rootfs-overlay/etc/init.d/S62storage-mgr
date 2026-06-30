@@ -1,0 +1,36 @@
+#!/bin/sh
+# S62storage-mgr - 저장장치 관리 데몬
+#
+# S61share 이후 실행. 외부 저장장치 핫플러그 감지 및 ES와의 IPC 담당.
+# /tmp/retropangui-storage-devices.json 을 유지하고,
+# /tmp/retropangui-storage-event 로 ES에 이벤트를 전달한다.
+
+TAG="S62storage-mgr"
+DAEMON="/usr/bin/storage-mgr"
+PIDFILE="/run/storage-mgr.pid"
+
+case "$1" in
+    start)
+        [ -x "${DAEMON}" ] || { logger -t "${TAG}" "storage-mgr 없음, 건너뜀"; exit 0; }
+        logger -t "${TAG}" "시작"
+        start-stop-daemon --start --quiet --background \
+            --make-pidfile --pidfile "${PIDFILE}" \
+            --exec "${DAEMON}" -- 2>&1 | logger -t "${TAG}"
+        ;;
+    stop)
+        logger -t "${TAG}" "종료"
+        start-stop-daemon --stop --quiet --pidfile "${PIDFILE}" --signal TERM
+        rm -f "${PIDFILE}"
+        ;;
+    restart|reload)
+        "$0" stop
+        sleep 1
+        "$0" start
+        ;;
+    *)
+        echo "Usage: $0 {start|stop|restart}"
+        exit 1
+        ;;
+esac
+
+exit 0

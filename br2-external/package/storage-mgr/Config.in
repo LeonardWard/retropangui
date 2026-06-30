@@ -1,0 +1,6 @@
+config BR2_PACKAGE_STORAGE_MGR
+	bool "storage-mgr"
+	help
+	  RetroPangUI 저장장치 관리 데몬.
+	  외부 저장장치(USB/SD) 핫플러그 감지, ES와 파일 기반 IPC,
+	  share 파티션 선택 및 boot.conf 업데이트를 담당한다.
