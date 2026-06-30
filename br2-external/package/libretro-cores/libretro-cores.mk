@@ -246,7 +246,7 @@ define LIBRETRO_CORES_BUILD_NP2KAI
 	test -d $(@D)/np2kai/.git || \
 		git clone --filter=blob:none $(NP2KAI_SITE) $(@D)/np2kai
 	git -C $(@D)/np2kai checkout $(NP2KAI_VERSION)
-	$(TARGET_MAKE_ENV) $(MAKE) -C $(@D)/np2kai \
+	$(TARGET_MAKE_ENV) $(MAKE) -C $(@D)/np2kai/sdl \
 		-f Makefile.libretro \
 		$(LIBRETRO_CROSS_OPTS) \
 		platform=unix
@@ -337,7 +337,7 @@ define LIBRETRO_CORES_INSTALL_TARGET_CMDS
 	echo "quasi88_libretro.so" > $(CORES_INSTALL_DIR)/lr-quasi88/.installed_so_name
 
 	mkdir -p $(CORES_INSTALL_DIR)/lr-np2kai
-	$(INSTALL) -m 0644 $(@D)/np2kai/np2kai_libretro.so \
+	$(INSTALL) -m 0644 $(@D)/np2kai/sdl/np2kai_libretro.so \
 		$(CORES_INSTALL_DIR)/lr-np2kai/
 	echo "np2kai_libretro.so" > $(CORES_INSTALL_DIR)/lr-np2kai/.installed_so_name
 endef
