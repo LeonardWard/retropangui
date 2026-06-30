@@ -171,8 +171,9 @@ if [ "${PRESERVE_SHARE}" = "true" ]; then
     sudo dd if="${IMAGE}" of="${DEVICE}" bs=4M status=progress conv=fsync
     sync
 else
-    echo -e "${YLW}[1/2] 카드 전체 초기화 중...${NC}"
-    sudo dd if=/dev/zero of="${DEVICE}" bs=4M status=progress || true
+    echo -e "${YLW}[1/2] 파티션 테이블 초기화 중...${NC}"
+    sudo wipefs -a "${DEVICE}"
+    sudo dd if=/dev/zero of="${DEVICE}" bs=4M count=8 status=progress
     sync
 
     echo ""
