@@ -2,14 +2,34 @@
 # flash-sd.sh - RetroPangui SD카드 플래싱 스크립트
 #
 # 사용법:
-#   bash scripts/flash-sd.sh                  # 최신 이미지 자동 선택
-#   bash scripts/flash-sd.sh output/foo.img   # 이미지 직접 지정
+#   bash scripts/flash-sd.sh            # 최신 이미지, share 초기화 (기본)
+#   bash scripts/flash-sd.sh -k         # 최신 이미지, 기존 share 보존
+#   bash scripts/flash-sd.sh foo.img    # 이미지 지정, share 초기화
+#   bash scripts/flash-sd.sh -k foo.img # 이미지 지정 + share 보존
+#
+# 기본 동작 (share 초기화):
+#   이미지를 쓴 뒤 p3 시작 지점의 앞 16MB를 0으로 채워 exFAT 헤더를 제거한다.
+#   첫 부팅 시 S61share가 마운트 실패 → mkfs.exfat으로 새 share 파티션 생성.
+#
+# -k:
+#   이미지만 쓰고 p3 영역을 건드리지 않는다. 기존 ROM/세이브 데이터가 보존된다.
 
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
 OUTPUT_DIR="${PROJECT_DIR}/output"
+
+# ── 옵션 파싱 ─────────────────────────────────────────────
+PRESERVE_SHARE=false
+POSITIONAL=""
+for arg in "$@"; do
+    case "$arg" in
+        -k) PRESERVE_SHARE=true ;;
+        *) POSITIONAL="$arg" ;;
+    esac
+done
+set -- ${POSITIONAL}
 
 RED='\033[0;31m'
 GRN='\033[0;32m'
@@ -20,6 +40,11 @@ NC='\033[0m'
 echo ""
 echo -e "${BLU}================================================${NC}"
 echo -e "${BLU}  RetroPangui SD카드 플래싱 도구${NC}"
+if [ "${PRESERVE_SHARE}" = "true" ]; then
+echo -e "${BLU}  모드: share 파티션 보존${NC}"
+else
+echo -e "${BLU}  모드: 전체 초기화 (share 새로 생성)${NC}"
+fi
 echo -e "${BLU}================================================${NC}"
 echo ""
 
@@ -125,7 +150,11 @@ if [ -n "${MOUNTED}" ]; then
 fi
 
 # ── 최종 확인 ─────────────────────────────────────────────
-echo -e "${RED}경고: ${DEVICE} 의 모든 데이터가 삭제됩니다!${NC}"
+if [ "${PRESERVE_SHARE}" = "true" ]; then
+    echo -e "${RED}경고: ${DEVICE} 의 boot/overlay 파티션이 덮어써집니다. share는 보존됩니다.${NC}"
+else
+    echo -e "${RED}경고: ${DEVICE} 의 모든 데이터가 삭제됩니다! (share 포함)${NC}"
+fi
 echo ""
 echo -n "  계속하려면 'yes' 또는 'y' 입력: "
 read -r CONFIRM
@@ -136,16 +165,25 @@ fi
 
 echo ""
 
-# ── 앞부분 초기화 (파티션 테이블 + 부트로더 영역) ────────
-echo -e "${YLW}[1/2] SD카드 초기화 (앞 32MB)...${NC}"
-sudo dd if=/dev/zero of="${DEVICE}" bs=1M count=32 status=progress
-sync
-
 # ── 이미지 플래싱 ─────────────────────────────────────────
-echo ""
-echo -e "${YLW}[2/2] 이미지 플래싱 중...${NC}"
-sudo dd if="${IMAGE}" of="${DEVICE}" bs=4M status=progress conv=fsync
-sync
+if [ "${PRESERVE_SHARE}" = "true" ]; then
+    echo -e "${YLW}[1/1] 이미지 플래싱 중 (share 영역 건드리지 않음)...${NC}"
+    sudo dd if="${IMAGE}" of="${DEVICE}" bs=4M status=progress conv=fsync
+    sync
+else
+    echo -e "${YLW}[1/2] 이미지 플래싱 중...${NC}"
+    sudo dd if="${IMAGE}" of="${DEVICE}" bs=4M status=progress conv=fsync
+    sync
+
+    # 이미지 이후 영역(p3 시작 지점)의 앞 16MB를 0으로 채워 기존 exFAT 헤더 제거
+    # → 첫 부팅 시 S61share가 마운트 실패 → mkfs.exfat으로 새로 포맷
+    echo ""
+    echo -e "${YLW}[2/2] share 영역 초기화 (기존 exFAT 헤더 제거)...${NC}"
+    IMAGE_BYTES="$(stat -c%s "${IMAGE}")"
+    SEEK_MB="$(( IMAGE_BYTES / 1024 / 1024 ))"
+    sudo dd if=/dev/zero of="${DEVICE}" bs=1M count=16 seek="${SEEK_MB}" status=none 2>/dev/null || true
+    sync
+fi
 
 echo ""
 echo -e "${GRN}================================================${NC}"
