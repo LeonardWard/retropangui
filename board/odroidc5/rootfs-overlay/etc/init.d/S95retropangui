@@ -87,10 +87,11 @@ case "$1" in
             done < "${CONF_DEFAULT}"
         fi
 
-        # 첫 부팅: retroarch.cfg 없으면 기본값에서 복사
+        # 첫 부팅: retroarch.cfg 없으면 빈 파일 생성
+        # 기본값은 appendconfig(/etc/retroarch.cfg)에서 제공. 사용자 변경분만 여기에 기록.
         if [ ! -f "${RA_CFG_USER}" ]; then
-            logger -t "${TAG}" "첫 부팅: retroarch.cfg 복사 중..."
-            cp "${RA_CFG_DEFAULT}" "${RA_CFG_USER}"
+            logger -t "${TAG}" "첫 부팅: retroarch.cfg 빈 파일 생성"
+            touch "${RA_CFG_USER}"
         fi
 
         # 첫 부팅: es_settings.cfg 없으면 최소 XML 골격 생성
