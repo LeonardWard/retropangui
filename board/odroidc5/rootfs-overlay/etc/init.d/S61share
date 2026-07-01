@@ -169,13 +169,7 @@ init_share_dirs() {
 
     local sentinel="${SHARE_MOUNT}/.bundled_initialized"
     if [ ! -f "${sentinel}" ]; then
-        local bundled="/usr/share/retropangui/bundled-roms"
-        if [ -d "${bundled}" ]; then
-            for sys in nes snes psx; do
-                [ -d "${bundled}/${sys}" ] && \
-                    cp -n "${bundled}/${sys}"/* "${SHARE_MOUNT}/roms/${sys}/" 2>/dev/null || true
-            done
-        fi
+        command -v rpui-bundlegame >/dev/null 2>&1 && rpui-bundlegame init
         local bgmusic="/usr/share/retropangui/bundled-bgmusic"
         [ -d "${bgmusic}" ] && \
             cp -n "${bgmusic}"/* "${SHARE_MOUNT}/music/" 2>/dev/null || true

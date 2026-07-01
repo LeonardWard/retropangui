@@ -1,0 +1,6 @@
+config BR2_PACKAGE_RPUI_BUNDLEGAME
+	bool "rpui-bundlegame"
+	help
+	  Bundle ROM management command.
+	  Manages symlinks from bundled-roms image path to share/roms/,
+	  and controls visibility via gamelist.xml hidden flag.

@@ -166,6 +166,22 @@ menus:
         conf_key: global.video_scale_integer
         restart: none
 
+  - id: bundlegame_settings
+    label: "BUNDLED GAMES"
+    parent: game
+    items:
+      - id: rp.bundlegame_show
+        label: "번들 게임 표시"
+        type: command
+        exec: "rpui-bundlegame show"
+        restart: none
+
+      - id: rp.bundlegame_hide
+        label: "번들 게임 감추기"
+        type: command
+        exec: "rpui-bundlegame hide"
+        restart: none
+
   - id: game_settings
     label: "GAME SETTINGS"
     parent: game

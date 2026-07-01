@@ -25,6 +25,9 @@ NES2048_URL  = https://raw.githubusercontent.com/mmuszkow/2048-nes/master/2048.n
 # PSX: 240p Test Suite (filipalac, GPL-2.0) - EMU 버전 (.bin/.cue)
 PS240P_URL   = https://github.com/filipalac/240pTestSuite-PS1/releases/download/19122020/240pTestSuitePS1-EMU.zip
 
+# NES 번들 목록 (retrobrews + 개별 다운로드에서 선별)
+BUNDLED_NES_ROMS = 2048.nes croom.nes driar.nes fff.nes indivisibleonnes.nes lala.nes owlia.nes thewit.nes
+
 # SNES 번들 목록 (retrobrews에서 선별)
 BUNDLED_SNES_ROMS = jetpilotrising.sfc questformoney.sfc saf.smc superbossgaiden.sfc
 
@@ -66,7 +69,9 @@ endef
 
 define BUNDLED_ROMS_INSTALL_TARGET_CMDS
 	mkdir -p $(BUNDLED_ROMS_TARGET_DIR)/nes $(BUNDLED_ROMS_TARGET_DIR)/snes $(BUNDLED_ROMS_TARGET_DIR)/psx
-	cp $(@D)/nes/*.nes   $(BUNDLED_ROMS_TARGET_DIR)/nes/
+	for rom in $(BUNDLED_NES_ROMS); do \
+		cp $(@D)/nes/$$rom $(BUNDLED_ROMS_TARGET_DIR)/nes/ 2>/dev/null || true; \
+	done
 	for rom in $(BUNDLED_SNES_ROMS); do \
 		cp $(@D)/snes/$$rom $(BUNDLED_ROMS_TARGET_DIR)/snes/ 2>/dev/null || true; \
 	done
