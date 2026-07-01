@@ -160,20 +160,9 @@ case "$1" in
             fi
         fi
 
-        # gamepad-daemon이 vdev를 생성할 때까지 대기 (최대 10초)
-        i=0
-        while [ $i -lt 20 ]; do
-            grep -q "RetroPangUI P1" /proc/bus/input/devices && break
-            sleep 0.5; i=$((i+1))
-        done
-        if ! grep -q "RetroPangUI P1" /proc/bus/input/devices; then
-            logger -t "${TAG}" "WARNING: RetroPangUI P1 vdev 없음 (timeout)"
-        fi
-
         # [하드웨어 고정] input_driver=udev, input_joypad_driver=udev 강제 적용.
         # - input_driver: KMS/DRM 환경에서 VT 없어 linuxraw 키보드 KDSKBMODE ioctl 실패
-        # - input_joypad_driver: linuxraw(/dev/input/jsX)는 EV_FF를 보내지 않아 rumble 불가.
-        #   udev는 /dev/input/eventX 직접 접근 → gamepad-mgr FF 패스스루 동작.
+        # - input_joypad_driver: udev는 /dev/input/eventX 직접 접근, EV_FF(진동) 지원.
         # apply_retropangui_conf.sh 이후에 실행해 conf 값을 덮어씀.
         if [ -f "${RA_CFG_USER}" ]; then
             sed -i 's/^input_driver = .*/input_driver = "udev"/' "${RA_CFG_USER}"
@@ -184,32 +173,6 @@ case "$1" in
                 echo 'input_joypad_driver = "udev"' >> "${RA_CFG_USER}"
         fi
 
-        # RA udev 드라이버는 udev syspath 알파벳 순으로 joystick을 열거한다.
-        # USB 물리 장치(/devices/platform/...)는 가상 장치(/devices/virtual/...)보다
-        # 알파벳 순으로 앞에 오므로 더 낮은 index를 차지한다.
-        # syspath 정렬로 RA enumerate 순서를 재현해 정확한 index를 설정한다.
-        if [ -f "${RA_CFG_USER}" ]; then
-            sed -i '/^input_player[0-9]*_joypad_index /d' "${RA_CFG_USER}"
-            pad_idx=0
-            for ev_path in $(
-                for ev in /dev/input/event*; do
-                    is_joy=$(udevadm info -q property "$ev" 2>/dev/null | grep 'ID_INPUT_JOYSTICK=1')
-                    [ -z "$is_joy" ] && continue
-                    syspath=$(udevadm info -q path "$ev" 2>/dev/null)
-                    printf '%s %s\n' "$syspath" "$ev"
-                done | sort | awk '{print $2}'
-            ); do
-                ev=$(basename "$ev_path")
-                name=$(cat "/sys/class/input/${ev}/device/name" 2>/dev/null)
-                for p in 1 2 3 4; do
-                    if [ "$name" = "RetroPangUI P${p}" ]; then
-                        echo "input_player${p}_joypad_index = \"${pad_idx}\"" >> "${RA_CFG_USER}"
-                        logger -t "${TAG}" "RetroPangUI P${p} → joypad index ${pad_idx} (udev order)"
-                    fi
-                done
-                pad_idx=$((pad_idx + 1))
-            done
-        fi
         ;;
     stop)
         ;;
