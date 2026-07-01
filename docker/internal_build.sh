@@ -51,6 +51,16 @@ if [ "$BUILD_OTA" = "1" ] && [ "$BUILD_IMG" = "0" ]; then
     JOBS="${BUILD_JOBS:-$(nproc)}"
     make BR2_EXTERNAL="${BR2_EXTERNAL_PATH}" -j${JOBS} emulationstation 2>&1 | tee /home/builder/output/build-ota.log
 
+    echo "[OTA 빌드] gamepad-mgr 잔여 파일 정리 중..."
+    rm -f  output/target/etc/init.d/S58gamepad
+    rm -f  output/target/usr/bin/gamepad-daemon
+    rm -rf output/target/etc/gamepad/
+    rm -f  "output/target/etc/retroarch/autoconfig/RetroPangUI P1.cfg"
+    rm -f  "output/target/etc/retroarch/autoconfig/RetroPangUI P2.cfg"
+    rm -f  "output/target/etc/retroarch/autoconfig/RetroPangUI P3.cfg"
+    rm -f  "output/target/etc/retroarch/autoconfig/RetroPangUI P4.cfg"
+    rm -f  output/target/etc/modprobe.d/xpad.conf
+
     echo "[OTA 빌드] rootfs-overlay 적용 중..."
     rsync -a board/${DEVICE}/rootfs-overlay/ output/target/
 
@@ -96,8 +106,6 @@ if [ "$PARTIAL" = "1" ]; then
     mkdir -p board/${DEVICE}/rootfs-overlay/etc
     echo "${VERSION}" > board/${DEVICE}/rootfs-overlay/etc/retropangui-version
 
-    echo "[부분 빌드] gamepad-mgr 재빌드 중..."
-    rm -rf output/build/gamepad-mgr-*/
     JOBS="${BUILD_JOBS:-$(nproc)}"
     make BR2_EXTERNAL="${BR2_EXTERNAL_PATH}" -j${JOBS} 2>&1 | tee /home/builder/output/build-partial.log
 
@@ -249,8 +257,15 @@ rm -f output/build/mali-ddk-r44p0/.stamp_built \
       output/build/mali-ddk-r44p0/.stamp_staging_installed \
       output/build/mali-ddk-r44p0/.stamp_target_installed
 
-# gamepad-mgr도 로컬 소스이므로 매번 강제 재빌드 (빌드 디렉토리 통째로 삭제)
-echo "  - gamepad-mgr 강제 재빌드 (로컬 소스 변경 반영)..."
+# gamepad-mgr 제거에 따른 잔여 파일 정리 (이전 빌드 캐시에 남아 있을 수 있음)
+rm -f  output/target/etc/init.d/S58gamepad
+rm -f  output/target/usr/bin/gamepad-daemon
+rm -rf output/target/etc/gamepad/
+rm -f  "output/target/etc/retroarch/autoconfig/RetroPangUI P1.cfg"
+rm -f  "output/target/etc/retroarch/autoconfig/RetroPangUI P2.cfg"
+rm -f  "output/target/etc/retroarch/autoconfig/RetroPangUI P3.cfg"
+rm -f  "output/target/etc/retroarch/autoconfig/RetroPangUI P4.cfg"
+rm -f  output/target/etc/modprobe.d/xpad.conf
 rm -rf output/build/gamepad-mgr-*/
 
 # retropangui-initramfs: init 스크립트·busybox.config 변경이 stamp로 감지 안 되므로 매번 재빌드
