@@ -14,7 +14,6 @@ case "$1" in
         nohup sh -c '
             export MESA_LOADER_DRIVER_OVERRIDE=meson
             export SDL_JOYSTICK_HIDAPI=0
-            export SDL_GAMECONTROLLERCONFIG_FILE=/etc/gamepad/gamecontrollerdb.txt
             export HOME=/root
             export RETROPANGUI_SHARE=/retropangui/share
             export LIBRETRO_CORES_PATH=/usr/lib/libretro
