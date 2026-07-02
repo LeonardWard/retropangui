@@ -1,0 +1,4 @@
+. /etc/retropangui.env
+export SDL_JOYSTICK_HIDAPI MESA_LOADER_DRIVER_OVERRIDE RETROPANGUI_SHARE LIBRETRO_CORES_PATH
+. /etc/locale.conf
+export LANG LC_ALL="$LANG"

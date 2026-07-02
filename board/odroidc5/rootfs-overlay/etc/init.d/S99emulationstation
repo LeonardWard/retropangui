@@ -12,11 +12,11 @@ case "$1" in
             i=$((i + 1))
         done
         nohup sh -c '
-            export MESA_LOADER_DRIVER_OVERRIDE=meson
-            export SDL_JOYSTICK_HIDAPI=0
+            . /etc/retropangui.env
+            export SDL_JOYSTICK_HIDAPI MESA_LOADER_DRIVER_OVERRIDE RETROPANGUI_SHARE LIBRETRO_CORES_PATH
+            . /etc/locale.conf
+            export LANG LC_ALL="$LANG"
             export HOME=/root
-            export RETROPANGUI_SHARE=/retropangui/share
-            export LIBRETRO_CORES_PATH=/usr/lib/libretro
             # shutdown 신호 시 루프 종료 — stop 섹션이 SIGTERM을 보내면 클린 exit
             trap "exit 0" TERM INT
             while true; do
