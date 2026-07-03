@@ -149,6 +149,46 @@ if [ -n "${MOUNTED}" ]; then
     sudo umount "${DEVICE}" 2>/dev/null || true
 fi
 
+# ── 기존 파티션 확인 ──────────────────────────────────────
+# share 파티션처럼 이미지에 없던 예전 데이터가 카드에 남아있으면
+# 재플래싱해도 안 지워지는 문제가 있어서, 파티션이 여러 개면 전부 삭제한다.
+EXISTING_PARTS=()
+for part in "${DEVICE}"[0-9]* "${DEVICE}"p[0-9]*; do
+    [ -b "$part" ] && EXISTING_PARTS+=("$part")
+done
+
+if [ "${#EXISTING_PARTS[@]}" -gt 1 ]; then
+    echo -e "${YLW}기존 파티션 ${#EXISTING_PARTS[@]}개 발견:${NC}"
+    for p in "${EXISTING_PARTS[@]}"; do
+        sz="$(lsblk -dno SIZE "$p" 2>/dev/null || echo "?")"
+        fs="$(lsblk -dno FSTYPE "$p" 2>/dev/null || echo "?")"
+        echo "    ${p}  ${sz}  ${fs}"
+    done
+fi
+
+delete_all_partitions() {
+    local dev="$1"
+    local parts=()
+    for part in "${dev}"[0-9]* "${dev}"p[0-9]*; do
+        [ -b "$part" ] && parts+=("$part")
+    done
+
+    if [ "${#parts[@]}" -eq 0 ]; then
+        return
+    fi
+
+    echo -e "${YLW}파티션 ${#parts[@]}개 삭제 중...${NC}"
+    for p in "${parts[@]}"; do
+        sudo umount "$p" 2>/dev/null || true
+        sudo wipefs -a "$p" 2>/dev/null || true
+    done
+
+    # 파티션 테이블 자체를 비움 (MBR/GPT 무관하게 동작)
+    sudo sfdisk --delete "${dev}" 2>/dev/null || true
+    sudo wipefs -a "${dev}" 2>/dev/null || true
+    sync
+}
+
 # ── 최종 확인 ─────────────────────────────────────────────
 if [ "${PRESERVE_SHARE}" = "true" ]; then
     echo -e "${RED}경고: ${DEVICE} 의 boot/overlay 파티션이 덮어써집니다. share는 보존됩니다.${NC}"
@@ -172,6 +212,9 @@ if [ "${PRESERVE_SHARE}" = "true" ]; then
     sync
 else
     echo -e "${YLW}[1/2] 파티션 테이블 초기화 중...${NC}"
+    if [ "${#EXISTING_PARTS[@]}" -gt 1 ]; then
+        delete_all_partitions "${DEVICE}"
+    fi
     sudo wipefs -a "${DEVICE}"
     sudo dd if=/dev/zero of="${DEVICE}" bs=4M count=8 status=progress
     sync
