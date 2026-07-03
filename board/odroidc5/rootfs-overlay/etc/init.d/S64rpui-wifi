@@ -1,0 +1,41 @@
+#!/bin/sh
+# S64rpui-wifi - WiFi 관리 데몬
+#
+# S61share 이후 실행 (wifi.conf가 share 파티션에 있음). USB WiFi 동글
+# 핫플러그 감지 및 ES와의 IPC 담당. /etc/retropangui.env를 먼저 소스해서
+# RETROPANGUI_SHARE를 데몬에 전달한다 (S99emulationstation과 동일 규칙).
+#
+# /tmp/retropangui-wifi-status.json 을 유지하고,
+# /tmp/retropangui-wifi-cmd 로 CLI(rpui-wifi 명령)의 요청을 받는다.
+
+TAG="S64rpui-wifi"
+DAEMON="/usr/bin/rpui-wifi"
+PIDFILE="/run/rpui-wifi.pid"
+
+case "$1" in
+    start)
+        [ -x "${DAEMON}" ] || { logger -t "${TAG}" "rpui-wifi 없음, 건너뜀"; exit 0; }
+        logger -t "${TAG}" "시작"
+        . /etc/retropangui.env 2>/dev/null
+        export RETROPANGUI_SHARE
+        start-stop-daemon --start --quiet --background \
+            --make-pidfile --pidfile "${PIDFILE}" \
+            --exec "${DAEMON}" -- 2>&1 | logger -t "${TAG}"
+        ;;
+    stop)
+        logger -t "${TAG}" "종료"
+        start-stop-daemon --stop --quiet --pidfile "${PIDFILE}" --signal TERM
+        rm -f "${PIDFILE}"
+        ;;
+    restart|reload)
+        "$0" stop
+        sleep 1
+        "$0" start
+        ;;
+    *)
+        echo "Usage: $0 {start|stop|restart}"
+        exit 1
+        ;;
+esac
+
+exit 0

@@ -1,0 +1,8 @@
+config BR2_PACKAGE_RPUI_WIFI
+	bool "rpui-wifi"
+	select BR2_PACKAGE_WPA_SUPPLICANT
+	select BR2_PACKAGE_WPA_SUPPLICANT_CLI
+	help
+	  RetroPangUI WiFi 관리 데몬.
+	  USB WiFi 동글 핫플러그 감지, wpa_supplicant/udhcpc 제어,
+	  ES와 파일 기반 IPC(status.json)를 담당한다.
