@@ -1,0 +1,16 @@
+--- a/os_dep/osdep_service.c	2026-07-03 19:16:46.880895300 +0900
++++ b/os_dep/osdep_service.c	2026-07-03 19:17:06.240895901 +0900
+@@ -17,6 +17,13 @@
+ #define _OSDEP_SERVICE_C_
+ 
+ #include <drv_types.h>
++#include <linux/module.h>
++
++/* 커널 5.9+ kernel_read/filp_open가 VFS 내부 네임스페이스로 옮겨져서
++ * out-of-tree 모듈은 명시적으로 import 선언해야 modpost 에러가 안 남 */
++#ifdef MODULE_IMPORT_NS
++MODULE_IMPORT_NS(VFS_internal_I_am_really_a_filesystem_and_am_NOT_a_driver);
++#endif
+ 
+ #define RT_TAG	'1178'
+ 
