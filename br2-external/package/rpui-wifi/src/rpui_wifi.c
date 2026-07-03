@@ -256,6 +256,35 @@ static int start_wifi_link(const char *ifname, const char *ssid, const char *psk
     return 0;
 }
 
+/* 저장된 프로필이 없을 때도 스캔은 가능해야 하므로, network 블록 없이
+ * wpa_supplicant만 붙여둔다 (연결은 안 하고 wpa_cli scan만 가능한 상태) */
+static int start_scan_only_link(const char *ifname)
+{
+    stop_wifi_link(ifname);
+
+    char conf_path[64];
+    snprintf(conf_path, sizeof(conf_path), WPA_CONF_TMP, ifname);
+    FILE *cf = fopen(conf_path, "w");
+    if (!cf) { perror("[rpui-wifi] wpa conf (scan-only)"); return -1; }
+    fprintf(cf, "ctrl_interface=/var/run/wpa_supplicant\nupdate_config=0\n");
+    fclose(cf);
+    chmod(conf_path, 0600);
+
+    char wpapid[64];
+    snprintf(wpapid, sizeof(wpapid), WPA_PID_TMP, ifname);
+
+    char *const wpa_argv[] = {
+        "wpa_supplicant", "-B", "-i", (char *)ifname,
+        "-c", conf_path, "-P", wpapid, NULL
+    };
+    pid_t r = spawn_argv(wpa_argv, 1);
+    if (r < 0) return -1;
+    waitpid(r, NULL, 0);
+
+    strncpy(g_active_if, ifname, sizeof(g_active_if) - 1);
+    return 0;
+}
+
 /* wpa_cli status로 연결 상태/SSID 조회 (raw ctrl 소켓 프로토콜 대신 기존 도구 재사용) */
 static void poll_wifi_status(void)
 {
@@ -331,7 +360,12 @@ static void write_status_json(void)
 static void try_autoconnect(const char *ifname)
 {
     char ssid[64], psk[128];
-    if (read_wifi_conf(ssid, sizeof(ssid), psk, sizeof(psk)) != 0) return;
+    if (read_wifi_conf(ssid, sizeof(ssid), psk, sizeof(psk)) != 0) {
+        /* 저장된 프로필이 없어도 스캔(SSID 목록 조회)은 가능해야 함 */
+        fprintf(stderr, "[rpui-wifi] 저장된 프로필 없음 — %s에 스캔 전용 wpa_supplicant 기동\n", ifname);
+        start_scan_only_link(ifname);
+        return;
+    }
     fprintf(stderr, "[rpui-wifi] autoconnect: %s → %s\n", ifname, ssid);
     start_wifi_link(ifname, ssid, psk);
 }
