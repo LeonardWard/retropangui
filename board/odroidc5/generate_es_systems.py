@@ -43,7 +43,7 @@ def generate(systems, roms_path, retroarch, config):
             )
         lines.append('    </cores>')
         lines.append(
-            f'    <command>{retroarch} -L %CORE% --config {config} %ROM%</command>'
+            '    <command>/usr/bin/rpui-launcher %SYSTEM% %ROM% default %CORE%</command>'
         )
         lines.append(f'    <platform>{platform}</platform>')
         lines.append(f'    <theme>{theme}</theme>')

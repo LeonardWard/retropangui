@@ -1,0 +1,9 @@
+config BR2_PACKAGE_RPUI_LAUNCHER
+	bool "rpui-launcher"
+	default y
+	depends on BR2_PACKAGE_PYTHON3
+	help
+	  RetroPangUI game launcher script.
+	  Installs /usr/bin/rpui-launcher which is invoked by
+	  EmulationStation to launch RetroArch with the correct core
+	  and appendconfig chain.
