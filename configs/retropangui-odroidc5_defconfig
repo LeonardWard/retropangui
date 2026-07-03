@@ -81,6 +81,11 @@ BR2_PACKAGE_WPA_SUPPLICANT=y
 BR2_PACKAGE_WPA_SUPPLICANT_NL80211=y
 BR2_PACKAGE_WPA_SUPPLICANT_CLI=y
 
+# 블루투스 펌웨어 (WiFi Module 5BK 콤보칩 RTL8821C 등) — btrtl 드라이버는 있으나
+# rtl_bt/rtl8821c_fw.bin 펌웨어 파일이 없어 hci0 초기화 실패하던 문제 (2026-07-03 확인)
+BR2_PACKAGE_LINUX_FIRMWARE=y
+BR2_PACKAGE_LINUX_FIRMWARE_RTL_88XX_BT=y
+
 # br2-external 패치 디렉토리 (SDL2 Mali Valhall 색상 수정, RetroArch DRM 수정 포함)
 BR2_GLOBAL_PATCH_DIR="$(BR2_EXTERNAL_C5_PANGUI_PATH)/patches"
 
