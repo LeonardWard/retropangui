@@ -1,0 +1,14 @@
+comment "rpui-rtl8821cu needs a Linux kernel to be built"
+	depends on !BR2_LINUX_KERNEL
+
+config BR2_PACKAGE_RPUI_RTL8821CU
+	bool "rpui-rtl8821cu"
+	depends on BR2_LINUX_KERNEL
+	help
+	  RTL8821CU WiFi 커널 드라이버 (하드커널 WiFi Module 5B/5BK 등).
+	  Buildroot 기본 rtl8821cu 패키지(morrownr/8821cu-20210916)가
+	  cfg80211 API 변경으로 커널 5.15+에서 빌드 실패해서, ODROID
+	  포럼이 하드커널 기기용으로 추천하는 brektrou/rtl8821CU 소스로
+	  대체한 버전.
+
+	  https://github.com/brektrou/rtl8821CU

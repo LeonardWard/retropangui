@@ -82,9 +82,10 @@ BR2_PACKAGE_WPA_SUPPLICANT_NL80211=y
 BR2_PACKAGE_WPA_SUPPLICANT_CLI=y
 
 # 하드커널 WiFi Module 5BK(RTL8821CU) 커널 드라이버 — mainline rtw88엔 USB 버전이 없어서
-# out-of-tree 드라이버 필요. Buildroot 기본 패키지에 이미 있음(morrownr/8821cu-20210916).
-# (2026-07-03 실기기 테스트 중 발견 — wlan 인터페이스가 전혀 안 생기던 문제)
-BR2_PACKAGE_RTL8821CU=y
+# out-of-tree 드라이버 필요. Buildroot 기본 rtl8821cu 패키지(morrownr 소스)는 커널
+# 5.15+ cfg80211 API 변경으로 빌드 실패해서, br2-external의 rpui-rtl8821cu(brektrou
+# 소스)로 대체. (2026-07-03 실기기 테스트 중 발견 + 빌드 실패 확인 후 교체)
+BR2_PACKAGE_RPUI_RTL8821CU=y
 
 # 블루투스 펌웨어 (WiFi Module 5BK 콤보칩 RTL8821C 등) — btrtl 드라이버는 있으나
 # rtl_bt/rtl8821c_fw.bin 펌웨어 파일이 없어 hci0 초기화 실패하던 문제 (2026-07-03 확인)
