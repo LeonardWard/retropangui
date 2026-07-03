@@ -68,6 +68,9 @@ define BUNDLED_ROMS_BUILD_CMDS
 endef
 
 define BUNDLED_ROMS_INSTALL_TARGET_CMDS
+	# BUNDLED_NES_ROMS/BUNDLED_SNES_ROMS 목록이 줄어들어도 예전 설치본이 남지 않도록
+	# 매번 깨끗이 지우고 다시 채운다 (cp만 하면 목록에서 뺀 게임이 계속 남는 문제 방지)
+	rm -rf $(BUNDLED_ROMS_TARGET_DIR)
 	mkdir -p $(BUNDLED_ROMS_TARGET_DIR)/nes $(BUNDLED_ROMS_TARGET_DIR)/snes $(BUNDLED_ROMS_TARGET_DIR)/psx
 	for rom in $(BUNDLED_NES_ROMS); do \
 		cp $(@D)/nes/$$rom $(BUNDLED_ROMS_TARGET_DIR)/nes/ 2>/dev/null || true; \
