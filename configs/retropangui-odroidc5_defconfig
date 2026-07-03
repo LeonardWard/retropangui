@@ -174,6 +174,9 @@ BR2_PACKAGE_NSS_MDNS=y
 
 # Python3
 BR2_PACKAGE_PYTHON3=y
+# xml 모듈 — rpui-bundlegame.sh가 gamelist.xml 조작에 xml.etree.ElementTree 사용
+# (2026-07-04: 빠져있어서 hide/show가 매번 ModuleNotFoundError로 조용히 실패하던 문제 확인)
+BR2_PACKAGE_PYTHON3_PYEXPAT=y
 
 # SMB 네트워크 파일 공유 (ksmbd: 커널 내장 SMB3 서버, Samba4보다 의존성 없음)
 BR2_PACKAGE_KSMBD_TOOLS=y

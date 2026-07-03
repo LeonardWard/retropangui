@@ -1,7 +1,10 @@
 #!/bin/sh
 # rpui-bundlegame - 번들 ROM 관리
 #
-#   init  : 이미지 내 번들 ROM → share/roms/{sys}/ 심볼릭 링크 생성 (S61share sentinel에서 1회 호출)
+#   init  : 이미지 내 번들 ROM → share/roms/{sys}/ 로 복사 (S61share sentinel에서 1회 호출)
+#           share 파티션이 exFAT라 심볼릭 링크가 안 먹힘("Operation not permitted") —
+#           2026-07-04 확인. cp로 복사하고, 어떤 파일이 번들 것인지는
+#           roms/{sys}/.bundled-manifest 에 파일명을 기록해서 구분한다.
 #   hide  : 번들 게임 gamelist.xml hidden 처리 + ES 재시작
 #   show  : 번들 게임 gamelist.xml hidden 해제 + ES 재시작
 #   status: 현재 번들 게임 표시 여부 출력
@@ -9,6 +12,7 @@
 SHARE="/retropangui/share"
 BUNDLED="/usr/share/retropangui/bundled-roms"
 SYSTEMS="nes snes psx"
+MANIFEST_NAME=".bundled-manifest"
 
 cmd_init() {
     for sys in ${SYSTEMS}; do
@@ -16,19 +20,21 @@ cmd_init() {
         dst="${SHARE}/roms/${sys}"
         [ -d "${src}" ] || continue
         [ -d "${dst}" ] || continue
+        manifest="${dst}/${MANIFEST_NAME}"
+        : > "${manifest}"
         for f in "${src}"/*; do
             [ -f "${f}" ] || continue
-            ln -sf "${f}" "${dst}/" 2>/dev/null || true
+            fname=$(basename "${f}")
+            cp -f "${f}" "${dst}/${fname}" 2>/dev/null && echo "${fname}" >> "${manifest}"
         done
     done
 }
 
-_bundled_paths() {
-    for sys in ${SYSTEMS}; do
-        dst="${SHARE}/roms/${sys}"
-        [ -d "${dst}" ] || continue
-        find "${dst}" -maxdepth 1 -type l 2>/dev/null
-    done
+# 저장된 매니페스트에서 이 시스템의 번들 파일명 목록을 반환
+_bundled_names() {
+    sys="$1"
+    manifest="${SHARE}/roms/${sys}/${MANIFEST_NAME}"
+    [ -f "${manifest}" ] && cat "${manifest}"
 }
 
 _gamelist_set_hidden() {
@@ -72,8 +78,7 @@ cmd_hide() {
         dst="${SHARE}/roms/${sys}"
         gamelist="${dst}/gamelist.xml"
         [ -d "${dst}" ] || continue
-        for link in $(find "${dst}" -maxdepth 1 -type l 2>/dev/null); do
-            fname=$(basename "${link}")
+        for fname in $(_bundled_names "${sys}"); do
             _gamelist_set_hidden "${gamelist}" "./${fname}" "true"
         done
     done
@@ -84,9 +89,8 @@ cmd_show() {
     for sys in ${SYSTEMS}; do
         dst="${SHARE}/roms/${sys}"
         gamelist="${dst}/gamelist.xml"
-        [ -f "${gamelist}" ] || continue
-        for link in $(find "${dst}" -maxdepth 1 -type l 2>/dev/null); do
-            fname=$(basename "${link}")
+        [ -d "${dst}" ] || continue
+        for fname in $(_bundled_names "${sys}"); do
             _gamelist_set_hidden "${gamelist}" "./${fname}" "false"
         done
     done
@@ -98,10 +102,9 @@ cmd_status() {
     local hidden=0
     for sys in ${SYSTEMS}; do
         dst="${SHARE}/roms/${sys}"
-        for link in $(find "${dst}" -maxdepth 1 -type l 2>/dev/null); do
+        gamelist="${dst}/gamelist.xml"
+        for fname in $(_bundled_names "${sys}"); do
             count=$((count + 1))
-            fname=$(basename "${link}")
-            gamelist="${dst}/gamelist.xml"
             if [ -f "${gamelist}" ]; then
                 grep -q "<path>./${fname}</path>" "${gamelist}" && \
                 grep -A5 "<path>./${fname}</path>" "${gamelist}" | grep -q "<hidden>true</hidden>" && \
