@@ -99,6 +99,22 @@ static void bt_ctl(const char *cmd)
     spawn_and_wait(argv);
 }
 
+/* bt_ctl과 달리 실제 종료 코드를 반환 — pair/trust/connect처럼 성공 여부를
+ * 확인해야 하는 곳에서 사용(2026-07-04 실기기 확인: bluetoothctl은 실패 시
+ * 0이 아닌 종료 코드를 정확히 반환하는데, 예전 코드는 이걸 확인 안 하고
+ * 항상 "완료"를 출력해서 실제로는 페어링 안 됐는데도 성공한 것처럼 보였음). */
+static int bt_ctl_status(const char *cmd)
+{
+    char cmdbuf[64];
+    snprintf(cmdbuf, sizeof(cmdbuf), "%s", cmd);
+    char *argv[] = { (char*)"bluetoothctl", (char*)"--", cmdbuf, NULL };
+    pid_t pid = spawn_argv(argv, 1);
+    if (pid < 0) return -1;
+    int status;
+    waitpid(pid, &status, 0);
+    return WIFEXITED(status) ? WEXITSTATUS(status) : -1;
+}
+
 /* bluetoothctl을 인터랙티브 모드로 띄운 채 데몬 수명 내내 유지 — BlueZ의
  * agent 등록은 D-Bus 연결(=이 프로세스)이 살아있는 동안만 유효하다.
  * bt_ctl()처럼 매번 새 프로세스로 "agent ..."를 실행하면 등록 직후
@@ -307,11 +323,25 @@ static void cli_list(void)
     pclose(p);
 }
 
+/* discovery 시작/중지 — one-shot 명령이지만 discovery 자체는 어댑터(D-Bus)에
+ * 남아 계속 진행됨(에이전트 등록과 달리 호출 프로세스 생명주기에 안 묶임). */
+static void start_discovery(void)
+{
+    char *argv[] = { (char*)"bluetoothctl", (char*)"--", (char*)"scan", (char*)"on", NULL };
+    spawn_and_wait(argv);
+}
+
+static void stop_discovery(void)
+{
+    char *argv[] = { (char*)"bluetoothctl", (char*)"--", (char*)"scan", (char*)"off", NULL };
+    spawn_and_wait(argv);
+}
+
 static void cli_live_devices(void)
 {
-    char cmd[64];
-    snprintf(cmd, sizeof(cmd), "bluetoothctl --timeout %s scan on >/dev/null 2>&1", SCAN_SECONDS);
-    system(cmd); /* 고정 인자, 사용자 입력 없음 — 안전 */
+    start_discovery();
+    sleep(atoi(SCAN_SECONDS));
+    stop_discovery();
 
     FILE *p = popen("bluetoothctl devices 2>/dev/null", "r");
     if (!p) { printf("{\"devices\": []}\n"); return; }
@@ -336,51 +366,63 @@ static int device_icon_matches(const char *mac, const char *needle)
     return match;
 }
 
-/* 스캔 후 지정 아이콘 종류의 첫 장치를 자동 pair+trust+connect */
+#define DISCOVERY_MAX_WAIT 30 /* 최대 대기(초) — 그 안에서는 1초 간격으로 즉시 반응 */
+
+/* discovery를 켜놓은 채 지정 아이콘 장치가 보이는 즉시 pair+trust+connect.
+ * 예전 방식(--timeout N scan on으로 고정 시간 기다렸다가 그 다음에 판단)은
+ * 실기기 확인 결과 8BitDo 패드처럼 페어링 창이 짧은 장치는 스캔이 끝나는
+ * 시점에 이미 창이 닫혀버려 매번 "Device ... not available"로 실패했음
+ * (2026-07-04). 발견 즉시 반응하도록 폴링 방식으로 변경. */
 static void auto_trust(const char *icon_needle, const char *label)
 {
-    char cmd[64];
-    snprintf(cmd, sizeof(cmd), "bluetoothctl --timeout %s scan on >/dev/null 2>&1", SCAN_SECONDS);
-    system(cmd);
+    start_discovery();
 
-    FILE *p = popen("bluetoothctl devices 2>/dev/null", "r");
-    if (!p) { printf("스캔 실패\n"); return; }
+    char found_mac[18] = "", found_name[128] = "";
+    for (int elapsed = 0; elapsed < DISCOVERY_MAX_WAIT && !found_mac[0]; elapsed++) {
+        FILE *p = popen("bluetoothctl devices 2>/dev/null", "r");
+        if (p) {
+            char line[256];
+            while (fgets(line, sizeof(line), p)) {
+                char *dp = strstr(line, "Device ");
+                if (!dp) continue;
+                dp += 7;
+                char mac[18] = "";
+                char *sp = strchr(dp, ' ');
+                if (!sp || (size_t)(sp - dp) >= sizeof(mac)) continue;
+                strncpy(mac, dp, (size_t)(sp - dp));
+                mac[sp - dp] = '\0';
 
-    char line[256], found_mac[18] = "", found_name[128] = "";
-    while (fgets(line, sizeof(line), p)) {
-        char *dp = strstr(line, "Device ");
-        if (!dp) continue;
-        dp += 7;
-        char mac[18] = "";
-        char *sp = strchr(dp, ' ');
-        if (!sp || (size_t)(sp - dp) >= sizeof(mac)) continue;
-        strncpy(mac, dp, (size_t)(sp - dp));
-        mac[sp - dp] = '\0';
+                if (is_blacklisted(mac)) continue;
+                if (!device_icon_matches(mac, icon_needle)) continue;
 
-        if (is_blacklisted(mac)) continue;
-        if (!device_icon_matches(mac, icon_needle)) continue;
-
-        strncpy(found_mac, mac, sizeof(found_mac) - 1);
-        char *name = sp + 1;
-        size_t nlen = strlen(name);
-        while (nlen && (name[nlen-1] == '\n' || name[nlen-1] == '\r')) name[--nlen] = '\0';
-        strncpy(found_name, name, sizeof(found_name) - 1);
-        break;
+                strncpy(found_mac, mac, sizeof(found_mac) - 1);
+                char *name = sp + 1;
+                size_t nlen = strlen(name);
+                while (nlen && (name[nlen-1] == '\n' || name[nlen-1] == '\r')) name[--nlen] = '\0';
+                strncpy(found_name, name, sizeof(found_name) - 1);
+                break;
+            }
+            pclose(p);
+        }
+        if (!found_mac[0]) sleep(1);
     }
-    pclose(p);
 
-    if (!found_mac[0]) { printf("탐지된 %s 장치 없음\n", label); return; }
+    stop_discovery();
+
+    if (!found_mac[0]) { printf("탐지된 %s 장치 없음 (%d초 대기)\n", label, DISCOVERY_MAX_WAIT); return; }
 
     printf("발견: %s (%s) — 페어링 시도\n", found_name, found_mac);
-    char argv_buf[3][64];
-    snprintf(argv_buf[0], sizeof(argv_buf[0]), "pair %s", found_mac);
-    snprintf(argv_buf[1], sizeof(argv_buf[1]), "trust %s", found_mac);
-    snprintf(argv_buf[2], sizeof(argv_buf[2]), "connect %s", found_mac);
-    for (int i = 0; i < 3; i++) {
-        char *argv[] = { (char*)"bluetoothctl", (char*)"--", argv_buf[i], NULL };
-        spawn_and_wait(argv);
-        usleep(500000);
-    }
+
+    char cmdbuf[64];
+    snprintf(cmdbuf, sizeof(cmdbuf), "pair %s", found_mac);
+    if (bt_ctl_status(cmdbuf) != 0) { printf("실패: pair (%s) — 발견 직후에도 이미 닿지 않음\n", found_mac); return; }
+
+    snprintf(cmdbuf, sizeof(cmdbuf), "trust %s", found_mac);
+    if (bt_ctl_status(cmdbuf) != 0) { printf("실패: trust (%s)\n", found_mac); return; }
+
+    snprintf(cmdbuf, sizeof(cmdbuf), "connect %s", found_mac);
+    if (bt_ctl_status(cmdbuf) != 0) { printf("경고: connect 실패(페어링·신뢰는 완료됨, 재연결은 자동으로 될 수 있음) — %s\n", found_mac); return; }
+
     printf("완료: %s (%s)\n", found_name, found_mac);
 }
 
