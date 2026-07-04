@@ -272,9 +272,11 @@ static void cli_live_devices(void)
 
 static void cli_remove(const char *mac)
 {
-    char cmdbuf[64];
-    snprintf(cmdbuf, sizeof(cmdbuf), "remove %s", mac);
-    char *argv[] = { (char*)"bluetoothctl", (char*)"--", cmdbuf, NULL };
+    /* "remove <MAC>"을 한 문자열로 합쳐서 넘기면 bluetoothctl이 그 전체를
+     * 명령어 이름으로 찾다가 실패해 조용히 무시함(2026-07-05 실기기 확인) —
+     * remove와 MAC을 반드시 별도 argv로 넘겨야 함(쉘에서 직접 실행한 것과
+     * 동일하게). */
+    char *argv[] = { (char*)"bluetoothctl", (char*)"--", (char*)"remove", (char*)mac, NULL };
     spawn_and_wait(argv);
     printf("제거: %s\n", mac);
 }
