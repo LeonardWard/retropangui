@@ -115,13 +115,6 @@ menus:
         unit: "ms"
         restart: none
 
-      - id: rp.bt_pair_audio
-        label: "PAIR A BLUETOOTH AUDIO DEVICE"
-        type: command
-        exec: "rpui-bt trust-audio"
-        feedback_msg: "블루투스 스캔을 시작합니다 (최대 30초 소요). 블루투스 기기 목록 메뉴에서 결과를 확인하세요."
-        restart: none
-
   - id: ui_settings
     label: "UI SETTINGS"
     parent: ui
@@ -248,11 +241,4 @@ menus:
         label: "UNIFIED CONTROLS"
         type: toggle
         conf_key: global.menu_unified_controls
-        restart: none
-
-      - id: rp.bt_pair_controller
-        label: "PAIR A BLUETOOTH CONTROLLER"
-        type: command
-        exec: "rpui-bt trust-pad"
-        feedback_msg: "블루투스 스캔을 시작합니다 (최대 30초 소요). 블루투스 기기 목록 메뉴에서 결과를 확인하세요."
         restart: none

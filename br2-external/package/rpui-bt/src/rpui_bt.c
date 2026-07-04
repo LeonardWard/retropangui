@@ -25,6 +25,7 @@
 #include <fcntl.h>
 #include <signal.h>
 #include <errno.h>
+#include <ctype.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
 #include <sys/wait.h>
@@ -40,6 +41,7 @@
 #define BLACKLIST_FILE    "system/bt-blacklist.conf"
 #define BT_CMD_FILE       "/tmp/retropangui-bt-cmd"
 #define BT_PAIR_STATUS    "/tmp/retropangui-bt-pairing-status"
+#define BT_DISCOVERY_JSON "/tmp/retropangui-bt-discovery.json"
 #define AGENT_PATH        "/rpui/agent"
 #define DISCOVERY_MAX_WAIT 30 /* 초 */
 
@@ -417,7 +419,36 @@ typedef struct {
     char name[128];
     char icon[32];
     gboolean paired, trusted, connected;
+    gint16 rssi;
+    gboolean has_rssi;
+    char vendor[32];
 } DeviceProps;
+
+/* Modalias 형식 예: "bluetooth:v05C4p09CCd0100", "usb:v2DC8p6101d...".
+ * 'v' 뒤 4자리 hex가 vendor id — 소규모 테이블만 인식(완벽한 OUI DB 아님). */
+static void vendor_from_modalias(const char *modalias, char *out, size_t outsz)
+{
+    out[0] = '\0';
+    if (!modalias) return;
+    const char *v = strchr(modalias, ':'); /* "bluetooth:"/"usb:" 뒤에서부터 찾아 안전하게 'v' 위치 확보 */
+    v = v ? strchr(v, 'v') : NULL;
+    if (!v || strlen(v) < 5) return;
+
+    char hexbuf[5];
+    strncpy(hexbuf, v + 1, 4);
+    hexbuf[4] = '\0';
+    long vid = strtol(hexbuf, NULL, 16);
+
+    switch (vid) {
+        case 0x2DC8: snprintf(out, outsz, "%s", "8BitDo");    break;
+        case 0x054C: snprintf(out, outsz, "%s", "Sony");      break;
+        case 0x045E: snprintf(out, outsz, "%s", "Microsoft"); break;
+        case 0x057E: snprintf(out, outsz, "%s", "Nintendo");  break;
+        case 0x0E6F: snprintf(out, outsz, "%s", "PDP");       break;
+        case 0x20D6: snprintf(out, outsz, "%s", "PowerA");    break;
+        default: break; /* 매칭 없음 — 빈 문자열 유지 */
+    }
+}
 
 static void parse_device_props_dict(GVariant *dict, DeviceProps *out)
 {
@@ -440,6 +471,11 @@ static void parse_device_props_dict(GVariant *dict, DeviceProps *out)
             out->trusted = g_variant_get_boolean(value);
         else if (strcmp(key, "Connected") == 0 && g_variant_is_of_type(value, G_VARIANT_TYPE_BOOLEAN))
             out->connected = g_variant_get_boolean(value);
+        else if (strcmp(key, "RSSI") == 0 && g_variant_is_of_type(value, G_VARIANT_TYPE_INT16)) {
+            out->rssi = g_variant_get_int16(value);
+            out->has_rssi = TRUE;
+        } else if (strcmp(key, "Modalias") == 0 && g_variant_is_of_type(value, G_VARIANT_TYPE_STRING))
+            vendor_from_modalias(g_variant_get_string(value, NULL), out->vendor, sizeof(out->vendor));
         g_variant_unref(value);
     }
 }
@@ -461,6 +497,79 @@ static int get_device_props(const char *obj_path, DeviceProps *out)
     g_variant_unref(dict);
     g_variant_unref(result);
     return out->address[0] != '\0';
+}
+
+/* 활성 스캔 세션 중 검색된 기기 전체 목록을 GUI가 폴링할 수 있도록 JSON으로
+ * 기록. GetManagedObjects를 매 시그널마다 통째로 다시 조회하는 방식이라
+ * 다소 낭비지만, 이 프로젝트 규모(기기 수 적음, 스캔 세션도 짧음)에선
+ * 허용 가능한 수준 — 기존 코드도 매 시그널마다 GetAll을 부르는 방식이라 일관됨. */
+static void write_discovery_list(void)
+{
+    char tmp[64];
+    snprintf(tmp, sizeof(tmp), "%s.tmp", BT_DISCOVERY_JSON);
+
+    const char *primary = primary_adapter();
+    GError *err = NULL;
+    GVariant *result = NULL;
+    if (primary) {
+        result = g_dbus_connection_call_sync(g_conn, "org.bluez", "/",
+            "org.freedesktop.DBus.ObjectManager", "GetManagedObjects", NULL,
+            G_VARIANT_TYPE("(a{oa{sa{sv}}})"), G_DBUS_CALL_FLAGS_NONE, 5000, NULL, &err);
+    }
+    if (err) { g_error_free(err); err = NULL; }
+
+    FILE *f = fopen(tmp, "w");
+    if (!f) { if (result) g_variant_unref(result); return; }
+
+    if (!result) {
+        fprintf(f, "{\"devices\": []}\n");
+        fclose(f);
+        rename(tmp, BT_DISCOVERY_JSON);
+        return;
+    }
+
+    char *prefix = g_strdup_printf("/org/bluez/%s/dev_", primary);
+    GVariant *managed = g_variant_get_child_value(result, 0);
+
+    fprintf(f, "{\n  \"devices\": [\n");
+    int first = 1;
+
+    GVariantIter iter;
+    const gchar *obj_path;
+    GVariant *interfaces;
+    g_variant_iter_init(&iter, managed);
+    while (g_variant_iter_loop(&iter, "{&oa{sa{sv}}}", &obj_path, &interfaces)) {
+        if (!g_str_has_prefix(obj_path, prefix)) continue;
+
+        GVariant *dev = g_variant_lookup_value(interfaces, "org.bluez.Device1", G_VARIANT_TYPE("a{sv}"));
+        if (!dev) continue;
+
+        DeviceProps dp;
+        parse_device_props_dict(dev, &dp);
+        g_variant_unref(dev);
+
+        if (!dp.address[0] || is_blacklisted(dp.address)) continue;
+
+        if (!first) fprintf(f, ",\n");
+        first = 0;
+
+        fprintf(f, "    {\"mac\": \"%s\", \"name\": \"%s\", \"icon\": \"%s\", \"looks_like_pad\": %s",
+            dp.address, dp.name, dp.icon,
+            strncmp(dp.icon, "input-gaming", 12) == 0 ? "true" : "false");
+        if (dp.has_rssi)
+            fprintf(f, ", \"rssi\": %d", dp.rssi);
+        fprintf(f, ", \"vendor\": \"%s\", \"paired\": %s, \"trusted\": %s, \"connected\": %s}",
+            dp.vendor, dp.paired ? "true" : "false", dp.trusted ? "true" : "false",
+            dp.connected ? "true" : "false");
+    }
+
+    fprintf(f, "%s  ]\n}\n", first ? "" : "\n");
+    fclose(f);
+    rename(tmp, BT_DISCOVERY_JSON);
+
+    g_variant_unref(managed);
+    g_variant_unref(result);
+    g_free(prefix);
 }
 
 /* 페어링 탐색 중 처음 매칭된 후보 하나에만 고정 — 동일 물리 기기가 서로
@@ -544,7 +653,9 @@ static void maybe_pair_device(const char *obj_path)
     if (!get_device_props(obj_path, &dp)) return;
     if (!dp.address[0]) return;
     if (is_blacklisted(dp.address)) return;
-    if (!dp.icon[0] || strncmp(dp.icon, g_pair_filter, strlen(g_pair_filter)) != 0) return;
+    /* g_pair_filter가 "*"이면 아이콘 무관하게 통과 — 사용자가 목록에서 수동으로
+     * 고른 기기(PAIR_MAC)이므로 아이콘 필터링을 건너뛴다. */
+    if (g_pair_filter[0] != '*' && (!dp.icon[0] || strncmp(dp.icon, g_pair_filter, strlen(g_pair_filter)) != 0)) return;
 
     if (!g_pairing_target[0]) {
         snprintf(g_pairing_target, sizeof(g_pairing_target), "%s", obj_path);
@@ -561,6 +672,7 @@ static void maybe_pair_device(const char *obj_path)
         g_pair_filter[0] = '\0';
         g_pairing_target[0] = '\0';
         stop_discovery_all();
+        write_discovery_list(); /* 스캔 세션 종료 — GUI에 빈 배열로 알림 */
         return;
     }
 
@@ -610,6 +722,7 @@ static void on_interfaces_added(GDBusConnection *conn, const gchar *sender, cons
     if (dev) {
         g_variant_unref(dev);
         maybe_pair_device(path);
+        if (g_pair_filter[0]) write_discovery_list();
     }
     g_variant_unref(interfaces);
 }
@@ -619,6 +732,7 @@ static void on_properties_changed(GDBusConnection *conn, const gchar *sender, co
 {
     (void)conn; (void)sender; (void)interface; (void)signal; (void)user_data; (void)params;
     maybe_pair_device(object_path);
+    if (g_pair_filter[0]) write_discovery_list();
 }
 
 /* ── 데몬: netlink 핫플러그 감지 (기존과 동일, 어댑터 설정만 D-Bus로) ── */
@@ -736,6 +850,7 @@ static gboolean on_discovery_timeout(gpointer user_data)
         g_pair_filter[0] = '\0';
         g_pairing_target[0] = '\0';
         stop_discovery_all();
+        write_discovery_list(); /* 빈 배열 — GUI에 스캔 종료 알림 */
     }
     return G_SOURCE_REMOVE;
 }
@@ -748,6 +863,7 @@ static void begin_pairing_search(const char *icon_filter)
     snprintf(g_pair_filter, sizeof(g_pair_filter), "%s", icon_filter);
     g_pairing_target[0] = '\0';
     write_pairing_status("SCANNING");
+    write_discovery_list(); /* 빈 목록(또는 이미 알려진 기기)으로 초기화 */
     start_discovery_on(primary);
     g_timeout_add_seconds(DISCOVERY_MAX_WAIT, on_discovery_timeout, NULL);
 }
@@ -763,6 +879,33 @@ static gboolean on_cmd_file_tick(gpointer user_data)
         begin_pairing_search("input-gaming");
     else if (strcmp(line, "TRUST_AUDIO") == 0)
         begin_pairing_search("audio-");
+    else if (strcmp(line, "STOP") == 0) {
+        g_pair_filter[0] = '\0';
+        g_pairing_target[0] = '\0';
+        stop_discovery_all();
+        write_discovery_list();
+        write_pairing_status("STOPPED");
+    } else if (strncmp(line, "PAIR_MAC:", 9) == 0) {
+        if (!g_pair_filter[0]) return G_SOURCE_CONTINUE; /* 활성 스캔 세션 중일 때만 유효 */
+
+        char mac[64];
+        snprintf(mac, sizeof(mac), "%s", line + 9);
+        for (char *p = mac; *p; p++) *p = (char)toupper((unsigned char)*p);
+
+        char obj_path[256];
+        const char *primary = primary_adapter();
+        if (!primary) return G_SOURCE_CONTINUE;
+        snprintf(obj_path, sizeof(obj_path), "/org/bluez/%s/dev_", primary);
+        size_t plen = strlen(obj_path);
+        for (const char *p = mac; *p && plen + 1 < sizeof(obj_path); p++)
+            obj_path[plen++] = (*p == ':') ? '_' : *p;
+        obj_path[plen] = '\0';
+
+        snprintf(g_pairing_target, sizeof(g_pairing_target), "%s", obj_path);
+        snprintf(g_pair_filter, sizeof(g_pair_filter), "*");
+        g_connect_retries = 0;
+        maybe_pair_device(obj_path);
+    }
 
     return G_SOURCE_CONTINUE;
 }
@@ -870,7 +1013,8 @@ static void cli_auto_trust(const char *cmd, const char *label)
 static void usage(void)
 {
     fprintf(stderr,
-        "사용법: rpui-bt <list|live_devices|trust-pad|trust-audio|remove <MAC>|"
+        "사용법: rpui-bt <list|live_devices|trust-pad|trust-audio|"
+        "scan-start-pad|scan-start-audio|scan-stop|pair <MAC>|remove <MAC>|"
         "blacklist <MAC> [name]|unblacklist <MAC>>\n");
 }
 
@@ -882,6 +1026,16 @@ int main(int argc, char **argv)
     else if (strcmp(argv[1], "live_devices") == 0) cli_live_devices();
     else if (strcmp(argv[1], "trust-pad") == 0)    cli_auto_trust("TRUST_PAD", "컨트롤러");
     else if (strcmp(argv[1], "trust-audio") == 0)  cli_auto_trust("TRUST_AUDIO", "오디오 장치");
+    /* GUI 전용 non-blocking 트리거 — trust-pad/trust-audio는 블로킹 폴링이라
+     * GUI 스레드에서 쓰기 부적합, 이건 명령만 전달하고 즉시 리턴한다. */
+    else if (strcmp(argv[1], "scan-start-pad") == 0)   cli_write_cmd("TRUST_PAD");
+    else if (strcmp(argv[1], "scan-start-audio") == 0) cli_write_cmd("TRUST_AUDIO");
+    else if (strcmp(argv[1], "scan-stop") == 0)        cli_write_cmd("STOP");
+    else if (strcmp(argv[1], "pair") == 0 && argc >= 3) {
+        char cmd[64];
+        snprintf(cmd, sizeof(cmd), "PAIR_MAC:%s", argv[2]);
+        cli_write_cmd(cmd);
+    }
     else if (strcmp(argv[1], "remove") == 0 && argc >= 3)      cli_remove(argv[2]);
     else if (strcmp(argv[1], "blacklist") == 0 && argc >= 3)   cli_blacklist(argv[2], argc >= 4 ? argv[3] : NULL);
     else if (strcmp(argv[1], "unblacklist") == 0 && argc >= 3) cli_unblacklist(argv[2]);
