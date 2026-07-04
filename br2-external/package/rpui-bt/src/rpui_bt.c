@@ -24,6 +24,7 @@
 #include <linux/netlink.h>
 #include <poll.h>
 #include <stdint.h>
+#include <dirent.h>
 
 #define MAX_ADAPTERS   8
 #define STATUS_JSON    "/tmp/retropangui-bt-status.json"
@@ -357,6 +358,39 @@ static void cli_remove(const char *mac)
     printf("제거: %s\n", mac);
 }
 
+/* 새 어댑터 감지 시 공통 처리 — 핫플러그 이벤트와 부팅 시 기존 어댑터 스캔이 공유 */
+static void adapter_added(const char *hciname)
+{
+    for (int i = 0; i < g_nadapter; i++)
+        if (strcmp(g_adapters[i], hciname) == 0) return;
+    if (g_nadapter >= MAX_ADAPTERS) return;
+
+    strncpy(g_adapters[g_nadapter], hciname, sizeof(g_adapters[g_nadapter]) - 1);
+    g_nadapter++;
+    fprintf(stderr, "[rpui-bt] adapter added: %s\n", hciname);
+
+    setup_persistence();
+    configure_adapter();
+    write_status_json();
+}
+
+/* 데몬 기동 시점에 이미 꽂혀있던 어댑터는 netlink "add" 이벤트가 절대 안 옴
+ * (커널이 이미 훨씬 전에 등록했으므로) — /sys/class/bluetooth/를 직접 스캔해서
+ * 기존 어댑터를 놓치지 않도록 함 (2026-07-04, 실기기에서 부팅 시 hci0/hci1이
+ * 있는데도 status.json이 계속 비어있던 문제로 발견). */
+static void scan_existing_adapters(void)
+{
+    DIR *d = opendir("/sys/class/bluetooth");
+    if (!d) return;
+
+    struct dirent *ent;
+    while ((ent = readdir(d)) != NULL) {
+        if (strncmp(ent->d_name, "hci", 3) == 0)
+            adapter_added(ent->d_name);
+    }
+    closedir(d);
+}
+
 /* ── 데몬: netlink 핫플러그 감지 ───────────────────────────
  * SUBSYSTEM=bluetooth 이벤트에는 net과 달리 INTERFACE=가 없고 DEVPATH만
  * 있음 — DEVPATH의 마지막 구성요소(hciN)를 장치명으로 사용. */
@@ -386,18 +420,8 @@ static void parse_uevent(const char *buf, ssize_t len)
     if (strncmp(hciname, "hci", 3) != 0) return; /* L2CAP 등 하위 노드 이벤트 제외 */
 
     if (strcmp(action, "add") == 0) {
-        for (int i = 0; i < g_nadapter; i++)
-            if (strcmp(g_adapters[i], hciname) == 0) return;
-        if (g_nadapter >= MAX_ADAPTERS) return;
-
-        strncpy(g_adapters[g_nadapter], hciname, sizeof(g_adapters[g_nadapter]) - 1);
-        g_nadapter++;
-        fprintf(stderr, "[rpui-bt] adapter added: %s\n", hciname);
-
-        usleep(500000); /* sysfs/D-Bus 등록 완료 대기 */
-        setup_persistence();
-        configure_adapter();
-        write_status_json();
+        usleep(500000); /* sysfs/D-Bus 등록 완료 대기 (핫플러그 직후라 아직 안정화 전) */
+        adapter_added(hciname);
 
     } else if (strcmp(action, "remove") == 0) {
         for (int i = 0; i < g_nadapter; i++) {
@@ -434,6 +458,9 @@ static void run_daemon(void)
         close(nl_fd);
         return;
     }
+
+    /* netlink bind 이후에 스캔 — 스캔 도중 핫플러그가 나도 poll 루프가 이어서 처리 */
+    scan_existing_adapters();
 
     fprintf(stderr, "[rpui-bt] started\n");
 
