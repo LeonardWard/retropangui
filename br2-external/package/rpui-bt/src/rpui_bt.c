@@ -481,6 +481,8 @@ static int get_device_props(const char *obj_path, DeviceProps *out)
  * Pro가 이런 걸로 확인됨) 여러 후보를 동시에 pair 시도하면 상태 메시지가
  * 뒤섞여서 실제로는 실패한 쪽의 "완료"가 찍히는 등 혼란이 생김. */
 static char g_pairing_target[256] = "";
+static int  g_connect_retries = 0;
+#define MAX_CONNECT_RETRIES 5 /* Batocera doConnect()와 동일 — 컨트롤러 쪽이 첫 연결을 흘리는 경우가 있음 */
 
 static void async_call_log(GObject *src, GAsyncResult *res, gpointer user_data)
 {
@@ -498,6 +500,50 @@ static void async_call_log(GObject *src, GAsyncResult *res, gpointer user_data)
     }
 }
 
+/* Connect()는 컨트롤러 쪽이 첫 시도를 흘리는 경우가 흔해서(Batocera 코드에도
+ * 동일 재시도 로직 있음) 실패해도 바로 포기하지 않고 최대 5번 재시도 —
+ * 성공하면 별도 처리 없이 리턴(다음 PropertiesChanged에서 Connected:true로
+ * 자연스럽게 이어짐). */
+static void on_connect_result(GObject *src, GAsyncResult *res, gpointer user_data);
+
+static gboolean retry_connect_cb(gpointer user_data)
+{
+    char *obj_path = (char*)user_data;
+    if (g_pairing_target[0] && strcmp(obj_path, g_pairing_target) == 0) {
+        g_dbus_connection_call(g_conn, "org.bluez", obj_path, "org.bluez.Device1", "Connect",
+            NULL, NULL, G_DBUS_CALL_FLAGS_NONE, 15000, NULL, on_connect_result, g_strdup(obj_path));
+    }
+    g_free(obj_path);
+    return G_SOURCE_REMOVE;
+}
+
+static void on_connect_result(GObject *src, GAsyncResult *res, gpointer user_data)
+{
+    char *obj_path = (char*)user_data;
+    GError *err = NULL;
+    GVariant *r = g_dbus_connection_call_finish(G_DBUS_CONNECTION(src), res, &err);
+    if (r) { g_variant_unref(r); g_free(obj_path); return; } /* 성공 — PropertiesChanged가 이어서 처리 */
+
+    g_connect_retries++;
+    fprintf(stderr, "[rpui-bt] connect 실패(%d/%d): %s\n", g_connect_retries, MAX_CONNECT_RETRIES,
+            err ? err->message : "?");
+
+    if (g_connect_retries < MAX_CONNECT_RETRIES && g_pairing_target[0]
+        && strcmp(obj_path, g_pairing_target) == 0) {
+        char msg[256];
+        snprintf(msg, sizeof(msg), "CONNECTING 재시도 %d/%d", g_connect_retries, MAX_CONNECT_RETRIES);
+        write_pairing_status(msg);
+        g_timeout_add(1000, retry_connect_cb, g_strdup(obj_path));
+    } else {
+        char msg[256];
+        snprintf(msg, sizeof(msg), "실패: connect (%s)", err ? err->message : "?");
+        write_pairing_status(msg);
+        g_pairing_target[0] = '\0';
+    }
+    if (err) g_error_free(err);
+    g_free(obj_path);
+}
+
 /* 페어링 탐색 중일 때 기기 상태에 따라 다음 단계(pair→trust→connect)를
  * 진행 — InterfacesAdded/PropertiesChanged 시그널마다 호출되어, 상태가
  * 바뀌는 즉시(폴링 지연 없이) 반응한다. Batocera의 connect_device()와
@@ -513,8 +559,10 @@ static void maybe_pair_device(const char *obj_path)
     if (is_blacklisted(dp.address)) return;
     if (!dp.icon[0] || strncmp(dp.icon, g_pair_filter, strlen(g_pair_filter)) != 0) return;
 
-    if (!g_pairing_target[0])
+    if (!g_pairing_target[0]) {
         snprintf(g_pairing_target, sizeof(g_pairing_target), "%s", obj_path);
+        g_connect_retries = 0;
+    }
 
     const char *label = dp.name[0] ? dp.name : dp.address;
 
@@ -529,16 +577,12 @@ static void maybe_pair_device(const char *obj_path)
         return;
     }
 
-    if (dp.paired && dp.trusted) {
-        char msg[256];
-        snprintf(msg, sizeof(msg), "CONNECTING %s (%s)", label, dp.address);
-        write_pairing_status(msg);
-        g_dbus_connection_call(g_conn, "org.bluez", obj_path, "org.bluez.Device1", "Connect",
-            NULL, NULL, G_DBUS_CALL_FLAGS_NONE, 15000, NULL, async_call_log, (gpointer)"connect");
-        return;
-    }
-
-    if (dp.paired && !dp.trusted) {
+    /* Recalbox 소스의 알려진 우회책 순서 그대로 따름 — 페어링 전에 먼저
+     * Trust부터 설정. 일부 게임패드(8BitDo SN30 Pro 등)는 이 순서가 아니면
+     * 본딩 도중 스스로 연결을 끊음(HCI status 0x13, Remote User Terminated
+     * Connection — 2026-07-04 실기기 bluetoothd -d 로그로 확인).
+     * 참고: https://bbs.archlinux.org/viewtopic.php?pid=2193776#p2193776 */
+    if (!dp.trusted) {
         char msg[256];
         snprintf(msg, sizeof(msg), "TRUSTING %s (%s)", label, dp.address);
         write_pairing_status(msg);
@@ -549,12 +593,21 @@ static void maybe_pair_device(const char *obj_path)
         return;
     }
 
-    /* !dp.paired */
+    if (!dp.paired) {
+        char msg[256];
+        snprintf(msg, sizeof(msg), "PAIRING %s (%s)", label, dp.address);
+        write_pairing_status(msg);
+        g_dbus_connection_call(g_conn, "org.bluez", obj_path, "org.bluez.Device1", "Pair",
+            NULL, NULL, G_DBUS_CALL_FLAGS_NONE, 15000, NULL, async_call_log, (gpointer)"pair");
+        return;
+    }
+
+    /* trusted && paired && !connected */
     char msg[256];
-    snprintf(msg, sizeof(msg), "PAIRING %s (%s)", label, dp.address);
+    snprintf(msg, sizeof(msg), "CONNECTING %s (%s)", label, dp.address);
     write_pairing_status(msg);
-    g_dbus_connection_call(g_conn, "org.bluez", obj_path, "org.bluez.Device1", "Pair",
-        NULL, NULL, G_DBUS_CALL_FLAGS_NONE, 15000, NULL, async_call_log, (gpointer)"pair");
+    g_dbus_connection_call(g_conn, "org.bluez", obj_path, "org.bluez.Device1", "Connect",
+        NULL, NULL, G_DBUS_CALL_FLAGS_NONE, 15000, NULL, on_connect_result, g_strdup(obj_path));
 }
 
 static void on_interfaces_added(GDBusConnection *conn, const gchar *sender, const gchar *object_path,
