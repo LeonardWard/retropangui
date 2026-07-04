@@ -17,6 +17,12 @@ case "$1" in
     start)
         [ -x "${DAEMON}" ] || { logger -t "${TAG}" "rpui-bt 없음, 건너뜀"; exit 0; }
         logger -t "${TAG}" "시작"
+        # CONFIG_BT_HIDP=m 이지만 자동 로드가 안 됨 — 커널이 AF_BLUETOOTH
+        # BTPROTO_HIDP 소켓 프로토콜에 대해 온디맨드 모듈 로딩을 안 해서,
+        # bluetoothd가 "Can't open HIDP control socket"으로 실패하고 패드
+        # 연결이 몇 초 뒤 스스로 끊기는 문제 확인(2026-07-04, 8BitDo SN30 Pro
+        # 실기기 페어링 테스트, bluetoothd -d 디버그 로그로 원인 확인).
+        modprobe hidp 2>/dev/null || true
         . /etc/retropangui.env 2>/dev/null
         export RETROPANGUI_SHARE
         start-stop-daemon --start --quiet --background \

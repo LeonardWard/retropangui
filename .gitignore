@@ -45,3 +45,6 @@ arcguve/
 
 # 사용 안 하는 파일 보관소 (git 미추적, 로컬에만 유지)
 archive/
+
+# 빌드 시 GitHub 태그 내용으로 자동 생성됨 (OTA 첫 부팅 화면용) — 소스 추적 불필요
+board/odroidc5/rootfs-overlay/usr/share/retropangui/changelog.txt
