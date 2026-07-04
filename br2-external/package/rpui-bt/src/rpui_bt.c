@@ -45,7 +45,6 @@
 
 static char g_adapters[MAX_ADAPTERS][16];
 static int  g_nadapter = 0;
-static int  g_persisted = 0;
 
 static GDBusConnection *g_conn = NULL;
 static GMainLoop       *g_loop = NULL;
@@ -105,42 +104,19 @@ static void spawn_and_wait(char *const argv[])
     if (pid > 0) waitpid(pid, NULL, 0);
 }
 
-/* ── /var/lib/bluetooth 영속화 (subprocess 기반, 변경 없음) ──
- * bluez5_utils의 S40bluetoothd는 share 마운트(S61share)보다 먼저 떠서
- * 로컬 /var/lib/bluetooth로 시작한다. rpui-bt는 share 마운트 이후
- * (S65) 기동되므로, 여기서 한 번 심볼릭 링크로 갈아끼우고 bluetoothd를
- * 재시작해 이후 페어링 정보가 share에 영속되도록 한다. */
-static void setup_persistence(void)
-{
-    if (g_persisted) return;
-
-    struct stat st;
-    if (lstat("/var/lib/bluetooth", &st) == 0 && S_ISLNK(st.st_mode)) {
-        g_persisted = 1;
-        return;
-    }
-
-    char share[192], target[256];
-    get_share_root(share, sizeof(share));
-    snprintf(target, sizeof(target), "%s/system/bluetooth", share);
-    mkdir_p(target);
-
-    char *stop_argv[] = { (char*)"/etc/init.d/S40bluetoothd", (char*)"stop", NULL };
-    spawn_and_wait(stop_argv);
-    usleep(300000);
-
-    char cmd[512];
-    snprintf(cmd, sizeof(cmd), "cp -a /var/lib/bluetooth/. '%s/' 2>/dev/null; rm -rf /var/lib/bluetooth && ln -s '%s' /var/lib/bluetooth", target, target);
-    char *sh_argv[] = { (char*)"sh", (char*)"-c", cmd, NULL };
-    spawn_and_wait(sh_argv);
-
-    char *start_argv[] = { (char*)"/etc/init.d/S40bluetoothd", (char*)"start", NULL };
-    spawn_and_wait(start_argv);
-    usleep(500000);
-
-    g_persisted = 1;
-    fprintf(stderr, "[rpui-bt] /var/lib/bluetooth → %s 로 영속화 완료\n", target);
-}
+/* ── /var/lib/bluetooth 영속화는 불필요 ────────────────────
+ * 2026-07-04: 처음엔 bluez5_utils의 S40bluetoothd가 share 마운트보다
+ * 먼저 떠서 로컬 /var/lib/bluetooth로 시작하니, share 파티션(exFAT)으로
+ * 심볼릭 링크를 걸어 영속화하는 코드가 있었음 — 그런데 exFAT는 콜론(:)이
+ * 든 파일/디렉토리명을 아예 못 만든다(mkdir: Invalid argument). BlueZ는
+ * 페어링 정보를 /var/lib/bluetooth/<어댑터MAC>/<기기MAC>/ 형태(콜론 포함)
+ * 로 저장하므로, 이 심볼릭 링크가 오히려 본딩 데이터 저장을 막아서
+ * 재부팅하면 페어링이 통째로 사라지는 문제를 만들고 있었음(실기기 확인).
+ *
+ * 실제로는 루트 파일시스템 자체가 overlay(lowerdir=squashfs 읽기전용,
+ * upperdir=/overlay/upper, ext4·재부팅해도 유지됨)라서, /var/lib/bluetooth를
+ * 아무 손도 안 대고 그냥 두면 자동으로 /overlay/upper/var/lib/bluetooth에
+ * 저장되어 이미 영속됨 — 별도 처리가 애초에 필요 없었음. */
 
 /* ── status.json ──────────────────────────────────────────── */
 
@@ -660,7 +636,6 @@ static void adapter_added(const char *hciname)
 
     if (was_empty) {
         /* 첫 어댑터만 상위(primary)로 전원을 켬 — RF 간섭 방지(primary_adapter() 주석 참고) */
-        setup_persistence();
         configure_adapter(hciname);
     } else {
         fprintf(stderr, "[rpui-bt] %s는 보조 어댑터로 대기(전원 안 켬)\n", hciname);
