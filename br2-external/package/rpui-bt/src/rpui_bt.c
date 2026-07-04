@@ -805,7 +805,9 @@ static void scan_existing_adapters(void)
     int n = 0;
     struct dirent *ent;
     while ((ent = readdir(d)) != NULL && n < MAX_ADAPTERS) {
-        if (strncmp(ent->d_name, "hci", 3) == 0)
+        /* "hci0:3" 같은 연결 서브 디바이스는 진짜 어댑터가 아니므로 제외
+         * (parse_uevent()의 동일 필터링 참고) */
+        if (strncmp(ent->d_name, "hci", 3) == 0 && strchr(ent->d_name, ':') == NULL)
             snprintf(names[n++], sizeof(names[0]), "%s", ent->d_name);
     }
     closedir(d);
@@ -838,6 +840,12 @@ static void parse_uevent(const char *buf, ssize_t len)
     const char *slash = strrchr(devpath, '/');
     const char *hciname = slash ? slash + 1 : devpath;
     if (strncmp(hciname, "hci", 3) != 0) return;
+    /* "hci0:3" 같은 이름은 실제 어댑터가 아니라 hci0의 개별 연결(ACL 링크)마다
+     * 커널이 만드는 서브 디바이스 — 연결/해제될 때마다 add/remove uevent가
+     * 따로 발생해서 이걸 "새 어댑터 추가/제거"로 잘못 처리하고 있었음
+     * (2026-07-05 실기기 디버그 로그로 확인: 패드 재연결 시도마다 hci0:N이
+     * 계속 늘어났다 지워짐). 콜론이 있으면 진짜 어댑터가 아니므로 무시. */
+    if (strchr(hciname, ':') != NULL) return;
 
     if (strcmp(action, "add") == 0) {
         usleep(500000);
