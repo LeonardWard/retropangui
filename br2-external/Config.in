@@ -15,3 +15,4 @@ source "$BR2_EXTERNAL_C5_PANGUI_PATH/package/kodi-peripheral-joystick-pangui/Con
 source "$BR2_EXTERNAL_C5_PANGUI_PATH/package/rpui-launcher/Config.in"
 source "$BR2_EXTERNAL_C5_PANGUI_PATH/package/rpui-wifi/Config.in"
 source "$BR2_EXTERNAL_C5_PANGUI_PATH/package/rpui-rtl8821cu/Config.in"
+source "$BR2_EXTERNAL_C5_PANGUI_PATH/package/rpui-bt/Config.in"

@@ -1,0 +1,9 @@
+config BR2_PACKAGE_RPUI_BT
+	bool "rpui-bt"
+	select BR2_PACKAGE_BLUEZ5_UTILS
+	select BR2_PACKAGE_BLUEZ5_UTILS_CLIENT
+	help
+	  RetroPangUI 블루투스 관리 데몬.
+	  USB BT 동글 핫플러그 감지, /var/lib/bluetooth를 share 파티션으로
+	  영속화, bluetoothctl 제어(전원/페어링/신뢰) 및 ES와 파일 기반
+	  IPC(status.json)를 담당한다.
