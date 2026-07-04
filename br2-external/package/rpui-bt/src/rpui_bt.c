@@ -279,6 +279,31 @@ static void cli_remove(const char *mac)
     printf("제거: %s\n", mac);
 }
 
+/* 페어링 기록 전체 초기화 — GUI의 "삭제" 메뉴(목록 없이 바로 전체 삭제)용 */
+static void cli_remove_all(void)
+{
+    FILE *p = popen("bluetoothctl devices Paired 2>/dev/null", "r");
+    if (!p) { printf("페어링된 기기 없음\n"); return; }
+
+    char line[256];
+    int count = 0;
+    while (fgets(line, sizeof(line), p)) {
+        char *dp = strstr(line, "Device ");
+        if (!dp) continue;
+        dp += 7;
+        char mac[18] = "";
+        char *sp = strchr(dp, ' ');
+        if (!sp || (size_t)(sp - dp) >= sizeof(mac)) continue;
+        strncpy(mac, dp, (size_t)(sp - dp));
+        mac[sp - dp] = '\0';
+
+        cli_remove(mac);
+        count++;
+    }
+    pclose(p);
+    printf("전체 삭제 완료: %d개\n", count);
+}
+
 /* ── D-Bus: 어댑터 경로/속성 ──────────────────────────────── */
 
 static char *adapter_obj_path(const char *hciname)
@@ -1055,7 +1080,7 @@ static void usage(void)
 {
     fprintf(stderr,
         "사용법: rpui-bt <list|live_devices|trust-pad|trust-audio|"
-        "scan-start-pad|scan-start-audio|scan-stop|pair <MAC>|remove <MAC>|"
+        "scan-start-pad|scan-start-audio|scan-stop|pair <MAC>|remove <MAC>|remove-all|"
         "blacklist <MAC> [name]|unblacklist <MAC>>\n");
 }
 
@@ -1078,6 +1103,7 @@ int main(int argc, char **argv)
         cli_write_cmd(cmd);
     }
     else if (strcmp(argv[1], "remove") == 0 && argc >= 3)      cli_remove(argv[2]);
+    else if (strcmp(argv[1], "remove-all") == 0)               cli_remove_all();
     else if (strcmp(argv[1], "blacklist") == 0 && argc >= 3)   cli_blacklist(argv[2], argc >= 4 ? argv[3] : NULL);
     else if (strcmp(argv[1], "unblacklist") == 0 && argc >= 3) cli_unblacklist(argv[2]);
     else { usage(); return 1; }
