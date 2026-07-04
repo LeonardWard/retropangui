@@ -519,11 +519,28 @@ static int cli_scanlist(void)
 
     char *const scan_argv[] = { "wpa_cli", "-i", ifname, "scan", NULL };
     spawn_and_wait(scan_argv);
-    sleep(2); /* 스캔 완료 대기 */
 
+    /* 스캔 소요시간이 채널/대역폭에 따라 들쭉날쭉해서(2.4/5GHz 둘 다 훑으면 몇 초씩 걸림)
+     * 고정 대기 대신 결과가 나올 때까지 짧게 여러 번 재시도 (최대 ~6초) */
     char cmd[64];
     snprintf(cmd, sizeof(cmd), "wpa_cli -i %s scan_results 2>/dev/null", ifname);
-    FILE *p = popen(cmd, "r");
+
+    FILE *p = NULL;
+    for (int attempt = 0; attempt < 6; attempt++) {
+        sleep(1);
+        p = popen(cmd, "r");
+        if (!p) continue;
+
+        char peek[256];
+        int lines = 0;
+        while (fgets(peek, sizeof(peek), p)) lines++;
+        pclose(p);
+
+        if (lines > 1) break; /* 헤더 외에 결과가 있으면 충분 */
+        p = NULL;
+    }
+
+    p = popen(cmd, "r");
     if (!p) { printf("{\"networks\": []}\n"); return 1; }
 
     printf("{\n  \"networks\": [\n");
