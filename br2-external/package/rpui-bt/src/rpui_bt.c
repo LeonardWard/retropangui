@@ -308,6 +308,17 @@ static char *adapter_obj_path(const char *hciname)
     return g_strdup_printf("/org/bluez/%s", hciname);
 }
 
+/* g_adapters[0]("상위" 어댑터, 보통 hci0)만 실제로 사용 — 전원 on, 스캔,
+ * 페어링 전부 여기서만 진행. 2026-07-04 실기기에서 확인: BT 동글 2개를
+ * 동시에 켜두면(둘 다 discoverable/scanning) 2.4GHz 자체 간섭으로 페어링이
+ * 붙었다 끊겼다 하는 불안정한 증상이 생김 — 동글 하나만 뽑으니 바로
+ * 정상화됨. 보조 어댑터는 감지만 하고 전원을 켜지 않는다(상위 어댑터가
+ * 제거되면 다음 것이 자동 승계). */
+static const char *primary_adapter(void)
+{
+    return g_nadapter > 0 ? g_adapters[0] : NULL;
+}
+
 static void adapter_set_bool(const char *hciname, const char *prop, gboolean val)
 {
     char *path = adapter_obj_path(hciname);
@@ -338,12 +349,12 @@ static void start_discovery_on(const char *hciname)
 
 static void stop_discovery_all(void)
 {
-    for (int i = 0; i < g_nadapter; i++) {
-        char *path = adapter_obj_path(g_adapters[i]);
-        g_dbus_connection_call(g_conn, "org.bluez", path, "org.bluez.Adapter1", "StopDiscovery",
-            NULL, NULL, G_DBUS_CALL_FLAGS_NONE, 5000, NULL, NULL, NULL); /* best-effort, 결과 무시 */
-        g_free(path);
-    }
+    const char *primary = primary_adapter();
+    if (!primary) return;
+    char *path = adapter_obj_path(primary);
+    g_dbus_connection_call(g_conn, "org.bluez", path, "org.bluez.Adapter1", "StopDiscovery",
+        NULL, NULL, G_DBUS_CALL_FLAGS_NONE, 5000, NULL, NULL, NULL); /* best-effort, 결과 무시 */
+    g_free(path);
 }
 
 /* 어댑터 기본 설정 — Just Works 자동 페어링(에이전트는 데몬 전체에 한 번만
@@ -642,25 +653,44 @@ static void adapter_added(const char *hciname)
         if (strcmp(g_adapters[i], hciname) == 0) return;
     if (g_nadapter >= MAX_ADAPTERS) return;
 
+    int was_empty = (g_nadapter == 0);
     strncpy(g_adapters[g_nadapter], hciname, sizeof(g_adapters[g_nadapter]) - 1);
     g_nadapter++;
     fprintf(stderr, "[rpui-bt] adapter added: %s\n", hciname);
 
-    setup_persistence();
-    configure_adapter(hciname);
+    if (was_empty) {
+        /* 첫 어댑터만 상위(primary)로 전원을 켬 — RF 간섭 방지(primary_adapter() 주석 참고) */
+        setup_persistence();
+        configure_adapter(hciname);
+    } else {
+        fprintf(stderr, "[rpui-bt] %s는 보조 어댑터로 대기(전원 안 켬)\n", hciname);
+    }
     write_status_json();
 }
 
+static int hci_name_cmp(const void *a, const void *b)
+{
+    return strcmp((const char*)a, (const char*)b);
+}
+
+/* /sys/class/bluetooth/ 스캔 순서(readdir)는 정렬 보장이 없어서, hci0가
+ * 항상 먼저 primary로 잡히도록 이름순 정렬 후 추가한다. */
 static void scan_existing_adapters(void)
 {
     DIR *d = opendir("/sys/class/bluetooth");
     if (!d) return;
+
+    char names[MAX_ADAPTERS][16];
+    int n = 0;
     struct dirent *ent;
-    while ((ent = readdir(d)) != NULL) {
+    while ((ent = readdir(d)) != NULL && n < MAX_ADAPTERS) {
         if (strncmp(ent->d_name, "hci", 3) == 0)
-            adapter_added(ent->d_name);
+            snprintf(names[n++], sizeof(names[0]), "%s", ent->d_name);
     }
     closedir(d);
+
+    qsort(names, (size_t)n, sizeof(names[0]), hci_name_cmp);
+    for (int i = 0; i < n; i++) adapter_added(names[i]);
 }
 
 static void parse_uevent(const char *buf, ssize_t len)
@@ -695,9 +725,14 @@ static void parse_uevent(const char *buf, ssize_t len)
         for (int i = 0; i < g_nadapter; i++) {
             if (strcmp(g_adapters[i], hciname) == 0) {
                 fprintf(stderr, "[rpui-bt] adapter removed: %s\n", hciname);
+                int was_primary = (i == 0);
                 memmove(&g_adapters[i], &g_adapters[i+1],
                         sizeof(g_adapters[0]) * (size_t)(g_nadapter - i - 1));
                 g_nadapter--;
+                if (was_primary && g_nadapter > 0) {
+                    fprintf(stderr, "[rpui-bt] %s를 새 상위 어댑터로 승격\n", g_adapters[0]);
+                    configure_adapter(g_adapters[0]);
+                }
                 write_status_json();
                 break;
             }
@@ -732,10 +767,13 @@ static gboolean on_discovery_timeout(gpointer user_data)
 
 static void begin_pairing_search(const char *icon_filter)
 {
+    const char *primary = primary_adapter();
+    if (!primary) { write_pairing_status("실패: 사용 가능한 BT 어댑터 없음"); return; }
+
     snprintf(g_pair_filter, sizeof(g_pair_filter), "%s", icon_filter);
     g_pairing_target[0] = '\0';
     write_pairing_status("SCANNING");
-    for (int i = 0; i < g_nadapter; i++) start_discovery_on(g_adapters[i]);
+    start_discovery_on(primary);
     g_timeout_add_seconds(DISCOVERY_MAX_WAIT, on_discovery_timeout, NULL);
 }
 
