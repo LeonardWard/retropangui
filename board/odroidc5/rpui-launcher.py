@@ -9,6 +9,8 @@ from pathlib import Path
 PRIORITIES_CONF = "/etc/retropangui/priorities.conf"
 RETROARCH_BIN   = "/usr/bin/retroarch"
 ETC_RA_CFG      = "/etc/retroarch.cfg"
+AUTOCONFIG_DIR  = "/etc/retroarch/autoconfig"
+HOTKEY_OVERRIDE_CFG = "/tmp/retropangui-hotkey-override.retroarch.cfg"
 
 
 def log(msg):
@@ -66,6 +68,86 @@ def resolve_core_path(module_id, cores_path):
     return str(core_so)
 
 
+def detect_joypad_names():
+    """/proc/bus/input/devices에서 joydev(js*) 핸들러를 가진 장치 이름 목록 반환.
+    (키보드/마우스 등은 js 핸들러가 없어서 자동 제외됨)"""
+    names = []
+    try:
+        content = Path("/proc/bus/input/devices").read_text()
+    except OSError:
+        return names
+
+    for block in content.split("\n\n"):
+        name = None
+        has_js = False
+        for line in block.splitlines():
+            if line.startswith("N: Name="):
+                name = line.split("=", 1)[1].strip().strip('"')
+            elif line.startswith("H: Handlers="):
+                if any(tok.startswith("js") for tok in line.split("=", 1)[1].split()):
+                    has_js = True
+        if name and has_js:
+            names.append(name)
+    return names
+
+
+def find_hotkey_btn_for_device(name):
+    """/etc/retroarch/autoconfig/*.cfg 중 이 장치 이름(또는 alt 이름)과 일치하는
+    파일을 찾아 input_menu_toggle_btn(가이드/홈 버튼) 값을 반환.
+
+    RetroArch의 input_enable_hotkey_btn은 전역 설정이라 조이패드별 autoconfig
+    안에 적어도 무시됨(2026-07-05, 8BitDo SN30 Pro 실기기 확인 — 홈 버튼이
+    패드마다 다른 인덱스인데 전역값은 Xbox 360 무선 수신기 기준으로 고정돼
+    있어서 다른 패드에서는 엉뚱한 버튼이 핫키로 걸림). 그래서 매 실행마다
+    현재 연결된 패드에 맞는 값을 여기서 직접 계산해 appendconfig로 주입한다."""
+    try:
+        entries = os.listdir(AUTOCONFIG_DIR)
+    except OSError:
+        return None
+
+    for fname in entries:
+        path = Path(AUTOCONFIG_DIR) / fname
+        try:
+            text = path.read_text()
+        except OSError:
+            continue
+
+        device_match = False
+        menu_btn = None
+        for line in text.splitlines():
+            line = line.strip()
+            if "=" not in line:
+                continue
+            key, _, val = line.partition("=")
+            key = key.strip()
+            val = val.strip().strip('"')
+            if key == "input_device" or (key.startswith("input_device_alt") and not key.endswith("_display_name")):
+                if val == name:
+                    device_match = True
+            elif key == "input_menu_toggle_btn":
+                menu_btn = val
+
+        if device_match and menu_btn is not None:
+            return menu_btn
+    return None
+
+
+def write_hotkey_override():
+    """연결된 패드 중 autoconfig에 input_menu_toggle_btn이 있는 첫 번째 것을 찾아
+    input_enable_hotkey_btn 오버라이드 파일을 써서 경로를 반환. 없으면 None."""
+    for jp_name in detect_joypad_names():
+        btn = find_hotkey_btn_for_device(jp_name)
+        if btn is not None:
+            try:
+                Path(HOTKEY_OVERRIDE_CFG).write_text(f'input_enable_hotkey_btn = "{btn}"\n')
+            except OSError as e:
+                log(f"Warning: 핫키 오버라이드 파일 작성 실패 — {e}")
+                return None
+            log(f"핫키 버튼 오버라이드: '{jp_name}' → 버튼 {btn}")
+            return HOTKEY_OVERRIDE_CFG
+    return None
+
+
 def build_appendconfig_chain(rom_path, roms_root):
     """
     romsRoot/sys/ 에서 rom dir 까지 내려가며 .retroarch.cfg 수집.
@@ -100,6 +182,14 @@ def build_appendconfig_chain(rom_path, roms_root):
     # /etc/retroarch.cfg 를 맨 앞에 삽입
     if Path(ETC_RA_CFG).exists():
         chain.insert(0, ETC_RA_CFG)
+
+    # 패드별 핫키 버튼 오버라이드 — /etc/retroarch.cfg(전역 기본값) 바로 뒤,
+    # 시스템/게임별 커스텀 설정보다는 앞에 두어서 게임별 설정이 필요하면
+    # 여전히 우선하도록 함
+    hotkey_override = write_hotkey_override()
+    if hotkey_override:
+        insert_at = 1 if (chain and chain[0] == ETC_RA_CFG) else 0
+        chain.insert(insert_at, hotkey_override)
 
     return "|".join(chain)
 
