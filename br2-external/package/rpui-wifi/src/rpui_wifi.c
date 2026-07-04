@@ -181,12 +181,24 @@ static void spawn_and_wait(char *const argv[])
     if (pid > 0) waitpid(pid, NULL, 0);
 }
 
+/* SIGTERM 보낸 뒤 프로세스가 실제로 죽을 때까지 기다림 — 안 기다리면
+ * wlan0 인터페이스를 아직 붙잡고 있는 상태에서 다음 wpa_supplicant가
+ * 뜨려다 실패하는 경쟁 조건이 생김 (2026-07-04 실기기에서 확인:
+ * scan-only → enable 전환 시 새 wpa_supplicant가 조용히 기동 실패). */
 static void kill_pidfile(const char *pidfile)
 {
     char buf[32];
     if (read_first_line(pidfile, buf, sizeof(buf)) == 0) {
         pid_t pid = (pid_t)atoi(buf);
-        if (pid > 0) kill(pid, SIGTERM);
+        if (pid > 0) {
+            kill(pid, SIGTERM);
+            for (int i = 0; i < 20; i++) { /* 최대 2초 대기 (100ms 간격) */
+                if (kill(pid, 0) != 0) break; /* 이미 죽음 (ESRCH) */
+                usleep(100000);
+            }
+            if (kill(pid, 0) == 0) /* 그래도 안 죽으면 강제 종료 */
+                kill(pid, SIGKILL);
+        }
     }
     unlink(pidfile);
 }
