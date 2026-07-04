@@ -696,10 +696,15 @@ static void maybe_pair_device(const char *obj_path)
         snprintf(msg, sizeof(msg), "CONNECTED %s (%s)", label, dp.address);
         write_pairing_status(msg);
         fprintf(stderr, "[rpui-bt] %s\n", msg);
-        g_pair_filter[0] = '\0';
-        g_pairing_target[0] = '\0';
-        stop_discovery_all();
-        write_discovery_list(); /* 스캔 세션 종료 — GUI에 빈 배열로 알림 */
+        /* 세션을 여기서 바로 끝내지 않는다 — 8BitDo SN30 Pro 등 일부 패드는
+         * 붙었다가 몇 초 뒤 스스로 끊기는 고질적 증상이 있어서(2026-07-05
+         * 실기기 재확인: Connected 스냅샷을 찍고 세션을 끝내버린 직후 실제
+         * 연결이 끊겼는데 아무도 재시도를 안 해서 방치됨), g_pair_filter와
+         * g_pairing_target을 그대로 두고 계속 모니터링한다. 끊기면 다음
+         * PropertiesChanged에서 이 함수가 다시 불려 trusted&&paired&&!connected
+         * 분기로 자동 재연결을 시도한다. 최종 세션 종료는
+         * on_discovery_timeout()의 타임아웃(또는 GUI가 scan-stop을 보낼 때)
+         * 에서만 처리. */
         return;
     }
 
@@ -872,8 +877,25 @@ static gboolean on_discovery_timeout(gpointer user_data)
 {
     (void)user_data;
     if (g_pair_filter[0]) {
-        write_pairing_status("TIMEOUT");
-        fprintf(stderr, "[rpui-bt] 페어링 탐색 시간 초과\n");
+        /* maybe_pair_device()가 CONNECTED 상태에서도 세션을 안 끝내고 계속
+         * 모니터링하게 바뀌었으니(끊김 재발 시 자동 재연결 위해), 여기서
+         * 최종적으로 실제 연결 상태를 한 번 더 확인해서 "TIMEOUT"이 실제로는
+         * 연결돼 있는데도 잘못 뜨는 일이 없게 한다. */
+        int actually_connected = 0;
+        if (g_pairing_target[0]) {
+            DeviceProps dp;
+            if (get_device_props(g_pairing_target, &dp) && dp.connected) {
+                char msg[256];
+                snprintf(msg, sizeof(msg), "CONNECTED %s (%s)",
+                         dp.name[0] ? dp.name : dp.address, dp.address);
+                write_pairing_status(msg);
+                actually_connected = 1;
+            }
+        }
+        if (!actually_connected) {
+            write_pairing_status("TIMEOUT");
+            fprintf(stderr, "[rpui-bt] 페어링 탐색 시간 초과\n");
+        }
         g_pair_filter[0] = '\0';
         g_pairing_target[0] = '\0';
         stop_discovery_all();
