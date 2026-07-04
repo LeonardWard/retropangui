@@ -14,12 +14,14 @@ case "$1" in
         nohup sh -c '
             . /etc/retropangui.env
             export SDL_JOYSTICK_HIDAPI MESA_LOADER_DRIVER_OVERRIDE RETROPANGUI_SHARE LIBRETRO_CORES_PATH
-            . /etc/locale.conf
-            export LANG LC_ALL="$LANG"
             export HOME=/root
             # shutdown 신호 시 루프 종료 — stop 섹션이 SIGTERM을 보내면 클린 exit
             trap "exit 0" TERM INT
             while true; do
+                # locale.conf는 루프 안에서 매번 다시 읽음 — ES 재시작만으로 언어 변경이 반영되게 함
+                # (루프 밖에서 한 번만 읽으면 언어 변경 시 전체 재부팅이 있어야만 적용되는 문제 있었음)
+                . /etc/locale.conf
+                export LANG LC_ALL="$LANG"
                 rm -f /tmp/es-restart /tmp/es-shutdown /tmp/es-sysrestart /tmp/es-kodi
                 # HDMI 연결 대기 (최대 60초) — 뽑혀있으면 PHY/DRM 초기화가 실패함
                 i=0
