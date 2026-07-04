@@ -150,16 +150,10 @@ menus:
         conf_key: system.samba
         restart: none
 
-      - id: rp.wifi_start
-        label: "WIFI 시작"
-        type: command
-        exec: "rpui-wifi start"
-        restart: none
-
-      - id: rp.wifi_disable
-        label: "WIFI 끄기"
-        type: command
-        exec: "rpui-wifi disable"
+      - id: rp.wifi
+        label: "WIFI"
+        type: toggle
+        conf_key: system.wifi.enabled
         restart: none
 
   - id: video_settings

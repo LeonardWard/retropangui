@@ -173,6 +173,14 @@ while IFS='=' read -r raw_key raw_val; do
                     [ -f /etc/init.d/S91ksmbd ] && /etc/init.d/S91ksmbd stop 2>/dev/null ;;
             esac
             ;;
+        system.wifi.enabled)
+            case "${val}" in
+                1|yes|true)
+                    command -v rpui-wifi >/dev/null 2>&1 && rpui-wifi start 2>/dev/null ;;
+                0|no|false)
+                    command -v rpui-wifi >/dev/null 2>&1 && rpui-wifi disable 2>/dev/null ;;
+            esac
+            ;;
         system.volume)
             amixer -q sset 'Master' "${val}%" 2>/dev/null || true
             ;;

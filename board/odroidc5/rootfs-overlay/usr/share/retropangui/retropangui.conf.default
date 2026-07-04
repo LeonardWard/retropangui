@@ -36,10 +36,8 @@ system.ssh=true
 # Samba 파일 공유 활성화
 system.samba=true
 
-# Wi-Fi (미구현, 향후 지원 예정)
-# system.wifi.enabled=false
-# system.wifi.ssid=
-# system.wifi.key=
+# Wi-Fi 사용 (SSID/비밀번호는 ES WIFI 네트워크 선택 메뉴에서 별도 설정, share/system/wifi.conf에 저장됨)
+system.wifi.enabled=true
 
 
 ## Section C - Audio ##
