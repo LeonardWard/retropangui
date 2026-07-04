@@ -99,6 +99,42 @@ static void bt_ctl(const char *cmd)
     spawn_and_wait(argv);
 }
 
+/* bluetoothctl을 인터랙티브 모드로 띄운 채 데몬 수명 내내 유지 — BlueZ의
+ * agent 등록은 D-Bus 연결(=이 프로세스)이 살아있는 동안만 유효하다.
+ * bt_ctl()처럼 매번 새 프로세스로 "agent ..."를 실행하면 등록 직후
+ * 프로세스가 종료되며 바로 해제되어, 이후 pair가 에이전트 없이 진행되다
+ * 조용히 실패한다(2026-07-04 실기기 확인: 원샷 방식은 "성공" 메시지가
+ * 찍혀도 실제로는 Paired:no — 프로세스를 살려두자 정상 동작 확인). */
+static FILE *g_agent_proc = NULL;
+
+static void start_persistent_agent(void)
+{
+    if (g_agent_proc) return;
+
+    int pipefd[2];
+    if (pipe(pipefd) != 0) return;
+
+    pid_t pid = fork();
+    if (pid < 0) { close(pipefd[0]); close(pipefd[1]); return; }
+
+    if (pid == 0) {
+        dup2(pipefd[0], STDIN_FILENO);
+        close(pipefd[0]);
+        close(pipefd[1]);
+        int devnull = open("/dev/null", O_RDWR);
+        if (devnull >= 0) { dup2(devnull, STDOUT_FILENO); dup2(devnull, STDERR_FILENO); close(devnull); }
+        execlp("bluetoothctl", "bluetoothctl", (char*)NULL);
+        _exit(127);
+    }
+
+    close(pipefd[0]);
+    g_agent_proc = fdopen(pipefd[1], "w");
+    if (!g_agent_proc) { close(pipefd[1]); return; }
+
+    fprintf(g_agent_proc, "agent NoInputNoOutput\ndefault-agent\n");
+    fflush(g_agent_proc);
+}
+
 /* ── /var/lib/bluetooth 영속화 ────────────────────────────
  * bluez5_utils의 S40bluetoothd는 share 마운트(S61share)보다 먼저 떠서
  * 로컬 /var/lib/bluetooth로 시작한다. rpui-bt는 share 마운트 이후
@@ -142,8 +178,7 @@ static void setup_persistence(void)
 static void configure_adapter(void)
 {
     bt_ctl("power on");
-    bt_ctl("agent NoInputNoOutput");
-    bt_ctl("default-agent");
+    start_persistent_agent();
     bt_ctl("pairable on");
 }
 
