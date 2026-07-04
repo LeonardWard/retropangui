@@ -855,6 +855,46 @@ static gboolean on_discovery_timeout(gpointer user_data)
     return G_SOURCE_REMOVE;
 }
 
+/* maybe_pair_device()는 InterfacesAdded/PropertiesChanged 시그널에만 반응하는데,
+ * 이미 BlueZ가 알고 있는 기기(예: 과거에 페어링됐다가 !Connected인 상태로
+ * 남아있는 기기)는 다시 광고를 시작해도 "속성이 실제로 안 바뀌면" 시그널
+ * 자체가 새로 안 올 수 있다 — 그러면 스캔을 시작해도 재연결이 영영 트리거
+ * 안 됨(2026-07-04 실기기 확인: Paired=true인 8BitDo SN30 Pro가 재부팅 후
+ * 다시 켜져도 데몬이 전혀 반응 안 하고 Connected=no로 계속 남음). 스캔 시작
+ * 시점에 이미 알려진 기기들에 대해서도 한 번씩 강제로 maybe_pair_device()를
+ * 호출해서 즉시 반응하도록 한다. */
+static void kickstart_known_devices(void)
+{
+    const char *primary = primary_adapter();
+    if (!primary) return;
+
+    GError *err = NULL;
+    GVariant *result = g_dbus_connection_call_sync(g_conn, "org.bluez", "/",
+        "org.freedesktop.DBus.ObjectManager", "GetManagedObjects", NULL,
+        G_VARIANT_TYPE("(a{oa{sa{sv}}})"), G_DBUS_CALL_FLAGS_NONE, 5000, NULL, &err);
+    if (err) { g_error_free(err); return; }
+    if (!result) return;
+
+    char *prefix = g_strdup_printf("/org/bluez/%s/dev_", primary);
+    GVariant *managed = g_variant_get_child_value(result, 0);
+
+    GVariantIter iter;
+    const gchar *obj_path;
+    GVariant *interfaces;
+    g_variant_iter_init(&iter, managed);
+    while (g_variant_iter_loop(&iter, "{&o@a{sa{sv}}}", &obj_path, &interfaces)) {
+        if (!g_str_has_prefix(obj_path, prefix)) continue;
+        GVariant *dev = g_variant_lookup_value(interfaces, "org.bluez.Device1", G_VARIANT_TYPE("a{sv}"));
+        if (!dev) continue;
+        g_variant_unref(dev);
+        maybe_pair_device(obj_path);
+    }
+
+    g_variant_unref(managed);
+    g_variant_unref(result);
+    g_free(prefix);
+}
+
 static void begin_pairing_search(const char *icon_filter)
 {
     const char *primary = primary_adapter();
@@ -865,6 +905,7 @@ static void begin_pairing_search(const char *icon_filter)
     write_pairing_status("SCANNING");
     write_discovery_list(); /* 빈 목록(또는 이미 알려진 기기)으로 초기화 */
     start_discovery_on(primary);
+    kickstart_known_devices(); /* 이미 알려진 기기(재연결 대상) 즉시 확인 */
     g_timeout_add_seconds(DISCOVERY_MAX_WAIT, on_discovery_timeout, NULL);
 }
 
