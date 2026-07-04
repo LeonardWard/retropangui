@@ -538,7 +538,7 @@ static void write_discovery_list(void)
     const gchar *obj_path;
     GVariant *interfaces;
     g_variant_iter_init(&iter, managed);
-    while (g_variant_iter_loop(&iter, "{&oa{sa{sv}}}", &obj_path, &interfaces)) {
+    while (g_variant_iter_loop(&iter, "{&o@a{sa{sv}}}", &obj_path, &interfaces)) {
         if (!g_str_has_prefix(obj_path, prefix)) continue;
 
         GVariant *dev = g_variant_lookup_value(interfaces, "org.bluez.Device1", G_VARIANT_TYPE("a{sv}"));
