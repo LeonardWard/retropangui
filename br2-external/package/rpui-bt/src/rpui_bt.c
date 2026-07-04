@@ -476,6 +476,12 @@ static int get_device_props(const char *obj_path, DeviceProps *out)
     return out->address[0] != '\0';
 }
 
+/* 페어링 탐색 중 처음 매칭된 후보 하나에만 고정 — 동일 물리 기기가 서로
+ * 다른 MAC 2개로 동시에 광고되는 경우(2026-07-04 실기기에서 8BitDo SN30
+ * Pro가 이런 걸로 확인됨) 여러 후보를 동시에 pair 시도하면 상태 메시지가
+ * 뒤섞여서 실제로는 실패한 쪽의 "완료"가 찍히는 등 혼란이 생김. */
+static char g_pairing_target[256] = "";
+
 static void async_call_log(GObject *src, GAsyncResult *res, gpointer user_data)
 {
     GError *err = NULL;
@@ -487,6 +493,7 @@ static void async_call_log(GObject *src, GAsyncResult *res, gpointer user_data)
         char msg[256];
         snprintf(msg, sizeof(msg), "실패: %s (%s)", op, err->message);
         write_pairing_status(msg);
+        g_pairing_target[0] = '\0'; /* 이 후보 포기 — 다른 후보(예: 같은 기기의 다른 MAC) 재시도 허용 */
         g_error_free(err);
     }
 }
@@ -498,12 +505,16 @@ static void async_call_log(GObject *src, GAsyncResult *res, gpointer user_data)
 static void maybe_pair_device(const char *obj_path)
 {
     if (!g_pair_filter[0]) return; /* 페어링 탐색 중 아님 */
+    if (g_pairing_target[0] && strcmp(obj_path, g_pairing_target) != 0) return; /* 이미 다른 후보 진행 중 */
 
     DeviceProps dp;
     if (!get_device_props(obj_path, &dp)) return;
     if (!dp.address[0]) return;
     if (is_blacklisted(dp.address)) return;
     if (!dp.icon[0] || strncmp(dp.icon, g_pair_filter, strlen(g_pair_filter)) != 0) return;
+
+    if (!g_pairing_target[0])
+        snprintf(g_pairing_target, sizeof(g_pairing_target), "%s", obj_path);
 
     const char *label = dp.name[0] ? dp.name : dp.address;
 
@@ -513,6 +524,7 @@ static void maybe_pair_device(const char *obj_path)
         write_pairing_status(msg);
         fprintf(stderr, "[rpui-bt] %s\n", msg);
         g_pair_filter[0] = '\0';
+        g_pairing_target[0] = '\0';
         stop_discovery_all();
         return;
     }
@@ -659,6 +671,7 @@ static gboolean on_discovery_timeout(gpointer user_data)
         write_pairing_status("TIMEOUT");
         fprintf(stderr, "[rpui-bt] 페어링 탐색 시간 초과\n");
         g_pair_filter[0] = '\0';
+        g_pairing_target[0] = '\0';
         stop_discovery_all();
     }
     return G_SOURCE_REMOVE;
@@ -667,6 +680,7 @@ static gboolean on_discovery_timeout(gpointer user_data)
 static void begin_pairing_search(const char *icon_filter)
 {
     snprintf(g_pair_filter, sizeof(g_pair_filter), "%s", icon_filter);
+    g_pairing_target[0] = '\0';
     write_pairing_status("SCANNING");
     for (int i = 0; i < g_nadapter; i++) start_discovery_on(g_adapters[i]);
     g_timeout_add_seconds(DISCOVERY_MAX_WAIT, on_discovery_timeout, NULL);
