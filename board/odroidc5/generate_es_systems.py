@@ -34,17 +34,23 @@ def generate(systems, roms_path, retroarch, config):
         lines.append(f'    <fullname>{fullname}</fullname>')
         lines.append(f'    <path>{roms_path}/{name}</path>')
         lines.append(f'    <extension>{extensions}</extension>')
-        lines.append('    <cores>')
-        for c in cores:
+        if cores:
+            lines.append('    <cores>')
+            for c in cores:
+                lines.append(
+                    f'      <core name="{c["name"]}" fullname="{c["fullname"]}"'
+                    f' module_id="{c["module_id"]}" priority="{c["priority"]}"'
+                    f' extensions="{extensions}"/>'
+                )
+            lines.append('    </cores>')
             lines.append(
-                f'      <core name="{c["name"]}" fullname="{c["fullname"]}"'
-                f' module_id="{c["module_id"]}" priority="{c["priority"]}"'
-                f' extensions="{extensions}"/>'
+                '    <command>/usr/bin/rpui-launcher %SYSTEM% %ROM% default %CORE%</command>'
             )
-        lines.append('    </cores>')
-        lines.append(
-            '    <command>/usr/bin/rpui-launcher %SYSTEM% %ROM% default %CORE%</command>'
-        )
+        else:
+            # cores가 없는 시스템(예: utility) — RetroArch를 거치지 않고
+            # 롬(실행 스크립트)을 그대로 실행. 2026-07-05, AI CLI 등
+            # 터미널 유틸리티를 게임처럼 실행하기 위한 용도.
+            lines.append('    <command>%ROM%</command>')
         lines.append(f'    <platform>{platform}</platform>')
         lines.append(f'    <theme>{theme}</theme>')
         lines.append('  </system>')

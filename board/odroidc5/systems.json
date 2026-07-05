@@ -130,5 +130,13 @@
     "cores": [
       { "name": "np2kai", "fullname": "Neko Project II Kai", "module_id": "lr-np2kai", "priority": 1 }
     ]
+  },
+  {
+    "name": "utility",
+    "fullname": "유틸리티",
+    "extensions": ".sh",
+    "platform": "pc",
+    "theme": "pc",
+    "cores": []
   }
 ]

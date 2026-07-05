@@ -11,7 +11,10 @@
 
 SHARE="/retropangui/share"
 BUNDLED="/usr/share/retropangui/bundled-roms"
+# utility: 게임이 아니라 터미널 유틸리티 스크립트(2026-07-05) — hide/show
+# 대상은 아니지만 init(최초 복사)에는 같이 포함시켜서 재사용
 SYSTEMS="nes snes psx"
+INIT_ONLY_SYSTEMS="utility"
 MANIFEST_NAME=".bundled-manifest"
 
 cmd_init() {
@@ -26,6 +29,18 @@ cmd_init() {
             [ -f "${f}" ] || continue
             fname=$(basename "${f}")
             cp -f "${f}" "${dst}/${fname}" 2>/dev/null && echo "${fname}" >> "${manifest}"
+        done
+    done
+    # hide/show 대상이 아닌 것들 — 매니페스트 없이 그냥 복사만(실행권한 보존)
+    for sys in ${INIT_ONLY_SYSTEMS}; do
+        src="${BUNDLED}/${sys}"
+        dst="${SHARE}/roms/${sys}"
+        [ -d "${src}" ] || continue
+        [ -d "${dst}" ] || continue
+        for f in "${src}"/*; do
+            [ -f "${f}" ] || continue
+            fname=$(basename "${f}")
+            cp -f "${f}" "${dst}/${fname}" 2>/dev/null
         done
     done
 }
