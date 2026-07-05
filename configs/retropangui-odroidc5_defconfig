@@ -196,6 +196,11 @@ BR2_PACKAGE_HTOP=y
 BR2_PACKAGE_NANO=y
 BR2_PACKAGE_VIM=y
 
+# Node.js/npm — AI CLI(Claude Code 등) 설치 지원 목적. 이미지엔 런타임만 포함,
+# 실제 AI CLI는 rpui-wifi로 기기에서 직접 npm install -g로 설치(todo-20260704-nodejs-npm)
+BR2_PACKAGE_NODEJS=y
+BR2_PACKAGE_NODEJS_NPM=y
+
 # 압축 도구
 BR2_PACKAGE_UNZIP=y
 BR2_PACKAGE_ZIP=y
