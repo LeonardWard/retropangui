@@ -174,12 +174,22 @@ while IFS='=' read -r raw_key raw_val; do
             esac
             ;;
         system.bundlegame_show)
-            case "${val}" in
-                1|yes|true)
-                    command -v rpui-bundlegame >/dev/null 2>&1 && rpui-bundlegame show 2>/dev/null ;;
-                0|no|false)
-                    command -v rpui-bundlegame >/dev/null 2>&1 && rpui-bundlegame hide 2>/dev/null ;;
-            esac
+            # rpui-bundlegame show/hide는 gamelist.xml을 반영시키려고 매번
+            # emulationstation을 killall 함(의도된 동작 — 원래는 사용자가
+            # 명시적으로 버튼 눌렀을 때만 호출됐음). 이 항목을 토글로 바꾸면서
+            # 값이 안 바뀌어도 메뉴 저장마다 이 스크립트 전체가 재실행되니,
+            # 매번 killall이 실행돼 메뉴 진입/퇴장만으로 ES가 죽는 버그가 됨
+            # (2026-07-05 발견) — 실제로 상태가 다를 때만 호출하도록 수정.
+            if command -v rpui-bundlegame >/dev/null 2>&1; then
+                bg_status="$(rpui-bundlegame status 2>/dev/null)"
+                bg_hidden="$(echo "${bg_status}" | sed -n 's/.*숨김: \([0-9]*\)개.*/\1/p')"
+                case "${val}" in
+                    1|yes|true)
+                        [ -n "${bg_hidden}" ] && [ "${bg_hidden}" != "0" ] && rpui-bundlegame show 2>/dev/null ;;
+                    0|no|false)
+                        [ -n "${bg_hidden}" ] && [ "${bg_hidden}" = "0" ] && rpui-bundlegame hide 2>/dev/null ;;
+                esac
+            fi
             ;;
         system.wifi.enabled)
             case "${val}" in
