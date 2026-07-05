@@ -91,19 +91,22 @@ def detect_joypad_names():
     return names
 
 
-def find_hotkey_btn_for_device(name):
+def find_pad_keys_for_device(name):
     """/etc/retroarch/autoconfig/*.cfg 중 이 장치 이름(또는 alt 이름)과 일치하는
-    파일을 찾아 input_menu_toggle_btn(가이드/홈 버튼) 값을 반환.
+    파일을 찾아 (input_menu_toggle_btn, input_start_btn) 값을 반환.
 
-    RetroArch의 input_enable_hotkey_btn은 전역 설정이라 조이패드별 autoconfig
-    안에 적어도 무시됨(2026-07-05, 8BitDo SN30 Pro 실기기 확인 — 홈 버튼이
-    패드마다 다른 인덱스인데 전역값은 Xbox 360 무선 수신기 기준으로 고정돼
-    있어서 다른 패드에서는 엉뚱한 버튼이 핫키로 걸림). 그래서 매 실행마다
-    현재 연결된 패드에 맞는 값을 여기서 직접 계산해 appendconfig로 주입한다."""
+    RetroArch의 input_enable_hotkey_btn/input_exit_emulator_btn은 전역 설정이라
+    조이패드별 autoconfig 안에 적어도 무시됨(2026-07-05, 8BitDo SN30 Pro 실기기
+    확인 — 홈 버튼이 패드마다 다른 인덱스인데 전역값은 Xbox 360 무선 수신기
+    기준으로 고정돼 있어서 다른 패드에서는 엉뚱한 버튼이 핫키/종료로 걸림.
+    START 버튼도 같은 문제 — PS2 Twin USB 어댑터에서 전역 exit_emulator_btn(7)이
+    이 패드의 START가 아니라 R2를 가리켜서 "핫키+START로 종료 안 됨" 재발,
+    2026-07-05). 그래서 매 실행마다 현재 연결된 패드에 맞는 값을 여기서 직접
+    계산해 appendconfig로 주입한다."""
     try:
         entries = os.listdir(AUTOCONFIG_DIR)
     except OSError:
-        return None
+        return None, None
 
     for fname in entries:
         path = Path(AUTOCONFIG_DIR) / fname
@@ -114,6 +117,7 @@ def find_hotkey_btn_for_device(name):
 
         device_match = False
         menu_btn = None
+        start_btn = None
         for line in text.splitlines():
             line = line.strip()
             if "=" not in line:
@@ -126,25 +130,34 @@ def find_hotkey_btn_for_device(name):
                     device_match = True
             elif key == "input_menu_toggle_btn":
                 menu_btn = val
+            elif key == "input_start_btn":
+                start_btn = val
 
-        if device_match and menu_btn is not None:
-            return menu_btn
-    return None
+        if device_match and (menu_btn is not None or start_btn is not None):
+            return menu_btn, start_btn
+    return None, None
 
 
 def write_hotkey_override():
-    """연결된 패드 중 autoconfig에 input_menu_toggle_btn이 있는 첫 번째 것을 찾아
-    input_enable_hotkey_btn 오버라이드 파일을 써서 경로를 반환. 없으면 None."""
+    """연결된 패드 중 autoconfig에 input_menu_toggle_btn/input_start_btn이 있는
+    첫 번째 것을 찾아 input_enable_hotkey_btn/input_exit_emulator_btn 오버라이드
+    파일을 써서 경로를 반환. 없으면 None."""
     for jp_name in detect_joypad_names():
-        btn = find_hotkey_btn_for_device(jp_name)
-        if btn is not None:
-            try:
-                Path(HOTKEY_OVERRIDE_CFG).write_text(f'input_enable_hotkey_btn = "{btn}"\n')
-            except OSError as e:
-                log(f"Warning: 핫키 오버라이드 파일 작성 실패 — {e}")
-                return None
-            log(f"핫키 버튼 오버라이드: '{jp_name}' → 버튼 {btn}")
-            return HOTKEY_OVERRIDE_CFG
+        menu_btn, start_btn = find_pad_keys_for_device(jp_name)
+        if menu_btn is None and start_btn is None:
+            continue
+        lines = []
+        if menu_btn is not None:
+            lines.append(f'input_enable_hotkey_btn = "{menu_btn}"\n')
+        if start_btn is not None:
+            lines.append(f'input_exit_emulator_btn = "{start_btn}"\n')
+        try:
+            Path(HOTKEY_OVERRIDE_CFG).write_text("".join(lines))
+        except OSError as e:
+            log(f"Warning: 핫키 오버라이드 파일 작성 실패 — {e}")
+            return None
+        log(f"핫키/종료 버튼 오버라이드: '{jp_name}' → 핫키={menu_btn} 종료={start_btn}")
+        return HOTKEY_OVERRIDE_CFG
     return None
 
 
