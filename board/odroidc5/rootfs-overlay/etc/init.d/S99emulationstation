@@ -44,7 +44,7 @@ case "$1" in
                 # 매 ES 실행 전 K_XLATE(ASCII)로 리셋해서 linuxraw가 깨끗하게 초기화되도록 함
                 kbd_mode -a 2>/dev/null || true
                 openvt -c 1 -s -w -- sh -c "
-                    emulationstation --no-splash --debug >> /var/log/es-launcher.log 2>&1 &
+                    emulationstation --no-splash --no-exit --debug >> /var/log/es-launcher.log 2>&1 &
                     echo \$! > /tmp/es.pid
                     wait \$!
                     rm -f /tmp/es.pid
