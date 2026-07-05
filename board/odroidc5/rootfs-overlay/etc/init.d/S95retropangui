@@ -141,6 +141,14 @@ case "$1" in
                 if [ ! -f "${CFG}" ]; then
                     mkdir -p "${ROMS_ROOT}/${sys}"
                     printf 'screenshot_directory = "%s/%s"\n' "${SCREENSHOTS_ROOT}" "${sys}" > "${CFG}"
+                    # 전역 input_player1_analog_dpad_mode=1(좌 아날로그) 기본값은
+                    # 8/10버튼 패드 기반 시스템 전용 — PSX/PC류(자체 아날로그
+                    # 스틱 또는 방향키 그대로가 자연스러움)는 여기서 꺼둠(2026-07-05)
+                    case "${sys}" in
+                        psx|pc|scummvm|pc88|pc98)
+                            printf 'input_player1_analog_dpad_mode = "0"\n' >> "${CFG}"
+                            ;;
+                    esac
                     logger -t "${TAG}" "screenshot cfg 생성: ${sys}"
                 fi
             done
