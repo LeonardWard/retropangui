@@ -196,10 +196,12 @@ BR2_PACKAGE_HTOP=y
 BR2_PACKAGE_NANO=y
 BR2_PACKAGE_VIM=y
 
-# Node.js/npm — AI CLI(Claude Code 등) 설치 지원 목적. 이미지엔 런타임만 포함,
-# 실제 AI CLI는 rpui-wifi로 기기에서 직접 npm install -g로 설치(todo-20260704-nodejs-npm)
-BR2_PACKAGE_NODEJS=y
-BR2_PACKAGE_NODEJS_NPM=y
+# Node.js/npm — AI CLI(Claude Code 등) 설치 지원 목적. Buildroot 자체 nodejs
+# 패키지는 20.11.1로 고정돼 있어 Claude Code(node>=22.0.0 요구)가 설치조차
+# 안 됨 — nodejs.org 공식 사전 컴파일 바이너리를 그대로 쓰는 자체 패키지로
+# 대체(2026-07-05, br2-external/package/rpui-nodejs). 이미지엔 런타임만
+# 포함, 실제 AI CLI는 rpui-wifi로 기기에서 직접 npm install -g로 설치.
+BR2_PACKAGE_RPUI_NODEJS=y
 
 # 압축 도구
 BR2_PACKAGE_UNZIP=y

@@ -1,0 +1,16 @@
+config BR2_PACKAGE_RPUI_NODEJS
+	bool "rpui-nodejs"
+	depends on BR2_aarch64
+	depends on BR2_TOOLCHAIN_USES_GLIBC
+	help
+	  AI CLI(Claude Code, Gemini CLI, Codex CLI 등)를 실기기에서
+	  npm install -g로 설치·실행할 수 있게 nodejs.org 공식 사전
+	  컴파일 바이너리(linux-arm64)를 그대로 설치한다.
+
+	  Buildroot 자체 nodejs 패키지는 V8을 처음부터 컴파일하고
+	  버전이 오래 고정돼 있어(2026-07 기준 20.11.1), Claude Code
+	  같은 최신 CLI가 요구하는 Node 22+를 못 맞춤 — 공식 배포
+	  tarball을 그대로 받아 쓰는 쪽이 버전도 최신이고 빌드 시간도
+	  훨씬 짧음.
+
+	  https://nodejs.org/
