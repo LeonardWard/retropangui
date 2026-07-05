@@ -43,7 +43,7 @@
 #define BT_PAIR_STATUS    "/tmp/retropangui-bt-pairing-status"
 #define BT_DISCOVERY_JSON "/tmp/retropangui-bt-discovery.json"
 #define AGENT_PATH        "/rpui/agent"
-#define DISCOVERY_MAX_WAIT 30 /* 초 */
+#define DISCOVERY_MAX_WAIT 180 /* 초 — GUI가 열려있는 동안은 계속 검색, 최대 3분. 창을 닫으면(scan-stop) 그 전에 끝남 */
 
 static char g_adapters[MAX_ADAPTERS][16];
 static int  g_nadapter = 0;
