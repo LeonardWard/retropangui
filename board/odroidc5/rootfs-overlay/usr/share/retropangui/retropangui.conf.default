@@ -27,6 +27,9 @@ system.hostname=retropangui
 # 자동 업데이트 여부 (0=비활성, 1=활성)
 # system.autoupdate=0
 
+# 번들 게임(사전 설치된 ROM) 목록에 표시 여부
+system.bundlegame_show=true
+
 
 ## Section B - Network ##
 

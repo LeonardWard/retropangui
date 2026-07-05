@@ -173,6 +173,14 @@ while IFS='=' read -r raw_key raw_val; do
                     [ -f /etc/init.d/S91ksmbd ] && /etc/init.d/S91ksmbd stop 2>/dev/null ;;
             esac
             ;;
+        system.bundlegame_show)
+            case "${val}" in
+                1|yes|true)
+                    command -v rpui-bundlegame >/dev/null 2>&1 && rpui-bundlegame show 2>/dev/null ;;
+                0|no|false)
+                    command -v rpui-bundlegame >/dev/null 2>&1 && rpui-bundlegame hide 2>/dev/null ;;
+            esac
+            ;;
         system.wifi.enabled)
             case "${val}" in
                 1|yes|true)
