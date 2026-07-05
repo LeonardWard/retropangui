@@ -1,0 +1,7 @@
+<?xml version="1.0"?>
+<gameList>
+	<game>
+		<path>./terminal.sh</path>
+		<name>터미널</name>
+	</game>
+</gameList>
