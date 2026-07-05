@@ -12,7 +12,14 @@
 # 아니라 같은 폴더의 gamelist.xml <name> 태그로 지정(파일 "내용"은
 # 인코딩 문제 없음, 파일"명"만 문제).
 #
-# 종료(exit, Ctrl+D)하면 ES 프로세스 자체가 이 스크립트로 exec 교체돼
-# 있던 상태라 함께 끝나고, S99emulationstation의 재시작 루프가 ES를
-# 다시 띄움 — 별도 복귀 처리 불필요.
+# ES는 FileData::launchGame()에서 system()(fork+exec+wait)으로 이 스크립트를
+# 실행함 — ES 프로세스 자체는 살아있고 대기만 함(RetroArch의 execvp 자기교체
+# 방식과 다름). launchGame()이 실행 직전 Window::deinit()→Renderer::deinit()
+# 으로 SDL/DRM을 이미 정리해두므로 화면 전환 자체는 문제없지만, ES가 백그라운드
+# (&)로 실행되면서 shell의 job control이 자동으로 stdin을 /dev/null로 돌려놔서
+# (2026-07-05 실기기 확인: /proc/<es_pid>/fd/0 -> /dev/null) 이 스크립트가
+# 그대로 상속받은 stdin도 /dev/null — 셸이 첫 입력을 시도하자마자 EOF를 만나
+# 즉시 종료되고 ES로 복귀해버리는 버그가 있었음. 실제 콘솔(VT1)로 명시적
+# 재연결해서 해결.
+exec < /dev/tty1 > /dev/tty1 2>&1
 exec /bin/sh -l
