@@ -31,7 +31,14 @@ case "$1" in
                 # HDMI PHY 활성화 — HPD 이벤트 후 드라이버가 자동 복구하지 않음
                 echo 1 > /sys/class/amhdmitx/amhdmitx0/phy 2>/dev/null || true
                 killall odroid-drm-fbset 2>/dev/null || true
-                odroid-drm-fbset -outputmode preferred
+                # 2026-07-07: "preferred"는 모니터가 EDID로 자기 신고하는 1순위
+                # 모드를 그대로 믿고 거는 방식인데, 실기기에서 이 모드가
+                # 1920x1080p120hz로 잡히는 경우가 있고 일부 모니터/TV가 이
+                # 120Hz를 제대로 못 받아서 스플래시 이후 화면이 완전히 안
+                # 나오는 문제가 있었음(HDMI 재연결해야 복구됨) - 커널
+                # 커맨드라인(boot.cmd/extlinux.conf)이 이미 명시적으로
+                # 고정해둔 안전한 값과 동일하게 60Hz로 명시 지정.
+                odroid-drm-fbset -outputmode 1080p60hz
                 # 스플래시 비디오 재생 — ALSA softvol "Master" 컨트롤 초기화 목적
                 # mpv가 오디오 디바이스를 열면 softvol 컨트롤이 등록되어 ES VolumeControl이 정상 작동함
                 SPLASH="/usr/share/retropangui/splash/splash.mp4"
