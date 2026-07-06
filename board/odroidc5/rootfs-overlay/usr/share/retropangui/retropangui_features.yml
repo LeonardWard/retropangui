@@ -134,6 +134,60 @@ menus:
           - value: zh_CN
             label: "中文简体 (Chinese)"
 
+      # 2026-07-06: 아래 7개는 GuiMenu.cpp에 하드코딩돼 있던 단순 토글/리스트를
+      # YAML로 옮긴 것 - conf_key는 Settings:: 키 이름과 정확히 일치해야
+      # emulationstation.* 브릿지(Settings::loadRetropanguiConf(), apply_retropangui_conf.sh)가
+      # 작동함. IGNORE ARTICLES는 값이 바뀔 때 전체 재정렬+팝업까지 하는 로직이
+      # 붙어있어서 YAML로 옮기지 않고 C++에 그대로 둠(GuiMenu.cpp 참고).
+      - id: rp.quick_system_select
+        label: "QUICK SYSTEM SELECT"
+        type: toggle
+        conf_key: emulationstation.QuickSystemSelect
+        restart: none
+
+      - id: rp.show_help_prompts
+        label: "ON-SCREEN HELP"
+        type: toggle
+        conf_key: emulationstation.ShowHelpPrompts
+        restart: none
+
+      - id: rp.show_hidden_files
+        label: "SHOW HIDDEN FILES"
+        type: toggle
+        conf_key: emulationstation.ShowHiddenFiles
+        restart: none
+
+      - id: rp.use_fullscreen_paging
+        label: "USE FULL SCREEN PAGING FOR LB/RB"
+        type: toggle
+        conf_key: emulationstation.UseFullscreenPaging
+        restart: none
+
+      - id: rp.save_gamelists_mode
+        label: "SAVE METADATA"
+        type: list
+        conf_key: emulationstation.SaveGamelistsMode
+        restart: none
+        options:
+          - value: "on exit"
+            label: "on exit"
+          - value: "always"
+            label: "always"
+          - value: "never"
+            label: "never"
+
+      - id: rp.parse_gamelist_only
+        label: "PARSE GAMESLISTS ONLY"
+        type: toggle
+        conf_key: emulationstation.ParseGamelistOnly
+        restart: none
+
+      - id: rp.local_art
+        label: "SEARCH FOR LOCAL ART"
+        type: toggle
+        conf_key: emulationstation.LocalArt
+        restart: none
+
   - id: network_settings
     label: "NETWORK SETTINGS"
     parent: system
