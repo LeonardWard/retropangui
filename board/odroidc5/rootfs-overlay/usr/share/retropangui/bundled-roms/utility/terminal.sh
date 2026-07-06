@@ -22,4 +22,41 @@
 # 즉시 종료되고 ES로 복귀해버리는 버그가 있었음. 실제 콘솔(VT1)로 명시적
 # 재연결해서 해결.
 exec < /dev/tty1 > /dev/tty1 2>&1
-exec /bin/sh -l
+
+# 2026-07-06: TERM 미설정 + 화면 미소거로 인한 문제 수정.
+# - TERM 없이 진입하면 vim/nano/htop 등 ncurses 기반 프로그램이 제대로 초기화
+#   못 함. fbcon(DRM 위 프레임버퍼 콘솔)이라 terminfo의 "linux" 항목이 맞음.
+# - ES(SDL_KMSDRM)가 DRM master를 쥐고 있다가 이 스크립트 실행 시점에 VT로
+#   돌아오는데, 화면을 안 지우면 이전 fbcon 버퍼 잔상 위에 프롬프트가 찍혀서
+#   커서/백스페이스 위치가 어긋나 보임 - clear로 명시적으로 지움.
+export TERM=linux
+clear
+
+# 환영 배너 - fbcon은 표준 VT100/ANSI 이스케이프를 그대로 지원(별도 터미널
+# 에뮬레이터 불필요, 조사 확인됨). figlet 미설치라 아스키아트는 고정 텍스트.
+printf '\033[1;36m'
+cat << 'BANNER'
+ ____      _             ____                   _   _ ___
+|  _ \ ___| |_ _ __ ___ |  _ \ __ _ _ __   __ _| | | |_ _|
+| |_) / _ \ __| '__/ _ \| |_) / _` | '_ \ / _` | | | || |
+|  _ <  __/ |_| | | (_) |  __/ (_| | | | | (_| | |_| || |
+|_| \_\___|\__|_|  \___/|_|   \__,_|_| |_|\__, |\___/|___|
+                                          |___/
+BANNER
+printf '\033[0m\033[32m'
+echo "  Terminal Utility"
+printf '\033[0m'
+echo "  종료: SELECT + START   |   스크린샷: SELECT + L1(pageup)"
+echo
+
+# 패드로 RA처럼 핫키 종료/스크린샷 - es_input.cfg가 이미 계산해둔 패드별
+# evdev 버튼 코드를 그대로 읽어서 씀(패드마다 코드가 완전히 달라서 하드코딩
+# 불가 - 예: 어떤 패드는 select가 evdev 314인데 다른 패드는 297).
+python3 /usr/share/retropangui/rpui-termkeys.py "$$" &
+WATCHER_PID=$!
+
+# exec로 자기 자신을 치환하지 않고 foreground로 실행 - 셸이 끝나야 워처를
+# 정리하고 이 스크립트도 정상 종료해서 ES로 복귀함.
+/bin/sh -l
+
+kill "$WATCHER_PID" 2>/dev/null
