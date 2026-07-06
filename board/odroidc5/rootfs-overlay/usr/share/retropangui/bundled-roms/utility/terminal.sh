@@ -68,7 +68,13 @@ BANNER
 printf '\033[0m\033[32m'
 echo "   Terminal Utility"
 printf '\033[0m'
-echo "   종료: SELECT + START   |   스크린샷: SELECT + L1(pageup)"
+# 2026-07-06: 여기 문구는 항상 영문으로 - fbcon(VT1)은 커널 내장 콘솔
+# 폰트(kbd 패키지 폰트 포함)를 쓰는데, 이 폰트들은 전부 서양권 글리프만
+# 있어서 한글 자체를 그릴 수 없음(어떤 콘솔 폰트를 골라도 근본적으로
+# 안 됨 - 실기기에서 한글로 썼다가 다 깨지는 걸로 확인). 한글이 꼭
+# 필요하면 FreeType 기반 터미널 에뮬레이터(fbterm/kmscon류)로 교체하는
+# 훨씬 큰 작업이 필요함 - 이전에 조사 후 보류한 사안.
+echo "   Exit: SELECT + START   |   Screenshot: SELECT + L1(pageup)"
 echo
 
 # 2026-07-06: /etc/profile을 여기서 직접 한 번 읽어서 PATH/로케일 등은
