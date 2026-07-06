@@ -32,7 +32,10 @@ def generate(systems, roms_path, retroarch, config):
         lines.append('  <system>')
         lines.append(f'    <name>{name}</name>')
         lines.append(f'    <fullname>{fullname}</fullname>')
-        lines.append(f'    <path>{roms_path}/{name}</path>')
+        # 대부분은 roms_path/name 이지만, 일부(예: screenshots)는 롬 폴더가 아닌
+        # 다른 경로를 직접 스캔해야 해서 systems.json에 "path"를 명시하면 그걸 씀
+        path = s.get('path', f'{roms_path}/{name}')
+        lines.append(f'    <path>{path}</path>')
         lines.append(f'    <extension>{extensions}</extension>')
         if cores:
             lines.append('    <cores>')

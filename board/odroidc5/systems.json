@@ -138,5 +138,14 @@
     "platform": "pc",
     "theme": "pc",
     "cores": []
+  },
+  {
+    "name": "screenshots",
+    "fullname": "스크린샷",
+    "extensions": ".png .jpg .jpeg",
+    "path": "/retropangui/share/screenshots",
+    "platform": "pc",
+    "theme": "pc",
+    "cores": []
   }
 ]
