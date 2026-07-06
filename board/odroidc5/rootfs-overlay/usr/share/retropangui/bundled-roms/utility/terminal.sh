@@ -31,6 +31,15 @@ exec < /dev/tty1 > /dev/tty1 2>&1
 #   커서/백스페이스 위치가 어긋나 보임 - clear로 명시적으로 지움.
 export TERM=linux
 
+# 2026-07-06: "시스템 메시지가 화면에 같이 찍힌다"는 피드백 - 부팅 커맨드라인에
+# `console=tty1`이 있어서(실기기 /proc/cmdline 확인) 커널 printk가 이 VT로도
+# 그대로 나옴. ES가 DRM(KMS) 그래픽 모드로 화면을 그리는 동안엔 안 보이다가,
+# 이 스크립트처럼 fbcon 텍스트 모드로 내려오면 그제서야 실시간으로 섞여 보임.
+# VT 번호를 바꿔도(어차피 console=tty1 고정이라) 근본 해결이 안 되므로, 세션
+# 동안만 콘솔 로그레벨을 낮추고 끝나면 원래 값으로 복원.
+OLD_PRINTK=$(awk '{print $1}' /proc/sys/kernel/printk 2>/dev/null)
+echo 1 > /proc/sys/kernel/printk 2>/dev/null
+
 # 2026-07-06: 기본 콘솔 폰트(커널 내장 8x16)가 1920x1080에서 너무 작아 보인다는
 # 피드백 - kbd 패키지의 iso01-12x22(가로 12/세로 22, 기본 대비 가로 1.5배·세로
 # 1.375배)로 교체. setfont는 .gz 압축 폰트를 그대로 인식함.
@@ -90,3 +99,9 @@ WATCHER_PID=$!
 /bin/sh -i
 
 kill "$WATCHER_PID" 2>/dev/null
+
+# 콘솔 로그레벨 원복 - ES로 돌아간 뒤에도 낮은 상태로 남아있으면 나중에
+# 디버깅할 때 커널 메시지가 안 보여서 곤란함.
+if [ -n "$OLD_PRINTK" ]; then
+    echo "$OLD_PRINTK" > /proc/sys/kernel/printk 2>/dev/null
+fi
