@@ -10,6 +10,15 @@ UIM_LICENSE = BSD-3-Clause
 UIM_LICENSE_FILES = COPYING
 UIM_DEPENDENCIES = ncurses gettext host-pkgconf
 
+# 2026-07-07: uim이 내장한 sigscheme의 libgcroots가 공유 라이브러리(.so)로
+# 빌드되는데, 이건 시스템에 install되는 게 아니라 uim 빌드 트리 안에만 있는
+# 내부 전용 라이브러리 - libuim-scm.so를 링크할 땐 알아서 -rpath로 이 경로를
+# 찾지만, 정작 그 libuim-scm.so에 의존하는 최종 실행파일들(uim-sh, uim-agent,
+# uim-help, uim-module-manager)을 링크할 땐 이 경로가 안 넘어가서
+# "undefined reference to GCROOTS_*" 링크 에러가 남 - -rpath-link로 빌드
+# 디렉토리를 직접 지정해서 해결.
+UIM_CONF_ENV = LDFLAGS="$(TARGET_LDFLAGS) -Wl,-rpath-link,$(BUILD_DIR)/uim-$(UIM_VERSION)/sigscheme/libgcroots/.libs"
+
 # 2026-07-06: GTK/Qt(각 버전)/일본어(anthy/canna/wnn/prime/sj3)/curl/sqlite3/
 # libffi/m17nlib 등은 전부 끄고, 텍스트 터미널 전용 프론트엔드(uim-fep)와
 # 한글 입력 엔진(벼루, byeoru.scm)만 남김 - GUI 없는 fbterm 콘솔 환경이라
