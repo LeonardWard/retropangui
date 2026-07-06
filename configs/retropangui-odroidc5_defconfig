@@ -195,6 +195,8 @@ BR2_PACKAGE_OPENNTPD=y
 BR2_PACKAGE_HTOP=y
 BR2_PACKAGE_NANO=y
 BR2_PACKAGE_VIM=y
+# setfont 제공 - 터미널 유틸리티 콘솔 폰트를 기본(8x16)보다 키우기 위함(2026-07-06)
+BR2_PACKAGE_KBD=y
 
 # Node.js/npm — AI CLI(Claude Code 등) 설치 지원 목적. Buildroot 자체 nodejs
 # 패키지는 20.11.1로 고정돼 있어 Claude Code(node>=22.0.0 요구)가 설치조차
