@@ -43,7 +43,13 @@ case "$1" in
                 # 이전 RA가 kill되면 VT1 키보드가 K_MEDIUMRAW에 묶여 linuxraw 재초기화 실패
                 # 매 ES 실행 전 K_XLATE(ASCII)로 리셋해서 linuxraw가 깨끗하게 초기화되도록 함
                 kbd_mode -a 2>/dev/null || true
-                openvt -c 1 -s -w -- sh -c "
+                # 2026-07-06: kbd 패키지(setfont 확보 목적) 추가 후 /usr/bin/openvt가
+                # busybox 내장 openvt(-f가 항상 켜진 것처럼 동작, 검사 자체가 없음)를
+                # 밀어내고 진짜 openvt(kbd 패키지, util-linux류)로 교체돼서 VT1이 이미
+                # foreground 콘솔이면(특히 부팅 직후) "vt 1 is in use" 에러로 즉시
+                # 실패 → ES가 아예 안 뜨고 스플래시만 무한 반복하는 회귀 발생(실기기
+                # 확인). -f로 강제해서 기존 busybox 동작과 동일하게 복원.
+                openvt -f -c 1 -s -w -- sh -c "
                     emulationstation --no-splash --no-exit --debug >> /var/log/es-launcher.log 2>&1 &
                     echo \$! > /tmp/es.pid
                     wait \$!
