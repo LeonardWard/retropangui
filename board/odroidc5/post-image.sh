@@ -22,10 +22,12 @@ ${MKIMAGE} -A arm64 -O linux -T script -C none -n "RETROPANGUI-C5 Boot Script" \
 # squashfs → retropangui.squashfs (genimage.cfg가 이 이름으로 참조)
 cp "${BINARIES_DIR}/rootfs.squashfs" "${BINARIES_DIR}/retropangui.squashfs"
 
-# overlay 파티션 이미지 생성 (ext4, 1GB) — genimage가 ext4 타입을 미지원할 수 있으므로 직접 생성
+# overlay 파티션 이미지 생성 (ext4, 3GB) — genimage가 ext4 타입을 미지원할 수 있으므로 직접 생성
+# 2026-07-06: 1GB → 3GB로 확장 — AI CLI(Claude Code/Gemini CLI/Codex CLI, 실측
+# 약 573MB 합계)를 $HOME(=/, overlay)에 npm install -g로 설치해두는 용도로 확정.
 if [ ! -f "${BINARIES_DIR}/overlay.ext4" ]; then
-    echo ">>> overlay.ext4 생성 중 (1GB)..."
-    dd if=/dev/zero of="${BINARIES_DIR}/overlay.ext4" bs=1M count=1024 status=progress
+    echo ">>> overlay.ext4 생성 중 (3GB)..."
+    dd if=/dev/zero of="${BINARIES_DIR}/overlay.ext4" bs=1M count=3072 status=progress
     mkfs.ext4 -L overlay -F "${BINARIES_DIR}/overlay.ext4"
 fi
 
