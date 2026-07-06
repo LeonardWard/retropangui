@@ -103,6 +103,16 @@ define RETROARCH_INSTALL_TARGET_CMDS
 	if [ -d $(@D)/media ]; then \
 		cp -r $(@D)/media/. $(TARGET_DIR)/usr/share/retroarch/; \
 	fi
+	# 2026-07-07: RA 소스(gfx/drivers_font_renderer/freetype.c)가 OSD
+	# 알림 메시지 폰트를 정확히 "assets://pkg/osd-font.ttf"라는 이름으로
+	# 찾는데, media/pkg/ 안에는 언어별 폴백 폰트만 있고 그 이름의 파일이
+	# 없어서 못 찾고 기본 비트맵 폰트로 떨어짐 - 한글 글리프가 없어서
+	# "ㅁㅁㅁ"로 깨짐. user_language=10(한국어)에 맞춰 한글 폴백 폰트를
+	# osd-font.ttf 이름으로도 배치.
+	if [ -f $(TARGET_DIR)/usr/share/retroarch/pkg/korean-fallback-font.ttf ]; then \
+		cp $(TARGET_DIR)/usr/share/retroarch/pkg/korean-fallback-font.ttf \
+			$(TARGET_DIR)/usr/share/retroarch/pkg/osd-font.ttf; \
+	fi
 endef
 
 $(eval $(generic-package))
