@@ -23,14 +23,16 @@ UIM_MAKE_OPTS = \
 	UIM_MODULE_MANAGER=$(HOST_DIR)/bin/uim-module-manager \
 	UIM_MODULE_MANAGER_ENV="LIBUIM_SYSTEM_SCM_FILES=$(UIM_BUILDDIR)/sigscheme/lib LIBUIM_SCM_FILES=$(UIM_BUILDDIR)/scm LIBUIM_PLUGIN_LIB_DIR=$(HOST_DIR)/lib/uim/plugin UIM_DISABLE_NOTIFY=1"
 
-# 2026-07-07: uim이 내장한 sigscheme의 libgcroots가 공유 라이브러리(.so)로
-# 빌드되는데, 이건 시스템에 install되는 게 아니라 uim 빌드 트리 안에만 있는
-# 내부 전용 라이브러리 - libuim-scm.so를 링크할 땐 알아서 -rpath로 이 경로를
-# 찾지만, 정작 그 libuim-scm.so에 의존하는 최종 실행파일들(uim-sh, uim-agent,
-# uim-help, uim-module-manager)을 링크할 땐 이 경로가 안 넘어가서
-# "undefined reference to GCROOTS_*" 링크 에러가 남 - -rpath-link로 빌드
-# 디렉토리를 직접 지정해서 해결.
-UIM_CONF_ENV = LDFLAGS="$(TARGET_LDFLAGS) -Wl,-rpath-link,$(BUILD_DIR)/uim-$(UIM_VERSION)/sigscheme/libgcroots/.libs"
+# 2026-07-07: uim 내부의 라이브러리 체인(uim-fep-tick/uim-sh 등 최종
+# 실행파일 → libuim.so → libuim-scm.so → libgcroots.so)이 전부 시스템에
+# install 안 되는 빌드 트리 내부 전용 공유 라이브러리라, 자기 자신을
+# 직접 링크하는 단계는 -rpath로 알아서 찾지만, 그 라이브러리에 "간접적으로"
+# 의존하는(자신은 한 단계 위 라이브러리만 직접 링크하는) 최종 실행파일을
+# 링크할 땐 그 경로가 안 넘어가서 "undefined reference to GCROOTS_*"
+# (sigscheme/libgcroots 단계) / "undefined reference to uim_scm_*"
+# (uim/libuim-scm.so 단계) 링크 에러가 남 - 체인의 각 단계 디렉토리를
+# 전부 -rpath-link로 직접 지정해서 해결.
+UIM_CONF_ENV = LDFLAGS="$(TARGET_LDFLAGS) -Wl,-rpath-link,$(BUILD_DIR)/uim-$(UIM_VERSION)/sigscheme/libgcroots/.libs -Wl,-rpath-link,$(BUILD_DIR)/uim-$(UIM_VERSION)/uim/.libs"
 
 # 2026-07-06: GTK/Qt(각 버전)/일본어(anthy/canna/wnn/prime/sj3)/curl/sqlite3/
 # libffi/m17nlib 등은 전부 끄고, 텍스트 터미널 전용 프론트엔드(uim-fep)와
