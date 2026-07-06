@@ -135,8 +135,8 @@
     "name": "utility",
     "fullname": "유틸리티",
     "extensions": ".sh",
-    "platform": "pc",
-    "theme": "pc",
+    "platform": "ports",
+    "theme": "ports",
     "cores": []
   },
   {
@@ -144,8 +144,8 @@
     "fullname": "스크린샷",
     "extensions": ".png .jpg .jpeg",
     "path": "/retropangui/share/screenshots",
-    "platform": "pc",
-    "theme": "pc",
+    "platform": "screenshots",
+    "theme": "screenshots",
     "cores": []
   }
 ]
