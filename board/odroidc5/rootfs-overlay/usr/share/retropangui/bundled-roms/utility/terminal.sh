@@ -103,7 +103,11 @@ export ENV=/usr/share/retropangui/termrc.sh
 # 패드로 RA처럼 핫키 종료/스크린샷 - es_input.cfg가 이미 계산해둔 패드별
 # evdev 버튼 코드를 그대로 읽어서 씀(패드마다 코드가 완전히 달라서 하드코딩
 # 불가 - 예: 어떤 패드는 select가 evdev 314인데 다른 패드는 297).
-python3 /usr/share/retropangui/rpui-termkeys.py "$$" &
+# 2026-07-06: 리다이렉트 안 하면 이 스크립트의 stdout/stderr가 위
+# "exec < /dev/tty1 > /dev/tty1 2>&1"을 그대로 물려받아서 rpui-termkeys.py의
+# [termkeys] 로그(log() 함수, stderr 출력)가 사용자 터미널 화면에 그대로
+# 찍혀 보임 - 로그 파일로 리다이렉트.
+python3 /usr/share/retropangui/rpui-termkeys.py "$$" >> /var/log/rpui-termkeys.log 2>&1 &
 WATCHER_PID=$!
 
 # -l(로그인 셸)이 아니라 -i(대화형)만 사용 - 로그인 셸이면 /etc/profile을
