@@ -1,0 +1,4 @@
+# Locally computed (cross-checked against uim-1.9.6.sum published alongside
+# the GitHub release, 2026-07-06)
+sha256  5436f5507b64c772da64e8ad7e598cb8b32dc9e5617e01d54e4a71eaf5566a3d  uim-1.9.6.tar.gz
+sha256  450c289f511c6e2386203b7c2f609307835284d0627cecb894635cd55cf666d2  COPYING

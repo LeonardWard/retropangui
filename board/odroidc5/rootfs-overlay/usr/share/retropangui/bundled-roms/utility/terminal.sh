@@ -68,12 +68,10 @@ BANNER
 printf '\033[0m\033[32m'
 echo "   Terminal Utility"
 printf '\033[0m'
-# 2026-07-06: 여기 문구는 항상 영문으로 - fbcon(VT1)은 커널 내장 콘솔
-# 폰트(kbd 패키지 폰트 포함)를 쓰는데, 이 폰트들은 전부 서양권 글리프만
-# 있어서 한글 자체를 그릴 수 없음(어떤 콘솔 폰트를 골라도 근본적으로
-# 안 됨 - 실기기에서 한글로 썼다가 다 깨지는 걸로 확인). 한글이 꼭
-# 필요하면 FreeType 기반 터미널 에뮬레이터(fbterm/kmscon류)로 교체하는
-# 훨씬 큰 작업이 필요함 - 이전에 조사 후 보류한 사안.
+# 2026-07-06: 이 배너 자체는 fbterm 진입 "전"에 순수 fbcon에 찍히는 거라
+# 여전히 영문 유지 - fbcon 커널 콘솔 폰트엔 한글 글리프가 없음(kbd 패키지
+# 폰트 포함, 실기기에서 확인). 배너 다음에 뜨는 실제 세션은 fbterm(아래)이
+# 담당해서 한글이 정상적으로 보임.
 echo "   Exit: SELECT + START   |   Screenshot: SELECT + L1(pageup)"
 echo
 
@@ -110,12 +108,26 @@ export ENV=/usr/share/retropangui/termrc.sh
 python3 /usr/share/retropangui/rpui-termkeys.py "$$" >> /var/log/rpui-termkeys.log 2>&1 &
 WATCHER_PID=$!
 
-# -l(로그인 셸)이 아니라 -i(대화형)만 사용 - 로그인 셸이면 /etc/profile을
-# 또 실행해서 위에서 어렵게 맞춰둔 PS1이 '# '로 도로 덮어써짐(profile은
-# "PS1이 비어있지 않으면 무조건 재설정"하는 방식이라 상속 여부와 무관하게
-# 덮어씀). exec로 자기 자신을 치환하지도 않음 - 셸이 끝나야 워처를 정리하고
-# 이 스크립트도 정상 종료해서 ES로 복귀함.
-/bin/sh -i
+# 2026-07-06: 한글 입출력 - fbterm(freetype+fontconfig로 화면에 그림, Pretendard
+# 폰트) 안에서 uim-fep(SHELL 환경변수로 지정한 셸을 자식으로 실행하며 키 입력을
+# 자모→완성형으로 조합)를 띄우고, 그 안에서 실제 셸이 도는 구조
+# (fbterm → uim-fep → sh). fbterm에 command 인자를 주면 그 명령을 그대로
+# execvp()하고(SHELL 환경변수는 안 봄 - fbterm 소스 shell.cpp 확인), uim-fep가
+# 자기 나름대로 SHELL을 읽어서 그 셸을 자식으로 띄움 - 그래서 SHELL은
+# fbterm이 아니라 uim-fep를 위해 지정.
+# -l(로그인 셸)이 아니라 SHELL=/bin/sh(인자 없음)로 지정한 이유는 이전과
+# 동일 - 로그인 셸이면 /etc/profile을 또 실행해서 위에서 어렵게 맞춰둔 PS1이
+# '# '로 도로 덮어써짐. busybox ash는 pty로 연결된 자식에서 isatty()로 대화형
+# 여부를 스스로 판단하므로 -i 없이 실행해도 정상적으로 대화형처럼 동작함.
+# exec로 자기 자신을 치환하지도 않음 - fbterm이 끝나야 워처를 정리하고 이
+# 스크립트도 정상 종료해서 ES로 복귀함.
+# fontconfig가 Pretendard(한글 폰트)를 찾으려면 캐시가 있어야 함 - 이미
+# 최신이면 fc-cache가 빠르게 넘어가므로 매번 호출해도 부담 없음.
+fc-cache -f >/dev/null 2>&1
+
+export SHELL=/bin/sh
+export UIM_FEP=byeoru
+fbterm -s 22 uim-fep
 
 kill "$WATCHER_PID" 2>/dev/null
 

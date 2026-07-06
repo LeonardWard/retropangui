@@ -1,0 +1,20 @@
+config BR2_PACKAGE_UIM
+	bool "uim"
+	depends on BR2_INSTALL_LIBSTDCPP
+	depends on BR2_USE_WCHAR
+	depends on BR2_USE_MMU # fork()
+	select BR2_PACKAGE_NCURSES
+	select BR2_PACKAGE_GETTEXT
+	help
+	  uim은 다국어 입력기 프레임워크. GTK/Qt 등 GUI 프론트엔드와
+	  일본어/중국어 등 다른 언어 엔진은 전부 끄고, 순수 텍스트
+	  터미널 전용 프론트엔드인 uim-fep와 한글 입력 엔진(벼루,
+	  byeoru)만 활성화 - 유틸리티 터미널에서 fbterm과 함께 한글
+	  입출력을 지원하기 위한 용도(2026-07-06, todo-20260706-terminal-cjk
+	  핸드오버 문서 참고).
+
+	  https://github.com/uim/uim
+
+comment "uim needs a toolchain w/ C++, wchar, dynamic library"
+	depends on BR2_USE_MMU
+	depends on !BR2_INSTALL_LIBSTDCPP || !BR2_USE_WCHAR
