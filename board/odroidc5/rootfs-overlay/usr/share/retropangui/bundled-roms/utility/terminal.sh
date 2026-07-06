@@ -80,10 +80,19 @@ echo
 
 # "#" 하나만 뜨는 게 아니라 일반 리눅스 콘솔처럼 user@host:경로 형태로 -
 # busybox ash는 bash의 \u/\h/\w PS1 이스케이프를 지원 안 해서(실기기 확인,
-# 리터럴 그대로 출력됨) whoami/hostname은 지금 값을 미리 채워 넣고 $PWD만
-# 작은따옴표로 묶어 평가를 미뤄서(프롬프트 그릴 때마다 셸이 알아서 재평가함,
-# 표준 POSIX 동작) 디렉토리 이동에 따라 갱신되게 함.
-export PS1="$(whoami)@$(hostname):"'$PWD'"# "
+# 리터럴 그대로 출력됨) whoami/hostname은 지금 값을 미리 채워 넣음. 경로는
+# 홈 디렉토리를 ~로 줄여 보여주는 일반 리눅스 관례까지 맞추려고(bash의
+# ${PWD/#$HOME/~} 같은 슬래시 치환 문법은 busybox ash가 지원 안 해서 실기기
+# 확인 후 POSIX 표준 case문 기반 함수로 대체) termrc.sh의 _rpui_shortpwd
+# 함수를 씀 - PS1 안에서 $(...)로 감싸 프롬프트 그릴 때마다 재실행되게 함
+# (작은따옴표로 묶어 지금 당장 평가되지 않게 함, $PWD와 같은 원리).
+export PS1="$(whoami)@$(hostname):"'$(_rpui_shortpwd)'"# "
+
+# 셸 함수는 프로세스 경계를 못 넘어서(POSIX sh엔 bash의 export -f가 없음)
+# 위에서 정의해봐야 아래 /bin/sh -i엔 안 보임 - ENV로 지정해두면 busybox
+# ash가 비로그인 대화형 셸 시작 시 POSIX 표준대로 이 파일을 소싱해서
+# _rpui_shortpwd가 그 안에서 실제로 정의됨(실기기 확인 완료).
+export ENV=/usr/share/retropangui/termrc.sh
 
 # 패드로 RA처럼 핫키 종료/스크린샷 - es_input.cfg가 이미 계산해둔 패드별
 # evdev 버튼 코드를 그대로 읽어서 씀(패드마다 코드가 완전히 달라서 하드코딩
