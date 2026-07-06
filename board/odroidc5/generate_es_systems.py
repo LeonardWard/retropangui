@@ -27,6 +27,7 @@ def generate(systems, roms_path, retroarch, config):
         platform   = s['platform']
         theme      = s['theme']
         cores      = s['cores']
+        command_override = s.get('command')
 
         lines.append('')
         lines.append('  <system>')
@@ -49,6 +50,11 @@ def generate(systems, roms_path, retroarch, config):
             lines.append(
                 '    <command>/usr/bin/rpui-launcher %SYSTEM% %ROM% default %CORE%</command>'
             )
+        elif command_override:
+            # cores 없이 %ROM%을 그대로 실행하는 게 안 맞는 시스템(예: screenshots -
+            # 이미지 파일을 실행 파일처럼 exec할 수 없음)은 systems.json에 "command"를
+            # 직접 명시해서 전용 뷰어/스크립트를 거치게 함(2026-07-06).
+            lines.append(f'    <command>{command_override}</command>')
         else:
             # cores가 없는 시스템(예: utility) — RetroArch를 거치지 않고
             # 롬(실행 스크립트)을 그대로 실행. 2026-07-05, AI CLI 등

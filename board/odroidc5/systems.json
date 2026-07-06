@@ -146,6 +146,7 @@
     "path": "/retropangui/share/screenshots",
     "platform": "screenshots",
     "theme": "screenshots",
-    "cores": []
+    "cores": [],
+    "command": "/usr/share/retropangui/rpui-imgview.sh %ROM%"
   }
 ]

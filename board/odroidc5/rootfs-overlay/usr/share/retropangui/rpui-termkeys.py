@@ -19,9 +19,10 @@ import struct
 import subprocess
 import sys
 import time
-import xml.etree.ElementTree as ET
 
-ES_INPUT_CFG = "/root/.emulationstation/es_input.cfg"
+sys.path.insert(0, "/usr/share/retropangui")
+from rpui_padutil import detect_joysticks, find_codes_for_device  # noqa: E402
+
 SCREENSHOT_DIR = "/retropangui/share/screenshots/utility"
 
 # struct input_event { struct timeval time; __u16 type; __u16 code; __s32 value; }
@@ -33,59 +34,6 @@ EV_KEY = 1
 
 def log(msg):
     print(f"[termkeys] {msg}", file=sys.stderr, flush=True)
-
-
-def detect_joysticks():
-    """/proc/bus/input/devices에서 조이스틱(js*) 핸들러를 가진 장치의
-    (이름, /dev/input/eventN) 목록을 반환. rpui-launcher.py의
-    detect_joypad_names()와 같은 판별 방식(js 핸들러 유무)."""
-    result = []
-    try:
-        content = open("/proc/bus/input/devices").read()
-    except OSError:
-        return result
-
-    for block in content.split("\n\n"):
-        name = None
-        event_path = None
-        has_js = False
-        for line in block.splitlines():
-            if line.startswith("N: Name="):
-                name = line.split("=", 1)[1].strip().strip('"')
-            elif line.startswith("H: Handlers="):
-                handlers = line.split("=", 1)[1].split()
-                if any(h.startswith("js") for h in handlers):
-                    has_js = True
-                for h in handlers:
-                    if h.startswith("event"):
-                        event_path = "/dev/input/" + h
-        if name and has_js and event_path:
-            result.append((name, event_path))
-    return result
-
-
-def find_codes_for_device(name):
-    """es_input.cfg에서 이 장치 이름과 일치하는 joystick 항목의
-    select/start/pageup evdev code를 dict로 반환."""
-    try:
-        tree = ET.parse(ES_INPUT_CFG)
-    except (OSError, ET.ParseError) as e:
-        log(f"es_input.cfg 읽기 실패: {e}")
-        return {}
-
-    for cfg in tree.getroot().findall("inputConfig"):
-        if cfg.get("type") != "joystick" or cfg.get("deviceName") != name:
-            continue
-        codes = {}
-        for inp in cfg.findall("input"):
-            n = inp.get("name")
-            if inp.get("type") == "button" and n in ("select", "start", "pageup"):
-                try:
-                    codes[n] = int(inp.get("code"))
-                except (TypeError, ValueError):
-                    pass
-        return codes
-    return {}
 
 
 def take_screenshot():
@@ -187,7 +135,7 @@ def main():
     # 여러 개 연결돼 있으면 첫 번째 것만 감시(rpui-launcher.py의
     # 핫키 오버라이드도 동일하게 첫 번째 매칭 장치 기준).
     name, event_path = joysticks[0]
-    codes = find_codes_for_device(name)
+    codes = find_codes_for_device(name, ("select", "start", "pageup"))
     if not codes:
         log(f"{name}: es_input.cfg에 매핑 없음 - 감시 안 함")
         return
