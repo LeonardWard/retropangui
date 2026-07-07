@@ -9,6 +9,11 @@ from pathlib import Path
 PRIORITIES_CONF = "/etc/retropangui/priorities.conf"
 RETROARCH_BIN   = "/usr/bin/retroarch"
 ETC_RA_CFG      = "/etc/retroarch.cfg"
+# apply_retropangui_conf.sh가 retropangui.conf의 global.*(언어 등)를 쓰는
+# 사용자 설정 오버레이 파일 - 2026-07-07까지 이 체인에 전혀 포함 안 돼서
+# global.* 설정이 게임 실행 시 전부 무시되고 있었음(구 C++ buildAppendConfig
+# 때부터 있던 누락, Python 이관 때 생긴 문제 아님).
+USER_RA_CFG     = "/retropangui/share/system/retroarch/retroarch.cfg"
 AUTOCONFIG_DIR  = "/etc/retroarch/autoconfig"
 HOTKEY_OVERRIDE_CFG = "/tmp/retropangui-hotkey-override.retroarch.cfg"
 
@@ -206,6 +211,12 @@ def build_appendconfig_chain(rom_path, roms_root):
     game_cfg = Path(str(rom) + ".retroarch.cfg")
     if game_cfg.exists():
         chain.append(str(game_cfg))
+
+    # 사용자 전역 설정(retropangui.conf의 global.* → apply_retropangui_conf.sh가
+    # 씀)을 /etc/retroarch.cfg 바로 뒤에 삽입 - 시스템/게임별 오버라이드보다는
+    # 앞이라 더 구체적인 설정이 여전히 우선함
+    if Path(USER_RA_CFG).exists():
+        chain.insert(0, USER_RA_CFG)
 
     # /etc/retroarch.cfg 를 맨 앞에 삽입
     if Path(ETC_RA_CFG).exists():
