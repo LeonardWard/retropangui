@@ -125,6 +125,14 @@ WATCHER_PID=$!
 # 최신이면 fc-cache가 빠르게 넘어가므로 매번 호출해도 부담 없음.
 fc-cache -f >/dev/null 2>&1
 
+# 2026-07-08: kmscon이 --use-original-mode(기본값)로 "지금 활성 상태인
+# DRM 모드"를 그대로 재사용하는데, ES/스플래시가 물러난 직후 이 VT의
+# 활성 모드가 EDID "preferred" 협상 결과인 1920x1080p120hz로 잡혀있는
+# 경우가 있음(S99emulationstation의 스플래시 60Hz 강제와 동일한 근본
+# 원인, 실기기 dmesg에서 hdmitx 120hz 모드 전환 확인) - 이 프로젝트가
+# 이미 쓰는 도구로 kmscon 시작 직전에 60Hz로 명시 고정.
+odroid-drm-fbset -outputmode 1080p60hz 2>/dev/null
+
 export SHELL=/bin/sh
 export UIM_FEP=byeoru
 kmscon --vt=/dev/tty1 --term=linux --font-size=22 --oneshot --login -- uim-fep
