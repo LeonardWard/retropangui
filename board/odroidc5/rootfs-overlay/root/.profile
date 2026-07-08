@@ -49,6 +49,16 @@ echo "   터미널 유틸리티"
 printf '\033[0m'
 echo "   종료: SELECT + START   |   스크린샷: SELECT + L1(pageup)"
 echo
+# 2026-07-09: AI CLI 설치 명령어 안내 - npm install -g로 기기에서 직접
+# 설치 가능(rpui-nodejs가 Node.js/npm 런타임 제공). Claude Code는 npm의
+# allow-scripts 보안 게이트 때문에 postinstall(claude 심볼릭 링크 생성)이
+# 기본적으로 안 돌아서 --allow-scripts 명시 필요함을 실기기에서 확인
+# (todo-20260704-nodejs-npm.html 참고) - Gemini/Codex는 별도 게이트 없음.
+echo "   AI CLI 설치:"
+echo "     claude: npm install -g --allow-scripts=@anthropic-ai/claude-code @anthropic-ai/claude-code"
+echo "     gemini: npm install -g @google/gemini-cli"
+echo "     codex : npm install -g @openai/codex"
+echo
 
 # 2026-07-09: uim-fep가 시작 시점에 ioctl(TIOCGWINSZ)로 터미널 크기를
 # 한 번만 읽어서(uim-fep 소스 fep/uim-fep.c의 get_winsize()) 자기 자식
@@ -57,5 +67,14 @@ echo
 # 근방)을 읽어가버림을 실기기에서 확인(sleep 없이 23x80, 1초 후 53x128로
 # 정상). 근본 원인(kmscon의 정확한 협상 완료 시점)까지는 못 찾았지만,
 # 짧은 지연으로 확실하게 우회됨.
+#
+# 2026-07-09: exec 없이 그냥 "uim-fep -u byeoru"만 실행하면, uim-fep가
+# 끝나도 그걸 호출한 이 로그인 셸(-sh) 자체는 안 죽고 남아있다가 이어받음
+# - 사용자가 exit를 한 번 치면 uim-fep 안쪽 셸만 끝나고, 그 뒤에 남아있는
+# 이 바깥쪽 로그인 셸에서 exit를 한 번 더 쳐야 kmscon --oneshot이 실제로
+# 종료됨(실기기에서 "exit 두 번 쳐야 꺼진다"로 확인). exec으로 이 셸
+# 프로세스 자체를 uim-fep로 치환해서 uim-fep 하나만 종료하면 바로
+# kmscon까지 끝나게 함 - 크기(54x128)에는 exec 유무가 영향 없음을 별도
+# 확인함.
 sleep 1
-uim-fep -u byeoru
+exec uim-fep -u byeoru
