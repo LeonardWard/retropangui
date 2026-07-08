@@ -32,7 +32,15 @@ UIM_MAKE_OPTS = \
 # (sigscheme/libgcroots 단계) / "undefined reference to uim_scm_*"
 # (uim/libuim-scm.so 단계) 링크 에러가 남 - 체인의 각 단계 디렉토리를
 # 전부 -rpath-link로 직접 지정해서 해결.
-UIM_CONF_ENV = LDFLAGS="$(TARGET_LDFLAGS) -Wl,-rpath-link,$(BUILD_DIR)/uim-$(UIM_VERSION)/sigscheme/libgcroots/.libs -Wl,-rpath-link,$(BUILD_DIR)/uim-$(UIM_VERSION)/uim/.libs"
+UIM_CONF_ENV = LDFLAGS="$(TARGET_LDFLAGS) -Wl,-rpath-link,$(BUILD_DIR)/uim-$(UIM_VERSION)/sigscheme/libgcroots/.libs -Wl,-rpath-link,$(BUILD_DIR)/uim-$(UIM_VERSION)/uim/.libs" CFLAGS="$(TARGET_CFLAGS) -O0"
+
+# 2026-07-08: uim-fep가 실행 즉시 세그폴트하던 문제(uim_init() 안쪽에서
+# sigscheme의 보수적 GC가 스택을 스캔하다가 make_loaded_str에서 크래시 -
+# gdb 코어덤프 분석 + 심볼 복원으로 확인) - 최적화를 켜면 컴파일러가 스택
+# 변수를 레지스터에 두거나 재정렬해서 conservative GC의 스택 스캔 가정이
+# 깨지는 것으로 추정. -O0로 낮춰서 실기기 검증 완료(uim-fep가 8초+ 정상
+# 대기 상태 유지 확인). uim은 입력기라 CPU 바운드 작업이 아니라서 -O0로
+# 인한 성능 저하는 체감상 무관.
 
 # 2026-07-06: GTK/Qt(각 버전)/일본어(anthy/canna/wnn/prime/sj3)/curl/sqlite3/
 # libffi/m17nlib 등은 전부 끄고, 텍스트 터미널 전용 프론트엔드(uim-fep)와
