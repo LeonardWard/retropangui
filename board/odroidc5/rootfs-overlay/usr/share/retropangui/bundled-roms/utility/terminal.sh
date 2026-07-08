@@ -42,7 +42,9 @@ echo 1 > /proc/sys/kernel/printk 2>/dev/null
 
 # 2026-07-06: 기본 콘솔 폰트(커널 내장 8x16)가 1920x1080에서 너무 작아 보인다는
 # 피드백 - kbd 패키지의 iso01-12x22(가로 12/세로 22, 기본 대비 가로 1.5배·세로
-# 1.375배)로 교체. setfont는 .gz 압축 폰트를 그대로 인식함.
+# 1.375배)로 교체. setfont는 .gz 압축 폰트를 그대로 인식함. 이 배너 자체는
+# kmscon 진입 "전"에 순수 fbcon 텍스트 모드로 찍히는 거라 이 설정이 적용됨
+# (kmscon은 자기 자신의 freetype 렌더링을 쓰므로 이 설정과 무관).
 setfont /usr/share/consolefonts/iso01-12x22.psfu.gz 2>/dev/null
 
 clear
@@ -68,9 +70,9 @@ BANNER
 printf '\033[0m\033[32m'
 echo "   Terminal Utility"
 printf '\033[0m'
-# 2026-07-06: 이 배너 자체는 fbterm 진입 "전"에 순수 fbcon에 찍히는 거라
+# 2026-07-06: 이 배너 자체는 kmscon 진입 "전"에 순수 fbcon에 찍히는 거라
 # 여전히 영문 유지 - fbcon 커널 콘솔 폰트엔 한글 글리프가 없음(kbd 패키지
-# 폰트 포함, 실기기에서 확인). 배너 다음에 뜨는 실제 세션은 fbterm(아래)이
+# 폰트 포함, 실기기에서 확인). 배너 다음에 뜨는 실제 세션은 kmscon(아래)이
 # 담당해서 한글이 정상적으로 보임.
 echo "   Exit: SELECT + START   |   Screenshot: SELECT + L1(pageup)"
 echo
@@ -108,26 +110,24 @@ export ENV=/usr/share/retropangui/termrc.sh
 python3 /usr/share/retropangui/rpui-termkeys.py "$$" >> /var/log/rpui-termkeys.log 2>&1 &
 WATCHER_PID=$!
 
-# 2026-07-06: 한글 입출력 - fbterm(freetype+fontconfig로 화면에 그림, Pretendard
-# 폰트) 안에서 uim-fep(SHELL 환경변수로 지정한 셸을 자식으로 실행하며 키 입력을
-# 자모→완성형으로 조합)를 띄우고, 그 안에서 실제 셸이 도는 구조
-# (fbterm → uim-fep → sh). fbterm에 command 인자를 주면 그 명령을 그대로
-# execvp()하고(SHELL 환경변수는 안 봄 - fbterm 소스 shell.cpp 확인), uim-fep가
-# 자기 나름대로 SHELL을 읽어서 그 셸을 자식으로 띄움 - 그래서 SHELL은
-# fbterm이 아니라 uim-fep를 위해 지정.
-# -l(로그인 셸)이 아니라 SHELL=/bin/sh(인자 없음)로 지정한 이유는 이전과
-# 동일 - 로그인 셸이면 /etc/profile을 또 실행해서 위에서 어렵게 맞춰둔 PS1이
-# '# '로 도로 덮어써짐. busybox ash는 pty로 연결된 자식에서 isatty()로 대화형
-# 여부를 스스로 판단하므로 -i 없이 실행해도 정상적으로 대화형처럼 동작함.
-# exec로 자기 자신을 치환하지도 않음 - fbterm이 끝나야 워처를 정리하고 이
-# 스크립트도 정상 종료해서 ES로 복귀함.
+# 2026-07-08: 한글 입출력 - 원래 fbterm(freetype/fontconfig로 화면에 그림)
+# 안에서 uim-fep를 띄우는 구조였는데, fbterm이 이 기기의 DRM_FBDEV_EMULATION과
+# 근본적으로 안 맞아서(실기기 확인 - 배너는 정상 출력되나 fbterm이 그래픽
+# 모드로 전환하면 화면이 검게 나옴. 프레임버퍼엔 데이터가 그려지는데 실제
+# 디스플레이 컨트롤러가 그 버퍼를 스캔아웃 안 하는 것으로 추정 - fbterm은
+# libdrm을 아예 링크 안 하는 순수 legacy fbdev 프로그램이라 근본적 해결이
+# 어려움) kmscon(DRM 네이티브 콘솔, br2-external 커스텀 패키지)으로 교체.
+# 한글 자모 조합 로직(uim-fep+벼루)은 그대로 재사용 - kmscon이 화면
+# 렌더링/VT 관리만 담당하고 uim-fep를 --login으로 자식 프로세스 실행시킴.
+# --oneshot: uim-fep(로그인 프로세스)가 끝나면 kmscon도 같이 종료됨(fbterm이
+# 셸 세션 끝나면 돌아오던 것과 동일한 동작).
 # fontconfig가 Pretendard(한글 폰트)를 찾으려면 캐시가 있어야 함 - 이미
 # 최신이면 fc-cache가 빠르게 넘어가므로 매번 호출해도 부담 없음.
 fc-cache -f >/dev/null 2>&1
 
 export SHELL=/bin/sh
 export UIM_FEP=byeoru
-fbterm -s 22 uim-fep
+kmscon --vt=/dev/tty1 --term=linux --font-size=22 --oneshot --login -- uim-fep
 
 kill "$WATCHER_PID" 2>/dev/null
 

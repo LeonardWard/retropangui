@@ -1,0 +1,29 @@
+config BR2_PACKAGE_KMSCON
+	bool "kmscon"
+	depends on BR2_PACKAGE_HAS_UDEV
+	depends on BR2_TOOLCHAIN_HAS_THREADS
+	select BR2_PACKAGE_LIBDRM
+	select BR2_PACKAGE_LIBXKBCOMMON
+	select BR2_PACKAGE_FREETYPE
+	select BR2_PACKAGE_FONTCONFIG
+	select BR2_PACKAGE_ZLIB
+	help
+	  DRM/KMS 기반 가상 콘솔 - fbterm이 이 기기(DRM_FBDEV_EMULATION)에서
+	  화면 전환이 안 되는 문제(2026-07-08 실기기에서 확인 - 배너는
+	  fbcon으로 정상 출력되지만 fbterm이 그래픽 모드로 전환하면 화면이
+	  검게 나옴, 프레임버퍼엔 데이터가 있는데 실제 디스플레이 컨트롤러가
+	  그 버퍼를 스캔아웃하지 않는 것으로 추정)를 우회하기 위해 fbterm을
+	  대체하는 용도. fbterm과 달리 libdrm을 직접 링크해서 DRM 네이티브로
+	  동작하므로 이 문제 자체가 구조적으로 발생하지 않음.
+
+	  한글 입출력은 여전히 uim-fep(byeoru)를 그대로 씀 - kmscon은 화면
+	  렌더링/VT 관리만 담당하고, `kmscon --login -- uim-fep`처럼 uim-fep를
+	  자식 프로세스로 실행시키는 방식으로 통합.
+
+	  libtsm(터미널 상태 머신)은 meson subproject wrap으로 빌드 중
+	  자동으로 git clone됨(네트워크 필요) - 별도 패키징 안 함.
+
+	  https://github.com/kmscon/kmscon
+
+comment "kmscon needs udev and a toolchain w/ threads"
+	depends on !BR2_PACKAGE_HAS_UDEV || !BR2_TOOLCHAIN_HAS_THREADS

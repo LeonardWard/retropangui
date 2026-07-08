@@ -200,8 +200,15 @@ BR2_PACKAGE_KBD=y
 # 터미널 유틸리티 한글 입출력(2026-07-06, todo-20260706-terminal-cjk 참고):
 # fbterm(freetype/fontconfig 기반 콘솔 - 한글 폰트로 화면에 그림) +
 # uim(uim-fep+벼루 - 한글 자모 조합 입력, br2-external 커스텀 패키지)
-BR2_PACKAGE_FBTERM=y
+# 2026-07-08: fbterm은 이 기기(DRM_FBDEV_EMULATION)와 화면 렌더링이
+# 근본적으로 안 맞아서(실기기 확인 - 배너는 fbcon으로 나오는데 fbterm이
+# 그래픽 모드로 전환하면 화면이 검게 나옴) kmscon(DRM 네이티브 콘솔,
+# br2-external 커스텀 패키지)으로 교체. uim(한글 조합 로직)은 그대로 씀 -
+# kmscon --login -- uim-fep 형태로 통합.
+# BR2_PACKAGE_FBTERM=y  # kmscon으로 교체(2026-07-08)
 BR2_PACKAGE_UIM=y
+BR2_PACKAGE_KMSCON=y
+BR2_PACKAGE_LIBXKBCOMMON=y
 
 # Node.js/npm — AI CLI(Claude Code 등) 설치 지원 목적. Buildroot 자체 nodejs
 # 패키지는 20.11.1로 고정돼 있어 Claude Code(node>=22.0.0 요구)가 설치조차
