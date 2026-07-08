@@ -134,7 +134,6 @@ fc-cache -f >/dev/null 2>&1
 odroid-drm-fbset -outputmode 1080p60hz 2>/dev/null
 
 export SHELL=/bin/sh
-export UIM_FEP=byeoru
 # 2026-07-08: uim-fep를 kmscon의 --login 대상으로 "직접" 지정하면
 # kmscon이 display/font/terminal 백엔드까지 정상 초기화한 직후 조용히
 # (exit 0) 종료돼버림(실기기 확인, dmesg/크래시 로그 없음) - 반면 셸
@@ -151,7 +150,15 @@ export UIM_FEP=byeoru
 # 주면 화면 왼쪽 위 일부만 쓰고 나머지가 새까맣게 남음(실기기 kmsgrab
 # 스크린샷으로 확인). 1920x1080에서 세로를 끝까지 채우는 값을 실측으로
 # 찾은 게 38.
-kmscon --vt=/dev/tty1 --term=linux --font-size=38 --oneshot --login -- /bin/sh -c "exec uim-fep"
+# 2026-07-08: 환경변수 UIM_FEP=byeoru로 입력기를 고른다고 착각했는데,
+# uim-fep 소스(fep/uim-fep.c) 어디에도 UIM_FEP라는 이름의 환경변수는
+# 없음(UIM_FEP_PID/GETMODE/SETMODE는 있지만 전혀 다른 용도) - 그래서
+# 계속 기본값인 "direct"(가공 없이 그대로 통과) 입력기로 떠 있었고,
+# 한/영 전환키를 뭘 눌러도 안 먹혔던 진짜 원인이 이거였음(실기기에서
+# 상태표시줄이 "direct[- -]"로 고정된 걸로 확인). 입력기 선택은
+# "-u byeoru" 커맨드라인 인자로 해야 함(uim-fep --help 확인) - 이걸로
+# 바꾸니 상태표시줄이 "byeoru[]"로 정상 전환됨.
+kmscon --vt=/dev/tty1 --term=linux --font-size=38 --oneshot --login -- /bin/sh -c "exec uim-fep -u byeoru"
 
 kill "$WATCHER_PID" 2>/dev/null
 
