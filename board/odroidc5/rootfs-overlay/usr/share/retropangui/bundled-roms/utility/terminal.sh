@@ -135,7 +135,16 @@ odroid-drm-fbset -outputmode 1080p60hz 2>/dev/null
 
 export SHELL=/bin/sh
 export UIM_FEP=byeoru
-kmscon --vt=/dev/tty1 --term=linux --font-size=22 --oneshot --login -- uim-fep
+# 2026-07-08: uim-fep를 kmscon의 --login 대상으로 "직접" 지정하면
+# kmscon이 display/font/terminal 백엔드까지 정상 초기화한 직후 조용히
+# (exit 0) 종료돼버림(실기기 확인, dmesg/크래시 로그 없음) - 반면 셸
+# 하나를 거쳐서(sh -c "exec uim-fep") 실행하면 정상적으로 계속 살아있음.
+# kmscon이 직접 지정한 로그인 프로세스에 대해서만 하는 특별 처리
+# (세션 리더 지정, TIOCSCTTY 등으로 추정)가 uim-fep 내부 동작과 충돌하는
+#것으로 보임 - 근본 원인 규명보다 셸 한 겹으로 감싸는 우회가 간단하고
+# 확실해서 채택. exec으로 셸 자신을 uim-fep로 치환해서 불필요한 프로세스
+# 하나 안 남기게 함.
+kmscon --vt=/dev/tty1 --term=linux --font-size=22 --oneshot --login -- /bin/sh -c "exec uim-fep"
 
 kill "$WATCHER_PID" 2>/dev/null
 
