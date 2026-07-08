@@ -52,13 +52,15 @@ def generate(systems, roms_path, retroarch, config):
             )
         elif command_override:
             # cores 없이 %ROM%을 그대로 실행하는 게 안 맞는 시스템(예: screenshots -
-            # 이미지 파일을 실행 파일처럼 exec할 수 없음)은 systems.json에 "command"를
-            # 직접 명시해서 전용 뷰어/스크립트를 거치게 함(2026-07-06).
+            # 이미지 파일을 실행 파일처럼 exec할 수 없음, utility - exFAT은 실행
+            # 권한 비트를 저장 못 해서 인터프리터를 명시해야 함)은 systems.json에
+            # "command"를 직접 명시해서 전용 뷰어/스크립트를 거치게 함(2026-07-06).
             lines.append(f'    <command>{command_override}</command>')
         else:
-            # cores가 없는 시스템(예: utility) — RetroArch를 거치지 않고
-            # 롬(실행 스크립트)을 그대로 실행. 2026-07-05, AI CLI 등
-            # 터미널 유틸리티를 게임처럼 실행하기 위한 용도.
+            # cores도 없고 command 명시도 없는 시스템 — RetroArch를 거치지 않고
+            # 롬을 그대로 실행. 2026-07-05, AI CLI 등 터미널 유틸리티를 게임처럼
+            # 실행하기 위한 용도로 도입했으나, exFAT 실행권한 문제로 utility는
+            # 이후 command_override(python3 %ROM%) 쪽으로 옮김(2026-07-08).
             lines.append('    <command>%ROM%</command>')
         lines.append(f'    <platform>{platform}</platform>')
         lines.append(f'    <theme>{theme}</theme>')

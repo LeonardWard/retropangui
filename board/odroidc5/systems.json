@@ -134,10 +134,11 @@
   {
     "name": "utility",
     "fullname": "유틸리티",
-    "extensions": ".sh",
+    "extensions": ".py",
     "platform": "ports",
     "theme": "ports",
-    "cores": []
+    "cores": [],
+    "command": "python3 %ROM%"
   },
   {
     "name": "screenshots",
