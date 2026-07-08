@@ -58,6 +58,21 @@ EOF
 rm -f "${TARGET_DIR}/etc/profile.d/locale.sh"
 rm -f "${TARGET_DIR}/etc/profile.d/retropangui-sdl.sh"
 
+# Liberation 폰트 제거 (RA 메뉴/OSD 한글 깨짐 원인, todo-20260707-ra-korean-menu 참고)
+# fbterm의 Config.in이 "select BR2_PACKAGE_LIBERATION"을 갖고 있어서 fbterm을
+# 켜면 자동으로 같이 설치됨(Buildroot의 select 강제 메커니즘이라 defconfig에서
+# 뺄 수 없음). fontconfig 스캔 경로(/usr/share/fonts)에 Liberation이 새로
+# 들어오면서 RA의 폰트 매칭이 꼬여 ozone 메뉴/OSD 한글이 ㅁㅁㅁ로 깨짐을
+# 2026-07-07~08 이분탐색+격리 테스트(A1~A4)로 확정. fbterm 자체는 Pretendard로
+# 한글을 그리므로 Liberation이 실제로 필요하지 않음 - 설치된 뒤 여기서 지운다
+# (buildroot/package/fbterm은 매 빌드마다 buildroot.org에서 새로 받아오는
+# 벤더 트리라 Config.in/mk를 직접 고쳐도 영속 안 됨 - 이 프로젝트가 추적하는
+# post-build.sh에서 지우는 게 유일하게 지속되는 방법).
+if [ -d "${TARGET_DIR}/usr/share/fonts/liberation" ]; then
+    echo ">>> Liberation 폰트 제거 중 (RA 한글 렌더링 회귀 방지)..."
+    rm -rf "${TARGET_DIR}/usr/share/fonts/liberation"
+fi
+
 # 기본 사용자 비밀번호 설정 (root:odroid)
 # 실제 배포 시에는 변경 필요!
 HASH=$(echo "odroid" | openssl passwd -6 -stdin)
