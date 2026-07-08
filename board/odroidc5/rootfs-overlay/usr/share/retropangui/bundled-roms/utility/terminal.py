@@ -114,7 +114,9 @@ def main():
     # 확인) termsession.sh 하나를 거쳐서 실행 - 그 안에서 LANG/PS1/ENV
     # 재지정 + 배너 출력 + uim-fep -u byeoru exec까지 처리함(kmscon이
     # --login 자식 프로세스의 환경을 새로 구성하고 호출 시점 환경을 안
-    # 물려줘서 여기서 export해봐야 소용없음 - 실기기 확인).
+    # 물려줘서 여기서 export해봐야 소용없음 - 실기기 확인). termsession.sh
+    # 자체는 squashfs에 있어 실행권한/셰뱅이 정상 보존되므로(exFAT과 달리)
+    # "/bin/sh"로 감쌀 필요 없이 경로만 바로 넘기면 됨 - 실기기 재확인.
     subprocess.run(
         [
             "kmscon",
@@ -124,7 +126,6 @@ def main():
             "--oneshot",
             "--login",
             "--",
-            "/bin/sh",
             TERMSESSION,
         ]
     )
