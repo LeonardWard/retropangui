@@ -13,10 +13,24 @@ KMSCON_LICENSE_FILES = COPYING
 KMSCON_DEPENDENCIES = host-pkgconf libdrm libxkbcommon freetype fontconfig \
 	zlib eudev
 
-# libtsm(터미널 상태 머신)은 subprojects/libtsm.wrap을 통해 meson이
-# configure 단계에서 git clone으로 직접 받아옴(네트워크 필요) - 이
-# 프로젝트가 이미 build.sh 단계에서 emulationstation을 git clone하는
-# 것과 같은 성격의 네트워크 의존성이라 별도 처리 없이 그대로 둠.
+# libtsm(터미널 상태 머신)은 kmscon이 subprojects/libtsm.wrap(wrap-git)으로
+# meson configure 단계에 자동 git clone하는 구조인데, Buildroot의
+# meson-package 인프라는 재현 가능한 빌드를 위해 자동 wrap 다운로드를
+# 막아놔서("Automatic wrap-based subproject downloading is disabled")
+# 그대로 두면 configure가 실패함(2026-07-08 확인). libtsm 자체는 별도
+# Buildroot 패키지로 안 만들고, EXTRA_DOWNLOADS로 타르볼을 받아서
+# meson이 기대하는 subprojects/libtsm/ 자리에 압축만 풀어넣는 방식으로
+# 해결 - meson은 이미 그 자리에 소스가 있으면 다운로드 시도 없이 그냥 씀.
+KMSCON_LIBTSM_VERSION = 4.6.0
+KMSCON_EXTRA_DOWNLOADS = https://github.com/kmscon/libtsm/archive/refs/tags/v$(KMSCON_LIBTSM_VERSION).tar.gz
+
+define KMSCON_EXTRACT_LIBTSM
+	mkdir -p $(@D)/subprojects/libtsm
+	$(call suitable-extractor,v$(KMSCON_LIBTSM_VERSION).tar.gz) \
+		$(KMSCON_DL_DIR)/v$(KMSCON_LIBTSM_VERSION).tar.gz | \
+		$(TAR) --strip-components=1 -C $(@D)/subprojects/libtsm $(TAR_OPTIONS) -
+endef
+KMSCON_POST_EXTRACT_HOOKS += KMSCON_EXTRACT_LIBTSM
 
 # 2026-07-08: fbterm의 DRM_FBDEV_EMULATION 비호환 문제를 피하려고 도입 -
 # drm2d(순수 DRM dumb-buffer, GPU 가속 없음)만 켜고 나머지 비디오
