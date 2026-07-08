@@ -29,13 +29,10 @@ Window::deinit()->Renderer::deinit()으로 SDL/DRM을 이미 정리해두므로 
 재연결해서 해결.
 """
 import os
-import signal
 import subprocess
-import sys
 
 TTY = "/dev/tty1"
 TERMKEYS_LOG = "/var/log/rpui-termkeys.log"
-TERMSESSION = "/usr/share/retropangui/termsession.py"
 
 
 def reconnect_tty():
@@ -75,7 +72,7 @@ def main():
     old_printk = read_printk_level()
     write_printk_level("1")
 
-    # 2026-07-08: 환영 배너는 kmscon 안(termsession.sh)에서 그림 - fbcon
+    # 2026-07-09: 환영 배너는 kmscon 안(root의 .profile)에서 그림 - fbcon
     # 커널 콘솔 폰트엔 한글 글리프가 없어서(PSF 비트맵, 256~512 글리프 한정)
     # 여기서는 화면만 지움.
     subprocess.run(["clear"])
@@ -109,26 +106,22 @@ def main():
     # 2026-07-08: 한글 입출력 - fbterm은 이 기기의 DRM_FBDEV_EMULATION과
     # 근본적으로 안 맞아서(배너는 정상 출력되나 그래픽 모드 전환 시 화면이
     # 검게 나옴 - libdrm을 아예 안 링크하는 legacy fbdev 프로그램이라 근본
-    # 해결 불가) kmscon(DRM 네이티브 콘솔)으로 교체. uim-fep를 kmscon
-    # --login에 "직접" 지정하면 조용히 종료돼버리는 문제가 있어서(실기기
-    # 확인) termsession.sh 하나를 거쳐서 실행 - 그 안에서 LANG/PS1/ENV
-    # 재지정 + 배너 출력 + uim-fep -u byeoru exec까지 처리함(kmscon이
-    # --login 자식 프로세스의 환경을 새로 구성하고 호출 시점 환경을 안
-    # 물려줘서 여기서 export해봐야 소용없음 - 실기기 확인). termsession.sh
-    # 자체는 squashfs에 있어 실행권한/셰뱅이 정상 보존되므로(exFAT과 달리)
-    # "/bin/sh"로 감쌀 필요 없이 경로만 바로 넘기면 됨 - 실기기 재확인.
-    subprocess.run(
-        [
-            "kmscon",
-            "--vt=/dev/tty1",
-            "--term=linux",
-            "--font-size=38",
-            "--oneshot",
-            "--login",
-            "--",
-            TERMSESSION,
-        ]
-    )
+    # 해결 불가) kmscon(DRM 네이티브 콘솔)으로 교체.
+    #
+    # 2026-07-09: 커맨드라인 인자 없이 그냥 kmscon만 실행 - 모든 설정은
+    # /etc/kmscon/kmscon.conf(rootfs-overlay/etc/kmscon/)에서 옴. 예전엔
+    # 여기서 --font-size/--login 등을 직접 CLI로 줬는데, login=으로 커스텀
+    # 프로그램(termsession.py)을 직접 지정하면 터미널 행/열이 24x80으로
+    # 고정되는 kmscon 버그를 발견(font-size를 뭘로 바꿔도 stty size가 항상
+    # "24 80" - 처음엔 이게 kmscon 자체의 근본 한계라고 결론 내렸었으나 틀린
+    # 진단이었음, 아래 done-20260706-terminal-cjk.html의 "잘못된 진단 기록"
+    # 참고). 진짜 원인은 login=/--login에 커스텀 명령을 직접 주는 코드
+    # 경로 자체였고, kmscon.conf의 login=/bin/login -f root로 kmscon
+    # 기본 로그인 경로를 그대로 타면서(-f로 비밀번호만 생략) 해결됨 - 실측
+    # 54x128. 배너/LANG/PS1/ENV/uim-fep 실행은 이제 root의
+    # .profile(rootfs-overlay/root/.profile)이 로그인 셸 시작 시 자동으로
+    # 담당함(login=이 가리키는 별도 스크립트 없이).
+    subprocess.run(["kmscon"])
 
     try:
         watcher.terminate()
