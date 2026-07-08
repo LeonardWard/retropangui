@@ -35,7 +35,7 @@ import sys
 
 TTY = "/dev/tty1"
 TERMKEYS_LOG = "/var/log/rpui-termkeys.log"
-TERMSESSION = "/usr/share/retropangui/termsession.sh"
+TERMSESSION = "/usr/share/retropangui/termsession.py"
 
 
 def reconnect_tty():
