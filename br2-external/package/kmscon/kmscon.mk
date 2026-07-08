@@ -48,6 +48,7 @@ KMSCON_CONF_OPTS = \
 	-Dlibseat=disabled \
 	-Ddbus=disabled \
 	-Dtests=false \
-	-Ddocs=disabled
+	-Ddocs=disabled \
+	-Dlibtsm:tests=false
 
 $(eval $(meson-package))
