@@ -158,7 +158,15 @@ export SHELL=/bin/sh
 # 상태표시줄이 "direct[- -]"로 고정된 걸로 확인). 입력기 선택은
 # "-u byeoru" 커맨드라인 인자로 해야 함(uim-fep --help 확인) - 이걸로
 # 바꾸니 상태표시줄이 "byeoru[]"로 정상 전환됨.
-kmscon --vt=/dev/tty1 --term=linux --font-size=38 --oneshot --login -- /bin/sh -c "exec uim-fep -u byeoru"
+# 2026-07-08: 이 스크립트 앞부분에서 ". /etc/profile"로 LANG/LC_ALL을
+# ko_KR.UTF-8로 챙겨놨는데도, kmscon --login으로 뜬 자식 프로세스의
+# /proc/<pid>/environ엔 LANG/LC_* 자체가 아예 없었음(실기기 확인) -
+# kmscon이 getty/login 전통을 따라 "로그인 프로세스"에는 환경을 새로
+# 구성하고 호출 시점의 환경을 그대로 물려주지 않는 것으로 보임. busybox
+# 유니코드 지원을 켜도(CONFIG_UNICODE_USING_LOCALE) 이 프로세스 안에선
+# LANG이 안 보이니 도로 "?"로 나왔던 것 - env로 명시적으로 넘겨서 해결.
+kmscon --vt=/dev/tty1 --term=linux --font-size=38 --oneshot --login -- \
+    /bin/sh -c "exec env LANG=ko_KR.UTF-8 LC_ALL=ko_KR.UTF-8 uim-fep -u byeoru"
 
 kill "$WATCHER_PID" 2>/dev/null
 
