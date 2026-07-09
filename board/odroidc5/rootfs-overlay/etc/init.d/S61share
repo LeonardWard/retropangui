@@ -154,7 +154,7 @@ init_share_dirs() {
         "${SHARE_MOUNT}/roms/msx2" \
         "${SHARE_MOUNT}/roms/fds" \
         "${SHARE_MOUNT}/roms/scummvm" \
-        "${SHARE_MOUNT}/roms/pc" \
+        "${SHARE_MOUNT}/roms/dos" \
         "${SHARE_MOUNT}/roms/utility" \
         "${SHARE_MOUNT}/bios" \
         "${SHARE_MOUNT}/saves" \

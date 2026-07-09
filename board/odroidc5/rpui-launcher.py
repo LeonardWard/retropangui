@@ -22,7 +22,7 @@ REMAP_DIR       = "/root/.config/retroarch/config/remaps"
 # 8/10버튼 패드 기반 시스템의 전역 input_player1_analog_dpad_mode=1(좌
 # 아날로그) 기본값은 PSX/PC류(자체 아날로그 스틱 또는 방향키 그대로가
 # 자연스러움)엔 안 맞아서 꺼둠(2026-07-05).
-_ANALOG_DPAD_MODE_OFF_SYSTEMS = {"psx", "pc", "scummvm", "pc88", "pc98"}
+_ANALOG_DPAD_MODE_OFF_SYSTEMS = {"psx", "dos", "scummvm", "pc88", "pc98"}
 
 # 코어별 라이브레트로 컨트롤러 포트 디바이스 ID 오버라이드(예: PS1 DualShock).
 # input_libretro_device_pN은 일반 .cfg/appendconfig에서는 아예 안 읽히고,

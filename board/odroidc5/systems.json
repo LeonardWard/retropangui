@@ -92,7 +92,7 @@
     ]
   },
   {
-    "name": "pc",
+    "name": "dos",
     "fullname": "PC (DOS)",
     "extensions": ".exe .com .bat .conf .zip .7z",
     "platform": "pc",
