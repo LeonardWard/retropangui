@@ -16,6 +16,20 @@ ETC_RA_CFG      = "/etc/retroarch.cfg"
 USER_RA_CFG     = "/retropangui/share/system/retroarch/retroarch.cfg"
 AUTOCONFIG_DIR  = "/etc/retroarch/autoconfig"
 HOTKEY_OVERRIDE_CFG = "/tmp/retropangui-hotkey-override.retroarch.cfg"
+REMAP_DIR       = "/root/.config/retroarch/config/remaps"
+
+# 코어별 라이브레트로 컨트롤러 포트 디바이스 ID 오버라이드(예: PS1 DualShock).
+# input_libretro_device_pN은 일반 .cfg/appendconfig에서는 아예 안 읽히고,
+# RetroArch가 코어 자체 이름(retro_get_system_info의 library_name) 기준으로
+# ~/.config/retroarch/config/remaps/{코어이름}/{코어이름}.rmp를 자동으로 찾아서
+# 로드하는 "리맵 파일"에서만 파싱됨(2026-07-09 RetroArch v1.22.2 소스
+# configuration.c의 input_remapping_load_file() 확인 - 코어 옵션도 아니고
+# 일반 cfg 체인도 아니고 이 경로뿐이라 517/5 둘 다 appendconfig로는 안 먹었음).
+# module_id(priorities.conf 기준) → library_name·포트별 디바이스 ID.
+_CORE_PORT_DEVICE_OVERRIDE = {
+    # PCSX-ReARMed: DualShock = RETRO_DEVICE_SUBCLASS(RETRO_DEVICE_ANALOG, 1) = 517
+    "lr-pcsx-rearmed": {"library_name": "PCSX-ReARMed", "ports": {1: 517}},
+}
 
 
 def log(msg):
@@ -181,6 +195,29 @@ def write_hotkey_override():
     return None
 
 
+def write_pad_type_remap(module_id):
+    """_CORE_PORT_DEVICE_OVERRIDE에 module_id가 정의돼 있으면 RetroArch가
+    코어 로드 시 자동으로 찾는 위치(REMAP_DIR/{library_name}/{library_name}.rmp)에
+    포트별 input_libretro_device_pN 리맵 파일을 써 둔다. appendconfig 체인과
+    무관하게 RetroArch가 코어 이름 기준으로 알아서 찾아서 로드함."""
+    entry = _CORE_PORT_DEVICE_OVERRIDE.get(module_id)
+    if not entry:
+        return
+    library_name = entry["library_name"]
+    ports = entry["ports"]
+    rmp_dir = Path(REMAP_DIR) / library_name
+    rmp_path = rmp_dir / f"{library_name}.rmp"
+    lines = [f'input_libretro_device_p{port} = "{device_id}"\n' for port, device_id in ports.items()]
+    try:
+        rmp_dir.mkdir(parents=True, exist_ok=True)
+        rmp_path.write_text("".join(lines))
+    except OSError as e:
+        log(f"Warning: 패드 타입 리맵 파일 작성 실패 — {e}")
+        return
+    overrides_str = ", ".join(f"p{port}={device_id}" for port, device_id in ports.items())
+    log(f"패드 타입 리맵: '{module_id}' → {rmp_path} ({overrides_str})")
+
+
 def build_appendconfig_chain(rom_path, roms_root):
     """
     romsRoot/sys/ 에서 rom dir 까지 내려가며 .retroarch.cfg 수집.
@@ -268,6 +305,9 @@ def main():
     # 2. 코어 .so 경로 결정
     core_path = resolve_core_path(module_id, cores_path)
     log(f"core path: {core_path}")
+
+    # 코어별 패드 타입(예: PCSX-ReARMed→DualShock) 리맵 파일 기록
+    write_pad_type_remap(module_id)
 
     # 3. appendconfig 체인 조립
     append_chain = build_appendconfig_chain(rom, roms_root)

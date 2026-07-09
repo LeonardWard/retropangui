@@ -149,16 +149,11 @@ case "$1" in
                             printf 'input_player1_analog_dpad_mode = "0"\n' >> "${CFG}"
                             ;;
                     esac
-                    case "${sys}" in
-                        psx)
-                            # 기본 컨트롤러 유형이 Standard(디지털 패드)라 아날로그 스틱을
-                            # 못 쓰고 진동도 지원 안 되는 게임이 많음 - DualShock으로 지정
-                            # (libretro RETRO_DEVICE_SUBCLASS(RETRO_DEVICE_ANALOG, 1) =
-                            # ((1+1)<<8)|5 = 517, pcsx_rearmed 소스로 직접 계산 확인,
-                            # 2026-07-06)
-                            printf 'input_libretro_device_p1 = "517"\n' >> "${CFG}"
-                            ;;
-                    esac
+                    # psx DualShock 지정(input_libretro_device_p1=517)은 여기서 정적으로
+                    # 쓰지 않음 - 애초에 이 키는 일반 .cfg/appendconfig에서는 안 읽히고
+                    # RetroArch의 리맵(.rmp) 파일에서만 파싱됨(2026-07-09 소스 확인).
+                    # rpui-launcher.py의 write_pad_type_remap()이 코어 실행마다
+                    # ~/.config/retroarch/config/remaps/{코어}/{코어}.rmp에 직접 씀.
                     logger -t "${TAG}" "screenshot cfg 생성: ${sys}"
                 fi
             done
