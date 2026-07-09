@@ -1,0 +1,10 @@
+config BR2_PACKAGE_RETROARCH_JOYPAD_AUTOCONFIG
+	bool "retroarch-joypad-autoconfig"
+	help
+	  RetroArch 공식 커뮤니티 컨트롤러 autoconfig DB(udev 서브셋).
+	  이 프로젝트가 실기기에서 직접 검증·수정한 장치(핫키 select 통일,
+	  X/Y 순서 수정 등)는 board/odroidc5/rootfs-overlay/etc/retroarch/
+	  autoconfig/에 그대로 유지되고, 이 패키지는 그 장치명과 겹치지
+	  않는 나머지만 설치함.
+
+	  https://github.com/libretro/retroarch-joypad-autoconfig
