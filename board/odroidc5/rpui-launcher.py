@@ -16,7 +16,13 @@ ETC_RA_CFG      = "/etc/retroarch.cfg"
 USER_RA_CFG     = "/retropangui/share/system/retroarch/retroarch.cfg"
 AUTOCONFIG_DIR  = "/etc/retroarch/autoconfig"
 HOTKEY_OVERRIDE_CFG = "/tmp/retropangui-hotkey-override.retroarch.cfg"
+SYSTEM_OVERRIDE_CFG = "/tmp/retropangui-system-override.retroarch.cfg"
 REMAP_DIR       = "/root/.config/retroarch/config/remaps"
+
+# 8/10버튼 패드 기반 시스템의 전역 input_player1_analog_dpad_mode=1(좌
+# 아날로그) 기본값은 PSX/PC류(자체 아날로그 스틱 또는 방향키 그대로가
+# 자연스러움)엔 안 맞아서 꺼둠(2026-07-05).
+_ANALOG_DPAD_MODE_OFF_SYSTEMS = {"psx", "pc", "scummvm", "pc88", "pc98"}
 
 # 코어별 라이브레트로 컨트롤러 포트 디바이스 ID 오버라이드(예: PS1 DualShock).
 # input_libretro_device_pN은 일반 .cfg/appendconfig에서는 아예 안 읽히고,
@@ -218,7 +224,27 @@ def write_pad_type_remap(module_id):
     log(f"패드 타입 리맵: '{module_id}' → {rmp_path} ({overrides_str})")
 
 
-def build_appendconfig_chain(rom_path, roms_root):
+def write_system_override(system, share_root):
+    """screenshot_directory(전 시스템 공통) + analog_dpad_mode(일부 시스템)를
+    /tmp 오버라이드 파일로 써서 경로를 반환. roms/시스템/.retroarch.cfg는
+    사용자가 직접 편집하는 용도로만 남겨두고 시스템이 여기 쓰지 않음 -
+    예전엔 S95retropangui가 최초 부팅 시 이 파일을 정적으로 생성했는데,
+    이미 프로비저닝된 기기는 이후 수정된 기본값이 반영 안 되는 문제와,
+    기기별 값이 share(향후 NAS 공유 대상) 트리에 섞이는 문제가 있었음
+    (2026-07-10) - 핫키/패드타입과 동일하게 매 실행마다 동적으로 주입."""
+    lines = [f'screenshot_directory = "{share_root}/screenshots/{system}"\n']
+    if system in _ANALOG_DPAD_MODE_OFF_SYSTEMS:
+        lines.append('input_player1_analog_dpad_mode = "0"\n')
+    try:
+        Path(SYSTEM_OVERRIDE_CFG).write_text("".join(lines))
+    except OSError as e:
+        log(f"Warning: 시스템 오버라이드 파일 작성 실패 — {e}")
+        return None
+    log(f"시스템 오버라이드: '{system}' → {' '.join(l.strip() for l in lines)}")
+    return SYSTEM_OVERRIDE_CFG
+
+
+def build_appendconfig_chain(rom_path, roms_root, system):
     """
     romsRoot/sys/ 에서 rom dir 까지 내려가며 .retroarch.cfg 수집.
     순서: /etc/retroarch.cfg → roms/sys/.retroarch.cfg → ... → rom_dir/.retroarch.cfg → rom.bin.retroarch.cfg
@@ -267,6 +293,14 @@ def build_appendconfig_chain(rom_path, roms_root):
         insert_at = 1 if (chain and chain[0] == ETC_RA_CFG) else 0
         chain.insert(insert_at, hotkey_override)
 
+    # 시스템 기본값(screenshot_directory, analog_dpad_mode) — 같은 이유로
+    # 앞쪽에 삽입. 사용자가 roms/시스템/.retroarch.cfg를 직접 만들어두면
+    # (체인 뒤쪽, 더 구체적) 그쪽이 항상 우선함.
+    system_override = write_system_override(system, roms_root.parent)
+    if system_override:
+        insert_at = 1 if (chain and chain[0] == ETC_RA_CFG) else 0
+        chain.insert(insert_at, system_override)
+
     return "|".join(chain)
 
 
@@ -310,7 +344,7 @@ def main():
     write_pad_type_remap(module_id)
 
     # 3. appendconfig 체인 조립
-    append_chain = build_appendconfig_chain(rom, roms_root)
+    append_chain = build_appendconfig_chain(rom, roms_root, system)
     if append_chain:
         log(f"appendconfig: {append_chain}")
     else:
