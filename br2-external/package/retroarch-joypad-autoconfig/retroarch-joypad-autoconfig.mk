@@ -25,6 +25,7 @@ define RETROARCH_JOYPAD_AUTOCONFIG_INSTALL_TARGET_CMDS
 		dev=$$(sed -n 's/^input_device *= *"\(.*\)"/\1/p' "$$f" | head -1); \
 		case "$$dev" in \
 			"8Bitdo SN30 Pro") continue ;; \
+			"8Bitdo SFC30 GamePad") continue ;; \
 			"Microsoft X-Box 360 pad") continue ;; \
 			"Nintendo Switch Pro Controller") continue ;; \
 			"HID 0925:8866") continue ;; \
