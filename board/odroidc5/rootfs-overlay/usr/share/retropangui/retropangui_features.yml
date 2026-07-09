@@ -37,7 +37,7 @@ menus:
     parent: sound
     items:
       - id: rp.bgm
-        label: "배경음악"
+        label: "BACKGROUND MUSIC"
         type: toggle
         conf_key: emulationstation.BackgroundMusic
         default: "true"
@@ -231,7 +231,7 @@ menus:
     parent: game
     items:
       - id: rp.bundlegame_show
-        label: "번들 게임 표시"
+        label: "SHOW BUNDLED GAMES"
         type: toggle
         conf_key: system.bundlegame_show
         restart: none
