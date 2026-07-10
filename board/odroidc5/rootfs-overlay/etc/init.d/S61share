@@ -7,11 +7,21 @@
 # 설정 없음 → 첫 부팅으로 간주, 내부 p3 exFAT 포맷 후 INTERNAL 기록
 #
 # 첫 부팅 이후에는 포맷 절대 없음. 마운트 실패 시 내부 p3 fallback.
+#
+# NAS 네트워크 마운트 (2026-07-10, Batocera/Recalbox 레퍼런스 기반 설계):
+#   sharenetwork_<nfs|smb|cmd>=<SHARE|ROMS|SAVES|BIOS|MUSIC|SCREENSHOTS>@host:경로[:옵션]
+#   sharenetwork_cmd=<mount 명령 그대로>
+#   sharewait=<초>  (기본 20, 네트워크 대기 + 마운트 재시도 둘 다에 적용)
+# Recalbox 실제 구현을 그대로 참고: sharedevice 값과 무관하게 위 디렉티브가
+# 있으면 항상 실행됨(INTERNAL/DEV UUID 마운트가 먼저 끝난 뒤, 그 위에 개별
+# 대상만 네트워크로 덮어씀) - 이미 마운트된 base 위에 subdir 단위로 겹쳐
+# 마운트하거나, SHARE 전체를 대상으로 지정하면 통째로 대체됨.
 
 TAG="S61share"
 SHARE_MOUNT="/retropangui/share"
 BOOT_CONF="/boot/retropangui-boot.conf"
 MOUNT_OPTS="uid=0,gid=0,fmask=0022,dmask=0022,sync,dirsync"
+NETLOG="/tmp/retropangui-share-network.log"
 
 # 내부 eMMC 디바이스 경로 반환 (예: /dev/mmcblk0)
 get_internal_device() {
@@ -62,6 +72,122 @@ write_sharedevice() {
 try_mount() {
     local dev="$1"
     mount -t exfat -o "${MOUNT_OPTS}" "${dev}" "${SHARE_MOUNT}" 2>/dev/null
+}
+
+# boot.conf에서 sharewait 값 읽기 (없으면 기본 20초)
+read_sharewait() {
+    local v
+    v=$(grep "^sharewait=" "${BOOT_CONF}" 2>/dev/null | cut -d= -f2- | tr -d ' \r')
+    echo "${v:-20}"
+}
+
+# 네트워크(게이트웨이 또는 8.8.8.8) 응답 대기 — 최대 ${1}초, 1초 간격
+wait_for_network() {
+    local maxwait="$1" i=0
+    local gw
+    gw=$(ip route show default 2>/dev/null | awk '/default/ {print $3; exit}')
+    while [ "${i}" -lt "${maxwait}" ]; do
+        if [ -n "${gw}" ] && ping -c1 -W1 "${gw}" >/dev/null 2>&1; then
+            return 0
+        fi
+        ping -c1 -W1 8.8.8.8 >/dev/null 2>&1 && return 0
+        sleep 1
+        i=$((i + 1))
+    done
+    return 1
+}
+
+# sharenetwork_<type>=<directive> 하나 처리
+#   type: nfs | smb | cmd (뒤에 붙는 숫자는 무시 - smb0/smb1처럼 여러 개 허용)
+#   nfs/smb 포맷: <SHARE|ROMS|SAVES|BIOS|MUSIC|SCREENSHOTS>@host:경로[:마운트옵션]
+#   cmd 포맷: mount 명령 그대로
+# 반환값: 0=성공, 1=실패(재시도 대상), 2=입력 오류(재시도 안 함)
+mount_network_directive() {
+    local rawtype="$1" directive="$2"
+    local directiveType target remoteHost remotePath mountOptions mountPoint cmd
+
+    directiveType=$(echo "${rawtype}" | sed -r 's/[0-9]+$//')
+
+    if [ "${directiveType}" = "cmd" ]; then
+        cmd="${directive}"
+    else
+        target=$(echo "${directive}" | sed -r 's|^([^@]+)@.*|\1|')
+        remoteHost=$(echo "${directive}" | sed -r 's|^[^@]+@([^:]+):.*|\1|')
+        remotePath=$(echo "${directive}" | sed -r 's|^[^@]+@[^:]+:([^:]*).*|\1|')
+        mountOptions=$(echo "${directive}" | sed -r 's|^[^@]+@[^:]+:[^:]*:?(.*)|\1|')
+
+        case "${target}" in
+            SHARE)       mountPoint="${SHARE_MOUNT}" ;;
+            ROMS)        mountPoint="${SHARE_MOUNT}/roms" ;;
+            SAVES)       mountPoint="${SHARE_MOUNT}/saves" ;;
+            BIOS)        mountPoint="${SHARE_MOUNT}/bios" ;;
+            MUSIC)       mountPoint="${SHARE_MOUNT}/music" ;;
+            SCREENSHOTS) mountPoint="${SHARE_MOUNT}/screenshots" ;;
+            *)
+                echo "잘못된 대상 '${target}' - sharenetwork_${rawtype}=${directive} 무시" >> "${NETLOG}"
+                return 2
+                ;;
+        esac
+
+        case "${directiveType}" in
+            nfs)
+                # 클래식 NFSv3 클라이언트 마운트 - busybox mount의 NFS 지원 여부와
+                # 무관하도록 mount.nfs 헬퍼(nfs-utils)를 직접 호출
+                local opts="port=2049,nolock,proto=tcp"
+                [ -n "${mountOptions}" ] && opts="${opts},${mountOptions}"
+                cmd="mkdir -p ${mountPoint} && mount.nfs -o ${opts} ${remoteHost}:${remotePath} ${mountPoint}"
+                ;;
+            smb)
+                local smbopts=""
+                [ -n "${mountOptions}" ] && smbopts="-o ${mountOptions}"
+                cmd="mkdir -p ${mountPoint} && mount.cifs ${smbopts} //${remoteHost}/${remotePath} ${mountPoint}"
+                ;;
+            *)
+                echo "잘못된 디렉티브 타입 '${directiveType}' - sharenetwork_${rawtype}=${directive} 무시" >> "${NETLOG}"
+                return 2
+                ;;
+        esac
+    fi
+
+    echo "${cmd}" >> "${NETLOG}"
+    eval "${cmd}" >> "${NETLOG}" 2>&1
+}
+
+# boot.conf의 모든 sharenetwork_* 디렉티브 처리 (없으면 즉시 종료 - 네트워크
+# 대기로 인한 부팅 지연 없음). sharedevice 값과 무관하게 항상 실행됨 -
+# INTERNAL/DEV UUID로 이미 마운트된 위 자리에 지정된 대상만 개별 덮어씀.
+mount_network_shares() {
+    local directives
+    directives=$(sed -nr 's/^sharenetwork_([^=]+)=(.*)$/\1\t\2/p' "${BOOT_CONF}" 2>/dev/null)
+    [ -z "${directives}" ] && return 0
+
+    local maxwait
+    maxwait=$(read_sharewait)
+
+    logger -t "${TAG}" "sharenetwork_* 디렉티브 발견 - 네트워크 대기(최대 ${maxwait}초)"
+    if ! wait_for_network "${maxwait}"; then
+        logger -t "${TAG}" "네트워크 대기 시간 초과 - 네트워크 공유 마운트 스킵"
+        return 1
+    fi
+
+    echo "${directives}" | while IFS="$(printf '\t')" read -r rawtype directive; do
+        [ -z "${rawtype}" ] && continue
+        local retry="${maxwait}"
+        while [ "${retry}" -gt 0 ]; do
+            mount_network_directive "${rawtype}" "${directive}"
+            local rc=$?
+            if [ "${rc}" = "0" ] || [ "${rc}" = "2" ]; then
+                break
+            fi
+            retry=$((retry - 1))
+            sleep 1
+        done
+        if [ "${rc}" = "0" ]; then
+            logger -t "${TAG}" "네트워크 공유 마운트 완료: sharenetwork_${rawtype}"
+        else
+            logger -t "${TAG}" "네트워크 공유 마운트 실패: sharenetwork_${rawtype} (로그: ${NETLOG})"
+        fi
+    done
 }
 
 # 단일 파일 다운로드 — 실패하거나 0바이트이면 파일 삭제
@@ -242,6 +368,14 @@ case "$1" in
         if [ "${MOUNTED}" = "true" ]; then
             init_share_dirs
         fi
+
+        # NAS 네트워크 마운트 — sharedevice 값과 무관하게 sharenetwork_* 디렉티브가
+        # 있으면 항상 처리 (없으면 mount_network_shares가 바로 리턴, 지연 없음).
+        # download_extra_roms()와 달리 백그라운드로 안 돌림 - ES(S99)가 스캔을
+        # 시작하기 전에 NAS 콘텐츠가 자리에 있어야 하므로 동기적으로 대기
+        # (Recalbox의 mountNetwork() 호출도 동일하게 블로킹) - sharenetwork_*
+        # 디렉티브를 안 쓰는 사용자는 위에서 바로 리턴되니 부팅 지연 없음.
+        mount_network_shares
         ;;
 
     stop)

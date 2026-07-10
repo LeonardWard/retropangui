@@ -194,6 +194,12 @@ BR2_PACKAGE_PYTHON3_PYEXPAT=y
 # SMB 네트워크 파일 공유 (ksmbd: 커널 내장 SMB3 서버, Samba4보다 의존성 없음)
 BR2_PACKAGE_KSMBD_TOOLS=y
 
+# share 폴더 네트워크화(NAS 마운트, S61share sharedevice=NETWORK) - mount.cifs/mount.nfs
+# 클라이언트 헬퍼. 서버 쪽(rpc.nfsd 등)은 불필요해서 명시적으로 끔.
+BR2_PACKAGE_CIFS_UTILS=y
+BR2_PACKAGE_NFS_UTILS=y
+# BR2_PACKAGE_NFS_UTILS_RPC_NFSD is not set
+
 # 시간 동기화 (NTP)
 BR2_PACKAGE_OPENNTPD=y
 
