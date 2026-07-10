@@ -57,12 +57,36 @@ read_sharedevice() {
     grep "^sharedevice=" "${BOOT_CONF}" 2>/dev/null | cut -d= -f2- | tr -d ' \r'
 }
 
-# boot.conf에 sharedevice 기록
+# boot.conf에 sharedevice 기록. 파일이 아직 없으면(최초 부팅) 사용법 주석
+# 헤더까지 같이 써줌 - PC로 부팅 파티션(FAT32) 열어보거나 SSH로 파일을 직접
+# 봤을 때 문법을 바로 알 수 있게. storage-mgr(C, storage_mgr.c)이 나중에
+# sharedevice= 줄만 골라서 교체하며 이 주석들은 그대로 보존함 - 단
+# storage_mgr.c의 파일 버퍼가 줄 수 제한이 있어서(현재 64줄) 헤더를
+# 너무 길게 늘리지 말 것(2026-07-11).
 write_sharedevice() {
     local val="$1"
     if grep -q "^sharedevice=" "${BOOT_CONF}" 2>/dev/null; then
         sed -i "s|^sharedevice=.*|sharedevice=${val}|" "${BOOT_CONF}"
     else
+        cat > "${BOOT_CONF}" <<'EOF'
+# retropangui-boot.conf - share 파티션 / 네트워크 공유 설정
+#
+# sharedevice=INTERNAL        내부 저장장치(eMMC) 사용 - 기본값
+# sharedevice=DEV UUID=xxxx   UUID로 지정한 외부 파티션 사용
+#                              (마운트 실패 시 자동으로 INTERNAL로 폴백)
+#
+# 네트워크(NAS/공유폴더) 마운트 - sharedevice 값과 무관하게 아래 줄이
+# 있으면 항상 적용됨(이미 마운트된 위 자리에 지정한 대상만 덮어씀):
+#   sharenetwork_smb=<대상>@<IP>:<공유폴더>[:username=계정,password=비번]
+#   sharenetwork_nfs=<대상>@<IP>:<경로>
+#   sharenetwork_cmd=<mount 명령 직접 지정>   (smb/nfs로 안 되는 경우용)
+#   <대상> 자리: SHARE(전체) | ROMS | SAVES | BIOS | MUSIC | SCREENSHOTS
+#   계정 없이 게스트로 붙는 공유면 username=...,password=... 대신 guest
+#   예) sharenetwork_smb=ROMS@192.168.0.50:games:username=pi,password=1234
+#   예) sharenetwork_nfs=ROMS@192.168.0.50:/mnt/games
+# sharewait=20   네트워크 대기/마운트 재시도 시간(초) - 생략 시 기본 20초
+#
+EOF
         echo "sharedevice=${val}" >> "${BOOT_CONF}"
     fi
     sync

@@ -241,12 +241,12 @@ static void read_boot_conf(void)
 
 static void write_boot_conf(const char *sharedevice)
 {
-    char lines[32][256];
+    char lines[64][256];
     int  nlines = 0, replaced = 0;
 
     FILE *fr = fopen(BOOT_CONF, "r");
     if (fr) {
-        while (nlines < 32 && fgets(lines[nlines], sizeof(lines[nlines]), fr))
+        while (nlines < 64 && fgets(lines[nlines], sizeof(lines[nlines]), fr))
             nlines++;
         fclose(fr);
     }
