@@ -72,19 +72,34 @@ write_sharedevice() {
 # retropangui-boot.conf - share 파티션 / 네트워크 공유 설정
 #
 # sharedevice=INTERNAL        내부 저장장치(eMMC) 사용 - 기본값
+# sharedevice=NETWORK         내부 대신 쓴다는 뜻이 아니라 그냥 INTERNAL과
+#                              동일하게 처리됨(Batocera/Recalbox 문서에서
+#                              흔히 이렇게 적길래 호환용으로 인식만 함) -
+#                              네트워크 공유 여부는 아래 sharenetwork_* 줄이
+#                              있는지 없는지로만 결정됨
 # sharedevice=DEV UUID=xxxx   UUID로 지정한 외부 파티션 사용
 #                              (마운트 실패 시 자동으로 INTERNAL로 폴백)
 #
-# 네트워크(NAS/공유폴더) 마운트 - sharedevice 값과 무관하게 아래 줄이
-# 있으면 항상 적용됨(이미 마운트된 위 자리에 지정한 대상만 덮어씀):
-#   sharenetwork_smb=<대상>@<IP>:<공유폴더>[:username=계정,password=비번]
-#   sharenetwork_nfs=<대상>@<IP>:<경로>
-#   sharenetwork_cmd=<mount 명령 직접 지정>   (smb/nfs로 안 되는 경우용)
+# 네트워크(NAS/공유폴더) 마운트 - sharedevice 값과 무관하게 아래 sharenetwork_*
+# 줄이 있으면 항상 적용됨(내부/외부 마운트가 끝난 자리 위에, 지정한 대상만
+# 개별적으로 네트워크 공유로 덮어씀):
+#   문법: sharenetwork_<smb|nfs><번호>=<대상>@<IP>:<경로>[:마운트옵션]
 #   <대상> 자리: SHARE(전체) | ROMS | SAVES | BIOS | MUSIC | SCREENSHOTS
-#   계정 없이 게스트로 붙는 공유면 username=...,password=... 대신 guest
-#   예) sharenetwork_smb=ROMS@192.168.0.50:games:username=pi,password=1234
-#   예) sharenetwork_nfs=ROMS@192.168.0.50:/mnt/games
-# sharewait=20   네트워크 대기/마운트 재시도 시간(초) - 생략 시 기본 20초
+#   번호(1,2,3...)는 여러 개를 동시에 쓸 때 구분용 - 하나만 쓸 거면 번호 없이
+#   sharenetwork_smb=... 로도 됨
+#   SMB 계정 없이 게스트로 붙는 공유면 username=...,password=... 대신 guest
+#   smb/nfs 문법으로 안 되는 특수한 경우는 sharenetwork_cmd=<mount 명령 그대로>
+#   sharewait=20   네트워크 대기/마운트 재시도 시간(초) - 생략 시 기본 20초
+#
+# 아래는 실제로 동작하는 예시 - 쓰고 싶은 줄 앞의 #만 지우고 IP/경로/계정을
+# 실제 값으로 바꾸면 됨 (안 쓸 줄은 # 그대로 둬서 비활성 상태 유지):
+#
+#sharewait=30
+#sharenetwork_smb1=ROMS@192.168.1.112:share/roms:username=USER,password=PASS,vers=3.0
+#sharenetwork_smb2=SAVES@192.168.1.112:share/saves:username=USER,password=PASS,vers=3.0
+#sharenetwork_smb3=BIOS@192.168.1.112:share/bios:username=USER,password=PASS,vers=3.0
+#sharenetwork_smb4=SCREENSHOTS@192.168.1.112:share/screenshots:username=USER,password=PASS,vers=3.0
+#sharenetwork_nfs1=ROMS@192.168.1.112:/mnt/share/roms
 #
 EOF
         echo "sharedevice=${val}" >> "${BOOT_CONF}"
@@ -360,8 +375,13 @@ case "$1" in
                 logger -t "${TAG}" "내부 p3 없음"
             fi
 
-        elif [ "${SHAREDEV}" = "INTERNAL" ]; then
-            # ── 내부 p3 마운트 ──
+        elif [ "${SHAREDEV}" = "INTERNAL" ] || [ "${SHAREDEV}" = "NETWORK" ]; then
+            # ── 내부 p3 마운트 ── (NETWORK도 여기로: Batocera/Recalbox 문서에
+            # 흔히 sharedevice=NETWORK로 적혀있길래 그대로 붙여넣는 사용자가
+            # 있을 수 있음 - 이 프로젝트는 sharenetwork_* 유무로 네트워크
+            # 사용 여부를 판단하므로 NETWORK 값 자체엔 특별한 의미가 없음.
+            # INTERNAL과 동일하게 처리해서 "DEV UUID=NETWORK" 같은 엉뚱한
+            # 시도/로그가 안 남게 함, 2026-07-11)
             if [ -b "${INTERNAL_PART}" ] && try_mount "${INTERNAL_PART}"; then
                 MOUNTED=true
                 logger -t "${TAG}" "마운트 완료 (내부): ${INTERNAL_PART}"
