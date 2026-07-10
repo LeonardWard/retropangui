@@ -187,6 +187,10 @@ BR2_PACKAGE_BLUEZ5_UTILS=y
 BR2_PACKAGE_BLUEZ5_UTILS_CLIENT=y
 BR2_PACKAGE_BLUEZ5_UTILS_PLUGINS_HID=y
 BR2_PACKAGE_BLUEZ5_UTILS_PLUGINS_HOG=y
+# sixaxis 플러그인 — BlueZ 5.12+부터 DS3 USB "MAC 각인" 페어링을 bluetoothd가
+# 직접 처리(별도 sixpair 툴 불필요, udev 필요 - 이미 다른 곳에서 씀).
+# 2026-07-10 밤, todo-20260705-ds3.html "MAC 각인 절차" 조사 결과로 추가.
+BR2_PACKAGE_BLUEZ5_UTILS_PLUGINS_SIXAXIS=y
 BR2_PACKAGE_NSS_MDNS=y
 
 # Python3
