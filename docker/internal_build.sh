@@ -44,15 +44,17 @@ if [ "$BUILD_OTA" = "1" ] && [ "$BUILD_IMG" = "0" ]; then
     mkdir -p board/${DEVICE}/rootfs-overlay/etc
     echo "${VERSION}" > board/${DEVICE}/rootfs-overlay/etc/retropangui-version
 
-    # defconfig를 항상 재동기화 — 안 하면 새로 추가된 BR2_PACKAGE_*가
-    # output/.config에 반영이 안 돼서 아래 전체 make가 그 패키지들을
-    # 존재하는지도 모르고 넘어감(2026-07-10, cifs-utils/nfs-utils/
-    # noto-cjk-font 세 패키지가 이 버그로 누락된 채 배포된 적 있음).
-    # .config 재생성 자체는 가벼운 작업이라 매번 해도 빌드 시간에
-    # 영향 없음 - 실제 컴파일은 아래 make가 스탬프 파일로 알아서
-    # 증분 처리함.
+    # defconfig를 항상 재동기화 — 이 cp가 빠지면 make가 buildroot/configs/
+    # 안의 예전 defconfig 사본을 그대로 읽어서, host 쪽 configs/에 새로
+    # 추가한 BR2_PACKAGE_*가 있어도 못 봄(2026-07-10, cifs-utils/nfs-utils/
+    # noto-cjk-font 세 패키지가 정확히 이 이유로 두 번이나 누락된 채
+    # 배포된 적 있음 - 1차 수정에서 make ${DEFCONFIG}만 추가하고 이 cp를
+    # 빠뜨렸었음). .config 자체는 buildroot 최상위(output/ 아래가 아님)에
+    # 생성됨 - 재생성 자체는 가벼운 작업이라 매번 해도 빌드 시간에 영향
+    # 없음, 실제 컴파일은 아래 make가 스탬프 파일로 알아서 증분 처리함.
     echo "[OTA 빌드] defconfig 재동기화 중..."
-    rm -f output/.config
+    cp /home/builder/configs/${DEFCONFIG} configs/
+    rm -f .config
     rm -f output/build/freeimage-3180/.stamp_built output/build/freeimage-3180/.stamp_staging_installed output/build/freeimage-3180/.stamp_target_installed
     make BR2_EXTERNAL="${BR2_EXTERNAL_PATH}" ${DEFCONFIG}
 
