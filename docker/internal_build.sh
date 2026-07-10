@@ -52,6 +52,8 @@ if [ "$BUILD_OTA" = "1" ] && [ "$BUILD_IMG" = "0" ]; then
     # 영향 없음 - 실제 컴파일은 아래 make가 스탬프 파일로 알아서
     # 증분 처리함.
     echo "[OTA 빌드] defconfig 재동기화 중..."
+    rm -f output/.config
+    rm -f output/build/freeimage-3180/.stamp_built output/build/freeimage-3180/.stamp_staging_installed output/build/freeimage-3180/.stamp_target_installed
     make BR2_EXTERNAL="${BR2_EXTERNAL_PATH}" ${DEFCONFIG}
 
     echo "[OTA 빌드] emulationstation 소스 최신화 중..."
@@ -60,6 +62,18 @@ if [ "$BUILD_OTA" = "1" ] && [ "$BUILD_IMG" = "0" ]; then
         git -C output/build/emulationstation-main reset --hard origin/main 2>&1 || true
     fi
     rm -f output/build/emulationstation-main/.stamp_built           output/build/emulationstation-main/.stamp_target_installed
+
+    # 아래 세 패키지는 Buildroot 스탬프가 로컬 소스/설정 변경을 못 잡아내서
+    # (mali-ddk: 로컬 소스, retropangui-initramfs: init 스크립트·busybox.config,
+    # bundled-bgmusic: .mid 파일) 전체 빌드 경로(BUILD_IMG=1)에서도 매번 강제
+    # 재빌드하고 있음(213번 줄 부근 참고) - img/squashfs는 "같은 내용물을
+    # 다른 방식으로 포장"하는 차이일 뿐이어야 하므로 OTA 경로도 동일하게 맞춤.
+    echo "[OTA 빌드] mali-ddk/retropangui-initramfs/bundled-bgmusic 강제 재빌드 (전체 빌드 경로와 동일하게)..."
+    rm -f  output/build/mali-ddk-r44p0/.stamp_built \
+           output/build/mali-ddk-r44p0/.stamp_staging_installed \
+           output/build/mali-ddk-r44p0/.stamp_target_installed
+    rm -rf output/build/retropangui-initramfs-*/
+    rm -f  output/build/bundled-bgmusic-1.0/.stamp_target_installed
 
     # emulationstation만 targeted로 빌드하던 걸 전체 make로 교체 —
     # defconfig에 새로 추가된 패키지(위 예시들)가 targeted 빌드 목록에
