@@ -160,6 +160,10 @@ BR2_PACKAGE_LIBRETRO_CORES=y
 # EmulationStation
 BR2_PACKAGE_EMULATIONSTATION=y
 BR2_PACKAGE_RPUI_LAUNCHER=y
+# 한중일 한자 폴백 폰트 - Pretendard(기본 UI 폰트)엔 한자 글리프가 없어서
+# 일본/중국 게임 제목이 깨지는 문제 대응 (es-core/src/resources/Font.cpp가
+# 이미 이 경로를 폴백 후보로 참조하고 있었음)
+BR2_PACKAGE_NOTO_CJK_FONT=y
 BR2_PACKAGE_BUNDLED_ROMS=y
 BR2_PACKAGE_BUNDLED_BGMUSIC=y
 BR2_PACKAGE_RPUI_BUNDLEGAME=y

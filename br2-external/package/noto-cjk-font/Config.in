@@ -1,0 +1,10 @@
+config BR2_PACKAGE_NOTO_CJK_FONT
+	bool "noto-cjk-font"
+	help
+	  Noto Sans CJK(Regular, 한중일 통합 OTC) 폰트 - ES의 폴백 폰트
+	  목록(es-core/src/resources/Font.cpp)이 이미 참조하고 있던
+	  /usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc 경로를
+	  실제로 채워서, 일본어/중국어 한자 게임 제목이 빈 네모로 깨지지
+	  않도록 함. Pretendard(기본 UI 폰트)엔 한자 글리프가 없음.
+
+	  https://github.com/notofonts/noto-cjk
