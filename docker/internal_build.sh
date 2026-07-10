@@ -31,7 +31,11 @@ echo "  모드: ${_MODE}"
 echo "  defconfig: ${DEFCONFIG}"
 echo "============================================"
 
-# OTA 빠른빌드: ES 재빌드 + squashfs만 생성 (img 없음)
+# OTA 빠른빌드: 전체 패키지 증분 빌드(defconfig 재동기화 포함) + squashfs만 생성
+# (img 없음) - 이름은 "빠른빌드"지만 실제로는 전체 make를 돌림. Buildroot의
+# 패키지별 스탬프 파일이 이미 빌드된 것들을 스킵해주므로 체감 속도는 여전히
+# 빠름 - 다만 새 패키지 추가 직후 첫 OTA 빌드는 그 패키지들 빌드 시간만큼
+# 더 걸림(당연함).
 if [ "$BUILD_OTA" = "1" ] && [ "$BUILD_IMG" = "0" ]; then
     BR2_EXTERNAL_PATH=/home/builder/br2-external
     echo "[OTA 빌드] board 파일 복사 중..."
@@ -40,16 +44,35 @@ if [ "$BUILD_OTA" = "1" ] && [ "$BUILD_IMG" = "0" ]; then
     mkdir -p board/${DEVICE}/rootfs-overlay/etc
     echo "${VERSION}" > board/${DEVICE}/rootfs-overlay/etc/retropangui-version
 
+    # defconfig를 항상 재동기화 — 안 하면 새로 추가된 BR2_PACKAGE_*가
+    # output/.config에 반영이 안 돼서 아래 전체 make가 그 패키지들을
+    # 존재하는지도 모르고 넘어감(2026-07-10, cifs-utils/nfs-utils/
+    # noto-cjk-font 세 패키지가 이 버그로 누락된 채 배포된 적 있음).
+    # .config 재생성 자체는 가벼운 작업이라 매번 해도 빌드 시간에
+    # 영향 없음 - 실제 컴파일은 아래 make가 스탬프 파일로 알아서
+    # 증분 처리함.
+    echo "[OTA 빌드] defconfig 재동기화 중..."
+    make BR2_EXTERNAL="${BR2_EXTERNAL_PATH}" ${DEFCONFIG}
+
     echo "[OTA 빌드] emulationstation 소스 최신화 중..."
     if [ -d "output/build/emulationstation-main/.git" ]; then
         git -C output/build/emulationstation-main fetch --depth=1 origin main 2>&1 || true
         git -C output/build/emulationstation-main reset --hard origin/main 2>&1 || true
     fi
-
-    echo "[OTA 빌드] emulationstation 재빌드 중..."
     rm -f output/build/emulationstation-main/.stamp_built           output/build/emulationstation-main/.stamp_target_installed
+
+    # emulationstation만 targeted로 빌드하던 걸 전체 make로 교체 —
+    # defconfig에 새로 추가된 패키지(위 예시들)가 targeted 빌드 목록에
+    # 없으면 조용히 누락되는 문제를 근본적으로 막기 위함. Buildroot는
+    # 패키지별 스탬프 파일로 증분 빌드하므로, 이미 빌드된 패키지는
+    # 이 전체 make에서도 빠르게 스킵됨 - ES만 변경된 흔한 경우엔
+    # 예전 targeted 방식과 체감 속도 차이 거의 없고, 새 패키지가
+    # 추가된 경우엔 자동으로 같이 빌드됨(retropangui-initramfs,
+    # bundled-roms, rootfs-squashfs도 이 안에서 함께 처리되므로
+    # 이후의 개별 make 호출은 불필요해서 제거).
+    echo "[OTA 빌드] 전체 빌드 중 (defconfig에 켜진 모든 패키지, 증분)..."
     JOBS="${BUILD_JOBS:-$(nproc)}"
-    make BR2_EXTERNAL="${BR2_EXTERNAL_PATH}" -j${JOBS} emulationstation 2>&1 | tee /home/builder/output/build-ota.log
+    make BR2_EXTERNAL="${BR2_EXTERNAL_PATH}" -j${JOBS} 2>&1 | tee /home/builder/output/build-ota.log
 
     echo "[OTA 빌드] gamepad-mgr 잔여 파일 정리 중..."
     rm -f  output/target/etc/init.d/S58gamepad
@@ -61,17 +84,10 @@ if [ "$BUILD_OTA" = "1" ] && [ "$BUILD_IMG" = "0" ]; then
     rm -f  "output/target/etc/retroarch/autoconfig/RetroPangUI P4.cfg"
     rm -f  output/target/etc/modprobe.d/xpad.conf
 
-    echo "[OTA 빌드] rootfs-overlay 적용 중..."
-    rsync -a board/${DEVICE}/rootfs-overlay/ output/target/
-
-    echo "[OTA 빌드] initramfs 재빌드 중..."
-    rm -rf output/build/retropangui-initramfs-*/
-    make BR2_EXTERNAL="${BR2_EXTERNAL_PATH}" retropangui-initramfs 2>&1 | tee -a /home/builder/output/build-ota.log
-
-    echo "[OTA 빌드] bundled-roms 재설치 중..."
-    make BR2_EXTERNAL="${BR2_EXTERNAL_PATH}" bundled-roms 2>&1 | tee -a /home/builder/output/build-ota.log
-
-    echo "[OTA 빌드] squashfs 재생성 중..."
+    # 위 정리 작업이 target/ 안의 파일을 직접 지우므로, squashfs를
+    # 다시 봉인해서 정리 결과를 반영 (전체 make가 이미 한 번 만들어
+    # 둔 squashfs는 정리 전 상태라 그대로 쓰면 안 됨)
+    echo "[OTA 빌드] squashfs 재생성 중 (정리 후 반영)..."
     make BR2_EXTERNAL="${BR2_EXTERNAL_PATH}" rootfs-squashfs 2>&1 | tee -a /home/builder/output/build-ota.log
 
     OUTPUT_SQ="retropangui-${DEVICE}-${VERSION}.squashfs"
