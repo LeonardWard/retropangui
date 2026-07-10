@@ -13,3 +13,4 @@
 # 항목 추가 시 한 줄에 절대경로 하나씩.
 
 /retropangui/share/system/emulationstation/es_input.cfg
+/retropangui/share/system/emulationstation/scripts/game-end/update-theme-screenshot.sh

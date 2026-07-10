@@ -127,6 +127,19 @@ case "$1" in
             cp -r "${THEMES_SRC}/." "${THEMES_DST}/"
         fi
 
+        # 첫 부팅: ES 스크립팅 훅(game-end 등) 없으면 기본값에서 복사.
+        # /root/.emulationstation은 위쪽에서 이미 이 디렉토리로 심볼릭 링크되므로
+        # /root/.emulationstation/scripts/에 직접 baked-in으로 넣으면 부팅 때
+        # 심볼릭 링크 교체(rm -rf /root/.emulationstation)로 사라짐 - 반드시
+        # 이 share 경로를 거쳐야 함(2026-07-10, screenshot-system 문서).
+        ES_SCRIPTS_SRC="/usr/share/retropangui/es-scripts"
+        ES_SCRIPTS_DST="/retropangui/share/system/emulationstation/scripts"
+        if [ ! -d "${ES_SCRIPTS_DST}" ] && [ -d "${ES_SCRIPTS_SRC}" ]; then
+            logger -t "${TAG}" "첫 부팅: ES 스크립팅 훅 복사"
+            mkdir -p "${ES_SCRIPTS_DST}"
+            cp -r "${ES_SCRIPTS_SRC}/." "${ES_SCRIPTS_DST}/"
+        fi
+
         # 시스템별 스크린샷/롬 디렉토리 생성만 - 설정값(screenshot_directory,
         # analog_dpad_mode)은 여기서 파일로 안 씀. 이유:
         # 1) 이 파일들이 share(공유/향후 NAS 마운트 대상) 트리 안에 있으면
