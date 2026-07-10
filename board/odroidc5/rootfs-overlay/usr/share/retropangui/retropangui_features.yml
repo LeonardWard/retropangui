@@ -190,7 +190,13 @@ menus:
 
   - id: network_settings
     label: "NETWORK SETTINGS"
-    parent: system
+    # parent가 6개 고정 카테고리(system/sound/ui/game/controller) 중 하나가
+    # 아니면 addFeatureItemsTo()의 자동 flatten 대상이 안 됨 - 이 블록은
+    # GuiMenu::openNetworkSettings()가 addFeatureItemsTo(s, "network_settings", ...)로
+    # 명시적으로만 끌어옴(2026-07-10, todo-20260704-wifi-menu-polish.html).
+    # 예전엔 parent: system이라 SYSTEM SETTINGS에 다른 항목들과 flat하게
+    # 섞여 있었음 - 진짜 NETWORK 서브메뉴로 분리하며 바꿈.
+    parent: network_settings
     items:
       - id: rp.ssh
         label: "SSH"
@@ -210,8 +216,15 @@ menus:
         conf_key: system.wifi.enabled
         restart: none
 
-  - id: video_settings
-    label: "VIDEO SETTINGS"
+  # 2026-07-10: video_settings/bundlegame_settings/game_settings 3블록을
+  # 하나로 통합(todo-20260704-wifi-menu-polish.html 항목 ②) - 셋 다
+  # parent: game라서 addFeatureItemsTo()가 어차피 순서대로 flat하게 이미
+  # 합쳐서 보여주고 있었음(id/label은 parent가 고정 카테고리일 때 렌더링에
+  # 안 쓰임) - 화면엔 변화 없는 순수 정리, 아이템 순서는 원래 파일 순서
+  # (video_smooth/video_scale_integer → bundlegame_show → video_driver 이하)
+  # 그대로 유지.
+  - id: game_settings
+    label: "GAME SETTINGS"
     parent: game
     items:
       - id: rp.video_smooth
@@ -226,20 +239,12 @@ menus:
         conf_key: global.video_scale_integer
         restart: none
 
-  - id: bundlegame_settings
-    label: "BUNDLED GAMES"
-    parent: game
-    items:
       - id: rp.bundlegame_show
         label: "SHOW BUNDLED GAMES"
         type: toggle
         conf_key: system.bundlegame_show
         restart: none
 
-  - id: game_settings
-    label: "GAME SETTINGS"
-    parent: game
-    items:
       - id: rp.video_driver
         label: "VIDEO DRIVER"
         type: list
