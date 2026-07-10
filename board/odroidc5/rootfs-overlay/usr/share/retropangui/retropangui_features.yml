@@ -17,6 +17,11 @@ menus:
         conf_key: system.hostname
         restart: none
 
+      - id: rp.ticker_submenu
+        label: "TICKER SETTINGS"
+        type: submenu
+        id: ticker_settings
+
       - id: rp.timezone
         label: "TIMEZONE"
         type: list
@@ -31,6 +36,51 @@ menus:
             label: "Paris (CET)"
           - value: America/Los_Angeles
             label: "Los Angeles (PST)"
+
+  # 뉴스/증권 티커 API 키 입력 - system_settings 안의 rp.ticker_submenu(type:
+  # submenu)로만 진입 가능(parent가 고정 카테고리가 아니라 자기 id라 자동
+  # flatten 대상 아님). 2026-07-10, todo-20260708-news-ticker.html.
+  # 실제 데이터 수집 데몬/marquee 렌더링(C++)은 아직 미구현 - 이 메뉴는
+  # 사용자가 API 키를 발급받는 대로 미리 입력해둘 수 있게 골격만 먼저 추가.
+  - id: ticker_settings
+    label: "TICKER SETTINGS"
+    parent: ticker_settings
+    items:
+      - id: rp.ticker_naver_client_id
+        label: "NAVER CLIENT ID"
+        type: input
+        conf_key: ticker.naver_client_id
+        restart: none
+
+      - id: rp.ticker_naver_client_secret
+        label: "NAVER CLIENT SECRET"
+        type: input
+        conf_key: ticker.naver_client_secret
+        restart: none
+
+      - id: rp.ticker_krx_api_key
+        label: "KRX API KEY"
+        type: input
+        conf_key: ticker.krx_api_key
+        restart: none
+
+      - id: rp.ticker_weather_service_key
+        label: "WEATHER SERVICE KEY"
+        type: input
+        conf_key: ticker.weather_service_key
+        restart: none
+
+      - id: rp.ticker_weather_nx
+        label: "WEATHER NX"
+        type: input
+        conf_key: ticker.weather_nx
+        restart: none
+
+      - id: rp.ticker_weather_ny
+        label: "WEATHER NY"
+        type: input
+        conf_key: ticker.weather_ny
+        restart: none
 
   - id: audio_settings
     label: "AUDIO SETTINGS"
