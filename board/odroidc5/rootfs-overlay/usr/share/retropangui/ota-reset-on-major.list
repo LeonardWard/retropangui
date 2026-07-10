@@ -1,0 +1,15 @@
+# ota-update.sh가 "메이저 버전"(태그에 정확히 일치하는 릴리스, 즉
+# git describe --tags --long에서 커밋 수 부분이 0인 버전)으로 업데이트할
+# 때만 삭제하는 파일 목록 - 한 줄에 경로 하나. 삭제되면 각 파일의
+# S95retropangui "없으면 최초 복사" 로직이 다음 부팅에서 새 번들
+# 기본값으로 다시 채워 넣음.
+#
+# 이 파일은 "시스템이 관리하는 기본값" 용도로만 쓸 것 - 사용자가 메뉴로
+# 직접 바꾸는 설정(retropangui.conf, wifi.conf, bt-blacklist.conf 등)은
+# 여기 절대 추가하지 말 것. ota-update.sh 쪽에도 retropangui.conf는
+# 하드코딩으로 걸러내는 안전장치가 있지만, 그것과 별개로 이 파일
+# 자체를 신뢰할 수 있는 목록으로 유지해야 함.
+#
+# 항목 추가 시 한 줄에 절대경로 하나씩.
+
+/retropangui/share/system/emulationstation/es_input.cfg
