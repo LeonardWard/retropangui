@@ -296,6 +296,12 @@ rm -f output/build/mali-ddk-r44p0/.stamp_built \
       output/build/mali-ddk-r44p0/.stamp_staging_installed \
       output/build/mali-ddk-r44p0/.stamp_target_installed
 
+# 2026-07-11: alsa-utils에 APLAYMIDI 서브옵션을 새로 켰는데 기존 빌드
+# 캐시(이미 configure된 Makefile)가 그대로 재사용돼서 aplaymidi 바이너리가
+# 안 만들어지는 문제 확인 - 소스 트리째 지워서 완전히 새로 configure되게 함.
+echo "  - alsa-utils 강제 재빌드 (서브옵션 변경 반영)..."
+rm -rf output/build/alsa-utils-*
+
 # gamepad-mgr 제거에 따른 잔여 파일 정리 (이전 빌드 캐시에 남아 있을 수 있음)
 rm -f  output/target/etc/init.d/S58gamepad
 rm -f  output/target/usr/bin/gamepad-daemon
