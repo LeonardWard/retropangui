@@ -21,8 +21,13 @@ system.language=ko_KR
 # 예: Asia/Seoul, America/New_York, Europe/Paris
 system.timezone=Asia/Seoul
 
-# 호스트명
-system.hostname=retropangui
+# 호스트명 - defconfig의 BR2_TARGET_GENERIC_HOSTNAME과 반드시 일치시킬 것.
+# 2026-07-11: 여기가 "retropangui"로 어긋나 있었는데, 지금까지는 이 값이
+# 실제로 적용된 적이 없어서(APPLY_NEEDED가 한 번도 안 걸림) 안 드러났다가,
+# 다른 기능(TICKER SETTINGS) 추가로 새 기본값 병합이 처음 발생하면서
+# apply_retropangui_conf.sh가 이 오래된 값을 실기기에 적용해버려 실제
+# 호스트명이 조용히 retropangui-c5 → retropangui로 바뀌는 사고가 있었음.
+system.hostname=retropangui-c5
 
 # 자동 업데이트 여부 (0=비활성, 1=활성)
 # system.autoupdate=0
