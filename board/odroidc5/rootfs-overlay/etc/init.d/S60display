@@ -10,7 +10,20 @@ case "$1" in
         done
         [ ! -c /dev/dri/card0 ] && logger -t "${TAG}" "WARNING: /dev/dri/card0 not ready"
         if [ -x /usr/sbin/odroid-drm-fbset ]; then
-            /usr/sbin/odroid-drm-fbset -outputmode 1920x1080p60hz 2>/dev/null || true
+            # 2026-07-11: retropangui.conf의 system.hdmi_resolution(기본값
+            # auto)에 따라 연결된 모니터의 EDID 네이티브 타이밍을 자동
+            # 감지해서 쓰거나, 사용자가 SYSTEM SETTINGS에서 고른 고정
+            # 모드를 씀. 스크립트가 무슨 이유로든 실패하면 항상
+            # 1920x1080p60hz로 폴백(파이프 결과 비어있을 때 대비).
+            HDMI_MODE="$(python3 /usr/share/retropangui/hdmi-set-resolution.py 2>>/var/log/hdmi-resolution.log)"
+            [ -z "${HDMI_MODE}" ] && HDMI_MODE="1920x1080p60hz"
+            /usr/sbin/odroid-drm-fbset -outputmode "${HDMI_MODE}" 2>/dev/null \
+                || /usr/sbin/odroid-drm-fbset -outputmode 1920x1080p60hz 2>/dev/null || true
+            # 2026-07-11: HDMI Content-Type을 "game"으로 신고 - 이 값을
+            # 지원하는(EDID CNC3 비트) TV/모니터에서 자동으로 저지연
+            # 게임모드가 켜짐. 미지원 기기에서는 커널이 조용히 무시함
+            # (hdmitx_sysfs_common.c의 prxcap->cnc3 체크) - 안전하게 항상 시도.
+            echo game > /sys/class/amhdmitx/amhdmitx0/contenttype_mode 2>/dev/null || true
             logger -t "${TAG}" "Display initialized"
         else
             logger -t "${TAG}" "odroid-drm-fbset not found"

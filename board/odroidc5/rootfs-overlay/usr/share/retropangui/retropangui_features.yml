@@ -36,6 +36,10 @@ menus:
             label: "Paris (CET)"
           - value: America/Los_Angeles
             label: "Los Angeles (PST)"
+      # HDMI 출력 해상도(OUTPUT RESOLUTION)는 잘못 고르면 화면이 안 보이게
+      #될 수 있는 위험한 설정이라 YAML 목록형이 아니라 GuiMenu.cpp의
+      # openSystemSettings()에 네이티브로(확인+되돌리기 포함) 구현함
+      # - A/B 버튼전환(SWAP BUTTONS A/B)과 동일한 패턴.
 
   # 뉴스/증권 티커 API 키 입력 - system_settings 안의 rp.ticker_submenu(type:
   # submenu)로만 진입 가능(parent가 고정 카테고리가 아니라 자기 id라 자동

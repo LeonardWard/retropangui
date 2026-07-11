@@ -1,0 +1,40 @@
+From: retropangui-c5 build <build@retropangui-c5>
+Date: Mon, 1 Jan 2024 00:00:00 +0000
+Subject: [PATCH] media: hdmitx21: signal Full Range + ITC in AVI infoframe
+
+construct_avi_packet() unconditionally hardcoded quantization_range
+to LIMITED (16-235) and itc to 0, regardless of any sysfs/userspace
+configuration. config_csc_en defaults to 0 (no CSC conversion on the
+pixel path), so the GPU/DRM output is genuine full-range RGB
+(0-255) being mislabeled to sinks as limited-range - some displays
+will re-expand already-full-range data assuming it's limited,
+crushing blacks/whites. itc=0 also makes the content_type field
+(already GRAPHICS) invalid per CEA-861, so compatible TVs cannot use
+it to auto-engage low-latency game mode.
+
+---
+ common_drivers/drivers/media/vout/hdmitx21/hdmi_tx_video.c | 10 +++++++--
+ 1 file changed, 8 insertions(+), 2 deletions(-)
+
+diff --git a/common_drivers/drivers/media/vout/hdmitx21/hdmi_tx_video.c b/common_drivers/drivers/media/vout/hdmitx21/hdmi_tx_video.c
+index 1111111..2222222 100644
+--- a/common_drivers/drivers/media/vout/hdmitx21/hdmi_tx_video.c
++++ b/common_drivers/drivers/media/vout/hdmitx21/hdmi_tx_video.c
+@@ -39,9 +39,15 @@ static void construct_avi_packet(struct hdmitx_dev *hdev)
+ 		info->colorimetry = HDMI_COLORIMETRY_ITU_709;
+ 	info->picture_aspect = HDMI_PICTURE_ASPECT_16_9;
+ 	info->active_aspect = HDMI_ACTIVE_ASPECT_PICTURE;
+-	info->itc = 0;
++	/* RetroPangui(2026-07-11): PC/그래픽 UI 출력이라 ITC+Full Range로
++	 * 신호함. GPU/DRM 경로는 CSC 변환 없이(config_csc_en=0) 풀레인지
++	 * (0-255) 픽셀을 그대로 내보내는데 인포프레임은 LIMITED(16-235)로
++	 * 잘못 신고되고 있었음 - 일부 모니터에서 이중 레인지 변환으로 블랙
++	 * 크러시 유발 가능. itc=1은 아래 content_type(GRAPHICS) 필드를
++	 * 유효하게 만들어 호환 TV의 자동 게임모드 트리거에도 도움됨. */
++	info->itc = 1;
+ 	info->extended_colorimetry = HDMI_EXTENDED_COLORIMETRY_XV_YCC_601;
+-	info->quantization_range = HDMI_QUANTIZATION_RANGE_LIMITED;
++	info->quantization_range = HDMI_QUANTIZATION_RANGE_FULL;
+ 	info->nups = HDMI_NUPS_UNKNOWN;
+ 	info->video_code = para->timing.vic;
+ 	if (para->timing.vic == HDMI_95_3840x2160p30_16x9 ||

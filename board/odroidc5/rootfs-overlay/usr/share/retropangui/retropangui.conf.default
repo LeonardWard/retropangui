@@ -21,6 +21,10 @@ system.language=ko_KR
 # 예: Asia/Seoul, America/New_York, Europe/Paris
 system.timezone=Asia/Seoul
 
+# HDMI 출력 해상도 - auto면 부팅 시 연결된 모니터 EDID 네이티브 타이밍을
+# 자동 감지(hdmi-set-resolution.py). 실패하면 1920x1080p60hz로 폴백.
+system.hdmi_resolution=auto
+
 # 호스트명 - defconfig의 BR2_TARGET_GENERIC_HOSTNAME과 반드시 일치시킬 것.
 # 2026-07-11: 여기가 "retropangui"로 어긋나 있었는데, 지금까지는 이 값이
 # 실제로 적용된 적이 없어서(APPLY_NEEDED가 한 번도 안 걸림) 안 드러났다가,

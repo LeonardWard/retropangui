@@ -230,6 +230,13 @@ rm -f output/.config
 rm -f output/build/freeimage-3180/.stamp_built output/build/freeimage-3180/.stamp_staging_installed output/build/freeimage-3180/.stamp_target_installed
 make BR2_EXTERNAL="${BR2_EXTERNAL_PATH}" ${DEFCONFIG}
 
+# linux: board/odroidc5/patches/linux/*.patch 변경이 stamp로 감지 안 될 수 있어
+# extract 전에 소스 트리 자체를 지워서 완전히 새로 추출+서브모듈클론+패치
+# 되게 함(2026-07-11: 추출 이후에 지우면 서브모듈 클론이 스킵되고 빈
+# common_drivers 디렉토리에 패치를 대려다 "can't find file to patch" 발생 확인).
+echo "  - linux 소스 재추출 강제 (커널 패치 변경 반영)..."
+rm -rf output/build/linux-custom
+
 # common_drivers 서브모듈 준비 (커널 추출 후, 빌드 전)
 echo "  - 커널 소스 추출 중..."
 make BR2_EXTERNAL="${BR2_EXTERNAL_PATH}" linux-extract
