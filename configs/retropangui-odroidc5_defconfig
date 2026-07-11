@@ -134,6 +134,9 @@ BR2_PACKAGE_SDL2_KMSDRM=y
 BR2_PACKAGE_ALSA_UTILS=y
 BR2_PACKAGE_ALSA_UTILS_APLAY=y
 BR2_PACKAGE_ALSA_UTILS_AMIXER=y
+# 2026-07-11: 배경음악 MIDI를 외부 하드웨어 MIDI 신디사이저(예: MT-32
+# 에뮬레이터)로 직접 보내는 기능(MusicManager.cpp)에 필요.
+BR2_PACKAGE_ALSA_UTILS_APLAYMIDI=y
 
 # 스플래시 비디오 플레이어
 BR2_PACKAGE_FFMPEG_SWSCALE=y
@@ -191,6 +194,12 @@ BR2_PACKAGE_BLUEZ5_UTILS_PLUGINS_HOG=y
 # 직접 처리(별도 sixpair 툴 불필요, udev 필요 - 이미 다른 곳에서 씀).
 # 2026-07-10 밤, todo-20260705-ds3.html "MAC 각인 절차" 조사 결과로 추가.
 BR2_PACKAGE_BLUEZ5_UTILS_PLUGINS_SIXAXIS=y
+# 블루투스 오디오(A2DP) 재생 - bluez-alsa가 bluetoothd의 오디오 프로파일
+# 플러그인(BLUEZ5_UTILS_PLUGINS_AUDIO)까지 자동으로 켜줌. alsa-plugins는
+# 블루투스 기기별로 다른 샘플레이트를 변환해주는 samplerate 플러그인 때문에
+# 필요(2026-07-11, todo-bluetooth-audio.html).
+BR2_PACKAGE_BLUEZ_ALSA=y
+BR2_PACKAGE_ALSA_PLUGINS=y
 BR2_PACKAGE_NSS_MDNS=y
 
 # Python3

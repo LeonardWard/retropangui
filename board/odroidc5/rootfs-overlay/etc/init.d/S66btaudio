@@ -1,0 +1,36 @@
+#!/bin/sh
+# S66btaudio - 블루투스 오디오 기기 연결 시 asound.conf 기본 출력 자동 전환
+#
+# S65rpui-bt 이후 실행 — rpui-bt가 유지하는 /tmp/retropangui-bt-discovery.json
+# 을 그대로 읽어서 판단하므로 그 데몬이 먼저 떠 있어야 한다.
+# 2026-07-11: bluez-alsa(bluealsa) 패키지 추가와 함께 도입.
+
+TAG="S66btaudio"
+DAEMON="/usr/share/retropangui/bt-audio-autoswitch.py"
+PIDFILE="/run/btaudio-autoswitch.pid"
+
+case "$1" in
+    start)
+        [ -f "${DAEMON}" ] || { logger -t "${TAG}" "스크립트 없음, 건너뜀"; exit 0; }
+        logger -t "${TAG}" "시작"
+        start-stop-daemon --start --quiet --background \
+            --make-pidfile --pidfile "${PIDFILE}" \
+            --exec /usr/bin/python3 -- "${DAEMON}" 2>&1 | logger -t "${TAG}"
+        ;;
+    stop)
+        logger -t "${TAG}" "종료"
+        start-stop-daemon --stop --quiet --pidfile "${PIDFILE}" --signal TERM
+        rm -f "${PIDFILE}"
+        ;;
+    restart|reload)
+        "$0" stop
+        sleep 1
+        "$0" start
+        ;;
+    *)
+        echo "Usage: $0 {start|stop|restart}"
+        exit 1
+        ;;
+esac
+
+exit 0
