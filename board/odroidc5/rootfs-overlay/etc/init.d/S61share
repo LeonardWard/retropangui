@@ -150,11 +150,15 @@ mount_network_directive() {
     if [ "${directiveType}" = "cmd" ]; then
         cmd="${directive}"
     else
-        target=$(echo "${directive}" | sed -r 's|^([^@]+)@.*|\1|')
+        target=$(echo "${directive}" | sed -r 's|^([^@]+)@.*|\1|' | tr '[:lower:]' '[:upper:]')
         remoteHost=$(echo "${directive}" | sed -r 's|^[^@]+@([^:]+):.*|\1|')
         remotePath=$(echo "${directive}" | sed -r 's|^[^@]+@[^:]+:([^:]*).*|\1|')
         mountOptions=$(echo "${directive}" | sed -r 's|^[^@]+@[^:]+:[^:]*:?(.*)|\1|')
 
+        # 대상 키워드는 대소문자 안 가림(roms/Roms/ROMS 다 허용) - 실제로
+        # 소문자로 적어서 조용히 거부당하는 사용자가 있어서 2026-07-11 추가.
+        # 호스트/경로/mount 옵션은 원래 대소문자 그대로 유지(계정명 등에
+        # 대소문자가 의미 있을 수 있어서 여긴 안 건드림).
         case "${target}" in
             SHARE)       mountPoint="${SHARE_MOUNT}" ;;
             ROMS)        mountPoint="${SHARE_MOUNT}/roms" ;;
