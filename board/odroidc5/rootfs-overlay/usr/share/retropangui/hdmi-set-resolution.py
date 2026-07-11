@@ -10,7 +10,7 @@
 #       - "WIDTHxHEIGHT"(예: 2560x1600): EDID가 실제로 신고한 후보 중
 #         일치하는 걸 찾아 그 타이밍으로 등록.
 #       - 그 외: odroid-drm-fbset이 이미 아는 CEA 모드 이름(예:
-#         1920x1080p60hz)이라고 보고 그대로 출력(수동 폴백용).
+#         1080p60hz)이라고 보고 그대로 출력(수동 폴백용).
 #
 #   --list  지금 연결된 모니터의 EDID에서 실제로 뽑아낸 해상도 후보
 #       목록을 JSON으로 stdout에 출력한다(부작용 없음 - 모드라인 등록
@@ -20,7 +20,17 @@
 #
 # 진단 로그는 stderr로만 나가고, (인자 없음) 모드의 stdout은 항상 모드
 # 이름 한 줄만 낸다 - 무슨 일이 있어도(EDID 없음, 파싱 실패, 파일 접근
-# 오류 등) 최종적으로 "1920x1080p60hz"를 출력해서 절대 부팅을 막지 않는다.
+# 오류 등) 최종적으로 "1080p60hz"를 출력해서 절대 부팅을 막지 않는다.
+#
+# 2026-07-12 정정: 예전엔 이 폴백 이름이 "1920x1080p60hz"였는데, 이건
+# U-Boot 부팅 파라미터(boot.cmd의 vout=1920x1080p60hz) 표기를 그대로
+# 가져온 실수였음 - odroid-drm-fbset -showmodes로 실제 DRM 커넥터가
+# 등록한 모드 이름을 확인해보면 "1080p60hz"/"720p60hz"(WxH 접두어 없음)
+# 이지 "1920x1080p60hz"/"1280x720p60hz"가 아님. 두 네임스페이스가 다른데
+# 섞어 써서, 이 폴백이 실제로 걸리는 상황(EDID 실패 등)에서 존재하지
+# 않는 모드 이름으로 odroid-drm-fbset을 호출해 조용히 실패하고 있었음
+# (사용자가 OUTPUT RESOLUTION에서 1280x720을 골랐는데 실제로는 안 바뀌고
+# 이전 해상도가 그대로 유지되는 걸로 발견됨).
 #
 # 2026-07-11: 예전에 EDID "preferred"를 그대로 믿고 걸었다가 일부 모니터/TV가
 # 120Hz로 잡혀서 화면이 안 나오는 사고가 있었음(S99emulationstation 주석
@@ -36,7 +46,7 @@ CONF_FILE = "/retropangui/share/system/retropangui.conf"
 EDID_PATH = "/sys/class/drm/card0-HDMI-A-A/edid"
 MODELINE_PARAM = "/sys/module/aml_drm/parameters/modeline"
 DISPLAYMODE_PARAM = "/sys/module/aml_drm/parameters/displaymode"
-FALLBACK_MODE = "1920x1080p60hz"
+FALLBACK_MODE = "1080p60hz"
 MIN_REFRESH = 55.0
 MAX_REFRESH = 61.0
 
@@ -256,7 +266,7 @@ def cmd_apply():
         apply_candidate(FALLBACK_CUSTOM_MODES[requested])
         return
 
-    # 그 외(예: "1920x1080p60hz") - odroid-drm-fbset이 이미 아는 CEA 모드 이름
+    # 그 외(예: "1080p60hz") - odroid-drm-fbset이 이미 아는 CEA 모드 이름
     log(f"수동 지정 CEA 모드 사용: {requested}")
     print(requested)
 

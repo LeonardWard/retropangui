@@ -115,14 +115,14 @@ def main():
     except OSError:
         hdmi_mode = ""
     if not hdmi_mode:
-        hdmi_mode = "1920x1080p60hz"
+        hdmi_mode = "1080p60hz"
     result = subprocess.run(
         ["odroid-drm-fbset", "-outputmode", hdmi_mode],
         stderr=subprocess.DEVNULL,
     )
     if result.returncode != 0:
         subprocess.run(
-            ["odroid-drm-fbset", "-outputmode", "1920x1080p60hz"],
+            ["odroid-drm-fbset", "-outputmode", "1080p60hz"],
             stderr=subprocess.DEVNULL,
         )
 
