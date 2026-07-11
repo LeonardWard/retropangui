@@ -40,6 +40,29 @@ FALLBACK_MODE = "1920x1080p60hz"
 MIN_REFRESH = 55.0
 MAX_REFRESH = 61.0
 
+# 2026-07-12: EDID가 신고 안 하는 종횡비(16:10/4:3)를 위한 고정 폴백들 -
+# odroid-drm-fbset이 아는 CEA 모드가 아니라서 EDID 조회 없이 바로 등록
+# 가능한, 업계에 널리 검증된 표준 모드라인만 골라서 박아둠(CVT-RB로
+# 새로 계산한 값은 신뢰도 검증이 안 돼서 안 씀 - 1600x900/1366x768 등을
+# 시도했다가 역산해보니 새로고침율이 틀려서 뺐음, 2026-07-12).
+#   - 1920x1200 (16:10): CVT-RB 표준값, 역산 검증 완료(~59.95Hz)
+#   - 1024x768  (4:3)  : VESA DMT 표준값(수십 년간 쓰인 고전 XGA 타이밍),
+#     역산 검증 완료(~60.00Hz)
+FALLBACK_CUSTOM_MODES = {
+    "fallback_1920x1200p60hz": {
+        "name": "fallback_1920x1200p60hz",
+        "width": 1920, "height": 1200,
+        "modeline": 'Modeline "fallback_1920x1200p60hz" 154.000 '
+                    '1920 1968 2000 2080 1200 1203 1209 1235 -hsync +vsync',
+    },
+    "fallback_1024x768p60hz": {
+        "name": "fallback_1024x768p60hz",
+        "width": 1024, "height": 768,
+        "modeline": 'Modeline "fallback_1024x768p60hz" 65.000 '
+                    '1024 1048 1184 1344 768 771 777 806 -hsync -vsync',
+    },
+}
+
 
 def log(msg):
     print(f"[hdmi-set-resolution] {msg}", file=sys.stderr)
@@ -225,6 +248,12 @@ def cmd_apply():
         log(f"수동 지정 해상도 적용: {match['width']}x{match['height']}"
             f"@{match['refresh']:.2f}Hz -> {match['name']}")
         apply_candidate(match)
+        return
+
+    if requested in FALLBACK_CUSTOM_MODES:
+        # 고정 16:10 폴백 등 - EDID 조회 없이 내장된 모드라인을 바로 등록.
+        log(f"고정 폴백 모드 적용: {requested}")
+        apply_candidate(FALLBACK_CUSTOM_MODES[requested])
         return
 
     # 그 외(예: "1920x1080p60hz") - odroid-drm-fbset이 이미 아는 CEA 모드 이름
