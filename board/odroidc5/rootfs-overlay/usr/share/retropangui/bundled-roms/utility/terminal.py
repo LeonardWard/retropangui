@@ -96,12 +96,35 @@ def main():
     # 2026-07-08: kmscon이 --use-original-mode(기본값)로 "지금 활성 상태인
     # DRM 모드"를 그대로 재사용하는데, ES/스플래시가 물러난 직후 이 VT의
     # 활성 모드가 EDID "preferred" 협상 결과인 1920x1080p120hz로 잡혀있는
-    # 경우가 있음(S99emulationstation의 스플래시 60Hz 강제와 동일한 근본
-    # 원인) - kmscon 시작 직전에 60Hz로 명시 고정.
-    subprocess.run(
-        ["odroid-drm-fbset", "-outputmode", "1080p60hz"],
+    # 경우가 있어서(S99emulationstation의 스플래시 60Hz 강제와 동일한 근본
+    # 원인) 예전엔 여기서 그냥 "1080p60hz"로 밀어붙였음.
+    #
+    # 2026-07-12 정정: 그 뒤로 해상도 체계가 EDID 기반 커스텀 모드라인
+    # 등록(aml_drm 모듈)으로 바뀌어서, 연결된 모니터에 따라 활성 모드가
+    # "1080p60hz" 같은 표준 CEA 프리셋이 아니라 custom_2560x1600_60hz류의
+    # 커스텀 이름일 수 있음 - 그 상태에서 무작정 "1080p60hz"로 전환을
+    # 시도하면 실패하고(stderr는 버려서 안 보임) 활성 모드가 그대로
+    # 남아서 "해상도가 크게 잡혀있다"는 증상으로 나타남. S60display/
+    # S99emulationstation과 동일하게 hdmi-set-resolution.py로 현재 설정에
+    # 맞는 모드를 다시 등록+적용하도록 교체.
+    try:
+        hdmi_mode = subprocess.run(
+            ["python3", "/usr/share/retropangui/hdmi-set-resolution.py"],
+            capture_output=True, text=True,
+        ).stdout.strip()
+    except OSError:
+        hdmi_mode = ""
+    if not hdmi_mode:
+        hdmi_mode = "1920x1080p60hz"
+    result = subprocess.run(
+        ["odroid-drm-fbset", "-outputmode", hdmi_mode],
         stderr=subprocess.DEVNULL,
     )
+    if result.returncode != 0:
+        subprocess.run(
+            ["odroid-drm-fbset", "-outputmode", "1920x1080p60hz"],
+            stderr=subprocess.DEVNULL,
+        )
 
     # 2026-07-08: 한글 입출력 - fbterm은 이 기기의 DRM_FBDEV_EMULATION과
     # 근본적으로 안 맞아서(배너는 정상 출력되나 그래픽 모드 전환 시 화면이
