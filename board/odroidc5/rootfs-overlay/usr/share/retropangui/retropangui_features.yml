@@ -189,16 +189,25 @@ menus:
       # emulationstation.* 브릿지(Settings::loadRetropanguiConf(), apply_retropangui_conf.sh)가
       # 작동함. IGNORE ARTICLES는 값이 바뀔 때 전체 재정렬+팝업까지 하는 로직이
       # 붙어있어서 YAML로 옮기지 않고 C++에 그대로 둠(GuiMenu.cpp 참고).
+      # 2026-07-11: 이 둘은 C++ 시절 실제 기본값이 true였는데(Settings.cpp
+      # QuickSystemSelect/ShowHelpPrompts) YAML 이관 때(commit 2396b99)
+      # default: 필드를 안 넣어서 GuiMenu.cpp의 fallback("false")을 그대로
+      # 타고 있었음 - conf 파일에 이 키가 아직 없는(=이관 이전부터 쓰던)
+      # 기기에서 UI SETTINGS를 한 번이라도 열었다 닫으면 조용히 false로
+      # 저장돼버려서, 특히 ShowHelpPrompts는 하단 도움말 표시줄이 통째로
+      # 사라지는 버그로 이어졌음(todo-20260710-helpbar-missing.html).
       - id: rp.quick_system_select
         label: "QUICK SYSTEM SELECT"
         type: toggle
         conf_key: emulationstation.QuickSystemSelect
+        default: "true"
         restart: none
 
       - id: rp.show_help_prompts
         label: "ON-SCREEN HELP"
         type: toggle
         conf_key: emulationstation.ShowHelpPrompts
+        default: "true"
         restart: none
 
       - id: rp.show_hidden_files
