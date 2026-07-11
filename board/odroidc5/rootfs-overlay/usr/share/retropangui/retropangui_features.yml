@@ -271,11 +271,10 @@ menus:
         conf_key: global.video_scale_integer
         restart: none
 
-      - id: rp.bundlegame_show
-        label: "SHOW BUNDLED GAMES"
-        type: toggle
-        conf_key: system.bundlegame_show
-        restart: none
+      # SHOW BUNDLED GAMES: killall emulationstation으로 강제 재시작하던
+      # 부작용(DRM plane 깨짐, 2026-07-12 실기기 확인) 때문에 YAML toggle이
+      # 아니라 GuiMenu.cpp의 openGameSettings()에 네이티브로(gamelist.xml
+      # 갱신 동기 실행 → quitES() 순서 보장) 구현함.
 
       - id: rp.video_driver
         label: "VIDEO DRIVER"

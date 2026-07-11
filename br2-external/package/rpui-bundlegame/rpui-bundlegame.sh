@@ -97,7 +97,10 @@ cmd_hide() {
             _gamelist_set_hidden "${gamelist}" "./${fname}" "true"
         done
     done
-    killall emulationstation 2>/dev/null || true
+    # 2026-07-12: killall emulationstation 제거 - 외부 SIGTERM은 타이밍에
+    # 따라 ES가 GPU/DRM 작업 도중 끊겨서 다음 실행 때 화면이 안 나오는
+    # 문제가 실기기에서 확인됨(DRM plane 없음). 재시작은 호출부(ES 자신의
+    # GuiMenu.cpp)가 quitES()로 안전하게 처리함 - 여기선 gamelist.xml만 갱신.
 }
 
 cmd_show() {
@@ -109,7 +112,7 @@ cmd_show() {
             _gamelist_set_hidden "${gamelist}" "./${fname}" "false"
         done
     done
-    killall emulationstation 2>/dev/null || true
+    # 2026-07-12: killall emulationstation 제거 - cmd_hide 주석 참고.
 }
 
 cmd_status() {
