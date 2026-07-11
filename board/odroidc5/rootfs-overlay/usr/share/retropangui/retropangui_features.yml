@@ -311,16 +311,10 @@ menus:
     label: "ADVANCED SETTINGS"
     parent: controller
     items:
-      - id: rp.input_joypad_driver
-        label: "JOYPAD DRIVER"
-        type: list
-        conf_key: global.input_joypad_driver
-        restart: system
-        options:
-          - value: linuxraw
-            label: "linuxraw (기본)"
-          - value: udev
-            label: "udev"
+      # 2026-07-11: JOYPAD DRIVER 제거 - 실제 기본값은 udev인데 라벨은
+      # "linuxraw (기본)"이라 되어 있어서 오해를 주고 있었고, 일반
+      # 사용자가 판단할 필요 없는 설정이라는 사용자 결정으로 삭제.
+      # retroarch.cfg의 input_joypad_driver=udev는 그대로 유지됨.
 
       - id: rp.menu_unified_controls
         label: "UNIFIED CONTROLS"
