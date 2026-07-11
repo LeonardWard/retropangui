@@ -1,17 +1,24 @@
 #!/bin/sh
 TAG="S62audio"
-CARD=0
 
 start() {
     modprobe amlogic-snd-codec-dummy 2>/dev/null || true
     modprobe amlogic-snd-codec-t9015 2>/dev/null || true
+    # 2026-07-11: CARD=0 하드코딩 버그 - USB 오디오 장치(예: 컨트롤러에
+    # 내장된 오디오 인터페이스)가 온보드 HDMI 오디오(AML-AUGESOUND)보다
+    # 먼저 등록되면 카드 번호가 밀려서(0이 USB, 1이 온보드) 이 스크립트가
+    # 엉뚱한 카드를 건드리고 실제 HDMI 오디오 라우팅이 안 되는 문제가
+    # 있었음(실기기에서 소리가 완전히 안 나오는 증상으로 확인). 이름으로
+    # 찾도록 수정.
+    CARD=""
     i=0
     while [ $i -lt 10 ]; do
-        amixer -c ${CARD} info >/dev/null 2>&1 && break
+        CARD=$(awk -F'[][]' '/\[AMLAUGESOUND/{print $1; exit}' /proc/asound/cards 2>/dev/null | tr -d ' ')
+        [ -n "${CARD}" ] && break
         sleep 0.5; i=$((i+1))
     done
-    if ! amixer -c ${CARD} info >/dev/null 2>&1; then
-        logger -t "${TAG}" "WARNING: ALSA card '${CARD}' not found"
+    if [ -z "${CARD}" ]; then
+        logger -t "${TAG}" "WARNING: AML-AUGESOUND card not found"
         return 1
     fi
     amixer -c ${CARD} sset "HDMITX Audio Source Select" "Tdm_B" 2>/dev/null || true
