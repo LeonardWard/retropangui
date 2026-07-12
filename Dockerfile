@@ -13,7 +13,7 @@ RUN apt-get update && apt-get install -y \
     mtools dosfstools parted fdisk \
     qemu-user-static debootstrap \
     libarchive-zip-perl xxd imagemagick ffmpeg \
-    pkg-config libfl-dev libacl1-dev libarchive-dev \
+    pkg-config libfl-dev libacl1-dev libarchive-dev libmount-dev \
     locales \
     default-jre-headless && \
     locale-gen en_US.UTF-8 && \
