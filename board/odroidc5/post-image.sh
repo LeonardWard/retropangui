@@ -11,6 +11,14 @@ echo ">>> RETROPANGUI-C5 post-image script 실행"
 # u-boot를 images 디렉토리로 복사
 cp "${BOARD_DIR}/u-boot.bin.sd.bin" "${BINARIES_DIR}/"
 
+# config.ini 복사 — U-Boot 바이너리(board_late_init())가 boot.cmd 실행 전에
+# 자동으로 파티션1 루트에서 읽어서 "ini generic $loadaddr"로 파싱함(2026-07-12
+# U-Boot 소스 확인 완료). displaymode="720p60hz"를 안전한 범용 부팅 기본값으로
+# 지정 - 이후 S60display가 EDID 확인해서 모니터별 최적 해상도로 재적용함.
+# 섹션명은 반드시 [generic] - 위키 예제의 "target"은 실제 섹션명이 아니라
+# 코드블록 위젯 탭 이름이었음(오독 확인됨).
+cp "${BOARD_DIR}/config.ini" "${BINARIES_DIR}/"
+
 # boot.scr 생성 (boot.cmd 소스에서 mkimage로 컴파일)
 MKIMAGE=$(find "${HOST_DIR}" -name mkimage -type f 2>/dev/null | head -1)
 if [ -z "${MKIMAGE}" ]; then
