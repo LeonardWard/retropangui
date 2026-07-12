@@ -295,6 +295,13 @@ endef
 # 타겟(aarch64) 컴파일러에 그대로 넘어감. ARCH=aarch64로 명시해서 우회
 # (parallel_n64도 같은 패턴, ppsspp는 platform 문자열 자체에 arm64를
 # 넣어야 하는 다른 방식 - 아래 참고).
+#
+# 2026-07-12 (2차): ARCH 수정 후 재시도에서 "GL/gl.h: No such file or
+# directory"로 다시 실패 - platform=unix 기본값이 데스크탑 OpenGL
+# (GLideN64 렌더러가 GL/gl.h를 include)을 가정하는데, C5는 Mali GPU라
+# GLES2/3만 제공함(mesa3d는 빌드타임 헤더용, 런타임은 libMali.so).
+# FORCE_GLES=1을 넘겨서 GLESv2로 링크하도록 강제(parallel_n64도 동일 -
+# 둘 다 GLideN64 기반 렌더러라 같은 문제를 공유함).
 ################################################################################
 
 MUPEN64PLUS_NEXT_SITE = https://github.com/libretro/mupen64plus-libretro-nx
@@ -307,7 +314,8 @@ define LIBRETRO_CORES_BUILD_MUPEN64PLUS_NEXT
 	$(TARGET_MAKE_ENV) $(MAKE) -C $(@D)/mupen64plus-libretro-nx \
 		$(LIBRETRO_CROSS_OPTS) \
 		platform=unix \
-		ARCH=aarch64
+		ARCH=aarch64 \
+		FORCE_GLES=1
 endef
 
 ################################################################################
@@ -324,7 +332,8 @@ define LIBRETRO_CORES_BUILD_PARALLEL_N64
 	$(TARGET_MAKE_ENV) $(MAKE) -C $(@D)/parallel-n64 \
 		$(LIBRETRO_CROSS_OPTS) \
 		platform=unix \
-		ARCH=aarch64
+		ARCH=aarch64 \
+		FORCE_GLES=1
 endef
 
 ################################################################################
