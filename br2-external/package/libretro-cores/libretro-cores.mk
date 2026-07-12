@@ -362,6 +362,15 @@ define LIBRETRO_CORES_BUILD_PPSSPP
 	# 제공하므로 이 코어에 XLIB 지원은 애초에 불필요 - 해당 줄만 제거.
 	sed -i '/^COREFLAGS += -DVK_USE_PLATFORM_XLIB_KHR$$/d' \
 		$(@D)/ppsspp/libretro/Makefile.common
+	# 같은 이유로 "ifeq ($$(TARGET_ARCH),arm64)"가 안드로이드 전용
+	# libadrenotools(Adreno GPU 드라이버 핫스왑용 안드로이드 링커 네임스페이스
+	# 조작 코드, android/api-level.h 필요)를 일반 리눅스 aarch64에도 무조건
+	# 끼워넣어서 크로스 빌드 실패함 - 우리는 안드로이드도 아니고 Adreno도
+	# 아닌 Mali GPU라 이 코드 자체가 무관함. 해당 ifeq 블록만 통째로 제거
+	# (같은 arm64 조건이라도 line 938의 "else ifeq" 블록은 실제 ARM64 JIT
+	# 소스라 건드리면 안 됨 - 순수 "ifeq" 블록 하나만 유일하게 존재함).
+	sed -i '/^ifeq ($$(TARGET_ARCH),arm64)$$/,/^endif$$/d' \
+		$(@D)/ppsspp/libretro/Makefile.common
 	$(TARGET_MAKE_ENV) $(MAKE) -C $(@D)/ppsspp/libretro \
 		$(LIBRETRO_CROSS_OPTS) \
 		platform=arm64-gles
