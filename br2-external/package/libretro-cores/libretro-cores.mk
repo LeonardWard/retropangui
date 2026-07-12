@@ -409,10 +409,20 @@ define LIBRETRO_CORES_BUILD_KRONOS
 	git -C $(@D)/yabause checkout $(KRONOS_VERSION)
 	git -C $(@D)/yabause submodule update --init --recursive
 	$(MAKE) -C $(@D)/yabause/yabause/src/libretro -f Makefile generate-files
+	# platform=odroid-c4는 "findstring odroid" 제네릭 브랜치를 타는데, 이
+	# 브랜치는 /proc/cpuinfo를 grep해서 XU3/XU4인지 확인한 뒤에만
+	# HAVE_SSE=0을 설정함 - 크로스 빌드 컨테이너엔 당연히 "odroid" 문자열이
+	# 없어서(빌드 호스트지 실제 기기가 아니므로) 이 하위 분기가 전혀 안
+	# 타고, 결국 파일 맨 위 기본값 HAVE_SSE=1(x86 SSE)이 그대로 살아남아
+	# -msse -mfpmath=sse가 크로스 컴파일러로 새어들어감(N64 코어들의
+	# ARCH=aarch64 문제와 같은 종류, 감지 대상이 다를 뿐). 커맨드라인에서
+	# HAVE_SSE=0을 명시해서 우회(파일 내부 "=" 대입은 커맨드라인 변수를
+	# 못 이김).
 	$(TARGET_CONFIGURE_OPTS) $(MAKE) $(LIBRETRO_CROSS_OPTS) -C $(@D)/yabause/yabause/src/libretro \
 		-f Makefile \
 		platform=odroid-c4 \
-		FORCE_GLES=1
+		FORCE_GLES=1 \
+		HAVE_SSE=0
 endef
 
 ################################################################################
