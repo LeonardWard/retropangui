@@ -1,0 +1,37 @@
+#!/bin/sh
+# S67daemon-watchdog - rpui-daemon-watchdog.sh 기동
+#
+# S66btaudio 다음 실행 - 감시 대상 데몬(rpui-wifi/rpui-bt/bluealsa/
+# bt-audio-autoswitch)이 전부 시작 시도를 마친 뒤에 감시를 시작해야
+# 정상 기동 중인 걸 "죽어있다"고 오판하지 않는다.
+# (2026-07-12, todo-20260709-systemd-migration.html 후속 제안 구현)
+
+TAG="S67daemon-watchdog"
+DAEMON="/usr/share/retropangui/rpui-daemon-watchdog.sh"
+PIDFILE="/run/rpui-daemon-watchdog.pid"
+
+case "$1" in
+    start)
+        [ -f "${DAEMON}" ] || { logger -t "${TAG}" "스크립트 없음, 건너뜀"; exit 0; }
+        logger -t "${TAG}" "시작"
+        start-stop-daemon --start --quiet --background \
+            --make-pidfile --pidfile "${PIDFILE}" \
+            --exec /bin/sh -- "${DAEMON}" 2>&1 | logger -t "${TAG}"
+        ;;
+    stop)
+        logger -t "${TAG}" "종료"
+        start-stop-daemon --stop --quiet --pidfile "${PIDFILE}" --signal TERM
+        rm -f "${PIDFILE}"
+        ;;
+    restart|reload)
+        "$0" stop
+        sleep 1
+        "$0" start
+        ;;
+    *)
+        echo "Usage: $0 {start|stop|restart}"
+        exit 1
+        ;;
+esac
+
+exit 0
