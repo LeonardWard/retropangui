@@ -25,7 +25,12 @@
 TAG="hdmi-hotplug"
 HPD="/sys/devices/virtual/amhdmitx/amhdmitx0/hpd_state"
 PHY="/sys/class/amhdmitx/amhdmitx0/phy"
-EDID="/sys/class/drm/card0-HDMI-A-A/edid"
+# 2026-07-13: EDID 소스를 DRM sysfs에서 amhdmitx rawedid로 변경 - DRM 쪽은
+# 커넥터를 누가 probe할 때만 갱신되는 캐시라서 핫플러그 직후엔 "이전
+# 모니터"의 EDID를 보여줌(실기기 모니터 교체로 실측 - 이 때문에 교체가
+# "same monitor"로 오판됐음). rawedid는 드라이버가 플러그인 때마다 새로
+# 읽는 원본. 기준선(hdmi-set-resolution.py)도 같은 파일을 같은 방식으로 해시함.
+EDID="/sys/class/amhdmitx/amhdmitx0/rawedid"
 BASELINE="/var/run/hdmi-edid.sha"
 
 [ -r "${HPD}" ] || exit 0
@@ -42,7 +47,12 @@ fi
 echo 1 > "${PHY}" 2>/dev/null || true
 logger -t "${TAG}" "reconnect: PHY re-enabled"
 
-# 모니터 교체 감지 - EDID 해시를 S99가 기록해둔 기준선과 비교
+# 모니터 교체 감지 - EDID 해시를 기준선과 비교. rawedid가 비어있으면
+# (EDID 미확보 상태) 빈 파일 해시로 오판하지 않도록 검사 자체를 건너뜀.
+if [ "$(wc -c < "${EDID}" 2>/dev/null || echo 0)" -lt 256 ]; then
+    logger -t "${TAG}" "EDID not available yet - skip monitor-change check"
+    exit 0
+fi
 NEW_HASH="$(sha256sum "${EDID}" 2>/dev/null | cut -d' ' -f1)"
 if [ -z "${NEW_HASH}" ]; then
     logger -t "${TAG}" "EDID unreadable - skip monitor-change check"

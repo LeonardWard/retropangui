@@ -44,7 +44,14 @@ import json
 import hashlib
 
 CONF_FILE = "/retropangui/share/system/retropangui.conf"
-EDID_PATH = "/sys/class/drm/card0-HDMI-A-A/edid"
+# 2026-07-13: EDID 소스를 DRM sysfs에서 amhdmitx rawedid(hex 텍스트)로 변경.
+# DRM 쪽(/sys/class/drm/card0-HDMI-A-A/edid)은 커넥터를 누가 probe할 때만
+# 갱신되는 캐시라서, 모니터를 핫플러그로 교체한 직후엔 "이전 모니터"의
+# EDID를 그대로 보여줌(실기기에서 모니터 교체로 실측 - amhdmitx는 SAC 신형을
+# 읽었는데 DRM은 ZEUSLAP 것을 유지). rawedid는 드라이버가 플러그인 때마다
+# 새로 읽는 원본이라 항상 신선함.
+RAWEDID_PATH = "/sys/class/amhdmitx/amhdmitx0/rawedid"
+EDID_DRM_FALLBACK = "/sys/class/drm/card0-HDMI-A-A/edid"
 EDID_BASELINE = "/var/run/hdmi-edid.sha"
 MODELINE_PARAM = "/sys/module/aml_drm/parameters/modeline"
 DISPLAYMODE_PARAM = "/sys/module/aml_drm/parameters/displaymode"
@@ -153,8 +160,16 @@ def build_candidate(d, preferred=False):
 
 
 def read_edid():
+    # rawedid(hex 텍스트) 우선 - 핫플러그 직후에도 항상 현재 모니터의 EDID.
     try:
-        with open(EDID_PATH, "rb") as f:
+        with open(RAWEDID_PATH, "r") as f:
+            hex_text = f.read().strip()
+        if len(hex_text) >= 256:  # 최소 EDID 1블록(128바이트=256hex)
+            return bytes.fromhex(hex_text)
+    except (OSError, ValueError) as e:
+        log(f"rawedid 읽기 실패({e}) - DRM sysfs로 폴백")
+    try:
+        with open(EDID_DRM_FALLBACK, "rb") as f:
             return f.read()
     except OSError as e:
         log(f"EDID 읽기 실패: {e}")
@@ -236,9 +251,11 @@ def write_edid_baseline():
     # 값과 비교해 "다른 모니터로 교체"를 감지함. 해상도 결정이 일어나는
     # 모든 경로(S60display/S99 루프/ES 게임 복귀/terminal.py)가 cmd_apply를
     # 지나므로, 기준선은 항상 "지금 적용된 해상도가 협상된 그 모니터"를
-    # 가리키는 불변식이 유지됨. sha256sum과 동일한 값(파일 바이트 전체 해시).
+    # 가리키는 불변식이 유지됨.
+    # 주의: 해시 대상은 rawedid "파일 바이트 그대로"(hex 텍스트+개행) -
+    # hdmi-hotplug의 "sha256sum rawedid"와 정확히 같은 값이 나와야 함.
     try:
-        with open(EDID_PATH, "rb") as f:
+        with open(RAWEDID_PATH, "rb") as f:
             digest = hashlib.sha256(f.read()).hexdigest()
         with open(EDID_BASELINE, "w") as f:
             f.write(digest + "\n")
