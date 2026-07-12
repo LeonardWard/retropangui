@@ -371,6 +371,17 @@ define LIBRETRO_CORES_BUILD_PPSSPP
 	# 소스라 건드리면 안 됨 - 순수 "ifeq" 블록 하나만 유일하게 존재함).
 	sed -i '/^ifeq ($$(TARGET_ARCH),arm64)$$/,/^endif$$/d' \
 		$(@D)/ppsspp/libretro/Makefile.common
+	# 세 번째 문제: 링크 단계에서 "undefined reference to
+	# png_init_filter_functions_neon" 실패. 원인: libpng17의
+	# arm/neon.h가 __aarch64__면 PNG_ARM_NEON_OPT를 2(런타임 체크 없이
+	# NEON 코드 항상 사용)로 기본 설정하는데, 정작 그 구현체(arm/filter_neon.S)는
+	# ".arch armv7-a" 32비트 전용 어셈블리라 Makefile.common이 TARGET_ARCH=arm64에는
+	# 아예 안 끼워넣음(정상 - 애초에 aarch64용으로 못 씀) - 그 결과 aarch64에서
+	# 헤더는 "NEON 있다"고 선언하는데 실제 구현은 빠지는 모순이 생김.
+	# libpng 공식 문서(neon.h 주석)가 권장하는 대로 -DPNG_ARM_NEON_OPT=0을
+	# COREFLAGS에 직접 추가해서 NEON 최적화 자체를 꺼버림(PNG 디코드는
+	# PSP 에뮬레이터의 성능 핵심 경로가 아니라 손실 감수 가능).
+	echo 'COREFLAGS += -DPNG_ARM_NEON_OPT=0' >> $(@D)/ppsspp/libretro/Makefile.common
 	$(TARGET_MAKE_ENV) $(MAKE) -C $(@D)/ppsspp/libretro \
 		$(LIBRETRO_CROSS_OPTS) \
 		platform=arm64-gles
