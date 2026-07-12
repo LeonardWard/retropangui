@@ -20,6 +20,11 @@
 #   parallel_n64    : 커밋 1a68b3bd (2026-07, libretro/parallel-n64, GLideN64 렌더러 - N64 대체 코어)
 #   ppsspp          : 커밋 f0baf3ad (2026-07, hrydgard/ppsspp, 서브모듈 23개 --recursive로 받음 - 빌드 시간 김)
 #
+#   kronos          : 커밋 146f4295 (2026-07, libretro/yabause, Saturn GL 가속 - beetle_saturn과 별개 코어).
+#                     Batocera가 Odroid C4(S905X3, 이 프로젝트의 C5와 같은 칩 계열)용으로 검증해둔
+#                     platform="odroid-c4" FORCE_GLES=1 레시피를 그대로 따름 - mesa3d(빌드 타임 헤더용,
+#                     이미 defconfig에 있음)+mali-ddk(런타임 libEGL/libGLESv2 - 이미 있음) 조합 확인함.
+#
 # 2026-07-12: 게임큐브(dolphin) 코어는 이 파일에 없음 - libretro/dolphin은 다른 코어들과
 # 달리 Makefile.libretro 방식이 아니라 데스크톱 Dolphin 프로젝트 그대로 CMakeLists.txt +
 # .gitmodules(Externals) 기반의 완전히 다른 빌드 체계라, 이 파일의 generic-package 패턴이
@@ -39,6 +44,8 @@ LIBRETRO_CORES_VERSION = 1.0
 LIBRETRO_CORES_LICENSE = GPL-2.0 (nestopia, snes9x, pcsx_rearmed, dosbox_pure, scummvm)
 # 자체 git clone으로 다운로드하므로 Buildroot 자동 소스 다운로드 비활성화
 LIBRETRO_CORES_SOURCE =
+# kronos(Saturn GL 가속)가 빌드 타임에 EGL/GLES2 헤더를 필요로 함
+LIBRETRO_CORES_DEPENDENCIES += mesa3d
 
 CORES_INSTALL_DIR = $(TARGET_DIR)/usr/lib/libretro
 
@@ -332,6 +339,27 @@ define LIBRETRO_CORES_BUILD_PPSSPP
 endef
 
 ################################################################################
+# kronos - Sega Saturn (GL 가속, beetle_saturn과 별개 코어)
+# Batocera의 Odroid C4(S905X3) 레시피(platform=odroid-c4 FORCE_GLES=1) 그대로 사용.
+# 저장소 자체가 "yabause" repo 안에 다시 "yabause" 하위 디렉토리를 갖는 구조.
+################################################################################
+
+KRONOS_SITE = https://github.com/libretro/yabause
+KRONOS_VERSION = 146f4295eb7f5f76a2e6e6c84518c9bdf6a8398f
+
+define LIBRETRO_CORES_BUILD_KRONOS
+	test -d $(@D)/yabause/.git || \
+		git clone --filter=blob:none --recurse-submodules $(KRONOS_SITE) $(@D)/yabause
+	git -C $(@D)/yabause checkout $(KRONOS_VERSION)
+	git -C $(@D)/yabause submodule update --init --recursive
+	$(MAKE) -C $(@D)/yabause/yabause/src/libretro -f Makefile generate-files
+	$(TARGET_CONFIGURE_OPTS) $(MAKE) $(LIBRETRO_CROSS_OPTS) -C $(@D)/yabause/yabause/src/libretro \
+		-f Makefile \
+		platform=odroid-c4 \
+		FORCE_GLES=1
+endef
+
+################################################################################
 # Build / Install
 ################################################################################
 
@@ -352,6 +380,7 @@ define LIBRETRO_CORES_BUILD_CMDS
 	$(call LIBRETRO_CORES_BUILD_MUPEN64PLUS_NEXT)
 	$(call LIBRETRO_CORES_BUILD_PARALLEL_N64)
 	$(call LIBRETRO_CORES_BUILD_PPSSPP)
+	$(call LIBRETRO_CORES_BUILD_KRONOS)
 endef
 
 define LIBRETRO_CORES_INSTALL_TARGET_CMDS
@@ -443,6 +472,11 @@ define LIBRETRO_CORES_INSTALL_TARGET_CMDS
 	$(INSTALL) -m 0644 $(@D)/ppsspp/libretro/ppsspp_libretro.so \
 		$(CORES_INSTALL_DIR)/lr-ppsspp/
 	echo "ppsspp_libretro.so" > $(CORES_INSTALL_DIR)/lr-ppsspp/.installed_so_name
+
+	mkdir -p $(CORES_INSTALL_DIR)/lr-kronos
+	$(INSTALL) -m 0644 $(@D)/yabause/yabause/src/libretro/kronos_libretro.so \
+		$(CORES_INSTALL_DIR)/lr-kronos/
+	echo "kronos_libretro.so" > $(CORES_INSTALL_DIR)/lr-kronos/.installed_so_name
 endef
 
 $(eval $(generic-package))

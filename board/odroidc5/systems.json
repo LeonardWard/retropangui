@@ -138,7 +138,8 @@
     "platform": "saturn",
     "theme": "saturn",
     "cores": [
-      { "name": "beetle_saturn", "fullname": "Beetle Saturn", "module_id": "lr-beetle-saturn", "priority": 1 }
+      { "name": "kronos", "fullname": "Kronos (GL 가속)", "module_id": "lr-kronos", "priority": 1 },
+      { "name": "beetle_saturn", "fullname": "Beetle Saturn", "module_id": "lr-beetle-saturn", "priority": 2 }
     ]
   },
   {
