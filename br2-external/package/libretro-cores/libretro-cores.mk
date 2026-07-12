@@ -382,6 +382,13 @@ define LIBRETRO_CORES_BUILD_PPSSPP
 	# COREFLAGS에 직접 추가해서 NEON 최적화 자체를 꺼버림(PNG 디코드는
 	# PSP 에뮬레이터의 성능 핵심 경로가 아니라 손실 감수 가능).
 	echo 'COREFLAGS += -DPNG_ARM_NEON_OPT=0' >> $(@D)/ppsspp/libretro/Makefile.common
+	# 이전 시도(NEON 수정 전)에서 이미 컴파일된 ext/libpng17/*.o가 남아있으면
+	# make가 COREFLAGS만 바뀐 걸로는 재컴파일 필요성을 못 느껴서(소스 .c
+	# 자체는 안 바뀌었으니) 예전 플래그로 빌드된 stale .o를 그대로 재사용함 -
+	# 방금 추가한 -DPNG_ARM_NEON_OPT=0이 실제로는 반영 안 된 채 링크되어 같은
+	# 에러가 반복됨(실측: 이 줄 추가 전 재시도에서 확인). libpng17 .o만
+	# 지워서 강제로 새 플래그로 재컴파일되게 함.
+	find $(@D)/ppsspp/ext/libpng17 -name '*.o' -delete 2>/dev/null || true
 	$(TARGET_MAKE_ENV) $(MAKE) -C $(@D)/ppsspp/libretro \
 		$(LIBRETRO_CROSS_OPTS) \
 		platform=arm64-gles
