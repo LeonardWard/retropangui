@@ -355,6 +355,13 @@ define LIBRETRO_CORES_BUILD_PPSSPP
 		git clone --filter=blob:none $(PPSSPP_SITE) $(@D)/ppsspp
 	git -C $(@D)/ppsspp checkout $(PPSSPP_VERSION)
 	git -C $(@D)/ppsspp submodule update --init --recursive
+	# Makefile.common의 "win32/darwin/android가 아니면 무조건 데스크탑
+	# Linux(X11)"라는 기본 가정 때문에 COREFLAGS에 -DVK_USE_PLATFORM_XLIB_KHR가
+	# 무조건 붙어서 X11/Xlib.h를 찾다가 크로스 빌드 실패함(우리 타겟은 X11
+	# 자체가 없는 DRM/KMS 임베디드 환경). RetroArch가 자체 Vulkan 서페이스를
+	# 제공하므로 이 코어에 XLIB 지원은 애초에 불필요 - 해당 줄만 제거.
+	sed -i '/^COREFLAGS += -DVK_USE_PLATFORM_XLIB_KHR$$/d' \
+		$(@D)/ppsspp/libretro/Makefile.common
 	$(TARGET_MAKE_ENV) $(MAKE) -C $(@D)/ppsspp/libretro \
 		$(LIBRETRO_CROSS_OPTS) \
 		platform=arm64-gles
