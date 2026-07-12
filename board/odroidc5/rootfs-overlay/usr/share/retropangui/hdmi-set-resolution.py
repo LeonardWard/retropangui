@@ -309,6 +309,18 @@ def cmd_apply():
         # 달리 사용자가 목록 보고 명시적으로 고른 것이므로).
         match = next((c for c in candidates if c["name"] == requested), None)
         if match is None:
+            # 2026-07-13: 고정 폴백(1080p60hz) 대신 "지금 연결된 모니터의
+            # EDID에서 실제로 뽑은 안전 후보"로 폴백. 모니터를 바꿔 끼운
+            # 상황에선 화면이 안 보여서 사람이 개입할 수 없으므로, 저장된
+            # 모드가 새 모니터에 없으면 새 모니터가 확실히 받는 모드로
+            # 무조건 자동 복구되어야 함(사용자 지적). 1080p 고정 폴백은
+            # 새 모니터가 1080p를 못 받으면 자동 복구가 실패하는 구멍이었음.
+            safe = get_safe_auto_candidate(candidates)
+            if safe is not None:
+                log(f"요청한 모드({requested})가 지금 EDID 후보에 없음 - "
+                    f"현재 모니터의 안전 후보로 폴백: {safe['name']}")
+                apply_candidate(safe)
+                return
             log(f"요청한 모드({requested})가 지금 EDID 후보에 없음 - 폴백")
             print(FALLBACK_MODE)
             return
