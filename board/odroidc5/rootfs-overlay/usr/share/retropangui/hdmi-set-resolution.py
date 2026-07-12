@@ -41,9 +41,11 @@
 
 import sys
 import json
+import hashlib
 
 CONF_FILE = "/retropangui/share/system/retropangui.conf"
 EDID_PATH = "/sys/class/drm/card0-HDMI-A-A/edid"
+EDID_BASELINE = "/var/run/hdmi-edid.sha"
 MODELINE_PARAM = "/sys/module/aml_drm/parameters/modeline"
 DISPLAYMODE_PARAM = "/sys/module/aml_drm/parameters/displaymode"
 FALLBACK_MODE = "1080p60hz"
@@ -229,7 +231,23 @@ def apply_candidate(c):
     print(c["name"])
 
 
+def write_edid_baseline():
+    # 현재 EDID의 sha256을 기준선으로 기록 - hdmi-hotplug가 재연결 때 이
+    # 값과 비교해 "다른 모니터로 교체"를 감지함. 해상도 결정이 일어나는
+    # 모든 경로(S60display/S99 루프/ES 게임 복귀/terminal.py)가 cmd_apply를
+    # 지나므로, 기준선은 항상 "지금 적용된 해상도가 협상된 그 모니터"를
+    # 가리키는 불변식이 유지됨. sha256sum과 동일한 값(파일 바이트 전체 해시).
+    try:
+        with open(EDID_PATH, "rb") as f:
+            digest = hashlib.sha256(f.read()).hexdigest()
+        with open(EDID_BASELINE, "w") as f:
+            f.write(digest + "\n")
+    except Exception as e:
+        log(f"EDID 기준선 기록 실패({e}) - 무시")
+
+
 def cmd_apply():
+    write_edid_baseline()
     requested = read_conf_value("system.hdmi_resolution", "auto")
     candidates = get_candidates()
 

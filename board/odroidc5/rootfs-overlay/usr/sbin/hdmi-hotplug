@@ -12,13 +12,15 @@
 # 기존 검증된 경로를 그대로 태우는 방식(이 스크립트가 직접 모드를 바꾸지
 # 않는 이유: ES가 DRM master를 쥔 동안엔 외부 모드 변경이 거부됨).
 #
-# 기준선(/var/run/hdmi-edid.sha)은 S99emulationstation이 해상도 적용 직후에
-# 기록함 - tmpfs라 부팅마다 리셋. 기준선이 없으면(부팅 직후 등) S99가 아직
-# 해상도를 적용하기 전이므로 교체 판정 없이 PHY만 복구.
+# 기준선(/var/run/hdmi-edid.sha)은 hdmi-set-resolution.py의 cmd_apply()가
+# 해상도 결정 때마다 기록함(해상도 적용이 일어나는 모든 경로 - S60display/
+# S99 루프/ES 게임 복귀/terminal.py - 가 그 함수를 지나므로 단일 소유자).
+# tmpfs라 부팅마다 리셋. 기준선이 없으면(부팅 직후 등) 아직 해상도 적용
+# 전이므로 교체 판정 없이 PHY만 복구.
 #
-# 알려진 한계: 게임 실행 중 모니터를 교체하면 ES에 SIGTERM이 가면서 게임도
-# 함께 종료됨(저장 안 된 진행 손실 가능) - 교체는 의도적 행위이고 화면이
-# 아예 안 나오는 것보단 낫다고 판단. 조사 기록:
+# 게임(RetroArch) 실행 중 교체는 RA를 절대 건드리지 않음 - PHY 복구만으로
+# 현재 모드 신호가 재개되어 게임이 그대로 이어지고, 재협상은 게임 종료 후
+# ES 복귀 시점에 자동으로 일어남. 조사 기록:
 # docs/retropangui/todo-20260712-hdmi-hotplug-investigation.html
 TAG="hdmi-hotplug"
 HPD="/sys/devices/virtual/amhdmitx/amhdmitx0/hpd_state"
@@ -56,7 +58,19 @@ if [ "${NEW_HASH}" = "${OLD_HASH}" ]; then
     exit 0
 fi
 
-# 다른 모니터: 기준선을 먼저 갱신(이벤트 연발 시 중복 재시작 방지)하고
+# 다른 모니터로 교체됨. 게임(RetroArch) 실행 중이면 절대 건드리지 않음 -
+# RA가 DRM master를 쥔 채 현재 모드로 계속 그리고 있고, 위에서 PHY를
+# 복구했으므로 새 모니터가 현재 모드를 지원하는 한(우리 기본값
+# 720p/1080p CEA는 사실상 모든 모니터가 지원) 게임 화면이 즉시 이어짐.
+# 기준선도 갱신하지 않음 - 게임 종료 후 ES 복귀 시 ES가
+# hdmi-set-resolution.py를 다시 실행하면서(2026-07-12 복귀 재적용 수정)
+# 새 모니터 기준으로 해상도 재협상 + 기준선 갱신이 자동으로 일어남.
+if pidof retroarch >/dev/null 2>&1; then
+    logger -t "${TAG}" "monitor changed but game running - RA untouched, current mode kept; renegotiation deferred to ES return"
+    exit 0
+fi
+
+# 게임 중이 아니면: 기준선을 먼저 갱신(이벤트 연발 시 중복 재시작 방지)하고
 # ES를 종료 - S99 루프가 새 EDID로 해상도 재적용 + ES 재시작을 담당
 echo "${NEW_HASH}" > "${BASELINE}"
 logger -t "${TAG}" "monitor changed (EDID mismatch) - restarting ES for renegotiation"

@@ -45,9 +45,6 @@ case "$1" in
                 HDMI_MODE="$(python3 /usr/share/retropangui/hdmi-set-resolution.py 2>>/var/log/hdmi-resolution.log)"
                 [ -z "${HDMI_MODE}" ] && HDMI_MODE="1080p60hz"
                 odroid-drm-fbset -outputmode "${HDMI_MODE}" || odroid-drm-fbset -outputmode 1080p60hz
-                # 현재 모니터의 EDID 해시를 기준선으로 기록 - hdmi-hotplug가
-                # 재연결 때 이 값과 비교해서 "다른 모니터로 교체"를 감지함
-                sha256sum /sys/class/drm/card0-HDMI-A-A/edid 2>/dev/null | cut -d" " -f1 > /var/run/hdmi-edid.sha
                 # 스플래시 비디오 재생 — ALSA softvol "Master" 컨트롤 초기화 목적
                 # mpv가 오디오 디바이스를 열면 softvol 컨트롤이 등록되어 ES VolumeControl이 정상 작동함
                 SPLASH="/usr/share/retropangui/splash/splash.mp4"
