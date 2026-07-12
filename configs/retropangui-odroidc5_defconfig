@@ -217,6 +217,12 @@ BR2_PACKAGE_KSMBD_TOOLS=y
 BR2_PACKAGE_CIFS_UTILS=y
 BR2_PACKAGE_NFS_UTILS=y
 # BR2_PACKAGE_NFS_UTILS_RPC_NFSD is not set
+# nfs-utils 2.6.4의 configure가 libmount(mount.pc)를 필수로 요구하는데
+# buildroot 2024.02의 nfs-utils Config.in이 LIBBLKID만 select하고 LIBMOUNT를
+# 빠뜨림(상류에서 나중에 수정된 종류의 버그). 클린 빌드에서만 드러남 -
+# 로컬 캐시 빌드는 예전 설정의 mount.pc가 staging에 남아있어 우연히 통과했었음
+# (WSL2 클린 빌드 2회 실측, 2026-07-12).
+BR2_PACKAGE_UTIL_LINUX_LIBMOUNT=y
 
 # 시간 동기화 (NTP)
 BR2_PACKAGE_OPENNTPD=y
