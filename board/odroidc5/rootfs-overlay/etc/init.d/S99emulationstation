@@ -28,8 +28,9 @@ case "$1" in
                 while [ "$(cat /sys/devices/virtual/amhdmitx/amhdmitx0/hpd_state 2>/dev/null)" != "1" ] && [ $i -lt 60 ]; do
                     sleep 1; i=$((i+1))
                 done
-                # HDMI PHY 활성화 — HPD 이벤트 후 드라이버가 자동 복구하지 않음
-                echo 1 > /sys/class/amhdmitx/amhdmitx0/phy 2>/dev/null || true
+                # 2026-07-12: PHY 재활성화 로직 제거 - HDMI 재연결 시 PHY 복구는
+                # udev 기반 /usr/sbin/hdmi-hotplug가 전담(중복 제거). 부팅/재시작
+                # 경로에서는 아래 odroid-drm-fbset의 모드 설정이 출력 활성화를 겸함.
                 killall odroid-drm-fbset 2>/dev/null || true
                 # 2026-07-07: "preferred"는 모니터가 EDID로 자기 신고하는 1순위
                 # 모드를 그대로 믿고 거는 방식인데, 실기기에서 이 모드가
@@ -44,6 +45,9 @@ case "$1" in
                 HDMI_MODE="$(python3 /usr/share/retropangui/hdmi-set-resolution.py 2>>/var/log/hdmi-resolution.log)"
                 [ -z "${HDMI_MODE}" ] && HDMI_MODE="1080p60hz"
                 odroid-drm-fbset -outputmode "${HDMI_MODE}" || odroid-drm-fbset -outputmode 1080p60hz
+                # 현재 모니터의 EDID 해시를 기준선으로 기록 - hdmi-hotplug가
+                # 재연결 때 이 값과 비교해서 "다른 모니터로 교체"를 감지함
+                sha256sum /sys/class/drm/card0-HDMI-A-A/edid 2>/dev/null | cut -d" " -f1 > /var/run/hdmi-edid.sha
                 # 스플래시 비디오 재생 — ALSA softvol "Master" 컨트롤 초기화 목적
                 # mpv가 오디오 디바이스를 열면 softvol 컨트롤이 등록되어 ES VolumeControl이 정상 작동함
                 SPLASH="/usr/share/retropangui/splash/splash.mp4"
