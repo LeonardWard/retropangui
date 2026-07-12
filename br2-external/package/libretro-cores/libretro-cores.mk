@@ -415,6 +415,15 @@ define LIBRETRO_CORES_BUILD_KRONOS
 	# 001-makefile-remove-bogus-link-GL.patch로 -lGL을 제거하고 있음
 	# (레시피의 platform/FORCE_GLES 값만 참고하고 패치 존재를 놓쳤던 것).
 	sed -i 's/-lpthread -lGL$$/-lpthread/' $(@D)/yabause/yabause/src/libretro/Makefile
+	# Makefile.common이 stdstring.c를 HAVE_CDROM=1 블록 안에만 넣어놨는데,
+	# 무조건 포함되는 file_path.c가 string_to_lower()를 항상 호출해서
+	# HAVE_CDROM이 꺼진 플랫폼(제네릭 odroid 브랜치 포함)에선 링크가 깨짐
+	# ("undefined reference to string_to_lower", WSL2 클린 빌드 실측).
+	# 무조건 소스 목록에 추가. 마커 grep은 재실행 시 중복 append 방지
+	# (중복되면 ld multiple definition으로 다른 에러가 남).
+	grep -q 'rpui-fix-stdstring' $(@D)/yabause/yabause/src/libretro/Makefile.common || \
+		echo 'SOURCES_C += $$(LIBRETRO_COMM_DIR)/string/stdstring.c # rpui-fix-stdstring' \
+			>> $(@D)/yabause/yabause/src/libretro/Makefile.common
 	$(MAKE) -C $(@D)/yabause/yabause/src/libretro -f Makefile generate-files
 	# platform=odroid-c4는 "findstring odroid" 제네릭 브랜치를 타는데, 이
 	# 브랜치는 /proc/cpuinfo를 grep해서 XU3/XU4인지 확인한 뒤에만
