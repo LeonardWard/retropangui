@@ -132,6 +132,37 @@
     ]
   },
   {
+    "name": "saturn",
+    "fullname": "Sega Saturn",
+    "extensions": ".cue .iso .bin .chd .ccd .mds .zip",
+    "platform": "saturn",
+    "theme": "saturn",
+    "cores": [
+      { "name": "beetle_saturn", "fullname": "Beetle Saturn", "module_id": "lr-beetle-saturn", "priority": 1 }
+    ]
+  },
+  {
+    "name": "n64",
+    "fullname": "Nintendo 64",
+    "extensions": ".n64 .z64 .v64 .zip",
+    "platform": "n64",
+    "theme": "n64",
+    "cores": [
+      { "name": "mupen64plus_next", "fullname": "Mupen64Plus-Next", "module_id": "lr-mupen64plus-next", "priority": 1 },
+      { "name": "parallel_n64", "fullname": "ParaLLEl N64", "module_id": "lr-parallel-n64", "priority": 2 }
+    ]
+  },
+  {
+    "name": "psp",
+    "fullname": "PlayStation Portable",
+    "extensions": ".iso .cso .pbp .zip",
+    "platform": "psp",
+    "theme": "psp",
+    "cores": [
+      { "name": "ppsspp", "fullname": "PPSSPP", "module_id": "lr-ppsspp", "priority": 1 }
+    ]
+  },
+  {
     "name": "utility",
     "fullname": "유틸리티",
     "extensions": ".py",

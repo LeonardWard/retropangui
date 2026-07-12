@@ -1,6 +1,6 @@
 ################################################################################
 #
-# libretro-cores - NES, SNES, PSX, MD, DOS, ScummVM libretro cores for RetroArch
+# libretro-cores - NES, SNES, PSX, MD, DOS, ScummVM, Saturn, N64, PSP libretro cores for RetroArch
 #
 # 버전 관리:
 #   fceumm          : 커밋 c0c52ad0 (2026-06, libretro/libretro-fceumm, FDS BIOS 불필요)
@@ -14,6 +14,17 @@
 #   scummvm         : 릴리즈 태그 libretro-v3.1.0.1 (libretro/scummvm)
 #   quasi88         : 커밋 520e0a37 (2026-06, libretro/quasi88-libretro, PC-88)
 #   np2kai          : 커밋 54ec39f5 (2026-06, libretro/np2kai, PC-98)
+#   beetle_saturn   : 커밋 6f0cb9d1 (2026-07, libretro/beetle-saturn-libretro, 소프트웨어 렌더링 - HW(GL) 가속 코어 kronos는
+#                     2026-07-12 조사 시점에 독립 공개 저장소를 못 찾아서 제외)
+#   mupen64plus_next: 커밋 98c1b0d8 (2026-07, libretro/mupen64plus-libretro-nx, develop 브랜치)
+#   parallel_n64    : 커밋 1a68b3bd (2026-07, libretro/parallel-n64, GLideN64 렌더러 - N64 대체 코어)
+#   ppsspp          : 커밋 f0baf3ad (2026-07, hrydgard/ppsspp, 서브모듈 23개 --recursive로 받음 - 빌드 시간 김)
+#
+# 2026-07-12: 게임큐브(dolphin) 코어는 이 파일에 없음 - libretro/dolphin은 다른 코어들과
+# 달리 Makefile.libretro 방식이 아니라 데스크톱 Dolphin 프로젝트 그대로 CMakeLists.txt +
+# .gitmodules(Externals) 기반의 완전히 다른 빌드 체계라, 이 파일의 generic-package 패턴이
+# 아니라 kodi-pangui처럼 별도 cmake-package로 새로 만들어야 함 - 훨씬 큰 작업이라 별도로
+# 진행 여부를 확인받기로 함(아래 참고).
 #
 # 빌드 방식:
 #   libretro 코어 Makefile은 크로스컴파일러 툴체인만 받고
@@ -253,6 +264,74 @@ define LIBRETRO_CORES_BUILD_NP2KAI
 endef
 
 ################################################################################
+# beetle_saturn - Sega Saturn (Mednafen 기반, 소프트웨어 렌더링)
+################################################################################
+
+BEETLE_SATURN_SITE = https://github.com/libretro/beetle-saturn-libretro
+BEETLE_SATURN_VERSION = 6f0cb9d1b9689601cd7dbf08e992d232304f50f7
+
+define LIBRETRO_CORES_BUILD_BEETLE_SATURN
+	test -d $(@D)/beetle-saturn-libretro/.git || \
+		git clone --filter=blob:none $(BEETLE_SATURN_SITE) $(@D)/beetle-saturn-libretro
+	git -C $(@D)/beetle-saturn-libretro checkout $(BEETLE_SATURN_VERSION)
+	$(TARGET_MAKE_ENV) $(MAKE) -C $(@D)/beetle-saturn-libretro \
+		$(LIBRETRO_CROSS_OPTS) \
+		platform=unix
+endef
+
+################################################################################
+# mupen64plus_next - Nintendo 64
+################################################################################
+
+MUPEN64PLUS_NEXT_SITE = https://github.com/libretro/mupen64plus-libretro-nx
+MUPEN64PLUS_NEXT_VERSION = 98c1b0d877542b01314b3b04272282ba223b65b3
+
+define LIBRETRO_CORES_BUILD_MUPEN64PLUS_NEXT
+	test -d $(@D)/mupen64plus-libretro-nx/.git || \
+		git clone --filter=blob:none $(MUPEN64PLUS_NEXT_SITE) $(@D)/mupen64plus-libretro-nx
+	git -C $(@D)/mupen64plus-libretro-nx checkout $(MUPEN64PLUS_NEXT_VERSION)
+	$(TARGET_MAKE_ENV) $(MAKE) -C $(@D)/mupen64plus-libretro-nx \
+		$(LIBRETRO_CROSS_OPTS) \
+		platform=unix
+endef
+
+################################################################################
+# parallel_n64 - Nintendo 64 (대체 코어, GLideN64 렌더러)
+################################################################################
+
+PARALLEL_N64_SITE = https://github.com/libretro/parallel-n64
+PARALLEL_N64_VERSION = 1a68b3bdebdd28936c7c74ac4365a097b44b1fe5
+
+define LIBRETRO_CORES_BUILD_PARALLEL_N64
+	test -d $(@D)/parallel-n64/.git || \
+		git clone --filter=blob:none $(PARALLEL_N64_SITE) $(@D)/parallel-n64
+	git -C $(@D)/parallel-n64 checkout $(PARALLEL_N64_VERSION)
+	$(TARGET_MAKE_ENV) $(MAKE) -C $(@D)/parallel-n64 \
+		$(LIBRETRO_CROSS_OPTS) \
+		platform=unix
+endef
+
+################################################################################
+# ppsspp - PlayStation Portable
+# 서브모듈이 많은 대형 프로젝트(libretro 코어 빌드에 필요한 것만 초기화하면
+# 이상적이지만, 어떤 서브모듈이 실제로 필요한지 사전 확인이 안 돼서
+# 일단 전체(--recursive)로 받음 - 빌드 시간이 길 수 있음.
+################################################################################
+
+PPSSPP_SITE = https://github.com/hrydgard/ppsspp
+PPSSPP_VERSION = f0baf3ade7bcb6c86f0835962b36eb4e51559d8f
+
+define LIBRETRO_CORES_BUILD_PPSSPP
+	test -d $(@D)/ppsspp/.git || \
+		git clone --filter=blob:none $(PPSSPP_SITE) $(@D)/ppsspp
+	git -C $(@D)/ppsspp checkout $(PPSSPP_VERSION)
+	git -C $(@D)/ppsspp submodule update --init --recursive
+	$(TARGET_MAKE_ENV) $(MAKE) -C $(@D)/ppsspp/libretro \
+		$(LIBRETRO_CROSS_OPTS) \
+		platform=unix
+endef
+
+################################################################################
 # Build / Install
 ################################################################################
 
@@ -269,6 +348,10 @@ define LIBRETRO_CORES_BUILD_CMDS
 	$(call LIBRETRO_CORES_BUILD_SCUMMVM)
 	$(call LIBRETRO_CORES_BUILD_QUASI88)
 	$(call LIBRETRO_CORES_BUILD_NP2KAI)
+	$(call LIBRETRO_CORES_BUILD_BEETLE_SATURN)
+	$(call LIBRETRO_CORES_BUILD_MUPEN64PLUS_NEXT)
+	$(call LIBRETRO_CORES_BUILD_PARALLEL_N64)
+	$(call LIBRETRO_CORES_BUILD_PPSSPP)
 endef
 
 define LIBRETRO_CORES_INSTALL_TARGET_CMDS
@@ -340,6 +423,26 @@ define LIBRETRO_CORES_INSTALL_TARGET_CMDS
 	$(INSTALL) -m 0644 $(@D)/np2kai/sdl/np2kai_libretro.so \
 		$(CORES_INSTALL_DIR)/lr-np2kai/
 	echo "np2kai_libretro.so" > $(CORES_INSTALL_DIR)/lr-np2kai/.installed_so_name
+
+	mkdir -p $(CORES_INSTALL_DIR)/lr-beetle-saturn
+	$(INSTALL) -m 0644 $(@D)/beetle-saturn-libretro/mednafen_saturn_libretro.so \
+		$(CORES_INSTALL_DIR)/lr-beetle-saturn/
+	echo "mednafen_saturn_libretro.so" > $(CORES_INSTALL_DIR)/lr-beetle-saturn/.installed_so_name
+
+	mkdir -p $(CORES_INSTALL_DIR)/lr-mupen64plus-next
+	$(INSTALL) -m 0644 $(@D)/mupen64plus-libretro-nx/mupen64plus_next_libretro.so \
+		$(CORES_INSTALL_DIR)/lr-mupen64plus-next/
+	echo "mupen64plus_next_libretro.so" > $(CORES_INSTALL_DIR)/lr-mupen64plus-next/.installed_so_name
+
+	mkdir -p $(CORES_INSTALL_DIR)/lr-parallel-n64
+	$(INSTALL) -m 0644 $(@D)/parallel-n64/parallel_n64_libretro.so \
+		$(CORES_INSTALL_DIR)/lr-parallel-n64/
+	echo "parallel_n64_libretro.so" > $(CORES_INSTALL_DIR)/lr-parallel-n64/.installed_so_name
+
+	mkdir -p $(CORES_INSTALL_DIR)/lr-ppsspp
+	$(INSTALL) -m 0644 $(@D)/ppsspp/libretro/ppsspp_libretro.so \
+		$(CORES_INSTALL_DIR)/lr-ppsspp/
+	echo "ppsspp_libretro.so" > $(CORES_INSTALL_DIR)/lr-ppsspp/.installed_so_name
 endef
 
 $(eval $(generic-package))
