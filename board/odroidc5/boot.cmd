@@ -7,7 +7,7 @@
 # 실측 확인). 진짜 부팅 시점 해상도 제어는 U-Boot 바이너리 자체가
 # board_late_init()에서 이 스크립트보다 먼저 자동으로 읽는 config.ini
 # (board/odroidc5/config.ini, [generic] 섹션의 displaymode=)가 담당함 -
-# 자세한 내용은 todo-20260709-resolution-design.html 참고.
+# 자세한 내용은 done-20260709-resolution-design.html 참고.
 
 # U-Boot 기본 환경 변수 사용 (Ubuntu 호환)
 if test -z "${loadaddr_kernel}"; then setenv loadaddr_kernel 0x03000000; fi
