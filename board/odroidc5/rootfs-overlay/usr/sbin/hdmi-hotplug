@@ -80,12 +80,16 @@ if pidof retroarch >/dev/null 2>&1; then
     exit 0
 fi
 
-# 게임 중이 아니면: 기준선을 먼저 갱신(이벤트 연발 시 중복 재시작 방지)하고
-# ES를 종료 - S99 루프가 새 EDID로 해상도 재적용 + ES 재시작을 담당
+# 게임 중이 아니면: 기준선을 먼저 갱신(이벤트 연발 시 중복 처리 방지)하고
+# ES에 SIGUSR1을 보냄 - ES는 프로세스를 유지한 채(사용자가 보던 메뉴 화면
+# 그대로) 비디오만 재초기화해서 새 모니터 기준으로 해상도를 다시 잡음
+# (main.cpp의 SIGUSR1 핸들러, 2026-07-13). 구버전 ES(핸들러 없음)라면
+# SIGUSR1의 기본 동작이 프로세스 종료라서 S99 루프의 재시작 경로로
+# 자연히 폴백됨 - 어느 쪽이든 사람 개입 없이 화면이 복구됨.
 echo "${NEW_HASH}" > "${BASELINE}"
-logger -t "${TAG}" "monitor changed (EDID mismatch) - restarting ES for renegotiation"
+logger -t "${TAG}" "monitor changed (EDID mismatch) - signaling ES for in-place display reset"
 if [ -f /tmp/es.pid ]; then
-    kill "$(cat /tmp/es.pid 2>/dev/null)" 2>/dev/null || true
+    kill -USR1 "$(cat /tmp/es.pid 2>/dev/null)" 2>/dev/null || true
 else
     logger -t "${TAG}" "ES not running - S99 loop will pick up new EDID on next start"
 fi
