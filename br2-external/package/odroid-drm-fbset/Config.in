@@ -1,0 +1,13 @@
+config BR2_PACKAGE_ODROID_DRM_FBSET
+	bool "odroid-drm-fbset"
+	select BR2_PACKAGE_LIBDRM
+	help
+	  HDMI 출력 모드 설정 도구. Hardkernel 공식 Ubuntu 이미지에서
+	  추출해 쓰던 동명 바이너리(블랙박스)를 자체 구현으로 교체한 것.
+	  DRM atomic commit으로 모드 설정 + fbcon 프레임버퍼를 플레인에
+	  바인딩해 화면 출력까지 활성화한다.
+
+	  원본과의 차이(버그 수정):
+	  - 실패 시 non-zero exit code (원본은 항상 0)
+	  - -showmodes가 순수 조회 전용 (원본은 첫 모드로 커밋하는 부작용)
+	  - 없는 모드 요청 시 에러 (원본은 조용히 첫 모드로 폴백)
