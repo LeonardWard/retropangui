@@ -288,6 +288,13 @@ endef
 
 ################################################################################
 # mupen64plus_next - Nintendo 64
+#
+# 2026-07-12: 첫 빌드 시도에서 "-msse -msse2 unrecognized" 에러로 실패 -
+# Makefile이 ARCH 미지정 시 `uname -m`으로 자동감지하는데, 이게 크로스
+# 컴파일 빌드 호스트(x86_64 Docker)를 가리켜서 x86_64 SSE 플래그가
+# 타겟(aarch64) 컴파일러에 그대로 넘어감. ARCH=aarch64로 명시해서 우회
+# (parallel_n64도 같은 패턴, ppsspp는 platform 문자열 자체에 arm64를
+# 넣어야 하는 다른 방식 - 아래 참고).
 ################################################################################
 
 MUPEN64PLUS_NEXT_SITE = https://github.com/libretro/mupen64plus-libretro-nx
@@ -299,7 +306,8 @@ define LIBRETRO_CORES_BUILD_MUPEN64PLUS_NEXT
 	git -C $(@D)/mupen64plus-libretro-nx checkout $(MUPEN64PLUS_NEXT_VERSION)
 	$(TARGET_MAKE_ENV) $(MAKE) -C $(@D)/mupen64plus-libretro-nx \
 		$(LIBRETRO_CROSS_OPTS) \
-		platform=unix
+		platform=unix \
+		ARCH=aarch64
 endef
 
 ################################################################################
@@ -315,7 +323,8 @@ define LIBRETRO_CORES_BUILD_PARALLEL_N64
 	git -C $(@D)/parallel-n64 checkout $(PARALLEL_N64_VERSION)
 	$(TARGET_MAKE_ENV) $(MAKE) -C $(@D)/parallel-n64 \
 		$(LIBRETRO_CROSS_OPTS) \
-		platform=unix
+		platform=unix \
+		ARCH=aarch64
 endef
 
 ################################################################################
@@ -325,6 +334,10 @@ endef
 # 일단 전체(--recursive)로 받음 - 빌드 시간이 길 수 있음.
 ################################################################################
 
+# 2026-07-12: platform 문자열에 "unix"가 있으면 if/else-if 체인에서 그 unix
+# 분기가 먼저 매치되어 버려서 ARM64 전용 분기(정확한 aarch64 FFmpeg 경로,
+# GLES 처리 포함)를 못 탐 - platform=arm64-gles로 "unix"를 빼고 "arm64"+
+# "gles"만 넣어서 그 전용 분기를 직접 타게 함.
 PPSSPP_SITE = https://github.com/hrydgard/ppsspp
 PPSSPP_VERSION = f0baf3ade7bcb6c86f0835962b36eb4e51559d8f
 
@@ -335,7 +348,7 @@ define LIBRETRO_CORES_BUILD_PPSSPP
 	git -C $(@D)/ppsspp submodule update --init --recursive
 	$(TARGET_MAKE_ENV) $(MAKE) -C $(@D)/ppsspp/libretro \
 		$(LIBRETRO_CROSS_OPTS) \
-		platform=unix
+		platform=arm64-gles
 endef
 
 ################################################################################
