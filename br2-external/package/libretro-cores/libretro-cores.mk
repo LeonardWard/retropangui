@@ -408,6 +408,13 @@ define LIBRETRO_CORES_BUILD_KRONOS
 		git clone --filter=blob:none --recurse-submodules $(KRONOS_SITE) $(@D)/yabause
 	git -C $(@D)/yabause checkout $(KRONOS_VERSION)
 	git -C $(@D)/yabause submodule update --init --recursive
+	# 모든 unix 계열 플랫폼 브랜치가 LDFLAGS에 -lGL(데스크탑 GL)을 무조건
+	# 넣는데, FORCE_GLES=1이면 Makefile.common이 -lGLESv2를 따로 추가할 뿐
+	# 이미 들어간 -lGL은 안 지워줌 - 우리 sysroot엔 libGL이 없어서 링크
+	# 실패("cannot find -lGL"). Batocera도 같은 이유로
+	# 001-makefile-remove-bogus-link-GL.patch로 -lGL을 제거하고 있음
+	# (레시피의 platform/FORCE_GLES 값만 참고하고 패치 존재를 놓쳤던 것).
+	sed -i 's/-lpthread -lGL$$/-lpthread/' $(@D)/yabause/yabause/src/libretro/Makefile
 	$(MAKE) -C $(@D)/yabause/yabause/src/libretro -f Makefile generate-files
 	# platform=odroid-c4는 "findstring odroid" 제네릭 브랜치를 타는데, 이
 	# 브랜치는 /proc/cpuinfo를 grep해서 XU3/XU4인지 확인한 뒤에만
