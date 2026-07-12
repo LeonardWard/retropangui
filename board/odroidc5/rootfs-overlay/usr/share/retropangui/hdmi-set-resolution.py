@@ -246,6 +246,28 @@ def apply_candidate(c):
     print(c["name"])
 
 
+def refresh_custom_slot(candidates):
+    # CEA/고정 폴백 경로 전용. aml_drm의 커스텀 모드라인 슬롯은 하나뿐이고
+    # 모니터를 바꿔도 이전 모니터용 등록이 그대로 남아 preferred 플래그를
+    # 계속 차지함(2026-07-13 실측: ZEUSLAP용 custom_2560x1600이 SAC 연결
+    # 후에도 preferred로 남아 mpv/kodi의 preferred 선택을 오염 - SAC에서
+    # 신호 없음 유발). 커스텀 모드를 적용하지 않는 경로에서도 현재 모니터의
+    # 안전한 preferred로 슬롯을 다시 채워서 죽은 모드가 남지 않게 한다.
+    # 주의: 재등록은 다음 HPD(플러그) 사이클 때 커넥터 목록에 반영됨 -
+    # 즉시 반영은 아니지만 슬롯이 영구히 낡은 채로 남는 것을 막는 목적.
+    safe = get_safe_auto_candidate(candidates)
+    if safe is None:
+        return
+    try:
+        with open(MODELINE_PARAM, "w") as f:
+            f.write(safe["modeline"])
+        with open(DISPLAYMODE_PARAM, "w") as f:
+            f.write(safe["name"])
+        log(f"커스텀 슬롯 재등록(이전 모니터 잔재 제거용): {safe['name']}")
+    except OSError as e:
+        log(f"커스텀 슬롯 재등록 실패({e}) - 무시")
+
+
 def write_edid_baseline():
     # 현재 EDID의 sha256을 기준선으로 기록 - hdmi-hotplug가 재연결 때 이
     # 값과 비교해 "다른 모니터로 교체"를 감지함. 해상도 결정이 일어나는
@@ -301,7 +323,9 @@ def cmd_apply():
         apply_candidate(FALLBACK_CUSTOM_MODES[requested])
         return
 
-    # 그 외(예: "1080p60hz") - odroid-drm-fbset이 이미 아는 CEA 모드 이름
+    # 그 외(예: "1080p60hz") - odroid-drm-fbset이 이미 아는 CEA 모드 이름.
+    # 커스텀 슬롯은 현재 모니터 기준으로 재등록(이전 모니터 잔재 제거).
+    refresh_custom_slot(candidates)
     log(f"수동 지정 CEA 모드 사용: {requested}")
     print(requested)
 

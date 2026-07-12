@@ -44,12 +44,22 @@ case "$1" in
                 # 깨짐 - 실기기에서 실제로 겪은 문제, S60display도 동일 주의).
                 HDMI_MODE="$(python3 /usr/share/retropangui/hdmi-set-resolution.py 2>>/var/log/hdmi-resolution.log)"
                 [ -z "${HDMI_MODE}" ] && HDMI_MODE="1080p60hz"
-                odroid-drm-fbset -outputmode "${HDMI_MODE}" || odroid-drm-fbset -outputmode 1080p60hz
+                FBSET_OUT="$(odroid-drm-fbset -outputmode "${HDMI_MODE}" || odroid-drm-fbset -outputmode 1080p60hz)"
+                echo "${FBSET_OUT}"
                 # 스플래시 비디오 재생 — ALSA softvol "Master" 컨트롤 초기화 목적
                 # mpv가 오디오 디바이스를 열면 softvol 컨트롤이 등록되어 ES VolumeControl이 정상 작동함
+                #
+                # 2026-07-13: --drm-mode 명시 필수. mpv의 기본값이 preferred인데,
+                # 모니터 교체 후 이전 모니터용 커스텀 모드가 preferred 플래그를
+                # 쥐고 있으면 mpv가 그 죽은 모드로 바꿔버려서 위에서 적용한
+                # 해상도가 무효화되고 "신호 없음"까지 감(실기기 실측 - 스플래시
+                # 도중 disp_mode가 2560x1600으로 뒤집히는 걸 초 단위 추적으로
+                # 확인). 방금 fbset이 성공한 모드(WxH@R)를 그대로 고정한다.
+                MPV_MODE="$(echo "${FBSET_OUT}" | grep -oE "[0-9]+x[0-9]+@[0-9]+" | tail -1)"
                 SPLASH="/usr/share/retropangui/splash/splash.mp4"
                 if [ -f "${SPLASH}" ]; then
                     mpv --vo=drm --drm-device=/dev/dri/card0 \
+                        ${MPV_MODE:+--drm-mode=${MPV_MODE}} \
                         --ao=alsa --audio-device=alsa/default \
                         "${SPLASH}" 2>/dev/null || true
                 fi
