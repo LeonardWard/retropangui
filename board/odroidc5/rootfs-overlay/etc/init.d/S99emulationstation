@@ -59,7 +59,12 @@ case "$1" in
                 # 해상도가 무효화되고 "신호 없음"까지 감(실기기 실측 - 스플래시
                 # 도중 disp_mode가 2560x1600으로 뒤집히는 걸 초 단위 추적으로
                 # 확인). 방금 fbset이 성공한 모드(WxH@R)를 그대로 고정한다.
-                MPV_MODE="$(echo "${FBSET_OUT}" | grep -oE "[0-9]+x[0-9]+@[0-9]+" | tail -1)"
+                # 주의: @새로고침율은 빼고 WxH만 지정 - fbset은 정수(@60)로 찍지만
+                # 커스텀/폴백 모드의 실제 값은 59.95Hz 같은 소수라서 @까지 주면
+                # mpv가 "Could not find mode matching"으로 스플래시 재생을 아예
+                # 포기함(1920x1200 폴백에서 실기기 확인). WxH만 주면 mpv가 같은
+                # 해상도의 현재 모드를 그대로 골라잡음.
+                MPV_MODE="$(echo "${FBSET_OUT}" | grep -oE "[0-9]+x[0-9]+" | tail -1)"
                 SPLASH="/usr/share/retropangui/splash/splash.mp4"
                 if [ -f "${SPLASH}" ]; then
                     mpv --vo=drm --drm-device=/dev/dri/card0 \
