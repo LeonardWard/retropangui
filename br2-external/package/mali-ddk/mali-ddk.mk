@@ -5,8 +5,8 @@
 # 소스: Hardkernel 공식 Ubuntu 이미지에서 추출
 # 라이선스: ARM Proprietary (비공개 저장소 전용)
 #
-# 빌드 전 scripts/fetch-blobs.sh 실행 필요:
-#   cd /path/to/retropangui-c5 && bash scripts/fetch-blobs.sh
+# 빌드 전 board/odroidc5/fetch-blobs.sh 실행 필요:
+#   cd /path/to/retropangui-c5 && bash board/odroidc5/fetch-blobs.sh
 #
 ################################################################################
 
@@ -26,7 +26,7 @@ define MALI_DDK_CHECK_BLOBS
 		echo ""; \
 		echo "ERROR: Mali DDK blobs not found!"; \
 		echo "  Expected: $(MALI_DDK_BLOBS_DIR)/libMali.so"; \
-		echo "  Run: bash scripts/fetch-blobs.sh"; \
+		echo "  Run: bash board/odroidc5/fetch-blobs.sh"; \
 		echo "  Or see: board/odroidc5/blobs/README.md"; \
 		echo ""; \
 		exit 1; \

@@ -5,12 +5,12 @@
 # Hardkernel 공식 Yocto 레이어(meta-odroid-aml)의 tarball에서 추출합니다.
 #
 # 사용법:
-#   bash scripts/fetch-blobs.sh
+#   bash board/odroidc5/fetch-blobs.sh
 
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-BLOBS_DIR="${SCRIPT_DIR}/../board/odroidc5/blobs/mali"
+BLOBS_DIR="${SCRIPT_DIR}/blobs/mali"
 WORK_DIR="$(mktemp -d)"
 trap "rm -rf ${WORK_DIR}" EXIT
 
@@ -22,7 +22,7 @@ echo "========================================"
 
 if [ -f "${BLOBS_DIR}/libMali.so" ]; then
     echo "[OK] Mali blobs already present: ${BLOBS_DIR}/libMali.so"
-    echo "     강제 재다운로드: rm -rf ${BLOBS_DIR} && bash scripts/fetch-blobs.sh"
+    echo "     강제 재다운로드: rm -rf ${BLOBS_DIR} && bash board/odroidc5/fetch-blobs.sh"
     exit 0
 fi
 

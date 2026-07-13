@@ -7,7 +7,7 @@
 ## 자동 다운로드
 
 ```bash
-bash scripts/fetch-blobs.sh
+bash board/odroidc5/fetch-blobs.sh
 ```
 
 ## 수동 설치
