@@ -324,6 +324,25 @@ def main():
 
     log(f"system={system} rom={rom} emulator={emulator} core={core_arg}")
 
+    # ScummVM 폴더 게임(게임명.scummvm 디렉토리) 경로 정규화.
+    # lr-scummvm(libretro-core.cpp retro_load_game)은 경로가 ".scummvm"으로
+    # 끝나면 디렉토리 여부 확인보다 확장자 검사를 먼저 해서, 디렉토리를
+    # 게임ID 파일로 열려다 실패한다(2026-07-14 실기기 재현). 폴더 안에
+    # 게임ID 파일이 정확히 하나 있으면 그 파일을 넘기고(정확한 타깃 지정,
+    # Batocera 배치 호환), 없으면 끝에 '/'를 붙여 확장자 검사를 빗겨가
+    # --auto-detect 분기로 보낸다(트레일링 슬래시 검증 완료).
+    if os.path.isdir(rom) and rom.endswith(".scummvm"):
+        inner = sorted(
+            os.path.join(rom, f) for f in os.listdir(rom)
+            if f.endswith(".scummvm") and os.path.isfile(os.path.join(rom, f))
+        )
+        if len(inner) == 1:
+            rom = inner[0]
+            log(f"scummvm 폴더: 내부 게임ID 파일 사용 - {rom}")
+        else:
+            rom = rom + "/"
+            log("scummvm 폴더: trailing slash로 autodetect 유도")
+
     # 1. module_id 결정
     if core_arg in ("", "default"):
         module_id = resolve_core_from_priorities(system)
