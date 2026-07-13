@@ -94,7 +94,7 @@
   {
     "name": "dos",
     "fullname": "PC (DOS)",
-    "extensions": ".exe .com .bat .conf .zip .7z",
+    "extensions": ".pc .dos .zip .dosz .m3u .iso .cue .conf",
     "platform": "pc",
     "theme": "pc",
     "cores": [
