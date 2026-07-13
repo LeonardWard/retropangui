@@ -24,6 +24,14 @@ REMAP_DIR       = "/root/.config/retroarch/config/remaps"
 # 자연스러움)엔 안 맞아서 꺼둠(2026-07-05).
 _ANALOG_DPAD_MODE_OFF_SYSTEMS = {"psx", "dos", "scummvm", "pc88", "pc98"}
 
+# 키보드를 실제 키보드로 써야 하는 시스템 - RetroArch 기본값이 키보드를
+# 1P 레트로패드로 바인딩해두는 바람에 dosbox-pure에서 타이핑이 조이스틱/
+# 액션휠 조작으로 해석되던 문제(2026-07-13 사용자 보고). Game Focus를
+# 켜면 키보드 입력이 온전히 코어로 전달됨 - 패드 쪽 핫키(종료 콤보 등)는
+# 키보드와 무관하므로 그대로 작동. pc98(np2kai)은 패드 입력을 사실상
+# 안 쓰는 구조라 증상이 없어 기존 동작 유지.
+_GAME_FOCUS_SYSTEMS = {"dos"}
+
 # 코어별 라이브레트로 컨트롤러 포트 디바이스 ID 오버라이드(예: PS1 DualShock).
 # input_libretro_device_pN은 일반 .cfg/appendconfig에서는 아예 안 읽히고,
 # RetroArch가 코어 자체 이름(retro_get_system_info의 library_name) 기준으로
@@ -235,6 +243,8 @@ def write_system_override(system, share_root):
     lines = [f'screenshot_directory = "{share_root}/screenshots/{system}"\n']
     if system in _ANALOG_DPAD_MODE_OFF_SYSTEMS:
         lines.append('input_player1_analog_dpad_mode = "0"\n')
+    if system in _GAME_FOCUS_SYSTEMS:
+        lines.append('input_auto_game_focus = "1"\n')
     try:
         Path(SYSTEM_OVERRIDE_CFG).write_text("".join(lines))
     except OSError as e:
