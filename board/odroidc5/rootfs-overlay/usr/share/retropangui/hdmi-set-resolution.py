@@ -74,6 +74,27 @@ FALLBACK_CUSTOM_MODES = {
         "modeline": 'Modeline "fallback_1920x1200p60hz" 154.000 '
                     '1920 1968 2000 2080 1200 1203 1209 1235 -hsync +vsync',
     },
+    # 16:10 저해상도 사다리 (2026-07-13 추가) - 전부 VESA DMT CVT-RB 표준
+    # 타이밍이고 역산 검증 통과(1680x1050@59.88 / 1440x900@59.90 /
+    # 1280x800@59.91, 모두 55~61Hz 안전범위). 극성은 CVT-RB 공식(+h -v).
+    "fallback_1680x1050p60hz": {
+        "name": "fallback_1680x1050p60hz",
+        "width": 1680, "height": 1050,
+        "modeline": 'Modeline "fallback_1680x1050p60hz" 119.000 '
+                    '1680 1728 1760 1840 1050 1053 1059 1080 +hsync -vsync',
+    },
+    "fallback_1440x900p60hz": {
+        "name": "fallback_1440x900p60hz",
+        "width": 1440, "height": 900,
+        "modeline": 'Modeline "fallback_1440x900p60hz" 88.750 '
+                    '1440 1488 1520 1600 900 903 909 926 +hsync -vsync',
+    },
+    "fallback_1280x800p60hz": {
+        "name": "fallback_1280x800p60hz",
+        "width": 1280, "height": 800,
+        "modeline": 'Modeline "fallback_1280x800p60hz" 71.000 '
+                    '1280 1328 1360 1440 800 803 809 823 +hsync -vsync',
+    },
     "fallback_1024x768p60hz": {
         "name": "fallback_1024x768p60hz",
         "width": 1024, "height": 768,
