@@ -126,6 +126,21 @@ case "$1" in
             mkdir -p "${THEMES_DST}"
             cp -r "${THEMES_SRC}/." "${THEMES_DST}/"
         fi
+        # 번들 테마 갱신: "최초 1회 복사" 패턴이라 OTA로 테마 변경이 기존
+        # 기기에 반영 안 되던 문제 수정(2026-07-13) - 번들의 .bundle-hash
+        # (post-build.sh가 생성)와 share 사본의 마커가 다르면 해당 테마만
+        # 통째로 교체. 사용자가 직접 추가한 다른 테마 폴더는 건드리지 않음.
+        if [ -d "${THEMES_SRC}" ] && [ -d "${THEMES_DST}" ]; then
+            for tsrc in "${THEMES_SRC}"/*/; do
+                tname="$(basename "${tsrc}")"
+                [ -f "${tsrc}/.bundle-hash" ] || continue
+                if ! cmp -s "${tsrc}/.bundle-hash" "${THEMES_DST}/${tname}/.bundle-hash" 2>/dev/null; then
+                    logger -t "${TAG}" "번들 테마 갱신: ${tname}"
+                    rm -rf "${THEMES_DST}/${tname}"
+                    cp -r "${tsrc}" "${THEMES_DST}/${tname}"
+                fi
+            done
+        fi
 
         # 첫 부팅: ES 스크립팅 훅(game-end 등) 없으면 기본값에서 복사.
         # /root/.emulationstation은 위쪽에서 이미 이 디렉토리로 심볼릭 링크되므로

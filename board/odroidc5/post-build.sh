@@ -147,7 +147,13 @@ if wget -q "${SLATE_REPO}/archive/refs/heads/main.tar.gz" -O "${TMPDIR}/theme.ta
     if [ -d "${TMPDIR}/retropangui-slate-main" ]; then
         rm -rf "${THEMES_DST}/${SLATE_THEME_NAME}"
         cp -r "${TMPDIR}/retropangui-slate-main" "${THEMES_DST}/${SLATE_THEME_NAME}"
-        echo ">>> 테마 설치 완료: ${THEMES_DST}/${SLATE_THEME_NAME}"
+        # 번들 내용 해시 마커 - S95retropangui가 부팅 때 share 사본의 마커와
+        # 비교해서 다르면 테마를 갱신함. 테마가 "최초 부팅 1회 복사"라서
+        # OTA로 테마 변경이 기존 기기에 영원히 반영 안 되던 문제의 해결
+        # (2026-07-13: utility 로고가 안 떠서 발견 - es_input.cfg와 같은
+        # 패턴의 함정. 심지어 없는 에셋 참조가 ES 크래시와도 얽혔음).
+        ( cd "${THEMES_DST}/${SLATE_THEME_NAME}" &&           find . -type f ! -name .bundle-hash -print0 | sort -z | xargs -0 md5sum | md5sum | cut -d" " -f1 > .bundle-hash )
+        echo ">>> 테마 설치 완료: ${THEMES_DST}/${SLATE_THEME_NAME} (rev $(cat "${THEMES_DST}/${SLATE_THEME_NAME}/.bundle-hash"))"
     else
         echo ">>> WARNING: 테마 폴더를 찾지 못함 (tar 구조 확인 필요)"
     fi
