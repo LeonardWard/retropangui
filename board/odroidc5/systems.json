@@ -84,7 +84,7 @@
   {
     "name": "psx",
     "fullname": "Sony PlayStation",
-    "extensions": ".bin .cue .img .iso .pbp .chd .zip",
+    "extensions": ".bin .cue .img .iso .pbp .chd .zip .m3u",
     "platform": "psx",
     "theme": "psx",
     "cores": [
@@ -134,12 +134,12 @@
   {
     "name": "saturn",
     "fullname": "Sega Saturn",
-    "extensions": ".cue .iso .bin .chd .ccd .mds .zip",
+    "extensions": ".cue .iso .bin .chd .ccd .mds .zip .m3u",
     "platform": "saturn",
     "theme": "saturn",
     "cores": [
-      { "name": "kronos", "fullname": "Kronos (GL 가속)", "module_id": "lr-kronos", "priority": 1 },
-      { "name": "beetle_saturn", "fullname": "Beetle Saturn", "module_id": "lr-beetle-saturn", "priority": 2 }
+      { "name": "kronos", "fullname": "Kronos (GL 가속)", "module_id": "lr-kronos", "priority": 2 },
+      { "name": "beetle_saturn", "fullname": "Beetle Saturn", "module_id": "lr-beetle-saturn", "priority": 1 }
     ]
   },
   {
@@ -149,8 +149,8 @@
     "platform": "n64",
     "theme": "n64",
     "cores": [
-      { "name": "mupen64plus_next", "fullname": "Mupen64Plus-Next", "module_id": "lr-mupen64plus-next", "priority": 1 },
-      { "name": "parallel_n64", "fullname": "ParaLLEl N64", "module_id": "lr-parallel-n64", "priority": 2 }
+      { "name": "mupen64plus_next", "fullname": "Mupen64Plus-Next", "module_id": "lr-mupen64plus-next", "priority": 2 },
+      { "name": "parallel_n64", "fullname": "ParaLLEl N64", "module_id": "lr-parallel-n64", "priority": 1 }
     ]
   },
   {
