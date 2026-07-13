@@ -146,6 +146,7 @@ fi
 
 # fetch-blobs.sh
 [ -f "${SCRIPT_DIR}/board/odroidc5/fetch-blobs.sh" ] || _pf_err "board/odroidc5/fetch-blobs.sh 없음"
+[ -f "${SCRIPT_DIR}/board/odroidc5/fetch-fonts.sh" ] || _pf_err "board/odroidc5/fetch-fonts.sh 없음"
 
 # buildroot (gitignore 제외 대상 — Docker 내부에서 자동 다운로드됨)
 [ -f "${SCRIPT_DIR}/buildroot/Makefile" ] || \
@@ -219,6 +220,7 @@ mkdir -p "${SCRIPT_DIR}/dl" "${SCRIPT_DIR}/output"
 # 전용 바이너리 블롭 확인 (Mali DDK 등)
 # (테마는 post-build.sh에서 GitHub에서 자동 다운로드됨)
 bash "${SCRIPT_DIR}/board/odroidc5/fetch-blobs.sh"
+bash "${SCRIPT_DIR}/board/odroidc5/fetch-fonts.sh"
 
 # 대형 git 패키지 사전 shallow clone
 # - Buildroot의 git 다운로더는 기본적으로 --depth=1을 사용하도록 패치됨

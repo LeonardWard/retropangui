@@ -107,7 +107,7 @@ BR2_PACKAGE_LINUX_FIRMWARE_RTL_88XX_BT=y
 # br2-external 패치 디렉토리 (SDL2 Mali Valhall 색상 수정, RetroArch DRM 수정 포함)
 BR2_GLOBAL_PATCH_DIR="$(BR2_EXTERNAL_C5_PANGUI_PATH)/patches"
 
-# Mali DDK (전용 바이너리 — scripts/fetch-blobs.sh 선행 실행 필요)
+# Mali DDK (전용 바이너리 — board/odroidc5/fetch-blobs.sh 선행 실행 필요)
 BR2_PACKAGE_MALI_DDK=y
 
 # 그래픽 라이브러리
@@ -174,6 +174,7 @@ BR2_PACKAGE_RPUI_LAUNCHER=y
 # 일본/중국 게임 제목이 깨지는 문제 대응 (es-core/src/resources/Font.cpp가
 # 이미 이 경로를 폴백 후보로 참조하고 있었음)
 BR2_PACKAGE_NOTO_CJK_FONT=y
+BR2_PACKAGE_BUNDLED_FONTS=y
 BR2_PACKAGE_BUNDLED_ROMS=y
 BR2_PACKAGE_BUNDLED_BGMUSIC=y
 BR2_PACKAGE_RPUI_BUNDLEGAME=y

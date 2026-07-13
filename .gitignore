@@ -14,8 +14,9 @@ buildroot/*
 dl/
 
 # 전용 바이너리 블롭 (ARM 라이선스 — 공개 불가)
-# scripts/fetch-blobs.sh 로 로컬에서 준비
+# board/odroidc5/fetch-blobs.sh / fetch-fonts.sh 로 로컬에서 준비
 board/odroidc5/blobs/mali/
+board/odroidc5/blobs/fonts/
 
 # 빌드 결과물
 output/

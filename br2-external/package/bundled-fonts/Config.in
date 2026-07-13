@@ -1,0 +1,8 @@
+config BR2_PACKAGE_BUNDLED_FONTS
+	bool "bundled-fonts"
+	help
+	  번들 한글 폰트 (나눔고딕/나눔바른고딕/D2Coding/Pretendard).
+	  예전엔 TTF(~24MB)를 rootfs-overlay에 직접 커밋했는데 저장소
+	  용량·출처 추적성 문제로 빌드 시 다운로드 방식으로 전환
+	  (2026-07-13). 빌드 전 board/odroidc5/fetch-fonts.sh 실행 필요
+	  (build.sh가 자동 실행) - 공식 배포처 URL + sha256 고정.
