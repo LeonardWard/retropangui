@@ -29,6 +29,13 @@ BR2_TOOLCHAIN_BUILDROOT_WCHAR=y
 BR2_GENERATE_LOCALE="en_US.UTF-8 ko_KR.UTF-8"
 # locale purge(기본 활성) 화이트리스트 — ko_KR 없으면 .mo와 로케일 데이터가 빌드 막바지에 삭제됨
 BR2_ENABLE_LOCALE_WHITELIST="C en_US en_US.UTF-8 ko_KR ko_KR.UTF-8"
+# gconv 문자 인코딩 변환 모듈(iconv용) — 예전엔 출처 미기록 ELF 3개
+# (UNICODE/UTF-16/UTF-32.so)+gconv-modules를 rootfs-overlay에 직접 커밋해서
+# 썼는데, buildroot 표준 옵션으로 전환(2026-07-13, 바이너리 전수 목록 후속).
+# LIST는 .so 확장자 없는 모듈 이름 - buildroot가 gconv-modules 설정도
+# 알아서 걸러 생성해줌.
+BR2_TOOLCHAIN_GLIBC_GCONV_LIBS_COPY=y
+BR2_TOOLCHAIN_GLIBC_GCONV_LIBS_LIST="UNICODE UTF-16 UTF-32"
 BR2_KERNEL_HEADERS_5_15=y
 
 # U-Boot (Hardkernel 공식 브랜치)

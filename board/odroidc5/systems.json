@@ -167,8 +167,8 @@
     "name": "utility",
     "fullname": "유틸리티",
     "extensions": ".py",
-    "platform": "ports",
-    "theme": "ports",
+    "platform": "utility",
+    "theme": "utility",
     "cores": [],
     "command": "python3 %ROM%"
   },
