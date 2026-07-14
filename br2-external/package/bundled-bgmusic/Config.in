@@ -1,8 +1,8 @@
 config BR2_PACKAGE_BUNDLED_BGMUSIC
 	bool "bundled-bgmusic"
 	help
-	  Bundled background music (MIDI) and MT-32 soundfont.
-	  MIDI files are copied to /share/music/ on first boot.
-	  MT32.sf2 is downloaded from archive.org at build time and
-	  installed to /usr/share/soundfonts/ (used by the VLC
-	  fluidsynth plugin for MIDI playback in EmulationStation).
+	  Bundled background music (MIDI files).
+	  MIDI files are copied to /share/bios/music/ on first boot.
+	  Requires BR2_PACKAGE_FLUID_SOUNDFONT for playback (VLC
+	  fluidsynth plugin in EmulationStation uses FluidR3_GM.sf2,
+	  MIT license, installed to /usr/share/soundfonts/).
