@@ -1,0 +1,56 @@
+#!/bin/sh
+# S62midisynth - FluidSynth 상시 데몬 (소프트웨어 GM MIDI 신스)
+#
+# dosbox-pure 등 코어의 MIDI Output "frontend" 옵션은 RetroArch 자신의
+# midi_driver=alsa + midi_output(ALSA 시퀀서 포트 이름)에 위임한다(코드
+# 확인, midi_retro.h → RETRO_ENVIRONMENT_GET_MIDI_INTERFACE). 외장 USB
+# MT-32 하드웨어가 없으면 지금까지는 연결할 포트가 아예 없어서 DOS 게임
+# MIDI가 항상 무음이었다(2026-07-14 규명).
+#
+# 이 스크립트는 fluidsynth CLI를 ALSA 시퀀서 클라이언트로 등록해 그
+# 빈자리를 채운다 - RetroArch가 이 포트로 연결하면 외장 하드웨어 없이도
+# General MIDI 음원이 재생된다.
+#
+# 상시 데몬으로 안전한 이유: /etc/asound.conf에 dmix 계층을 추가해뒀다
+# (2026-07-14) - 원래는 hw 장치 직접 접근이라 한 번에 한 프로세스만 열
+# 수 있어서(ES가 게임 실행 직전 배경음악을 항상 먼저 꺼야 했던 이유,
+# MusicManager::stop() 참조) 상시 데몬이 게임 오디오와 충돌했을 것.
+# dmix 도입 후 실기기에서 fluidsynth + aplay 동시 재생 확인함.
+#
+# S62audio 이후 실행 - modprobe snd_seq_midi(ALSA 시퀀서 브릿지)가 거기서
+# 먼저 로드돼야 fluidsynth의 alsa_seq 미디 드라이버가 포트를 만들 수 있음.
+
+TAG="S62midisynth"
+DAEMON="/usr/bin/fluidsynth"
+SOUNDFONT="/usr/share/soundfonts/FluidR3_GM.sf2"
+PORTNAME="RetroPangUI FluidSynth"
+PIDFILE="/run/midisynth.pid"
+
+case "$1" in
+    start)
+        [ -x "${DAEMON}" ] || { logger -t "${TAG}" "fluidsynth 없음, 건너뜀"; exit 0; }
+        [ -f "${SOUNDFONT}" ] || { logger -t "${TAG}" "사운드폰트 없음(${SOUNDFONT}), 건너뜀"; exit 0; }
+        logger -t "${TAG}" "시작 (포트: ${PORTNAME})"
+        start-stop-daemon --start --quiet --background \
+            --make-pidfile --pidfile "${PIDFILE}" \
+            --exec "${DAEMON}" -- \
+            -a alsa -m alsa_seq -is -r 48000 -g 0.5 \
+            -p "${PORTNAME}" "${SOUNDFONT}" 2>&1 | logger -t "${TAG}"
+        ;;
+    stop)
+        logger -t "${TAG}" "종료"
+        start-stop-daemon --stop --quiet --pidfile "${PIDFILE}" --signal TERM
+        rm -f "${PIDFILE}"
+        ;;
+    restart|reload)
+        "$0" stop
+        sleep 1
+        "$0" start
+        ;;
+    *)
+        echo "Usage: $0 {start|stop|restart}"
+        exit 1
+        ;;
+esac
+
+exit 0
