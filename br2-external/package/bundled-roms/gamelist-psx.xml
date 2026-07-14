@@ -2,7 +2,7 @@
 <gameList>
   <game>
     <path>./240p Test Suite/240pTestSuitePS1-EMU.bin</path>
-    <name>240p Test Suite</name>
+    <name>240p Test Suite (번들)</name>
     <sortname>240p Test Suite</sortname>
     <desc>TV 출력 화질·스캔라인·지터 등을 점검하기 위한 진단용 테스트 롬. 실제 게임이 아니라 화면 표시 상태 확인용이라 별도 박스아트는 없음.</desc>
     <image />

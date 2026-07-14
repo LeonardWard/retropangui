@@ -36,8 +36,12 @@ BUNDLED_ROMS_TARGET_DIR = $(TARGET_DIR)/usr/share/retropangui/bundled-roms
 # 2026-07-15: 박스아트/스크린샷 URL 매핑 파일 - 저장소에 이미지 바이너리를
 # 커밋하지 않고 원 배포처에서 빌드 시점에 받아온다(todo-20260714-bundled-
 # game-curation 사용자 지시 - "임시로" 코드 다운로드 방식, 이미지 검토 후
-# URL이 교체될 수 있음). "폴더명 URL" 한 줄씩, install_image_urls.sh에서 읽음.
+# URL이 교체될 수 있음). "롬파일스템 URL" 한 줄씩(공백 구분).
 BUNDLED_ROMS_IMAGE_URLS_FILE = $(BUNDLED_ROMS_PKGDIR)/image-urls.txt
+
+# 폴더명은 롬 파일명이 아니라 게임 정식 명칭을 쓴다(사용자 지시, 2026-07-15).
+# "롬파일스템|정식 폴더명" 한 줄씩(공백이 들어간 이름이 많아 | 구분).
+BUNDLED_ROMS_FOLDER_NAMES_FILE = $(BUNDLED_ROMS_PKGDIR)/folder-names.txt
 
 define BUNDLED_ROMS_BUILD_CMDS
 	mkdir -p $(@D)/nes $(@D)/snes $(@D)/psx
@@ -80,19 +84,23 @@ define BUNDLED_ROMS_INSTALL_TARGET_CMDS
 	mkdir -p $(BUNDLED_ROMS_TARGET_DIR)/nes $(BUNDLED_ROMS_TARGET_DIR)/snes $(BUNDLED_ROMS_TARGET_DIR)/psx
 	# 2026-07-15: 게임별 폴더로 배치(todo-20260714-bundled-game-curation) -
 	# 큐레이션 단계에서 같은 폴더에 gamelist.xml/이미지를 동봉하기 위한 준비.
-	# 폴더명은 일단 확장자를 뗀 롬 파일명(표시용 이름 정리는 콘텐츠 단계에서).
+	# 폴더명은 롬 파일명이 아니라 게임 정식 명칭(folder-names.txt 매핑, 사용자 지시).
 	for rom in $(BUNDLED_NES_ROMS); do \
-		dir="$${rom%.*}"; \
+		stem="$${rom%.*}"; \
+		dir=$$(awk -F'|' -v k="$$stem" '$$1==k{print $$2}' $(BUNDLED_ROMS_FOLDER_NAMES_FILE)); \
+		[ -n "$$dir" ] || dir="$$stem"; \
 		mkdir -p "$(BUNDLED_ROMS_TARGET_DIR)/nes/$$dir"; \
 		cp $(@D)/nes/$$rom "$(BUNDLED_ROMS_TARGET_DIR)/nes/$$dir/" 2>/dev/null || true; \
-		imgurl=$$(awk -v k="$$dir" '$$1==k{print $$2}' $(BUNDLED_ROMS_IMAGE_URLS_FILE)); \
+		imgurl=$$(awk -v k="$$stem" '$$1==k{print $$2}' $(BUNDLED_ROMS_IMAGE_URLS_FILE)); \
 		[ -n "$$imgurl" ] && wget -q -O "$(BUNDLED_ROMS_TARGET_DIR)/nes/$$dir/image.png" "$$imgurl"; \
 	done
 	for rom in $(BUNDLED_SNES_ROMS); do \
-		dir="$${rom%.*}"; \
+		stem="$${rom%.*}"; \
+		dir=$$(awk -F'|' -v k="$$stem" '$$1==k{print $$2}' $(BUNDLED_ROMS_FOLDER_NAMES_FILE)); \
+		[ -n "$$dir" ] || dir="$$stem"; \
 		mkdir -p "$(BUNDLED_ROMS_TARGET_DIR)/snes/$$dir"; \
 		cp $(@D)/snes/$$rom "$(BUNDLED_ROMS_TARGET_DIR)/snes/$$dir/" 2>/dev/null || true; \
-		imgurl=$$(awk -v k="$$dir" '$$1==k{print $$2}' $(BUNDLED_ROMS_IMAGE_URLS_FILE)); \
+		imgurl=$$(awk -v k="$$stem" '$$1==k{print $$2}' $(BUNDLED_ROMS_IMAGE_URLS_FILE)); \
 		[ -n "$$imgurl" ] && wget -q -O "$(BUNDLED_ROMS_TARGET_DIR)/snes/$$dir/image.png" "$$imgurl"; \
 	done
 	mkdir -p "$(BUNDLED_ROMS_TARGET_DIR)/psx/240p Test Suite"

@@ -1,16 +1,16 @@
 <?xml version='1.0' encoding='utf-8'?>
 <gameList>
   <game>
-    <path>./croom/croom.nes</path>
-    <name>Concentration Room</name>
+    <path>./Concentration Room/croom.nes</path>
+    <name>Concentration Room (번들)</name>
     <sortname>Concentration Room</sortname>
     <desc>생화학 연구소 사고로 신경독소가 유출되어 격리된 주인공이 제정신을 유지하려고 카드 짝맞추기 게임을 한다는 설정의 NES용 메모리 매칭(카드 뒤집기) 게임. 10~72장의 카드를 뒤집어 같은 무늬가 나오면 가져가는 방식. 1인 스토리 모드로 다른 오염자들과 차례로 대결하거나, 1인 솔리테어, 2인 대전(번갈아 하기 또는 CPU 상대)을 지원한다.</desc>
-    <image>./croom/image.png</image>
+    <image>./Concentration Room/image.png</image>
     <video />
     <marquee />
     <thumbnail />
     <rating>0</rating>
-    <releasedate>not-a-date-time</releasedate>
+    <releasedate>20240522T000000</releasedate>
     <developer>pinobatch (Damian Yerrick)</developer>
     <publisher>pinobatch</publisher>
     <genre>퍼즐(카드 매칭)</genre>
@@ -22,11 +22,11 @@
     <lastplayed>0</lastplayed>
   </game>
   <game>
-    <path>./driar/driar.nes</path>
-    <name>Driar</name>
+    <path>./Driar/driar.nes</path>
+    <name>Driar (번들)</name>
     <sortname>Driar</sortname>
     <desc>공룡 캐릭터 드리아르를 조작해 레벨을 돌아다니며 모든 별을 모아 클리어하는 플랫포머. 고정된 궤도로 움직이는 적과 장애물을 점프로 피해야 한다. 레벨 화면이 좌우로 연결돼 있어 이를 활용해야 하는 구간도 있다.</desc>
-    <image>./driar/image.png</image>
+    <image>./Driar/image.png</image>
     <video />
     <marquee />
     <thumbnail />
@@ -43,16 +43,16 @@
     <lastplayed>0</lastplayed>
   </game>
   <game>
-    <path>./fff/fff.nes</path>
-    <name>F-FF</name>
+    <path>./F-FF/fff.nes</path>
+    <name>F-FF (번들)</name>
     <sortname>F-FF</sortname>
     <desc>F-Zero를 오마주한 NES용 고속 3D 레이싱 게임. 방향패드로 조향, B로 가속, A로 부스터를 쓴다(부스터 사용 시 생명력 소모). 셀렉트 버튼으로 2인 플레이도 가능하다.</desc>
-    <image>./fff/image.png</image>
+    <image>./F-FF/image.png</image>
     <video />
     <marquee />
     <thumbnail />
     <rating>0</rating>
-    <releasedate>not-a-date-time</releasedate>
+    <releasedate>20180127T000000</releasedate>
     <developer>Pubby</developer>
     <publisher>Pubby</publisher>
     <genre>레이싱</genre>
@@ -64,11 +64,11 @@
     <lastplayed>0</lastplayed>
   </game>
   <game>
-    <path>./indivisibleonnes/indivisibleonnes.nes</path>
-    <name>Indivisible on NES</name>
+    <path>./Indivisible on NES/indivisibleonnes.nes</path>
+    <name>Indivisible on NES (번들)</name>
     <sortname>Indivisible on NES</sortname>
-    <desc>Lab Zero Games의 "Indivisible" 인디고고 프로토타입을 NES로 팬 이식한 액션 플랫포머. 개발자 Kasumi가 원작 제작진과 무관하게 처음부터 새로 만들었다.</desc>
-    <image>./indivisibleonnes/image.png</image>
+    <desc>잊혀진 사원들을 헤치고 나아가며 맥(tapir) "로티"를 찾는 아즈나의 이야기. Lab Zero Games의 "Indivisible" 프로토타입을 실제 NES 롬으로 데메이크한 팬 게임 - 505 Games나 Lab Zero Games와 무관한 비공식 작품이다.</desc>
+    <image>./Indivisible on NES/image.png</image>
     <video />
     <marquee />
     <thumbnail />
@@ -85,11 +85,11 @@
     <lastplayed>0</lastplayed>
   </game>
   <game>
-    <path>./lala/lala.nes</path>
-    <name>Lala The Magical</name>
+    <path>./Lala The Magical/lala.nes</path>
+    <name>Lala The Magical (번들)</name>
     <sortname>Lala The Magical</sortname>
-    <desc>고대 유적에 사는 견습 마법사 라라가, 스승이 자리를 비운 사이 위험하다고 경고받은 "하늘의 궁전"에 몰래 들어가 세 개의 힘의 보석을 찾아 나서는 액션 플랫포머. 지팡이를 휘두르고 한 번에 하나씩 임시 발판을 만들어 큰 틈을 건넌다. 해가 지면 궁전이 점점 어두워지다 결국 사라진다.</desc>
-    <image>./lala/image.png</image>
+    <desc>바다호스 지방의 고대 유적에서 스승과 함께 사는 라라. "하늘의 궁전" 이야기와 그 안에 숨겨진 세 개의 힘의 보석이 궁금하지만, 스승은 너무 위험하고 강력한 마법이 필요하다며 못 가게 한다. 스승이 며칠 자리를 비운 사이, 라라는 마법 지팡이(마법으로 잠긴 금고 안에 있음)를 찾고 마법 물약 8개를 모아 강해진 뒤, 하늘의 궁전으로 가서 세 개의 힘의 보석을 찾기로 한다 - 그냥 심심해서.</desc>
+    <image>./Lala The Magical/image.png</image>
     <video />
     <marquee />
     <thumbnail />
@@ -106,16 +106,16 @@
     <lastplayed>0</lastplayed>
   </game>
   <game>
-    <path>./owlia/owlia.nes</path>
-    <name>The Legends of Owlia</name>
+    <path>./The Legends of Owlia/owlia.nes</path>
+    <name>The Legends of Owlia (번들)</name>
     <sortname>Legends of Owlia</sortname>
     <desc>젤다·크리스탈리스·스타트로픽스풍 액션 어드벤처. 부엉이 친구 타이토와 함께 여전사 아들라니엘이 되어 위대한 부엉이들을 구하고 머맨의 왕 메르몬을 물리친다. 부엉이는 진행에 따라 열쇠 회수, 주인공 운반 같은 새 능력을 익힌다. 패스워드로 진행 상황을 저장한다.</desc>
-    <image>./owlia/image.png</image>
+    <image>./The Legends of Owlia/image.png</image>
     <video />
     <marquee />
     <thumbnail />
     <rating>0</rating>
-    <releasedate>not-a-date-time</releasedate>
+    <releasedate>20160101T000000</releasedate>
     <developer>Gradual Games</developer>
     <publisher>Gradual Games</publisher>
     <genre>액션 어드벤처</genre>
@@ -127,16 +127,16 @@
     <lastplayed>0</lastplayed>
   </game>
   <game>
-    <path>./thewit/thewit.nes</path>
-    <name>The Wit.Nes</name>
+    <path>./The Wit.Nes/thewit.nes</path>
+    <name>The Wit.Nes (번들)</name>
     <sortname>The Wit.Nes</sortname>
     <desc>Thekla Inc.의 "The Witness"를 NES로 재해석한 탐색형 퍼즐 게임. 위에서 내려다보는 시점의 4방향 스크롤 월드(전체 16화면)를 탐험하며 32개의 퍼즐을 풀어나간다.</desc>
-    <image>./thewit/image.png</image>
+    <image>./The Wit.Nes/image.png</image>
     <video />
     <marquee />
     <thumbnail />
     <rating>0</rating>
-    <releasedate>not-a-date-time</releasedate>
+    <releasedate>20160601T000000</releasedate>
     <developer>Dustmop</developer>
     <publisher>Dustmop</publisher>
     <genre>퍼즐</genre>
@@ -149,17 +149,17 @@
   </game>
   <game>
     <path>./2048/2048.nes</path>
-    <name>2048</name>
+    <name>2048 (번들)</name>
     <sortname>2048</sortname>
-    <desc>스마트폰 게임으로 유명한 2048을 NES로 이식한 버전. cc65로 작성됐고, 타일을 두 개씩 합쳐서 2048을 만드는 것이 목표.</desc>
+    <desc>NES용 2048 이식판. 제작자가 NES 홈브류를 만지작거리던 시절에 전부 C로 작성한 예제 게임. 빌드하려면 cc65가 필요하고, 그냥 플레이만 해보고 싶다면 2048.nes를 받으면 된다.</desc>
     <image>./2048/image.png</image>
     <video />
     <marquee />
     <thumbnail />
     <rating>0</rating>
-    <releasedate>not-a-date-time</releasedate>
-    <developer>mmuszkow</developer>
-    <publisher>mmuszkow</publisher>
+    <releasedate>20190221T000000</releasedate>
+    <developer>Maciek Moszkowski (mmuszkow)</developer>
+    <publisher>Maciek Moszkowski (mmuszkow)</publisher>
     <genre>퍼즐</genre>
     <players>1</players>
     <favorite>false</favorite>

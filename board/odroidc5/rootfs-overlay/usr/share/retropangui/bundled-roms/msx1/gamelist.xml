@@ -2,7 +2,7 @@
 <gameList>
   <game>
     <path>./xracing/xracing.rom</path>
-    <name>XRacing</name>
+    <name>XRacing (번들)</name>
     <sortname>XRacing</sortname>
     <desc>F1 세계 챔피언을 꿈꾸는 레이서가 되어 스톡카·내구레이스 시즌을 거치며 실력을 증명하는 아케이드 레이싱 게임. 참가비 지불과 차량 구매 등 자금 관리 요소도 있다.</desc>
     <image>./xracing/image.png</image>
@@ -23,7 +23,7 @@
   </game>
   <game>
     <path>./xspelunker-en/xspelunker-en.rom</path>
-    <name>XSpelunker</name>
+    <name>XSpelunker (번들)</name>
     <sortname>XSpelunker</sortname>
     <desc>Spelunky에서 영감을 받은 MSX1용 액션 게임. 던전이 매번 절차적으로 새로 생성되며, 장비를 모아 갈수록 어려워지는 후반 스테이지에 대비해야 한다.</desc>
     <image>./xspelunker-en/image.png</image>
@@ -44,7 +44,7 @@
   </game>
   <game>
     <path>./Yazzie/Yazzie.rom</path>
-    <name>Yazzie</name>
+    <name>Yazzie (번들)</name>
     <sortname>Yazzie</sortname>
     <desc>금 채굴꾼을 도와 낡은 저택의 금을 모으는 MSX1용 게임. 곡괭이를 모으면 벽돌 바닥을 파고 이동할 수 있다.</desc>
     <image>./Yazzie/image.png</image>

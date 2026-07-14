@@ -1,11 +1,11 @@
 <?xml version='1.0' encoding='utf-8'?>
 <gameList>
   <game>
-    <path>./jetpilotrising/jetpilotrising.sfc</path>
-    <name>Jet Pilot Rising</name>
+    <path>./Jet Pilot Rising/jetpilotrising.sfc</path>
+    <name>Jet Pilot Rising (번들)</name>
     <sortname>Jet Pilot Rising</sortname>
     <desc>로켓을 탄 고양이가 등장하는, 버튼 하나로 즐기는 SNES용 아케이드 게임.</desc>
-    <image>./jetpilotrising/image.png</image>
+    <image>./Jet Pilot Rising/image.png</image>
     <video />
     <marquee />
     <thumbnail />
@@ -22,11 +22,11 @@
     <lastplayed>0</lastplayed>
   </game>
   <game>
-    <path>./questformoney/questformoney.sfc</path>
-    <name>Uwol: Quest for Money</name>
+    <path>./Uwol - Quest for Money/questformoney.sfc</path>
+    <name>Uwol: Quest for Money (번들)</name>
     <sortname>Uwol Quest for Money</sortname>
     <desc>ZX 스펙트럼용 "Uwol Question Money"를 SNES로 이식한 플랫포머.</desc>
-    <image>./questformoney/image.png</image>
+    <image>./Uwol - Quest for Money/image.png</image>
     <video />
     <marquee />
     <thumbnail />
@@ -43,11 +43,11 @@
     <lastplayed>0</lastplayed>
   </game>
   <game>
-    <path>./saf/saf.smc</path>
-    <name>Skipp and Friends</name>
+    <path>./Skipp and Friends/saf.smc</path>
+    <name>Skipp and Friends (번들)</name>
     <sortname>Skipp and Friends</sortname>
     <desc>세 캐릭터를 모두 출구까지 이동시켜야 하는 협동 퍼즐 게임. 각 캐릭터는 제한된 횟수만 쓸 수 있는 특수능력 2개를 갖고 있어 이를 활용해 장애물을 돌파해야 한다. 레벨을 클리어하면 4자리 비밀번호가 주어져 나중에 이어할 수 있다.</desc>
-    <image>./saf/image.png</image>
+    <image>./Skipp and Friends/image.png</image>
     <video />
     <marquee />
     <thumbnail />
@@ -64,11 +64,11 @@
     <lastplayed>0</lastplayed>
   </game>
   <game>
-    <path>./superbossgaiden/superbossgaiden.sfc</path>
-    <name>Super Boss Gaiden</name>
+    <path>./Super Boss Gaiden/superbossgaiden.sfc</path>
+    <name>Super Boss Gaiden (번들)</name>
     <sortname>Super Boss Gaiden</sortname>
     <desc>타이트한 조작감과 유머러스한 대사가 특징인 16비트 레트로 플랫포머. 가상의 소니 사장실 최상층에서 시작해 회사 전체를 헤집고 다니는 "보스"가 되어 난동을 부린다.</desc>
-    <image>./superbossgaiden/image.png</image>
+    <image>./Super Boss Gaiden/image.png</image>
     <video />
     <marquee />
     <thumbnail />
