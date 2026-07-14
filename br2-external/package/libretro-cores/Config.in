@@ -1,7 +1,0 @@
-config BR2_PACKAGE_LIBRETRO_CORES
-	bool "libretro-cores"
-	help
-	  Libretro cores for RetroArch: fceumm/nestopia (NES), snes9x (SNES),
-	  pcsx_rearmed/beetle_psx_hw (PSX), picodrive (MD/32X/MCD), bluemsx (MSX),
-	  dosbox_pure (DOS), scummvm, quasi88 (PC-88), np2kai (PC-98),
-	  beetle_saturn (Saturn), mupen64plus_next/parallel_n64 (N64), ppsspp (PSP).

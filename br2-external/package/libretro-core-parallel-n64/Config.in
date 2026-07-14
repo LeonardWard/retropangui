@@ -1,0 +1,6 @@
+config BR2_PACKAGE_LIBRETRO_CORE_PARALLEL_N64
+	bool "libretro-core-parallel-n64"
+	help
+	  parallel-n64 libretro core - Nintendo 64 (대체 코어, GLideN64 렌더러).
+
+	  https://github.com/libretro/parallel-n64

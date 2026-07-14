@@ -1,0 +1,6 @@
+config BR2_PACKAGE_LIBRETRO_CORE_PCSX_REARMED
+	bool "libretro-core-pcsx-rearmed"
+	help
+	  pcsx_rearmed libretro core - PlayStation 1.
+
+	  https://github.com/libretro/pcsx_rearmed

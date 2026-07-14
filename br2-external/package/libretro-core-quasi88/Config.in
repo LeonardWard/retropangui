@@ -1,0 +1,6 @@
+config BR2_PACKAGE_LIBRETRO_CORE_QUASI88
+	bool "libretro-core-quasi88"
+	help
+	  quasi88 libretro core - NEC PC-8801.
+
+	  https://github.com/libretro/quasi88-libretro

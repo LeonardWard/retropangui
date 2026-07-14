@@ -1,0 +1,6 @@
+config BR2_PACKAGE_LIBRETRO_CORE_NP2KAI
+	bool "libretro-core-np2kai"
+	help
+	  np2kai libretro core - NEC PC-9801.
+
+	  https://github.com/libretro/np2kai

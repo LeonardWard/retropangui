@@ -1,0 +1,6 @@
+config BR2_PACKAGE_LIBRETRO_CORE_SCUMMVM
+	bool "libretro-core-scummvm"
+	help
+	  scummvm libretro core - Point-and-click adventures.
+
+	  https://github.com/libretro/scummvm

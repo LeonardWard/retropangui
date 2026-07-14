@@ -1,0 +1,6 @@
+config BR2_PACKAGE_LIBRETRO_CORE_BEETLE_PSX_HW
+	bool "libretro-core-beetle-psx-hw"
+	help
+	  beetle-psx-hw libretro core - PlayStation 1 (Vulkan HW 렌더러).
+
+	  https://github.com/libretro/beetle-psx-libretro

@@ -1,0 +1,6 @@
+config BR2_PACKAGE_LIBRETRO_CORE_MUPEN64PLUS_NEXT
+	bool "libretro-core-mupen64plus-next"
+	help
+	  mupen64plus-next libretro core - Nintendo 64.
+
+	  https://github.com/libretro/mupen64plus-libretro-nx

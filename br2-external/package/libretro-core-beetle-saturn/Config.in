@@ -1,0 +1,6 @@
+config BR2_PACKAGE_LIBRETRO_CORE_BEETLE_SATURN
+	bool "libretro-core-beetle-saturn"
+	help
+	  beetle_saturn libretro core - Sega Saturn (Mednafen 기반, 소프트웨어 렌더링).
+
+	  https://github.com/libretro/beetle-saturn-libretro

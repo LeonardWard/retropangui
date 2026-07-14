@@ -1,0 +1,7 @@
+config BR2_PACKAGE_LIBRETRO_CORE_FCEUMM
+	bool "libretro-core-fceumm"
+	help
+	  fceumm libretro core - NES/Famicom/FDS (BIOS 불필요, FDS 내장
+	  에뮬레이션 지원).
+
+	  https://github.com/libretro/libretro-fceumm

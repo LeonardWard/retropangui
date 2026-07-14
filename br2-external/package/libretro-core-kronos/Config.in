@@ -1,0 +1,6 @@
+config BR2_PACKAGE_LIBRETRO_CORE_KRONOS
+	bool "libretro-core-kronos"
+	help
+	  kronos libretro core - Sega Saturn (GL 가속, beetle_saturn과 별개 코어).
+
+	  https://github.com/libretro/yabause

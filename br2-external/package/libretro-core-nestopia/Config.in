@@ -1,0 +1,6 @@
+config BR2_PACKAGE_LIBRETRO_CORE_NESTOPIA
+	bool "libretro-core-nestopia"
+	help
+	  nestopia libretro core - NES/Famicom.
+
+	  https://github.com/libretro/nestopia

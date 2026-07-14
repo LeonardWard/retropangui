@@ -1,0 +1,6 @@
+config BR2_PACKAGE_LIBRETRO_CORE_PPSSPP
+	bool "libretro-core-ppsspp"
+	help
+	  ppsspp libretro core - PlayStation Portable.
+
+	  https://github.com/hrydgard/ppsspp

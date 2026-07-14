@@ -1,0 +1,6 @@
+config BR2_PACKAGE_LIBRETRO_CORE_SNES9X
+	bool "libretro-core-snes9x"
+	help
+	  snes9x libretro core - SNES/Super Famicom.
+
+	  https://github.com/libretro/snes9x
