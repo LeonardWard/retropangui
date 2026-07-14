@@ -35,13 +35,17 @@ define LIBRETRO_CORE_SCUMMVM_BUILD_CMDS
 		(rm -rf $(LIBRETRO_CORE_SCUMMVM_DEPS_PATH)/libretro-common && \
 		 git clone --filter=blob:none $(LIBRETRO_CORE_SCUMMVM_COMMON_URL) $(LIBRETRO_CORE_SCUMMVM_DEPS_PATH)/libretro-common && \
 		 git -C $(LIBRETRO_CORE_SCUMMVM_DEPS_PATH)/libretro-common checkout $(LIBRETRO_CORE_SCUMMVM_COMMON_COMMIT))
-	# 2026-07-14: platform=unix 기본값이 데스크탑 OpenGL(HAVE_OPENGL)을
-	# 요청하는데, 우리 RA는 OpenGLES만 지원해서 매 실행마다 "Requesting
-	# OpenGL context... Cannot use HW context" 에러 후 소프트웨어 렌더링
-	# 폴백이 남(실기기 로그에서 확인 - 기능은 되지만 매번 실패 시도 낭비).
-	# n64 코어들의 FORCE_GLES=1과 같은 종류의 우회 - Makefile.common의
-	# FORCE_OPENGLES2 플래그로 GLES2를 요청하게 강제해서 Mali GPU로 실제
-	# 하드웨어 가속을 받게 함(실패 후 폴백이 아니라 처음부터 성공).
+	# 2026-07-14: FORCE_OPENGLES2=1(GLES2 HW 렌더 강제)을 시도했다가 원복함.
+	# platform=unix 기본값은 데스크탑 OpenGL을 요청해 RA(OpenGLES만 지원)에서
+	# 매번 "Cannot use HW context" 로그 후 소프트웨어 폴백이 뜨는데, 이건 그냥
+	# 로그 노이즈일 뿐 실사용엔 문제 없었음. FORCE_OPENGLES2=1로 GLES2 HW
+	# 컨텍스트 요청 자체는 성공시켰지만(Mali-G310), 실측 결과 이 GPU에서
+	# scummvm 2D 콘텐츠엔 텍스처 업로드+드로우 왕복 오버헤드가 소프트웨어
+	# 블릿보다 오히려 버벅임을 유발함(RA 드라이버 전환/오디오 레이턴시 문제가
+	# 아니라 GLES2 HW 경로 자체의 성능 특성으로 실측 확인 - ScummVM.cfg
+	# video_driver 코어 오버라이드로 드라이버 전환을 없애도 동일하게 버벅임).
+	# 소프트웨어 렌더링이 이 콘텐츠엔 더 낫다는 결론 - hw_acceleration
+	# 기본값은 ScummVM.opt 번들 파일(rootfs-overlay)로 명시적으로 disabled.
 	$(TARGET_MAKE_ENV) $(MAKE) -C $(@D)/scummvm/backends/platform/libretro \
 		CC="$(TARGET_CC)" \
 		CXX="$(TARGET_CXX)" \
@@ -50,7 +54,6 @@ define LIBRETRO_CORE_SCUMMVM_BUILD_CMDS
 		STRIP="$(TARGET_STRIP)" \
 		OBJCOPY="$(TARGET_OBJCOPY)" \
 		platform=unix \
-		FORCE_OPENGLES2=1 \
 		BUILD_64BIT=1
 endef
 
