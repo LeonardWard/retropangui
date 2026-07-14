@@ -332,9 +332,23 @@ init_share_dirs() {
         "${SHARE_MOUNT}/system/emulationstation"
 
     # bundled-bios: 파일 단위로 없는 것만 복사 (sentinel 무관, OTA로 추가되면 자동 반영)
+    #
+    # 2026-07-14: "cp -rn SRC/. DST/" 방식은 이 BusyBox(v1.36.1)에서 DST에
+    # 이미 다른 내용이 하나라도 있으면 SRC의 새 최상위 항목을 통째로
+    # 무시하는 버그가 있음(에러 없이 exit 0, 실기기에서 무관한 디렉토리로도
+    # 재현 확인) - share/bios는 최초 부팅 때부터 파일이 많아서 그 이후
+    # bundled-bios에 추가된 내용(scummvm 테마 등)이 전부 조용히 누락되고
+    # 있었음. find로 파일 단위 순회하며 없는 파일만 개별 복사하는 방식으로
+    # 교체(디렉토리는 필요할 때만 mkdir -p).
     local bundled_bios="/usr/share/retropangui/bundled-bios"
     if [ -d "${bundled_bios}" ]; then
-        cp -rn "${bundled_bios}/." "${SHARE_MOUNT}/bios/" 2>/dev/null || true
+        find "${bundled_bios}" -type f | while IFS= read -r src; do
+            rel="${src#${bundled_bios}/}"
+            dst="${SHARE_MOUNT}/bios/${rel}"
+            [ -f "${dst}" ] && continue
+            mkdir -p "$(dirname "${dst}")"
+            cp "${src}" "${dst}"
+        done
     fi
 
     # bundled-bgmusic(.mid): 위 bundled-bios와 같은 이유로 sentinel 밖으로 뺌

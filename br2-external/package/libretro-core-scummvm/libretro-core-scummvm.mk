@@ -51,13 +51,17 @@ define LIBRETRO_CORE_SCUMMVM_INSTALL_TARGET_CMDS
 	$(INSTALL) -m 0644 $(@D)/scummvm/backends/platform/libretro/scummvm_libretro.so \
 		$(TARGET_DIR)/usr/lib/libretro/lr-scummvm/
 	echo "scummvm_libretro.so" > $(TARGET_DIR)/usr/lib/libretro/lr-scummvm/.installed_so_name
-	mkdir -p $(TARGET_DIR)/usr/share/retropangui/bundled-bios/scummvm
+	# 2026-07-14: SCUMMVM_THEME_SUBDIR="theme" (Makefile.common) - 코어가
+	# <system dir>/scummvm/theme/ 에서 테마 파일을 찾음(libretro-os-utils.cpp
+	# s_themeDir). scummvm/ 바로 밑에 평평하게 설치하면 코어가 "테마 폴더
+	# 없음"으로 판정해 못 찾음(실기기에서 확인된 배치 오류).
+	mkdir -p $(TARGET_DIR)/usr/share/retropangui/bundled-bios/scummvm/theme
 	$(INSTALL) -m 0644 $(@D)/scummvm/gui/themes/gui-icons.dat \
-		$(TARGET_DIR)/usr/share/retropangui/bundled-bios/scummvm/
+		$(TARGET_DIR)/usr/share/retropangui/bundled-bios/scummvm/theme/
 	$(INSTALL) -m 0644 $(@D)/scummvm/gui/themes/scummclassic.zip \
-		$(TARGET_DIR)/usr/share/retropangui/bundled-bios/scummvm/
+		$(TARGET_DIR)/usr/share/retropangui/bundled-bios/scummvm/theme/
 	$(INSTALL) -m 0644 $(@D)/scummvm/gui/themes/scummmodern.zip \
-		$(TARGET_DIR)/usr/share/retropangui/bundled-bios/scummvm/
+		$(TARGET_DIR)/usr/share/retropangui/bundled-bios/scummvm/theme/
 endef
 
 $(eval $(generic-package))
