@@ -35,6 +35,13 @@ define LIBRETRO_CORE_SCUMMVM_BUILD_CMDS
 		(rm -rf $(LIBRETRO_CORE_SCUMMVM_DEPS_PATH)/libretro-common && \
 		 git clone --filter=blob:none $(LIBRETRO_CORE_SCUMMVM_COMMON_URL) $(LIBRETRO_CORE_SCUMMVM_DEPS_PATH)/libretro-common && \
 		 git -C $(LIBRETRO_CORE_SCUMMVM_DEPS_PATH)/libretro-common checkout $(LIBRETRO_CORE_SCUMMVM_COMMON_COMMIT))
+	# 2026-07-14: platform=unix 기본값이 데스크탑 OpenGL(HAVE_OPENGL)을
+	# 요청하는데, 우리 RA는 OpenGLES만 지원해서 매 실행마다 "Requesting
+	# OpenGL context... Cannot use HW context" 에러 후 소프트웨어 렌더링
+	# 폴백이 남(실기기 로그에서 확인 - 기능은 되지만 매번 실패 시도 낭비).
+	# n64 코어들의 FORCE_GLES=1과 같은 종류의 우회 - Makefile.common의
+	# FORCE_OPENGLES2 플래그로 GLES2를 요청하게 강제해서 Mali GPU로 실제
+	# 하드웨어 가속을 받게 함(실패 후 폴백이 아니라 처음부터 성공).
 	$(TARGET_MAKE_ENV) $(MAKE) -C $(@D)/scummvm/backends/platform/libretro \
 		CC="$(TARGET_CC)" \
 		CXX="$(TARGET_CXX)" \
@@ -43,6 +50,7 @@ define LIBRETRO_CORE_SCUMMVM_BUILD_CMDS
 		STRIP="$(TARGET_STRIP)" \
 		OBJCOPY="$(TARGET_OBJCOPY)" \
 		platform=unix \
+		FORCE_OPENGLES2=1 \
 		BUILD_64BIT=1
 endef
 
