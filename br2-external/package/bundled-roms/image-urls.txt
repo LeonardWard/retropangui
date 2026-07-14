@@ -7,6 +7,5 @@ lala https://www.mojontwins.com/wp-content/uploads/2016/11/lala-gnrom-20161116a-
 owlia https://img.itch.zone/aW1hZ2UvMTQ3OTQ4Ny84NjI4NTc4LnBuZw==/original/wouj9Z.png
 thewit https://img.itch.zone/aW1hZ2UvNzAxMzkvMzIwNDQ0LnBuZw==/original/0oBpIY.png
 jetpilotrising https://raw.githubusercontent.com/retrobrews/snes-games/master/jetpilotrising.png
-questformoney https://raw.githubusercontent.com/retrobrews/snes-games/master/questformoney.png
 saf https://raw.githubusercontent.com/retrobrews/snes-games/master/saf.png
 superbossgaiden https://raw.githubusercontent.com/retrobrews/snes-games/master/superbossgaiden.png

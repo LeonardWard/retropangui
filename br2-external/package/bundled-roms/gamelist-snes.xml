@@ -22,27 +22,6 @@
     <lastplayed>0</lastplayed>
   </game>
   <game>
-    <path>./Uwol - Quest for Money/questformoney.sfc</path>
-    <name>Uwol: Quest for Money (번들)</name>
-    <sortname>Uwol Quest for Money</sortname>
-    <desc>ZX 스펙트럼용 "Uwol Question Money"를 SNES로 이식한 플랫포머.</desc>
-    <image>./Uwol - Quest for Money/image.png</image>
-    <video />
-    <marquee />
-    <thumbnail />
-    <rating>0</rating>
-    <releasedate>not-a-date-time</releasedate>
-    <developer>Alekmaul, Mojon Twins, KungfuFurby</developer>
-    <publisher>Mojon Twins</publisher>
-    <genre>플랫포머</genre>
-    <players>1</players>
-    <favorite>false</favorite>
-    <kidgame>false</kidgame>
-    <core />
-    <playcount>0</playcount>
-    <lastplayed>0</lastplayed>
-  </game>
-  <game>
     <path>./Skipp and Friends/saf.smc</path>
     <name>Skipp and Friends (번들)</name>
     <sortname>Skipp and Friends</sortname>

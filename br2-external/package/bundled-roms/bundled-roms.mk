@@ -29,7 +29,7 @@ PS240P_URL   = https://github.com/filipalac/240pTestSuite-PS1/releases/download/
 BUNDLED_NES_ROMS = 2048.nes croom.nes driar.nes fff.nes indivisibleonnes.nes lala.nes owlia.nes thewit.nes
 
 # SNES 번들 목록 (retrobrews에서 선별)
-BUNDLED_SNES_ROMS = jetpilotrising.sfc questformoney.sfc saf.smc superbossgaiden.sfc
+BUNDLED_SNES_ROMS = jetpilotrising.sfc saf.smc superbossgaiden.sfc
 
 BUNDLED_ROMS_TARGET_DIR = $(TARGET_DIR)/usr/share/retropangui/bundled-roms
 
