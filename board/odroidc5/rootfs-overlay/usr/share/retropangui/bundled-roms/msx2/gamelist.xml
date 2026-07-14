@@ -1,0 +1,45 @@
+<?xml version='1.0' encoding='utf-8'?>
+<gameList>
+  <game>
+    <path>./Brunilda [v1.1] (Retroworks)/Brunilda [v1.1] (Retroworks).rom</path>
+    <name>브루닐다의 사랑</name>
+    <sortname>Brunilda</sortname>
+    <desc>낯선 마을을 찾은 화자가 마을 사람들의 정신을 사로잡은 기이한 무언가를 눈치채면서 시작되는, 공포 분위기가 짙은 MSX2용 롤플레잉 게임.</desc>
+    <image>./Brunilda [v1.1] (Retroworks)/image.png</image>
+    <video />
+    <marquee />
+    <thumbnail />
+    <rating>0.9</rating>
+    <releasedate>20131223T000000</releasedate>
+    <developer>RetroWorks</developer>
+    <publisher>RetroWorks</publisher>
+    <genre>롤플레잉</genre>
+    <players>1</players>
+    <favorite>false</favorite>
+    <kidgame>false</kidgame>
+    <core />
+    <playcount>0</playcount>
+    <lastplayed>0</lastplayed>
+  </game>
+  <game>
+    <path>./The Sword of Ianna (Retroworks)/The Sword of Ianna (Retroworks).rom</path>
+    <name>The Sword of Ianna</name>
+    <sortname>Sword of Ianna</sortname>
+    <desc>악이 다시 깨어난 세계에서, 여신 이안나가 선택한 혈통의 야만전사 "자르쿰"이 되어 어둠의 세력을 물리치는 MSX2용 액션 어드벤처.</desc>
+    <image>./The Sword of Ianna (Retroworks)/image.png</image>
+    <video />
+    <marquee />
+    <thumbnail />
+    <rating>0.85</rating>
+    <releasedate>20170101T000000</releasedate>
+    <developer>RetroWorks</developer>
+    <publisher>RetroWorks</publisher>
+    <genre>액션 어드벤처</genre>
+    <players>1</players>
+    <favorite>false</favorite>
+    <kidgame>false</kidgame>
+    <core />
+    <playcount>0</playcount>
+    <lastplayed>0</lastplayed>
+  </game>
+</gameList>

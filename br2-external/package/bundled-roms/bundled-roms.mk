@@ -33,6 +33,12 @@ BUNDLED_SNES_ROMS = jetpilotrising.sfc questformoney.sfc saf.smc superbossgaiden
 
 BUNDLED_ROMS_TARGET_DIR = $(TARGET_DIR)/usr/share/retropangui/bundled-roms
 
+# 2026-07-15: 박스아트/스크린샷 URL 매핑 파일 - 저장소에 이미지 바이너리를
+# 커밋하지 않고 원 배포처에서 빌드 시점에 받아온다(todo-20260714-bundled-
+# game-curation 사용자 지시 - "임시로" 코드 다운로드 방식, 이미지 검토 후
+# URL이 교체될 수 있음). "폴더명 URL" 한 줄씩, install_image_urls.sh에서 읽음.
+BUNDLED_ROMS_IMAGE_URLS_FILE = $(BUNDLED_ROMS_PKGDIR)/image-urls.txt
+
 define BUNDLED_ROMS_BUILD_CMDS
 	mkdir -p $(@D)/nes $(@D)/snes $(@D)/psx
 
@@ -79,15 +85,24 @@ define BUNDLED_ROMS_INSTALL_TARGET_CMDS
 		dir="$${rom%.*}"; \
 		mkdir -p "$(BUNDLED_ROMS_TARGET_DIR)/nes/$$dir"; \
 		cp $(@D)/nes/$$rom "$(BUNDLED_ROMS_TARGET_DIR)/nes/$$dir/" 2>/dev/null || true; \
+		imgurl=$$(awk -v k="$$dir" '$$1==k{print $$2}' $(BUNDLED_ROMS_IMAGE_URLS_FILE)); \
+		[ -n "$$imgurl" ] && wget -q -O "$(BUNDLED_ROMS_TARGET_DIR)/nes/$$dir/image.png" "$$imgurl"; \
 	done
 	for rom in $(BUNDLED_SNES_ROMS); do \
 		dir="$${rom%.*}"; \
 		mkdir -p "$(BUNDLED_ROMS_TARGET_DIR)/snes/$$dir"; \
 		cp $(@D)/snes/$$rom "$(BUNDLED_ROMS_TARGET_DIR)/snes/$$dir/" 2>/dev/null || true; \
+		imgurl=$$(awk -v k="$$dir" '$$1==k{print $$2}' $(BUNDLED_ROMS_IMAGE_URLS_FILE)); \
+		[ -n "$$imgurl" ] && wget -q -O "$(BUNDLED_ROMS_TARGET_DIR)/snes/$$dir/image.png" "$$imgurl"; \
 	done
 	mkdir -p "$(BUNDLED_ROMS_TARGET_DIR)/psx/240p Test Suite"
 	cp $(@D)/psx/*.bin "$(BUNDLED_ROMS_TARGET_DIR)/psx/240p Test Suite/" 2>/dev/null || true
 	cp $(@D)/psx/*.cue "$(BUNDLED_ROMS_TARGET_DIR)/psx/240p Test Suite/" 2>/dev/null || true
+	# 2026-07-15: 큐레이션한 gamelist.xml(전체 필드) 저장소에서 그대로 설치.
+	# 이미지는 위에서 원 배포처 다운로드로 채워짐(검토 후 URL이 바뀔 수 있음).
+	$(INSTALL) -m 0644 $(BUNDLED_ROMS_PKGDIR)/gamelist-nes.xml "$(BUNDLED_ROMS_TARGET_DIR)/nes/gamelist.xml"
+	$(INSTALL) -m 0644 $(BUNDLED_ROMS_PKGDIR)/gamelist-snes.xml "$(BUNDLED_ROMS_TARGET_DIR)/snes/gamelist.xml"
+	$(INSTALL) -m 0644 $(BUNDLED_ROMS_PKGDIR)/gamelist-psx.xml "$(BUNDLED_ROMS_TARGET_DIR)/psx/gamelist.xml"
 endef
 
 $(eval $(generic-package))

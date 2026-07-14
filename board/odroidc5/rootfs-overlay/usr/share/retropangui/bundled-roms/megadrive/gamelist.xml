@@ -1,0 +1,87 @@
+<?xml version='1.0' encoding='utf-8'?>
+<gameList>
+  <game>
+    <path>./Yazzie (Retrosouls)/Yazzie (Retrosouls).bin</path>
+    <name>Yazzie</name>
+    <sortname>Yazzie</sortname>
+    <desc>덤벙대는 금 채굴꾼이 되어 함정투성이 낡은 저택을 탐험하는 게임. 모든 금을 모으고 적을 피하면서 치명적인 함정에 빠지지 않아야 한다.</desc>
+    <image>./Yazzie (Retrosouls)/image.png</image>
+    <video />
+    <marquee />
+    <thumbnail />
+    <rating>0.9</rating>
+    <releasedate>not-a-date-time</releasedate>
+    <developer>RetroSouls</developer>
+    <publisher>RetroSouls</publisher>
+    <genre>액션(미로 탐험)</genre>
+    <players>1</players>
+    <favorite>false</favorite>
+    <kidgame>false</kidgame>
+    <core />
+    <playcount>0</playcount>
+    <lastplayed>0</lastplayed>
+  </game>
+  <game>
+    <path>./Gluf (Retrosouls)/Gluf (Retrosouls).bin</path>
+    <name>Gluf</name>
+    <sortname>Gluf</sortname>
+    <desc>메가드라이브용 아케이드 퍼즐 게임. 적을 피해 다니며 맵의 모든 발판에 색을 칠해야 하고, 에너지 관리도 함께 신경 써야 한다.</desc>
+    <image>./Gluf (Retrosouls)/image.png</image>
+    <video />
+    <marquee />
+    <thumbnail />
+    <rating>0.75</rating>
+    <releasedate>20200514T000000</releasedate>
+    <developer>RetroSouls</developer>
+    <publisher>RetroSouls</publisher>
+    <genre>퍼즐</genre>
+    <players>1</players>
+    <favorite>false</favorite>
+    <kidgame>false</kidgame>
+    <core />
+    <playcount>0</playcount>
+    <lastplayed>0</lastplayed>
+  </game>
+  <game>
+    <path>./Old Towers (Retrosouls)/Old Towers (Retrosouls).bin</path>
+    <name>Old Towers</name>
+    <sortname>Old Towers</sortname>
+    <desc>함정과 해골이 가득한 탑을 탐험하는 어린 탐험가가 되어, 순발력과 기술만으로 살아남아야 하는 퍼즐 게임.</desc>
+    <image>./Old Towers (Retrosouls)/image.png</image>
+    <video />
+    <marquee />
+    <thumbnail />
+    <rating>0.9</rating>
+    <releasedate>20190318T000000</releasedate>
+    <developer>Denis Grachev</developer>
+    <publisher>RetroSouls</publisher>
+    <genre>퍼즐</genre>
+    <players>1</players>
+    <favorite>false</favorite>
+    <kidgame>false</kidgame>
+    <core />
+    <playcount>0</playcount>
+    <lastplayed>0</lastplayed>
+  </game>
+  <game>
+    <path>./Misplaced (Retrosouls)/Misplaced (Retrosouls).bin</path>
+    <name>Misplaced</name>
+    <sortname>Misplaced</sortname>
+    <desc>주인공 "하라"가 구름 위를 떠도는 기이한 섬에서 매일 똑같은 하루를 반복하며 시작되는 이야기의 퍼즐 게임.</desc>
+    <image>./Misplaced (Retrosouls)/image.png</image>
+    <video />
+    <marquee />
+    <thumbnail />
+    <rating>0.65</rating>
+    <releasedate>not-a-date-time</releasedate>
+    <developer>Denis Grachev</developer>
+    <publisher>RetroSouls</publisher>
+    <genre>퍼즐</genre>
+    <players>1</players>
+    <favorite>false</favorite>
+    <kidgame>false</kidgame>
+    <core />
+    <playcount>0</playcount>
+    <lastplayed>0</lastplayed>
+  </game>
+</gameList>

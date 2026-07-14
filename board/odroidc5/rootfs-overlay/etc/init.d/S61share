@@ -317,6 +317,34 @@ download_extra_roms() {
         _rp_dl "${lure}/${f}" \
             "${base}/scummvm/init/roms/Lure%20of%20the%20Tempress%20(English).scummvm/${f}"
     done
+
+    # 2026-07-15: 박스아트/스크린샷 - 저장소에 이미지 바이너리를 커밋하지
+    # 않고 원 배포처에서 받아온다("임시로" 코드 다운로드 방식, 이미지 검토
+    # 후 URL이 교체될 수 있음 - todo-20260714-bundled-game-curation).
+    local rbase="https://gitlab.com/recalbox/recalbox/-/raw/master/package/recalbox-romfs2/systems"
+    _rp_dl "${md}/Yazzie (Retrosouls)/image.png"       "${rbase}/megadrive/init/roms/media/images/Yazzie%20(Retrosouls).png"
+    _rp_dl "${md}/Gluf (Retrosouls)/image.png"         "${rbase}/megadrive/init/roms/media/images/Gluf%20(Retrosouls).png"
+    _rp_dl "${md}/Old Towers (Retrosouls)/image.png"   "${rbase}/megadrive/init/roms/media/images/Old%20Towers%20(Retrosouls).png"
+    _rp_dl "${md}/Misplaced (Retrosouls)/image.png"    "${rbase}/megadrive/init/roms/media/images/Misplaced%20(Retrosouls).png"
+    _rp_dl "${m1}/xracing/image.png"                   "${rbase}/msx1/init/roms/media/images/xracing.png"
+    _rp_dl "${m1}/xspelunker-en/image.png"              "${rbase}/msx1/init/roms/media/images/xspelunker-en.png"
+    _rp_dl "${m1}/Yazzie/image.png"                     "${rbase}/msx1/init/roms/media/images/Yazzie.png"
+    _rp_dl "${m2}/Brunilda [v1.1] (Retroworks)/image.png" \
+        "${rbase}/msx2/init/roms/media/images/Brunilda%20%5Bv1.1%5D%20(Retroworks).png"
+    _rp_dl "${m2}/The Sword of Ianna (Retroworks)/image.png" \
+        "${rbase}/msx2/init/roms/media/images/The%20Sword%20of%20Ianna%20(Retroworks).png"
+    _rp_dl "${sky}/image.png"   "${rbase}/scummvm/init/roms/media/images/Beneath%20a%20Steel%20Sky%20(English).png"
+    _rp_dl "${queen}/image.png" "${rbase}/scummvm/init/roms/media/images/Flight%20of%20the%20Amazon%20Queen%20(Fran%C3%A7ais).png"
+    _rp_dl "${soltys}/image.png" "${rbase}/scummvm/init/roms/media/images/Soltys%20(English).png"
+    _rp_dl "${lure}/image.png"  "${rbase}/scummvm/init/roms/media/images/Lure%20of%20the%20Tempress%20(Fran%C3%A7ais).png"
+
+    # 큐레이션한 gamelist.xml(전체 필드) 최초 1회만 배치 - 이미 있으면
+    # 건드리지 않음(사용자가 직접 스크랩/수정한 내용 보존).
+    for sys in megadrive msx1 msx2 scummvm; do
+        tmpl="/usr/share/retropangui/bundled-roms/${sys}/gamelist.xml"
+        dst="${roms}/${sys}/gamelist.xml"
+        [ -f "${tmpl}" ] && [ ! -f "${dst}" ] && cp "${tmpl}" "${dst}"
+    done
 }
 
 # 폴더 구조 초기화 + bundled 파일 복사 (sentinel로 최초 1회만)

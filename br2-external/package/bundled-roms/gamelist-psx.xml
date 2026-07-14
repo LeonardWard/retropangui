@@ -1,0 +1,24 @@
+<?xml version='1.0' encoding='utf-8'?>
+<gameList>
+  <game>
+    <path>./240p Test Suite/240pTestSuitePS1-EMU.bin</path>
+    <name>240p Test Suite</name>
+    <sortname>240p Test Suite</sortname>
+    <desc>TV 출력 화질·스캔라인·지터 등을 점검하기 위한 진단용 테스트 롬. 실제 게임이 아니라 화면 표시 상태 확인용이라 별도 박스아트는 없음.</desc>
+    <image />
+    <video />
+    <marquee />
+    <thumbnail />
+    <rating>0</rating>
+    <releasedate>not-a-date-time</releasedate>
+    <developer>filipalac (PS1 EMU 이식판)</developer>
+    <publisher>-</publisher>
+    <genre>유틸리티</genre>
+    <players>1</players>
+    <favorite>false</favorite>
+    <kidgame>false</kidgame>
+    <core />
+    <playcount>0</playcount>
+    <lastplayed>0</lastplayed>
+  </game>
+</gameList>
