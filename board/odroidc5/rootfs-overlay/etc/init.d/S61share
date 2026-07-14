@@ -236,6 +236,7 @@ mount_network_shares() {
 # 단일 파일 다운로드 — 실패하거나 0바이트이면 파일 삭제
 _rp_dl() {
     local dst="$1" url="$2"
+    mkdir -p "$(dirname "${dst}")"
     if wget -q -T 30 --no-check-certificate -O "${dst}" "${url}" 2>/dev/null; then
         [ -s "${dst}" ] || rm -f "${dst}"
     else
@@ -258,56 +259,64 @@ download_extra_roms() {
     local roms="${SHARE_MOUNT}/roms"
     local base="https://gitlab.com/recalbox/recalbox/-/raw/master/package/recalbox-romfs2/systems"
 
+    # 2026-07-15: 게임별 폴더로 배치(todo-20260714-bundled-game-curation) -
+    # 큐레이션 단계에서 같은 폴더에 gamelist.xml/이미지를 동봉하기 위한 준비.
+
     # Mega Drive — Retrosouls (CC BY-NC-SA 4.0)
     local md="${roms}/megadrive"
-    _rp_dl "${md}/Yazzie (Retrosouls).bin"       "${base}/megadrive/init/roms/Yazzie%20(Retrosouls).bin"
-    _rp_dl "${md}/Gluf (Retrosouls).bin"         "${base}/megadrive/init/roms/Gluf%20(Retrosouls).bin"
-    _rp_dl "${md}/Old Towers (Retrosouls).bin"   "${base}/megadrive/init/roms/Old%20Towers%20(Retrosouls).bin"
-    _rp_dl "${md}/Misplaced (Retrosouls).bin"    "${base}/megadrive/init/roms/Misplaced%20(Retrosouls).bin"
+    _rp_dl "${md}/Yazzie (Retrosouls)/Yazzie (Retrosouls).bin" \
+        "${base}/megadrive/init/roms/Yazzie%20(Retrosouls).bin"
+    _rp_dl "${md}/Gluf (Retrosouls)/Gluf (Retrosouls).bin" \
+        "${base}/megadrive/init/roms/Gluf%20(Retrosouls).bin"
+    _rp_dl "${md}/Old Towers (Retrosouls)/Old Towers (Retrosouls).bin" \
+        "${base}/megadrive/init/roms/Old%20Towers%20(Retrosouls).bin"
+    _rp_dl "${md}/Misplaced (Retrosouls)/Misplaced (Retrosouls).bin" \
+        "${base}/megadrive/init/roms/Misplaced%20(Retrosouls).bin"
 
     # MSX1 — GPL + CC BY-NC-SA
     local m1="${roms}/msx1"
-    _rp_dl "${m1}/xracing.rom"        "${base}/msx1/init/roms/xracing.rom"
-    _rp_dl "${m1}/xspelunker-en.rom"  "${base}/msx1/init/roms/xspelunker-en.rom"
-    _rp_dl "${m1}/Yazzie.rom"         "${base}/msx1/init/roms/Yazzie.rom"
+    _rp_dl "${m1}/xracing/xracing.rom"               "${base}/msx1/init/roms/xracing.rom"
+    _rp_dl "${m1}/xspelunker-en/xspelunker-en.rom"   "${base}/msx1/init/roms/xspelunker-en.rom"
+    _rp_dl "${m1}/Yazzie/Yazzie.rom"                 "${base}/msx1/init/roms/Yazzie.rom"
 
     # MSX2 — Retroworks (비상업 재배포 가능)
     local m2="${roms}/msx2"
-    _rp_dl "${m2}/Brunilda [v1.1] (Retroworks).rom" \
+    _rp_dl "${m2}/Brunilda [v1.1] (Retroworks)/Brunilda [v1.1] (Retroworks).rom" \
         "${base}/msx2/init/roms/Brunilda%20%5Bv1.1%5D%20(Retroworks).rom"
-    _rp_dl "${m2}/The Sword of Ianna (Retroworks).rom" \
+    _rp_dl "${m2}/The Sword of Ianna (Retroworks)/The Sword of Ianna (Retroworks).rom" \
         "${base}/msx2/init/roms/The%20Sword%20of%20Ianna%20(Retroworks).rom"
 
-    # ScummVM — 공식 freeware (.scummvm 파일 + 게임 데이터 플랫 구조)
-    # lr-scummvm은 게임ID가 담긴 .scummvm 텍스트 파일을 ROM으로 받고,
-    # 같은 디렉토리에서 게임 데이터를 검색함
+    # ScummVM — 공식 freeware. Recalbox 소스가 이미 "게임명.scummvm/" 폴더 안에
+    # raw 게임 데이터를 담고 있어서 그대로 받으면 코어의 폴더 자동 감지
+    # (todo-core-lr-scummvm 문서의 "게임 배치법" 참조)가 그대로 먹힘 -
+    # 예전처럼 게임ID 텍스트 파일을 별도로 만들 필요 없음.
     local sc="${roms}/scummvm"
 
     # Beneath a Steel Sky
-    _rp_dl "${sc}/sky.dnr" \
+    local sky="${sc}/Beneath a Steel Sky (English).scummvm"
+    _rp_dl "${sky}/sky.dnr" \
         "${base}/scummvm/init/roms/Beneath%20a%20Steel%20Sky%20(English).scummvm/sky.dnr"
-    _rp_dl "${sc}/sky.dsk" \
+    _rp_dl "${sky}/sky.dsk" \
         "${base}/scummvm/init/roms/Beneath%20a%20Steel%20Sky%20(English).scummvm/sky.dsk"
-    [ -s "${sc}/sky.dnr" ] && printf 'sky' > "${sc}/Beneath a Steel Sky (English).scummvm"
 
     # Flight of the Amazon Queen
-    _rp_dl "${sc}/queen.1" \
+    local queen="${sc}/Flight of the Amazon Queen (English).scummvm"
+    _rp_dl "${queen}/queen.1" \
         "${base}/scummvm/init/roms/Flight%20of%20the%20Amazon%20Queen%20(English).scummvm/queen.1"
-    [ -s "${sc}/queen.1" ] && printf 'queen' > "${sc}/Flight of the Amazon Queen (English).scummvm"
 
     # Soltys
-    _rp_dl "${sc}/vol.cat" \
+    local soltys="${sc}/Soltys (English).scummvm"
+    _rp_dl "${soltys}/vol.cat" \
         "${base}/scummvm/init/roms/Soltys%20(English).scummvm/vol.cat"
-    _rp_dl "${sc}/vol.dat" \
+    _rp_dl "${soltys}/vol.dat" \
         "${base}/scummvm/init/roms/Soltys%20(English).scummvm/vol.dat"
-    [ -s "${sc}/vol.cat" ] && printf 'soltys' > "${sc}/Soltys (English).scummvm"
 
     # Lure of the Temptress
+    local lure="${sc}/Lure of the Tempress (English).scummvm"
     for f in Disk1.vga Disk2.vga Disk3.vga Disk4.vga Lure.exe; do
-        _rp_dl "${sc}/${f}" \
+        _rp_dl "${lure}/${f}" \
             "${base}/scummvm/init/roms/Lure%20of%20the%20Tempress%20(English).scummvm/${f}"
     done
-    [ -s "${sc}/Disk1.vga" ] && printf 'lure' > "${sc}/Lure of the Tempress (English).scummvm"
 }
 
 # 폴더 구조 초기화 + bundled 파일 복사 (sentinel로 최초 1회만)

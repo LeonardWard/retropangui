@@ -72,14 +72,22 @@ define BUNDLED_ROMS_INSTALL_TARGET_CMDS
 	# 매번 깨끗이 지우고 다시 채운다 (cp만 하면 목록에서 뺀 게임이 계속 남는 문제 방지)
 	rm -rf $(BUNDLED_ROMS_TARGET_DIR)
 	mkdir -p $(BUNDLED_ROMS_TARGET_DIR)/nes $(BUNDLED_ROMS_TARGET_DIR)/snes $(BUNDLED_ROMS_TARGET_DIR)/psx
+	# 2026-07-15: 게임별 폴더로 배치(todo-20260714-bundled-game-curation) -
+	# 큐레이션 단계에서 같은 폴더에 gamelist.xml/이미지를 동봉하기 위한 준비.
+	# 폴더명은 일단 확장자를 뗀 롬 파일명(표시용 이름 정리는 콘텐츠 단계에서).
 	for rom in $(BUNDLED_NES_ROMS); do \
-		cp $(@D)/nes/$$rom $(BUNDLED_ROMS_TARGET_DIR)/nes/ 2>/dev/null || true; \
+		dir="$${rom%.*}"; \
+		mkdir -p "$(BUNDLED_ROMS_TARGET_DIR)/nes/$$dir"; \
+		cp $(@D)/nes/$$rom "$(BUNDLED_ROMS_TARGET_DIR)/nes/$$dir/" 2>/dev/null || true; \
 	done
 	for rom in $(BUNDLED_SNES_ROMS); do \
-		cp $(@D)/snes/$$rom $(BUNDLED_ROMS_TARGET_DIR)/snes/ 2>/dev/null || true; \
+		dir="$${rom%.*}"; \
+		mkdir -p "$(BUNDLED_ROMS_TARGET_DIR)/snes/$$dir"; \
+		cp $(@D)/snes/$$rom "$(BUNDLED_ROMS_TARGET_DIR)/snes/$$dir/" 2>/dev/null || true; \
 	done
-	cp $(@D)/psx/*.bin   $(BUNDLED_ROMS_TARGET_DIR)/psx/ 2>/dev/null || true
-	cp $(@D)/psx/*.cue   $(BUNDLED_ROMS_TARGET_DIR)/psx/ 2>/dev/null || true
+	mkdir -p "$(BUNDLED_ROMS_TARGET_DIR)/psx/240p Test Suite"
+	cp $(@D)/psx/*.bin "$(BUNDLED_ROMS_TARGET_DIR)/psx/240p Test Suite/" 2>/dev/null || true
+	cp $(@D)/psx/*.cue "$(BUNDLED_ROMS_TARGET_DIR)/psx/240p Test Suite/" 2>/dev/null || true
 endef
 
 $(eval $(generic-package))
