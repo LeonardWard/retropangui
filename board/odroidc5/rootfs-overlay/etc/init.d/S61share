@@ -337,12 +337,19 @@ init_share_dirs() {
         cp -rn "${bundled_bios}/." "${SHARE_MOUNT}/bios/" 2>/dev/null || true
     fi
 
+    # bundled-bgmusic(.mid): 위 bundled-bios와 같은 이유로 sentinel 밖으로 뺌
+    # (2026-07-14) - 예전엔 최초 부팅 1회만 복사했는데, share/music →
+    # share/bios/music 경로 이전 이후 이미 초기화 끝난 기기에서는 sentinel이
+    # 이미 있어 새 경로로 재복사가 영영 안 일어나는 버그였음(실기기 확인 -
+    # ES 배경음악 켜도 재생 안 됨, share/bios/music 폴더가 빈 채로 남아있었음).
+    local bgmusic="/usr/share/retropangui/bundled-bgmusic"
+    if [ -d "${bgmusic}" ]; then
+        cp -n "${bgmusic}"/* "${SHARE_MOUNT}/bios/music/" 2>/dev/null || true
+    fi
+
     local sentinel="${SHARE_MOUNT}/.bundled_initialized"
     if [ ! -f "${sentinel}" ]; then
         command -v rpui-bundlegame >/dev/null 2>&1 && rpui-bundlegame init
-        local bgmusic="/usr/share/retropangui/bundled-bgmusic"
-        [ -d "${bgmusic}" ] && \
-            cp -n "${bgmusic}"/* "${SHARE_MOUNT}/bios/music/" 2>/dev/null || true
         touch "${sentinel}"
         download_extra_roms &
     fi
