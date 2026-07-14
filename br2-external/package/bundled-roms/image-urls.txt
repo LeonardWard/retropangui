@@ -1,4 +1,4 @@
-2048 https://gitlab.com/recalbox/recalbox/-/raw/master/package/recalbox-romfs2/systems/nes/init/roms/media/images/2048%20(tsone).png
+2048 https://raw.githubusercontent.com/mmuszkow/2048-nes/master/screen0.png
 croom https://raw.githubusercontent.com/pinobatch/croom-nes/master/docs/croom_screenshot01.png
 driar https://gitlab.com/recalbox/recalbox/-/raw/master/package/recalbox-romfs2/systems/nes/init/roms/media/images/Driar%20(Stefan%20Adolfsson%20-%20David%20Eriksson).png
 fff https://pubby.games/fff/screenshot1.png

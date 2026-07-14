@@ -151,15 +151,15 @@
     <path>./2048/2048.nes</path>
     <name>2048</name>
     <sortname>2048</sortname>
-    <desc>스마트폰 게임으로 유명한 2048을 NES로 이식한 버전. 타일을 두 개씩 합쳐서 2048을 만드는 것이 목표.</desc>
+    <desc>스마트폰 게임으로 유명한 2048을 NES로 이식한 버전. cc65로 작성됐고, 타일을 두 개씩 합쳐서 2048을 만드는 것이 목표.</desc>
     <image>./2048/image.png</image>
     <video />
     <marquee />
     <thumbnail />
     <rating>0</rating>
-    <releasedate>20140621T000000</releasedate>
-    <developer>tsone</developer>
-    <publisher>tsone</publisher>
+    <releasedate>not-a-date-time</releasedate>
+    <developer>mmuszkow</developer>
+    <publisher>mmuszkow</publisher>
     <genre>퍼즐</genre>
     <players>1</players>
     <favorite>false</favorite>
