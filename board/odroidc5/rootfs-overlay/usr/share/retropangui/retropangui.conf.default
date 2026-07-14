@@ -116,7 +116,10 @@ emulationstation.GamelistViewStyle=detailed
 # 전원을 바로 끄는 기기 특성상 always 권장
 emulationstation.SaveGamelistsMode=always
 
-# 배경 음악 — /retropangui/share/music 의 mp3/ogg/flac/wav/m4a 셔플 재생
+# 배경 음악 — /retropangui/share/bios/music 의 mp3/ogg/flac/wav/m4a 셔플 재생.
+# 이 폴더에 .sf2(사운드폰트)나 MT-32 롬 쌍(*_CONTROL.ROM/*_PCM.ROM)을 넣으면
+# ES 배경음악의 .mid 합성 재료로도 쓰이고, bios/ 하위 전체를 재귀 스캔하는
+# lr-dosbox-pure의 "MIDI Output" 옵션 목록에도 같이 잡힘(둘이 같은 재료 공유).
 emulationstation.BackgroundMusic=true
 
 # 즐겨찾기 컬렉션 표시 여부

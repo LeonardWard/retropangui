@@ -164,7 +164,7 @@ mount_network_directive() {
             ROMS)        mountPoint="${SHARE_MOUNT}/roms" ;;
             SAVES)       mountPoint="${SHARE_MOUNT}/saves" ;;
             BIOS)        mountPoint="${SHARE_MOUNT}/bios" ;;
-            MUSIC)       mountPoint="${SHARE_MOUNT}/music" ;;
+            MUSIC)       mountPoint="${SHARE_MOUNT}/bios/music" ;;
             SCREENSHOTS) mountPoint="${SHARE_MOUNT}/screenshots" ;;
             *)
                 echo "잘못된 대상 '${target}' - sharenetwork_${rawtype}=${directive} 무시" >> "${NETLOG}"
@@ -326,9 +326,9 @@ init_share_dirs() {
         "${SHARE_MOUNT}/roms/dos" \
         "${SHARE_MOUNT}/roms/utility" \
         "${SHARE_MOUNT}/bios" \
+        "${SHARE_MOUNT}/bios/music" \
         "${SHARE_MOUNT}/saves" \
         "${SHARE_MOUNT}/screenshots" \
-        "${SHARE_MOUNT}/music" \
         "${SHARE_MOUNT}/system/emulationstation"
 
     # bundled-bios: 파일 단위로 없는 것만 복사 (sentinel 무관, OTA로 추가되면 자동 반영)
@@ -342,7 +342,7 @@ init_share_dirs() {
         command -v rpui-bundlegame >/dev/null 2>&1 && rpui-bundlegame init
         local bgmusic="/usr/share/retropangui/bundled-bgmusic"
         [ -d "${bgmusic}" ] && \
-            cp -n "${bgmusic}"/* "${SHARE_MOUNT}/music/" 2>/dev/null || true
+            cp -n "${bgmusic}"/* "${SHARE_MOUNT}/bios/music/" 2>/dev/null || true
         touch "${sentinel}"
         download_extra_roms &
     fi
