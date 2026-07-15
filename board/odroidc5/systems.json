@@ -114,7 +114,7 @@
   {
     "name": "pc88",
     "fullname": "NEC PC-8801",
-    "extensions": ".d88 .u88 .m3u .zip .7z",
+    "extensions": ".d88 .u88 .m3u",
     "platform": "pc88",
     "theme": "pc88",
     "cores": [
