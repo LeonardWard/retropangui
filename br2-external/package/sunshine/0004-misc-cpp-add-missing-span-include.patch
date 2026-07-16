@@ -1,0 +1,10 @@
+--- a/src/platform/linux/misc.cpp	2026-07-15 16:47:10.419410624 +0900
++++ b/src/platform/linux/misc.cpp	2026-07-15 16:47:10.815410631 +0900
+@@ -12,6 +12,7 @@
+ #include <fstream>
+ #include <iomanip>
+ #include <iostream>
++#include <span>
+ #include <sstream>
+ 
+ // platform includes

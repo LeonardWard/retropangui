@@ -1,0 +1,34 @@
+--- /dev/null	2026-07-04 07:44:49.224555439 +0900
++++ b/src/vaapi_stub.cpp
+@@ -0,0 +1,21 @@
++/**
++ * @file src/vaapi_stub.cpp
++ * @brief Stub for vaMapBuffer2, absent from this build's libva (2.20.0).
++ *
++ * ffmpeg's prebuilt libavutil.a (hwcontext_vaapi.o) references
++ * vaMapBuffer2 unconditionally, even though this build has
++ * SUNSHINE_ENABLE_VAAPI=OFF and never actually creates a VAAPI
++ * hwcontext. This stub only exists to satisfy the linker; it is
++ * never reachable at runtime.
++ */
++#include <va/va.h>
++
++extern "C" VAStatus vaMapBuffer2(VADisplay dpy, VABufferID buf_id, void **pbuf, uint32_t flags) {
++  (void) dpy;
++  (void) buf_id;
++  (void) flags;
++  if (pbuf) {
++    *pbuf = nullptr;
++  }
++  return VA_STATUS_ERROR_UNIMPLEMENTED;
++}
+--- a/cmake/compile_definitions/common.cmake	2026-07-15 17:48:50.347481597 +0900
++++ b/cmake/compile_definitions/common.cmake	2026-07-15 17:48:51.803481625 +0900
+@@ -58,6 +58,7 @@
+ list(APPEND PLATFORM_TARGET_FILES ${NVENC_SOURCES})
+ 
+ set(SUNSHINE_TARGET_FILES
++        "${CMAKE_SOURCE_DIR}/src/vaapi_stub.cpp"
+         "${CMAKE_SOURCE_DIR}/third-party/moonlight-common-c/src/Input.h"
+         "${CMAKE_SOURCE_DIR}/third-party/moonlight-common-c/src/Rtsp.h"
+         "${CMAKE_SOURCE_DIR}/third-party/moonlight-common-c/src/RtspParser.c"

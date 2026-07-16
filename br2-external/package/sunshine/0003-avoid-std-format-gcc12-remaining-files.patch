@@ -1,0 +1,170 @@
+--- a/src/confighttp.cpp	2026-07-15 16:24:42.067384759 +0900
++++ b/src/confighttp.cpp	2026-07-15 16:24:58.931385083 +0900
+@@ -9,7 +9,6 @@
+ // standard includes
+ #include <algorithm>
+ #include <filesystem>
+-#include <format>
+ #include <fstream>
+ #include <string_view>
+ 
+@@ -433,7 +432,7 @@
+       if (const int max_index = static_cast<int>(apps.size()) - 1; max_index < 0) {
+         error = "No applications found";
+       } else {
+-        error = std::format("'index' {} out of range, max index is {}", index, max_index);
++        error = "'index' " + std::to_string(index) + " out of range, max index is " + std::to_string(max_index);
+       }
+       bad_request(response, request, error);
+       return false;
+@@ -814,7 +813,7 @@
+       proc::refresh(config::stream.file_apps);
+ 
+       output_tree["status"] = true;
+-      output_tree["result"] = std::format("application {} deleted", index);
++      output_tree["result"] = "application " + std::to_string(index) + " deleted";
+       send_response(response, output_tree);
+     } catch (std::exception &e) {
+       BOOST_LOG(warning) << "DeleteApp: "sv << e.what();
+--- a/src/entry_handler.cpp	2026-07-15 16:24:42.067384759 +0900
++++ b/src/entry_handler.cpp	2026-07-15 16:25:12.823385349 +0900
+@@ -4,7 +4,6 @@
+  */
+ // standard includes
+ #include <csignal>
+-#include <format>
+ #include <iostream>
+ #include <thread>
+ 
+@@ -27,7 +26,7 @@
+ using namespace std::literals;
+ 
+ void launch_ui(const std::optional<std::string> &path) {
+-  std::string url = std::format("https://localhost:{}", static_cast<int>(net::map_port(confighttp::PORT_HTTPS)));
++  std::string url = "https://localhost:" + std::to_string(static_cast<int>(net::map_port(confighttp::PORT_HTTPS)));
+   if (path) {
+     url += *path;
+   }
+--- a/src/nvhttp.cpp	2026-07-15 16:24:42.071384759 +0900
++++ b/src/nvhttp.cpp	2026-07-15 16:24:58.931385083 +0900
+@@ -7,7 +7,6 @@
+ 
+ // standard includes
+ #include <filesystem>
+-#include <format>
+ #include <string>
+ #include <utility>
+ 
+@@ -644,7 +643,7 @@
+       tree.put("root.<xmlattr>.status_code", 400);
+       tree.put(
+         "root.<xmlattr>.status_message",
+-        std::format("Pin must be 4 digits, {} provided", pin.size())
++        "Pin must be 4 digits, " + std::to_string(pin.size()) + " provided"
+       );
+       return false;
+     }
+@@ -915,12 +914,10 @@
+     tree.put("root.<xmlattr>.status_code", 200);
+     tree.put(
+       "root.sessionUrl0",
+-      std::format(
+-        "{}{}:{}",
+-        launch_session->rtsp_url_scheme,
+-        net::addr_to_url_escaped_string(request->local_endpoint().address()),
+-        static_cast<int>(net::map_port(rtsp_stream::RTSP_SETUP_PORT))
+-      )
++      launch_session->rtsp_url_scheme +
++        net::addr_to_url_escaped_string(request->local_endpoint().address()) +
++        ":" +
++        std::to_string(static_cast<int>(net::map_port(rtsp_stream::RTSP_SETUP_PORT)))
+     );
+     tree.put("root.gamesession", 1);
+ 
+@@ -1009,12 +1006,10 @@
+     tree.put("root.<xmlattr>.status_code", 200);
+     tree.put(
+       "root.sessionUrl0",
+-      std::format(
+-        "{}{}:{}",
+-        launch_session->rtsp_url_scheme,
+-        net::addr_to_url_escaped_string(request->local_endpoint().address()),
+-        static_cast<int>(net::map_port(rtsp_stream::RTSP_SETUP_PORT))
+-      )
++      launch_session->rtsp_url_scheme +
++        net::addr_to_url_escaped_string(request->local_endpoint().address()) +
++        ":" +
++        std::to_string(static_cast<int>(net::map_port(rtsp_stream::RTSP_SETUP_PORT)))
+     );
+     tree.put("root.resume", 1);
+ 
+--- a/src/rtsp.cpp	2026-07-15 16:24:42.071384759 +0900
++++ b/src/rtsp.cpp	2026-07-15 16:24:58.931385083 +0900
+@@ -12,7 +12,6 @@
+ // standard includes
+ #include <array>
+ #include <cctype>
+-#include <format>
+ #include <set>
+ #include <unordered_map>
+ #include <utility>
+@@ -872,7 +871,7 @@
+     session_option.next = &port_option;
+ 
+     // Moonlight merely requires 'server_port=<port>'
+-    auto port_value = std::format("server_port={}", static_cast<int>(port));
++    auto port_value = "server_port=" + std::to_string(static_cast<int>(port));
+ 
+     port_option.option = const_cast<char *>("Transport");
+     port_option.content = port_value.data();
+--- a/src/nvenc/nvenc_base.cpp	2026-07-15 16:24:42.075384759 +0900
++++ b/src/nvenc/nvenc_base.cpp	2026-07-15 16:24:58.931385083 +0900
+@@ -5,9 +5,6 @@
+ // this include
+ #include "nvenc_base.h"
+ 
+-// standard includes
+-#include <format>
+-
+ // local includes
+ #include "src/config.h"
+ #include "src/logging.h"
+@@ -471,7 +468,7 @@
+         extra += " two-pass";
+       }
+       if (config.vbv_percentage_increase > 0 && get_encoder_cap(NV_ENC_CAPS_SUPPORT_CUSTOM_VBV_BUF_SIZE)) {
+-        extra += std::format(" vbv+{}", config.vbv_percentage_increase);
++        extra += " vbv+" + std::to_string(config.vbv_percentage_increase);
+       }
+       if (encoder_params.rfi) {
+         extra += " rfi";
+@@ -483,7 +480,7 @@
+         extra += " spatial-aq";
+       }
+       if (enc_config.rcParams.enableMinQP) {
+-        extra += std::format(" qpmin={}", enc_config.rcParams.minQP.qpInterP);
++        extra += " qpmin=" + std::to_string(enc_config.rcParams.minQP.qpInterP);
+       }
+       if (config.insert_filler_data) {
+         extra += " filler-data";
+--- a/src/platform/linux/input/inputtino_gamepad.cpp	2026-07-15 16:24:42.079384759 +0900
++++ b/src/platform/linux/input/inputtino_gamepad.cpp	2026-07-15 16:24:58.931385083 +0900
+@@ -3,6 +3,7 @@
+  * @brief Definitions for inputtino gamepad input handling.
+  */
+ // lib includes
++#include <cstdio>
+ #include <boost/locale.hpp>
+ #include <inputtino/input.hpp>
+ #include <libevdev/libevdev.h>
+@@ -48,7 +49,9 @@
+ 
+     if (!config::input.ds5_inputtino_randomize_mac && globalIndex >= 0 && globalIndex <= 255) {
+       // Generate private virtual device MAC based on gamepad globalIndex between 0 (00) and 255 (ff)
+-      device_mac = std::format("02:00:00:00:00:{:02x}", globalIndex);
++      char mac_suffix[3];
++      std::snprintf(mac_suffix, sizeof(mac_suffix), "%02x", globalIndex);
++      device_mac = std::string("02:00:00:00:00:") + mac_suffix;
+     }
+ 
+     return inputtino::PS5Joypad::create({.name = inputtino_name_for_seat("Sunshine PS5 (virtual) pad"sv), .vendor_id = 0x054C, .product_id = 0x0CE6, .version = 0x8111, .device_phys = device_mac, .device_uniq = device_mac});

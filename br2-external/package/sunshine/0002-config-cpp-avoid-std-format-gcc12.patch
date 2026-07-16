@@ -1,0 +1,23 @@
+--- a/src/config.cpp
++++ b/src/config.cpp
+@@ -5,7 +5,6 @@
+ // standard includes
+ #include <algorithm>
+ #include <filesystem>
+-#include <format>
+ #include <fstream>
+ #include <functional>
+ #include <iostream>
+@@ -1324,9 +1323,9 @@
+     // Now that we have the port, add web UI port-specific origins to CSRF allowed list
+     // Web UI runs on port + 1 (PORT_HTTPS offset is 1 for confighttp)
+     const unsigned short web_ui_port = sunshine.port + 1;
+-    sunshine.csrf_allowed_origins.push_back(std::format("https://localhost:{}", web_ui_port));
+-    sunshine.csrf_allowed_origins.push_back(std::format("https://127.0.0.1:{}", web_ui_port));
+-    sunshine.csrf_allowed_origins.push_back(std::format("https://[::1]:{}", web_ui_port));
++    sunshine.csrf_allowed_origins.push_back("https://localhost:" + std::to_string(web_ui_port));
++    sunshine.csrf_allowed_origins.push_back("https://127.0.0.1:" + std::to_string(web_ui_port));
++    sunshine.csrf_allowed_origins.push_back("https://[::1]:" + std::to_string(web_ui_port));
+
+     string_restricted_f(vars, "address_family", sunshine.address_family, {"ipv4"sv, "both"sv});
+     string_f(vars, "bind_address", sunshine.bind_address);

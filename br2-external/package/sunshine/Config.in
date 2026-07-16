@@ -1,0 +1,17 @@
+config BR2_PACKAGE_SUNSHINE
+	bool "sunshine"
+	depends on BR2_PACKAGE_LIBDRM
+	depends on BR2_TOOLCHAIN_HAS_THREADS
+	select BR2_PACKAGE_LIBMINIUPNPC
+	select BR2_PACKAGE_OPUS
+	select BR2_PACKAGE_LIBEVDEV
+	select BR2_PACKAGE_NUMACTL
+	select BR2_PACKAGE_JSON_FOR_MODERN_CPP
+	help
+	  Sunshine is a self-hosted game stream host for Moonlight,
+	  built with DRM/KMS-only capture (no X11/Wayland/VAAPI/Vulkan/
+	  CUDA/tray - odroidc5 minimal build). Software x264 encoding
+	  only in this configuration (no hardware encoder integration -
+	  that is tracked separately).
+
+	  https://github.com/LizardByte/Sunshine
