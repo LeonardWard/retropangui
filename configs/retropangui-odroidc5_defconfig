@@ -229,22 +229,22 @@ BR2_PACKAGE_ODROID_DRM_FBSET=y
 BR2_PACKAGE_RPUI_WIFI=y
 BR2_PACKAGE_RPUI_BT=y
 
-# 2026-07-15: 원격 스트리밍 1차 빌드 시도 (todo-20260709-remote-streaming.html)
-BR2_PACKAGE_SUNSHINE=y
-# Sunshine Linux 빌드는 SUNSHINE_ENABLE_* 플래그와 무관하게 pulse/pulse-simple을
-# 무조건 링크함(cmake/compile_definitions/linux.cmake) - 별도 옵션 없음. ALSA를
-# 쓰는 이 프로젝트엔 pulse 서버를 실제로 띄울 필요 없어 DAEMON 서브옵션은 끔 -
-# 클라이언트 라이브러리+헤더만 있으면 컴파일/링크 가능.
-BR2_PACKAGE_PULSEAUDIO=y
-# BR2_PACKAGE_PULSEAUDIO_DAEMON is not set
-# LizardByte의 사전빌드 정적 ffmpeg(Linux-aarch64-ffmpeg.tar.gz)는 VAAPI/X11
-# 하드웨어 가속 지원까지 포함해서 빌드돼 있어 libavutil.a에 vaGetDisplayAttributes
-# 등 va/X11 심볼이 undefined로 걸려있음(nm -u로 실측 확인) - Sunshine 쪽
-# SUNSHINE_ENABLE_VAAPI=OFF/ENABLE_X11=OFF라 실제로 그 경로가 호출되진 않지만,
-# 정적 라이브러리 링크 시점엔 심볼 해석용으로 libva/libX11 .so가 그냥 존재만
-# 하면 됨 - 실제 VAAPI 가속이나 X11 세션을 이 기기에서 쓰겠다는 게 아님.
-BR2_PACKAGE_XORG7=y
-BR2_PACKAGE_LIBVA=y
+# 2026-07-16: 원격 스트리밍(todo-20260709-remote-streaming.html) 빌드에서 제외.
+# 소프트웨어 x264 경로는 실기기에서 크래시 확정(Sunshine의 GLAD 바인딩이 데스크탑
+# GL 4.6으로 고정 생성돼 이 보드의 GLES 전용 Mali 드라이버와 함수 포인터 수준에서
+# 안 맞음 - NULL 함수 포인터 호출로 SIGSEGV, LD_PRELOAD 트랩으로 확인).
+# Vulkan 우회도 막힘(Mali-G310 드라이버에 VK_KHR_video_encode_queue 등 video 확장
+# 자체가 없음, vulkaninfo 대체 프로그램으로 직접 확인). Amlogic 자체 하드웨어
+# 인코더(amvenc_multi)도 커널 드라이버는 있으나 C5(S905X5M)용 devicetree에
+# "cnm, MultiEnc" 노드 자체가 없음(T7/C2/C1 계열 SoC에만 있음) - 처음부터
+# 새로 만들어야 하는 수준이라 이번 범위 밖. 이 프로젝트 본질(레트로 게이밍)과
+# 거리가 있는 별도 컴포넌트라 여기서 접음 - 소스/패키지 정의는 유지, 나중에
+# 재검토 가능.
+# BR2_PACKAGE_SUNSHINE=y
+# 아래는 Sunshine 링크 전용 의존성이라 같이 비활성화.
+# BR2_PACKAGE_PULSEAUDIO=y
+# BR2_PACKAGE_XORG7=y
+# BR2_PACKAGE_LIBVA=y
 
 # Kodi Media Center (GBM/GLES2, KMS/DRM)
 BR2_PACKAGE_KODI_PANGUI=y
