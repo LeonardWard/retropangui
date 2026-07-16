@@ -1,0 +1,38 @@
+--- a/src/video.cpp
++++ b/src/video.cpp
+@@ -2732,6 +2732,15 @@
+         encoder.h264[encoder_t::YUV444] = false;
+       }
+ 
++      // RetroPangUI 2026-07-16: HDR은 HEVC/AV1에서만 의미가 있고(H.264는 위에서
++      // 이미 무조건 DYNAMIC_RANGE=false), test_hevc/test_av1이 둘 다 꺼진
++      // 인코더(예: software/libx264, H.264 전용)라면 이 블록은 애초에
++      // 아무 것도 검증하지 않고 그냥 reset_display()만 한 번 더 태움 -
++      // 이 보드에서 그 재오픈이 Amlogic 벤더 DRM 드라이버 특성으로 실패해
++      // (기존 disp는 정상인데도) 이미 성공한 h264 검증 결과 전체를 무효화
++      // 시키는 원인이었음(2026-07-16 실기기 확인). HEVC/AV1을 안 쓰는
++      // 경우엔 이 재오픈을 건너뛰어 그 문제를 회피.
++      if (test_hevc || test_av1) {
+       const config_t generic_hdr_config = {1920, 1080, 60, 6000, 1000, 1, 0, 3, 1, 1, 0};
+ 
+       // Reset the display since we're switching from SDR to HDR
+@@ -2769,13 +2778,16 @@
+         }
+       };
+ 
+-      // HDR is not supported with H.264. Don't bother even trying it.
+-      encoder.h264[encoder_t::DYNAMIC_RANGE] = false;
+-
+       test_hdr_and_yuv444(encoder.hevc, 1);
+       test_hdr_and_yuv444(encoder.av1, 2);
++      }
+     }
+ 
++    // HDR is not supported with H.264. Don't bother even trying it.
++    // (test_hevc/test_av1이 둘 다 꺼져 위 블록 자체를 건너뛴 경우에도
++    // capabilities.set()의 기본값(true)이 남지 않도록 항상 실행)
++    encoder.h264[encoder_t::DYNAMIC_RANGE] = false;
++
+     encoder.h264[encoder_t::VUI_PARAMETERS] = encoder.h264[encoder_t::VUI_PARAMETERS] && !config::sunshine.flags[config::flag::FORCE_VIDEO_HEADER_REPLACE];
+     encoder.hevc[encoder_t::VUI_PARAMETERS] = encoder.hevc[encoder_t::VUI_PARAMETERS] && !config::sunshine.flags[config::flag::FORCE_VIDEO_HEADER_REPLACE];
+ 
