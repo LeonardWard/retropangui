@@ -88,7 +88,8 @@
     "platform": "psx",
     "theme": "psx",
     "cores": [
-      { "name": "pcsx_rearmed", "fullname": "PCSX ReARMed", "module_id": "lr-pcsx-rearmed", "priority": 1 }
+      { "name": "pcsx_rearmed", "fullname": "PCSX ReARMed", "module_id": "lr-pcsx-rearmed", "priority": 1 },
+      { "name": "beetle_psx_hw", "fullname": "Beetle PSX HW", "module_id": "lr-beetle-psx-hw", "priority": 2 }
     ]
   },
   {
