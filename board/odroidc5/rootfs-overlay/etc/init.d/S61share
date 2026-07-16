@@ -141,6 +141,22 @@ wait_for_network() {
 #   nfs/smb 포맷: <SHARE|ROMS|SAVES|BIOS|MUSIC|SCREENSHOTS>@host:경로[:마운트옵션]
 #   cmd 포맷: mount 명령 그대로
 # 반환값: 0=성공, 1=실패(재시도 대상), 2=입력 오류(재시도 안 함)
+# target 키워드(SHARE/ROMS/SAVES/BIOS/MUSIC/SCREENSHOTS) → 마운트포인트 경로.
+# mount/umount 양쪽에서 재사용 - 대소문자 안 가림(2026-07-11 이유는 아래 유지).
+# 실패 시 아무것도 echo 안 하고 return 1.
+_network_target_mountpoint() {
+    local target="$1"
+    case "${target}" in
+        SHARE)       echo "${SHARE_MOUNT}" ;;
+        ROMS)        echo "${SHARE_MOUNT}/roms" ;;
+        SAVES)       echo "${SHARE_MOUNT}/saves" ;;
+        BIOS)        echo "${SHARE_MOUNT}/bios" ;;
+        MUSIC)       echo "${SHARE_MOUNT}/music" ;;
+        SCREENSHOTS) echo "${SHARE_MOUNT}/screenshots" ;;
+        *)           return 1 ;;
+    esac
+}
+
 mount_network_directive() {
     local rawtype="$1" directive="$2"
     local directiveType target remoteHost remotePath mountOptions mountPoint cmd
@@ -159,18 +175,11 @@ mount_network_directive() {
         # 소문자로 적어서 조용히 거부당하는 사용자가 있어서 2026-07-11 추가.
         # 호스트/경로/mount 옵션은 원래 대소문자 그대로 유지(계정명 등에
         # 대소문자가 의미 있을 수 있어서 여긴 안 건드림).
-        case "${target}" in
-            SHARE)       mountPoint="${SHARE_MOUNT}" ;;
-            ROMS)        mountPoint="${SHARE_MOUNT}/roms" ;;
-            SAVES)       mountPoint="${SHARE_MOUNT}/saves" ;;
-            BIOS)        mountPoint="${SHARE_MOUNT}/bios" ;;
-            MUSIC)       mountPoint="${SHARE_MOUNT}/music" ;;
-            SCREENSHOTS) mountPoint="${SHARE_MOUNT}/screenshots" ;;
-            *)
-                echo "잘못된 대상 '${target}' - sharenetwork_${rawtype}=${directive} 무시" >> "${NETLOG}"
-                return 2
-                ;;
-        esac
+        mountPoint=$(_network_target_mountpoint "${target}")
+        if [ -z "${mountPoint}" ]; then
+            echo "잘못된 대상 '${target}' - sharenetwork_${rawtype}=${directive} 무시" >> "${NETLOG}"
+            return 2
+        fi
 
         case "${directiveType}" in
             nfs)
@@ -242,6 +251,40 @@ mount_network_shares() {
             logger -t "${TAG}" "네트워크 공유 마운트 실패: sharenetwork_${rawtype} (로그: ${NETLOG})"
         fi
     done
+}
+
+# 2026-07-16: 네트워크 공유(nfs/cifs) 마운트를 네트워크 인터페이스가 아직
+# 살아있는 시점에 먼저 해제하기 위한 전용 함수 - S67rpui-network-unmount가
+# 종료 시퀀스 중 S64rpui-wifi(WiFi 링크를 실제로 끊음)보다 먼저 호출함.
+# 실기기에서 재부팅이 "nfs: server ... not responding, timed out"로
+# 무한정 멈추는 사고가 있었음 - 원인: rcK가 S 번호 역순으로 정지시키는데
+# S64rpui-wifi가 S61share보다 먼저 정지되면서 WiFi 연결이 끊긴 뒤에야
+# S61share stop이 NFS umount를 시도했고, hard 마운트(의도적으로 유지 -
+# 원격 NAS 응답이 일시적으로 늦어도 데이터 정합성을 우선하기로 결정)라
+# 서버 무응답 시 영원히 재시도하며 대기했음.
+#
+# Recalbox(S11share stop) 구현을 참고해 boot.conf 파싱이 아니라 실제
+# /proc/mounts 상태 기준으로 처리 - boot.conf 문법과 무관하게 그 시점에
+# 실제로 걸려있는 네트워크 마운트를 전부 잡아내고, fuser로 열린 파일
+# 핸들부터 정리한 뒤 타입 단위로 일괄 umount함(개별 마운트포인트를
+# boot.conf에서 역산하는 것보다 견고함). Recalbox는 "nfs cifs"만 훑는데
+# 이 프로젝트는 NFSv4.1을 쓰므로 /proc/mounts에 타입이 "nfs4"로 찍힘
+# (실기기 확인) - 빠뜨리면 이 함수가 하나 마나이므로 반드시 포함.
+umount_network_shares() {
+    local fstype fs_dir
+    for fstype in nfs nfs4 cifs; do
+        awk -v t="${fstype}" '$3 == t { print $2 }' /proc/mounts | while read -r fs_dir; do
+            # 열린 파일 핸들 보유 프로세스 정리: SIGTERM 먼저(정상 종료 기회),
+            # 그래도 남아있으면 SIGKILL - Recalbox의 kill_process_from_dir와 동일 패턴
+            fuser -s -m -k -15 "${fs_dir}" 2>/dev/null && sleep 1
+            fuser -s -m -k -9  "${fs_dir}" 2>/dev/null
+        done
+        # 타입 단위 일괄 umount. -f(force)는 busybox 도움말에 "unreachable
+        # NFS server" 대응용으로 명시돼 있음 - fuser 정리 후에도 커널에
+        # pending RPC가 남아있는 경우까지 대비.
+        umount -a -t "${fstype}" 2>>"${NETLOG}" || umount -a -t "${fstype}" -f 2>>"${NETLOG}" || true
+    done
+    logger -t "${TAG}" "네트워크 공유 선제 언마운트 완료(nfs/nfs4/cifs)"
 }
 
 # 단일 파일 다운로드 — 실패하거나 0바이트이면 파일 삭제
@@ -514,6 +557,15 @@ case "$1" in
 
     stop)
         umount "${SHARE_MOUNT}" 2>/dev/null || true
+        ;;
+
+    # 2026-07-16: 종료 시퀀스에서 네트워크 인터페이스가 내려가기 전에
+    # S67rpui-network-unmount가 호출하는 전용 서브커맨드 - 위 umount_network_shares
+    # 설명 참고. 일반 stop과 분리한 이유: stop은 S61share 본연의 정지
+    # 순서(S64rpui-wifi보다 늦음)에 그대로 두고, 네트워크 언마운트만
+    # 시점을 앞당겨야 해서 별도 진입점이 필요했음.
+    network-stop)
+        umount_network_shares
         ;;
 
     restart|reload)

@@ -1,0 +1,11 @@
+config BR2_PACKAGE_LIBRETRO_CORE_YABASANSHIRO
+	bool "libretro-core-yabasanshiro"
+	help
+	  yabasanshiro libretro core - Sega Saturn (Yabause 계열, OpenGL/GLES
+	  가속, beetle_saturn보다 낮은 정확도 대신 빠른 속도·내부 해상도 업스케일).
+
+	  주의(상류 공식 안내): "outdated, 이슈 많음, unmaintained - 가능하면
+	  다른 새턴 코어 권장." 이 프로젝트는 이미 beetle_saturn(1순위)·
+	  kronos(2순위)가 있음 - 이 코어는 실험용 3순위.
+
+	  https://github.com/libretro/yabause (브랜치: yabasanshiro)

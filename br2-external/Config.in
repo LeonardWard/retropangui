@@ -29,6 +29,10 @@ source "$BR2_EXTERNAL_C5_PANGUI_PATH/package/libretro-core-mupen64plus-next/Conf
 source "$BR2_EXTERNAL_C5_PANGUI_PATH/package/libretro-core-parallel-n64/Config.in"
 source "$BR2_EXTERNAL_C5_PANGUI_PATH/package/libretro-core-ppsspp/Config.in"
 source "$BR2_EXTERNAL_C5_PANGUI_PATH/package/libretro-core-kronos/Config.in"
+source "$BR2_EXTERNAL_C5_PANGUI_PATH/package/libretro-core-beetle-pce/Config.in"
+source "$BR2_EXTERNAL_C5_PANGUI_PATH/package/libretro-core-beetle-supergrafx/Config.in"
+source "$BR2_EXTERNAL_C5_PANGUI_PATH/package/libretro-core-beetle-bsnes/Config.in"
+source "$BR2_EXTERNAL_C5_PANGUI_PATH/package/libretro-core-yabasanshiro/Config.in"
 source "$BR2_EXTERNAL_C5_PANGUI_PATH/package/kodi-pangui-texturepacker/Config.in"
 source "$BR2_EXTERNAL_C5_PANGUI_PATH/package/kodi-pangui/Config.in"
 source "$BR2_EXTERNAL_C5_PANGUI_PATH/package/kodi-peripheral-joystick-pangui/Config.in"
@@ -41,3 +45,6 @@ source "$BR2_EXTERNAL_C5_PANGUI_PATH/package/uim/Config.in"
 source "$BR2_EXTERNAL_C5_PANGUI_PATH/package/kmscon/Config.in"
 source "$BR2_EXTERNAL_C5_PANGUI_PATH/package/odroid-drm-fbset/Config.in"
 source "$BR2_EXTERNAL_C5_PANGUI_PATH/package/bundled-fonts/Config.in"
+# 2026-07-15: 원격 스트리밍(todo-20260709-remote-streaming.html) br2-external
+# 빌드 시도 - 소프트웨어 x264 파이프라인 1차 검증용, 하드웨어 인코더 연동 없음
+source "$BR2_EXTERNAL_C5_PANGUI_PATH/package/sunshine/Config.in"

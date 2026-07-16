@@ -28,7 +28,8 @@
     "platform": "snes",
     "theme": "snes",
     "cores": [
-      { "name": "snes9x", "fullname": "Snes9x", "module_id": "lr-snes9x", "priority": 1 }
+      { "name": "snes9x", "fullname": "Snes9x", "module_id": "lr-snes9x", "priority": 1 },
+      { "name": "beetle_bsnes", "fullname": "Beetle bsnes", "module_id": "lr-beetle-bsnes", "priority": 2 }
     ]
   },
   {
@@ -88,8 +89,7 @@
     "platform": "psx",
     "theme": "psx",
     "cores": [
-      { "name": "pcsx_rearmed", "fullname": "PCSX ReARMed", "module_id": "lr-pcsx-rearmed", "priority": 1 },
-      { "name": "beetle_psx_hw", "fullname": "Beetle PSX HW", "module_id": "lr-beetle-psx-hw", "priority": 2 }
+      { "name": "pcsx_rearmed", "fullname": "PCSX ReARMed", "module_id": "lr-pcsx-rearmed", "priority": 1 }
     ]
   },
   {
@@ -140,7 +140,8 @@
     "theme": "saturn",
     "cores": [
       { "name": "kronos", "fullname": "Kronos (GL 가속)", "module_id": "lr-kronos", "priority": 2 },
-      { "name": "beetle_saturn", "fullname": "Beetle Saturn", "module_id": "lr-beetle-saturn", "priority": 1 }
+      { "name": "beetle_saturn", "fullname": "Beetle Saturn", "module_id": "lr-beetle-saturn", "priority": 1 },
+      { "name": "yabasanshiro", "fullname": "YabaSanshiro", "module_id": "lr-yabasanshiro", "priority": 3 }
     ]
   },
   {

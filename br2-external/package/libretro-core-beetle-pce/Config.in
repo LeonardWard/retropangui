@@ -1,0 +1,7 @@
+config BR2_PACKAGE_LIBRETRO_CORE_BEETLE_PCE
+	bool "libretro-core-beetle-pce"
+	help
+	  beetle_pce libretro core - PC Engine/TurboGrafx-16 (Mednafen 기반,
+	  CD-ROM2 + SuperGrafx 지원, 소프트웨어 렌더링).
+
+	  https://github.com/libretro/beetle-pce-libretro

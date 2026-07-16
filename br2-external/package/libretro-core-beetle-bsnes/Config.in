@@ -1,0 +1,11 @@
+config BR2_PACKAGE_LIBRETRO_CORE_BEETLE_BSNES
+	bool "libretro-core-beetle-bsnes"
+	help
+	  beetle_bsnes libretro core - SNES/Famicom (Mednafen이 이식한 구버전
+	  bsnes 0.59 포크, 소프트웨어 렌더링).
+
+	  주의(상류 공식 안내): "더 이상 쓸 이유가 없음 - Snes9x나 Supafaust가
+	  더 빠르고, 이후 bsnes 포크나 Mesen-S가 더 정확함." 이 프로젝트는
+	  이미 snes9x가 1순위로 있음 - 이 코어는 대체/실험용 2순위.
+
+	  https://github.com/libretro/beetle-bsnes-libretro

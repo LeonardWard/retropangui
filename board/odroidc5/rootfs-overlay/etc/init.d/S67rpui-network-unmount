@@ -1,0 +1,41 @@
+#!/bin/sh
+# S67rpui-network-unmount - 네트워크 공유(NFS/CIFS)를 인터페이스가 내려가기
+# 전에 먼저 언마운트하기 위한 정지 전용 스크립트.
+#
+# 마운트(start)는 S61share가 전담 - 이 스크립트는 아무것도 안 함(no-op).
+# 오직 종료 시퀀스의 정지 "순서"만 조정하는 목적: rcK는 /etc/init.d/S??*를
+# 알파벳(=번호) 역순으로 정지시키는데, S64rpui-wifi는 정지 시 WiFi가
+# 연결돼 있으면 wpa_supplicant/udhcpc를 죽여 실제로 링크를 끊는다
+# (rpui-wifi.c의 stop_wifi_link 참고). S61share의 stop은 번호상 S64보다
+# 나중에 실행되므로, WiFi 연결 상태에서 재부팅/종료하면 네트워크가 이미
+# 끊긴 뒤에 NFS umount를 시도하게 됨 - hard 마운트(의도적으로 유지, 원격
+# NAS 응답 지연보다 데이터 정합성 우선)라 서버 무응답 시 영원히 재시도
+# 하며 전체 종료 시퀀스가 멈추는 사고가 실기기에서 실제로 있었음
+# (SSH root@retropangui-c5.lan, 2026-07-16, 마지막 커널 로그
+# "nfs: server ... not responding, timed out" 후 강제 전원 차단으로 복구).
+#
+# S61share의 시작 순서 자체는 못 바꿈 - rpui-wifi가 wifi.conf를 share
+# 파티션에서 읽어야 해서 반드시 S61share(마운트) 이후에 시작돼야 하는
+# 제약이 있음(정지도 같은 번호로 묶여 있어 시작을 그대로 두면 정지도
+# 그대로 묶임). 그래서 S64보다 큰 번호의 새 파일로 "정지 순서만" 분리.
+#
+# Batocera(S08connman < S11share)는 애초에 번호 자체로 이 순서를 보장하고,
+# Recalbox는 커스텀 네트워크 종료 데몬이 없어 이 문제 자체가 없음 - 이
+# 프로젝트는 rpui-wifi가 종료 시 링크를 직접 끊는 자체 제작 데몬이라 이
+# 문제만 별도로 풀어야 했음.
+
+case "$1" in
+    start)
+        ;;
+    stop)
+        /etc/init.d/S61share network-stop
+        ;;
+    restart|reload)
+        ;;
+    *)
+        echo "Usage: $0 {start|stop|restart}"
+        exit 1
+        ;;
+esac
+
+exit 0

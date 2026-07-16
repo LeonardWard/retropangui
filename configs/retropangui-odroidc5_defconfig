@@ -172,7 +172,10 @@ BR2_PACKAGE_LIBRETRO_CORE_FCEUMM=y
 BR2_PACKAGE_LIBRETRO_CORE_NESTOPIA=y
 BR2_PACKAGE_LIBRETRO_CORE_SNES9X=y
 BR2_PACKAGE_LIBRETRO_CORE_PCSX_REARMED=y
-BR2_PACKAGE_LIBRETRO_CORE_BEETLE_PSX_HW=y
+# 2026-07-16: 실기기 검증(Saru! Get You! 등) 결과 버퍼링으로 C5에서 실사용
+# 무리 - 소스/패키지 정의는 유지, 빌드에서만 비활성화(todo-core-lr-beetle-psx-hw.html).
+# 다른 타겟(GPU 여유 있는 임베디드/PC)에서는 다시 켤 수 있음.
+# BR2_PACKAGE_LIBRETRO_CORE_BEETLE_PSX_HW=y
 BR2_PACKAGE_LIBRETRO_CORE_PICODRIVE=y
 BR2_PACKAGE_LIBRETRO_CORE_BLUEMSX=y
 BR2_PACKAGE_LIBRETRO_CORE_DOSBOX_PURE=y
@@ -184,6 +187,12 @@ BR2_PACKAGE_LIBRETRO_CORE_MUPEN64PLUS_NEXT=y
 BR2_PACKAGE_LIBRETRO_CORE_PARALLEL_N64=y
 BR2_PACKAGE_LIBRETRO_CORE_PPSSPP=y
 BR2_PACKAGE_LIBRETRO_CORE_KRONOS=y
+BR2_PACKAGE_LIBRETRO_CORE_BEETLE_BSNES=y
+BR2_PACKAGE_LIBRETRO_CORE_YABASANSHIRO=y
+# 2026-07-16: PCE/SuperGrafx는 이 프로젝트에 시스템 자체가 아직 없음
+# (롬 폴더·테마 온보딩 별도 필요) - 코어 패키지만 준비, 이번엔 비활성화.
+# BR2_PACKAGE_LIBRETRO_CORE_BEETLE_PCE=y
+# BR2_PACKAGE_LIBRETRO_CORE_BEETLE_SUPERGRAFX=y
 
 # EmulationStation
 BR2_PACKAGE_EMULATIONSTATION=y
@@ -201,6 +210,23 @@ BR2_PACKAGE_STORAGE_MGR=y
 BR2_PACKAGE_ODROID_DRM_FBSET=y
 BR2_PACKAGE_RPUI_WIFI=y
 BR2_PACKAGE_RPUI_BT=y
+
+# 2026-07-15: 원격 스트리밍 1차 빌드 시도 (todo-20260709-remote-streaming.html)
+BR2_PACKAGE_SUNSHINE=y
+# Sunshine Linux 빌드는 SUNSHINE_ENABLE_* 플래그와 무관하게 pulse/pulse-simple을
+# 무조건 링크함(cmake/compile_definitions/linux.cmake) - 별도 옵션 없음. ALSA를
+# 쓰는 이 프로젝트엔 pulse 서버를 실제로 띄울 필요 없어 DAEMON 서브옵션은 끔 -
+# 클라이언트 라이브러리+헤더만 있으면 컴파일/링크 가능.
+BR2_PACKAGE_PULSEAUDIO=y
+# BR2_PACKAGE_PULSEAUDIO_DAEMON is not set
+# LizardByte의 사전빌드 정적 ffmpeg(Linux-aarch64-ffmpeg.tar.gz)는 VAAPI/X11
+# 하드웨어 가속 지원까지 포함해서 빌드돼 있어 libavutil.a에 vaGetDisplayAttributes
+# 등 va/X11 심볼이 undefined로 걸려있음(nm -u로 실측 확인) - Sunshine 쪽
+# SUNSHINE_ENABLE_VAAPI=OFF/ENABLE_X11=OFF라 실제로 그 경로가 호출되진 않지만,
+# 정적 라이브러리 링크 시점엔 심볼 해석용으로 libva/libX11 .so가 그냥 존재만
+# 하면 됨 - 실제 VAAPI 가속이나 X11 세션을 이 기기에서 쓰겠다는 게 아님.
+BR2_PACKAGE_XORG7=y
+BR2_PACKAGE_LIBVA=y
 
 # Kodi Media Center (GBM/GLES2, KMS/DRM)
 BR2_PACKAGE_KODI_PANGUI=y

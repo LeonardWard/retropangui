@@ -162,6 +162,45 @@ else
 fi
 rm -rf "${TMPDIR}"
 
+# 2026-07-16: 코어 등록 일관성 검증(todo-20260716-core-registration-check.html) -
+# lr-beetle-psx-hw가 defconfig엔 켜져 빌드는 됐지만 systems.json 미등록으로
+# ES 코어 선택 메뉴에 안 뜬 사고에서 발단. defconfig(BR2_PACKAGE_LIBRETRO_CORE_*)
+# ↔ systems.json(module_id) 양방향 비교 - 불일치는 빌드를 막지 않고 눈에 띄게
+# 경고만 함(module_id 명명 규칙에 예외가 나올 수 있어 강제 실패는 아직 이름).
+echo ">>> 코어 등록 일관성 검증 중..."
+if [ -n "${BR2_CONFIG}" ] && [ -f "${BR2_CONFIG}" ]; then
+    python3 - "${BR2_CONFIG}" "${BOARD_DIR}/systems.json" << 'PYEOF'
+import json, re, sys
+config_file, systems_file = sys.argv[1], sys.argv[2]
+
+defconfig_modids = set()
+with open(config_file) as f:
+    for line in f:
+        m = re.match(r'^BR2_PACKAGE_LIBRETRO_CORE_(.+)=y$', line.strip())
+        if m:
+            defconfig_modids.add('lr-' + m.group(1).lower().replace('_', '-'))
+
+with open(systems_file) as f:
+    systems = json.load(f)
+systemsjson_modids = {c['module_id'] for s in systems for c in s.get('cores', [])}
+
+only_in_defconfig = sorted(defconfig_modids - systemsjson_modids)
+only_in_systemsjson = sorted(systemsjson_modids - defconfig_modids)
+
+if only_in_defconfig or only_in_systemsjson:
+    print(">>> ⚠️  경고: 코어 등록 불일치 발견")
+    if only_in_defconfig:
+        print(f"    빌드는 되지만 systems.json 미등록(메뉴에 안 뜸): {', '.join(only_in_defconfig)}")
+    if only_in_systemsjson:
+        print(f"    systems.json엔 있지만 defconfig 비활성(실행 시 코어 없음): {', '.join(only_in_systemsjson)}")
+    print("    module_id 명명 규칙(BR2_PACKAGE_LIBRETRO_CORE_XXX -> lr-xxx)의 예외일 수도 있음 - 확인 필요.")
+else:
+    print(">>> 코어 등록 일관성 OK (defconfig <-> systems.json 완전 일치)")
+PYEOF
+else
+    echo ">>> WARNING: BR2_CONFIG 미설정 - 코어 등록 일관성 검증 스킵"
+fi
+
 # priorities.conf 생성 (systems.json → module_id:system:priority)
 echo ">>> priorities.conf 생성 중..."
 PRIORITIES_DST="${TARGET_DIR}/etc/retropangui/priorities.conf"
