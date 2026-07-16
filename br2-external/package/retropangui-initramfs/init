@@ -153,6 +153,23 @@ if [ -f /boot/.factory-reset ]; then
     echo "  공장 초기화: upper 레이어 전체 삭제 중..."
     rm -rf /overlay/upper
     mkdir -p /overlay/upper /overlay/work
+
+    # retropangui-boot.conf는 /boot(FAT32, p1)에 있어 upper 삭제로는 안
+    # 지워짐 - sharenetwork_*/sharewait(NAS 계정정보 포함 가능)는 남아있으면
+    # 안 되는 사용자 데이터라 여기서 별도로 제거. sharedevice=는 물리적
+    # 저장장치 배선 설정이라 건드리지 않음(2026-07-16, 실기기에서 공장
+    # 초기화 후에도 NFS 마운트가 계속 살아있는 현상 발견 후 수정).
+    if [ -f /boot/retropangui-boot.conf ]; then
+        sed -i '/^sharenetwork_/d; /^sharewait=/d' /boot/retropangui-boot.conf
+    fi
+
+    # share/system(retropangui.conf, es_settings.cfg, es_input.cfg, retroarch.cfg
+    # 등)은 exFAT share 파티션(p3)에 있어 여기(initramfs)에서 마운트/삭제할 수
+    # 없음(exfat 도구 미탑재, share는 S61share가 switch_root 이후 마운트).
+    # ES의 공장 초기화 확인 문구("THIS WILL RESET SYSTEM SETTINGS")가 실제로
+    # 지워야 하는 대상이라 마커만 남겨두고 S61share가 share 마운트 직후 처리.
+    touch /overlay/upper/.factory-reset-pending-share
+
     rm -f /boot/.factory-reset
     sync
     echo "  공장 초기화 완료"

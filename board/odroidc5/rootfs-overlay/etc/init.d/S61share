@@ -543,6 +543,16 @@ case "$1" in
         fi
 
         if [ "${MOUNTED}" = "true" ]; then
+            # 공장 초기화 마커(retropangui-initramfs/init이 남김) — share가
+            # exFAT라 initramfs에서 직접 못 지우고 여기서 처리. ES 확인 문구가
+            # 약속하는 "시스템 설정 초기화" 대상(retropangui.conf, es_settings.cfg,
+            # es_input.cfg, retroarch.cfg 등)이 전부 이 안에 있음 - roms/saves/
+            # bios/music/screenshots는 형제 디렉토리라 영향 없음(2026-07-16).
+            if [ -f /.factory-reset-pending-share ]; then
+                logger -t "${TAG}" "공장 초기화: ${SHARE_MOUNT}/system 삭제 중"
+                rm -rf "${SHARE_MOUNT}/system"
+                rm -f /.factory-reset-pending-share
+            fi
             init_share_dirs
         fi
 
