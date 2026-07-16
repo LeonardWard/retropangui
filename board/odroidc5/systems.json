@@ -151,7 +151,6 @@
     "platform": "n64",
     "theme": "n64",
     "cores": [
-      { "name": "mupen64plus_next", "fullname": "Mupen64Plus-Next", "module_id": "lr-mupen64plus-next", "priority": 2 },
       { "name": "parallel_n64", "fullname": "ParaLLEl N64", "module_id": "lr-parallel-n64", "priority": 1 }
     ]
   },
