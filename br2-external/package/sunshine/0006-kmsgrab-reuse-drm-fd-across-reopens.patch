@@ -1,0 +1,66 @@
+--- a/src/platform/linux/kmsgrab.cpp
++++ b/src/platform/linux/kmsgrab.cpp
+@@ -6,8 +6,11 @@
+ #include <errno.h>
+ #include <fcntl.h>
+ #include <filesystem>
++#include <mutex>
++#include <string>
+ #include <thread>
+ #include <unistd.h>
++#include <unordered_map>
+ 
+ // platform includes
+ #include <drm_fourcc.h>
+@@ -314,13 +317,41 @@
+       std::uint32_t fb_id;
+     };
+ 
++    // RetroPangUI 2026-07-16: Amlogic 벤더 DRM 드라이버가 같은 프로세스 안에서
++    // /dev/dri/cardN을 close() 후 재차 open()하면(Sunshine이 인코더를 하나씩
++    // 시도할 때마다 반복함) 그 뒤로 열리는 fd에서는 원래 정상이던 plane의
++    // fb_id를 0으로 돌려줌(다른 프로세스나 최초 open에서는 항상 정상) - 실기기
++    // LD_PRELOAD 인터포저로 확인(todo-20260709-remote-streaming.html). 커널
++    // 드라이버 자체를 고칠 수 없으니, 같은 경로는 프로세스 생애주기 동안 딱
++    // 한 번만 진짜 open()하고 이후엔 그 fd를 dup()해서 재사용 - dup된 fd는
++    // 커널 안에서 같은 open file description(=같은 DRM 클라이언트 세션)을
++    // 공유하므로 close/reopen 사이클 자체가 사라짐.
++    inline int open_or_reuse_card_fd(const char *path) {
++      static std::mutex mtx;
++      static std::unordered_map<std::string, int> master_fds;
++
++      std::lock_guard<std::mutex> lock(mtx);
++      auto it = master_fds.find(path);
++      if (it != master_fds.end()) {
++        return dup(it->second);
++      }
++
++      int master = open(path, O_RDWR);
++      if (master < 0) {
++        return -1;
++      }
++
++      master_fds.emplace(path, master);
++      return dup(master);
++    }
++
+     class card_t {
+     public:
+       using connector_interal_t = util::safe_ptr<drmModeConnector, drmModeFreeConnector>;
+ 
+       int init(const char *path) {
+         cap_sys_admin admin;
+-        fd.el = open(path, O_RDWR);
++        fd.el = open_or_reuse_card_fd(path);
+ 
+         if (fd.el < 0) {
+           BOOST_LOG(error) << "Couldn't open: "sv << path << ": "sv << strerror(errno);
+@@ -335,7 +366,7 @@
+         char *rendernode_path = drmGetRenderDeviceNameFromFd(fd.el);
+         if (rendernode_path) {
+           BOOST_LOG(debug) << "Opening render node: "sv << rendernode_path;
+-          render_fd.el = open(rendernode_path, O_RDWR);
++          render_fd.el = open_or_reuse_card_fd(rendernode_path);
+           if (render_fd.el < 0) {
+             BOOST_LOG(warning) << "Couldn't open render node: "sv << rendernode_path << ": "sv << strerror(errno);
+             render_fd.el = dup(fd.el);

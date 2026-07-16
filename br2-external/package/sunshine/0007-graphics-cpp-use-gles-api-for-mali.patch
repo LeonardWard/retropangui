@@ -1,0 +1,26 @@
+--- a/src/platform/linux/graphics.cpp
++++ b/src/platform/linux/graphics.cpp
+@@ -404,9 +404,13 @@
+     cap_free(caps);
+ #endif
+ 
++    // RetroPangUI 2026-07-16: 이 보드(Mali-G310 Valhall)는 GLES 전용
++    // 드라이버라 데스크탑 EGL_OPENGL_API/EGL_OPENGL_BIT 조합은 즉시
++    // EGL_BAD_PARAMETER(0x300C)로 거부됨 - 바로 아래 EGL_CONTEXT_CLIENT_VERSION=3
++    // 지정과 앞뒤가 맞는 GLES 3 경로로 바꿈.
+     constexpr int conf_attr[] {
+       EGL_RENDERABLE_TYPE,
+-      EGL_OPENGL_BIT,
++      EGL_OPENGL_ES3_BIT,
+       EGL_NONE
+     };
+ 
+@@ -417,7 +421,7 @@
+       return std::nullopt;
+     }
+ 
+-    if (!eglBindAPI(EGL_OPENGL_API)) {
++    if (!eglBindAPI(EGL_OPENGL_ES_API)) {
+       BOOST_LOG(error) << "Couldn't bind API: ["sv << util::hex(eglGetError()).to_string_view() << ']';
+       return std::nullopt;
+     }
