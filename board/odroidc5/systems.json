@@ -139,8 +139,7 @@
     "platform": "saturn",
     "theme": "saturn",
     "cores": [
-      { "name": "beetle_saturn", "fullname": "Beetle Saturn", "module_id": "lr-beetle-saturn", "priority": 1 },
-      { "name": "yabasanshiro", "fullname": "YabaSanshiro", "module_id": "lr-yabasanshiro", "priority": 3 }
+      { "name": "yabasanshiro", "fullname": "YabaSanshiro", "module_id": "lr-yabasanshiro", "priority": 1 }
     ]
   },
   {

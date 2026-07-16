@@ -182,7 +182,14 @@ BR2_PACKAGE_LIBRETRO_CORE_DOSBOX_PURE=y
 BR2_PACKAGE_LIBRETRO_CORE_SCUMMVM=y
 BR2_PACKAGE_LIBRETRO_CORE_QUASI88=y
 BR2_PACKAGE_LIBRETRO_CORE_NP2KAI=y
-BR2_PACKAGE_LIBRETRO_CORE_BEETLE_SATURN=y
+# 2026-07-16: Grandia 실측 - 인트로 특정 구간(1:30~2:30)에서 사운드 버벅임 +
+# 약 0.7배속. RetroArch 자체 계측 평균 20~26Hz(목표 60Hz), 프레임타임 편차
+# 17~23%(todo-core-lr-beetle-saturn.html). CPU는 16~34%만 써서 연산 병목
+# 아님, video_driver(gl/vulkan)·cdimagecache 옵션 우회 둘 다 실패 - 소프트웨어
+# 렌더러 코어 내부 문제로 추정되나 코어 패치 없인 원인 특정 불가, 코어 패치는
+# 이 프로젝트가 하지 않으므로([[feedback_no_core_patching]]) 비활성화.
+# 소스/패키지 정의는 유지. saturn은 이제 yabasanshiro만 남음(미검증).
+# BR2_PACKAGE_LIBRETRO_CORE_BEETLE_SATURN=y
 # 2026-07-16: 모든 CPU코어/RDP렌더러 조합에서 100% 크래시 확정
 # (todo-core-lr-mupen64plus-next.html) - 원인은 상류 GLideN64 소스의
 # glMapBufferRange() NULL 미체크 버그(Mali-G310 드라이버가 이 매핑에
@@ -195,7 +202,8 @@ BR2_PACKAGE_LIBRETRO_CORE_PPSSPP=y
 # initializer must be a constant expression")으로 Mali 컴파일러가 거부 →
 # abort() 100% 재현 확정(todo-core-lr-kronos.html). 코어 패치는 이
 # 프로젝트가 하지 않으므로([[feedback_no_core_patching]]) 비활성화.
-# 소스/패키지 정의는 유지, saturn은 beetle-saturn이 1순위.
+# 소스/패키지 정의는 유지. saturn은 이제 yabasanshiro만 남음(미검증,
+# beetle-saturn도 같은 날 성능 문제로 비활성화됨 - 위 참고).
 # BR2_PACKAGE_LIBRETRO_CORE_KRONOS=y
 BR2_PACKAGE_LIBRETRO_CORE_BEETLE_BSNES=y
 BR2_PACKAGE_LIBRETRO_CORE_YABASANSHIRO=y
