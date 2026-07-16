@@ -142,17 +142,30 @@ case "$1" in
             done
         fi
 
-        # 첫 부팅: ES 스크립팅 훅(game-end 등) 없으면 기본값에서 복사.
+        # ES 스크립팅 훅(game-end 등) 없는 파일만 기본값에서 복사.
         # /root/.emulationstation은 위쪽에서 이미 이 디렉토리로 심볼릭 링크되므로
         # /root/.emulationstation/scripts/에 직접 baked-in으로 넣으면 부팅 때
         # 심볼릭 링크 교체(rm -rf /root/.emulationstation)로 사라짐 - 반드시
         # 이 share 경로를 거쳐야 함(2026-07-10, screenshot-system 문서).
+        #
+        # 2026-07-16: "디렉토리 없으면 복사"(구버전)는 실기기에서 조용히 실패함 -
+        # ES가 game-end 이벤트를 처음 쏠 때 훅 디렉토리(scripts/game-end/)를
+        # 미리 만들어두는 것으로 보이는데, 그러면 디렉토리는 이미 "있는" 상태가
+        # 돼서 이 조건이 다시는 안 걸림 → update-theme-screenshot.sh가 영원히
+        # 안 복사되는 버그로 실측됨(파일이 하나도 없는데 디렉토리만 있었음).
+        # bundled-bios와 같은 방식으로 파일 단위 존재 확인으로 교체.
         ES_SCRIPTS_SRC="/usr/share/retropangui/es-scripts"
         ES_SCRIPTS_DST="/retropangui/share/system/emulationstation/scripts"
-        if [ ! -d "${ES_SCRIPTS_DST}" ] && [ -d "${ES_SCRIPTS_SRC}" ]; then
-            logger -t "${TAG}" "첫 부팅: ES 스크립팅 훅 복사"
-            mkdir -p "${ES_SCRIPTS_DST}"
-            cp -r "${ES_SCRIPTS_SRC}/." "${ES_SCRIPTS_DST}/"
+        if [ -d "${ES_SCRIPTS_SRC}" ]; then
+            find "${ES_SCRIPTS_SRC}" -type f | while IFS= read -r src; do
+                rel="${src#${ES_SCRIPTS_SRC}/}"
+                dst="${ES_SCRIPTS_DST}/${rel}"
+                [ -f "${dst}" ] && continue
+                logger -t "${TAG}" "ES 스크립팅 훅 복사: ${rel}"
+                mkdir -p "$(dirname "${dst}")"
+                cp "${src}" "${dst}"
+                chmod +x "${dst}"
+            done
         fi
 
         # 시스템별 스크린샷/롬 디렉토리 생성만 - 설정값(screenshot_directory,
