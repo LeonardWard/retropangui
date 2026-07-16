@@ -51,6 +51,11 @@ system.samba=true
 # Wi-Fi 사용 (SSID/비밀번호는 ES WIFI 네트워크 선택 메뉴에서 별도 설정, share/system/wifi.conf에 저장됨)
 system.wifi.enabled=true
 
+# 원격 화면 스트리밍(Sunshine + moonlight-web-stream, Moonlight 프로토콜 호환) -
+# 다른 기기 화면으로 이 기기를 보고 조작하는 원격 디버깅/확인용 도구.
+# 기본적으로 꺼둠 - 필요할 때만 켤 것(2026-07-16).
+system.remote_streaming=false
+
 
 ## Section C - Audio ##
 
