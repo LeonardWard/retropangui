@@ -164,7 +164,7 @@ mount_network_directive() {
             ROMS)        mountPoint="${SHARE_MOUNT}/roms" ;;
             SAVES)       mountPoint="${SHARE_MOUNT}/saves" ;;
             BIOS)        mountPoint="${SHARE_MOUNT}/bios" ;;
-            MUSIC)       mountPoint="${SHARE_MOUNT}/bios/music" ;;
+            MUSIC)       mountPoint="${SHARE_MOUNT}/music" ;;
             SCREENSHOTS) mountPoint="${SHARE_MOUNT}/screenshots" ;;
             *)
                 echo "잘못된 대상 '${target}' - sharenetwork_${rawtype}=${directive} 무시" >> "${NETLOG}"
@@ -176,6 +176,17 @@ mount_network_directive() {
             nfs)
                 # 클래식 NFSv3 클라이언트 마운트 - busybox mount의 NFS 지원 여부와
                 # 무관하도록 mount.nfs 헬퍼(nfs-utils)를 직접 호출
+                #
+                # 2026-07-16: nfs/nfsv4 커널 모듈이 기본 상태에서 로드돼있지
+                # 않아 실기기 검증 중 "No such device"로 실패했음(modprobe
+                # 안 하면 항상 재현). nfsv4는 nfs와 별개 모듈이라 한 줄에
+                # 같이 modprobe해도 nfsv4만 안 실리는 현상이 있어(실기기
+                # 확인) 반드시 각각 개별 호출해야 함 - vers=4.x를 쓰는
+                # NAS(시놀로지 등)는 nfsv4 없이는 "Protocol not supported"로
+                # 실패함. 실패해도(이미 로드됐거나 built-in인 커널이면 에러)
+                # 무시하고 진행.
+                modprobe nfs 2>/dev/null || true
+                modprobe nfsv4 2>/dev/null || true
                 local opts="port=2049,nolock,proto=tcp"
                 [ -n "${mountOptions}" ] && opts="${opts},${mountOptions}"
                 cmd="mkdir -p ${mountPoint} && mount.nfs -o ${opts} ${remoteHost}:${remotePath} ${mountPoint}"
@@ -318,6 +329,18 @@ download_extra_roms() {
             "${base}/scummvm/init/roms/Lure%20of%20the%20Tempress%20(English).scummvm/${f}"
     done
 
+    # 2026-07-16: sky.cpt/lure.dat - 게임 배포 파일이 아니라 ScummVM 자체
+    # "엔진 추가 데이터"(engines/sky, engines/lure 코드가 런타임에 읽는
+    # 리소스). 공식 scummvm/scummvm 저장소 dists/engine-data/에 있음 -
+    # scummvm.ini의 extrapath=share/bios/scummvm/extra (MT32 ROM과 같은
+    # 폴더) - share/bios/scummvm/ 루트에 넣으면 코어가 못 찾음(실기기로
+    # 확인된 실수 - 처음엔 루트에 넣었다가 안 돼서 extra/로 옮김).
+    local scbios="${SHARE_MOUNT}/bios/scummvm/extra"
+    _rp_dl "${scbios}/sky.cpt" \
+        "https://raw.githubusercontent.com/scummvm/scummvm/master/dists/engine-data/sky.cpt"
+    _rp_dl "${scbios}/lure.dat" \
+        "https://raw.githubusercontent.com/scummvm/scummvm/master/dists/engine-data/lure.dat"
+
     # 2026-07-15: 박스아트/스크린샷 - 저장소에 이미지 바이너리를 커밋하지
     # 않고 원 배포처에서 받아온다("임시로" 코드 다운로드 방식, 이미지 검토
     # 후 URL이 교체될 수 있음 - todo-20260714-bundled-game-curation).
@@ -364,6 +387,7 @@ init_share_dirs() {
         "${SHARE_MOUNT}/roms/utility" \
         "${SHARE_MOUNT}/bios" \
         "${SHARE_MOUNT}/bios/music" \
+        "${SHARE_MOUNT}/music" \
         "${SHARE_MOUNT}/saves" \
         "${SHARE_MOUNT}/screenshots" \
         "${SHARE_MOUNT}/system/emulationstation"
@@ -393,9 +417,13 @@ init_share_dirs() {
     # share/bios/music 경로 이전 이후 이미 초기화 끝난 기기에서는 sentinel이
     # 이미 있어 새 경로로 재복사가 영영 안 일어나는 버그였음(실기기 확인 -
     # ES 배경음악 켜도 재생 안 됨, share/bios/music 폴더가 빈 채로 남아있었음).
+    #
+    # 2026-07-16: share/bios/music은 사운드폰트(.sf2)·MT-32 롬 전용 폴더로
+    # bios/music 이전은 설계 오류였음(실제 재생곡을 합성 재료 폴더에 두는 게
+    # 잘못됨, 사용자 지적) - 번들 .mid 복사 대상을 share/music으로 되돌림.
     local bgmusic="/usr/share/retropangui/bundled-bgmusic"
     if [ -d "${bgmusic}" ]; then
-        cp -n "${bgmusic}"/* "${SHARE_MOUNT}/bios/music/" 2>/dev/null || true
+        cp -n "${bgmusic}"/* "${SHARE_MOUNT}/music/" 2>/dev/null || true
     fi
 
     local sentinel="${SHARE_MOUNT}/.bundled_initialized"
