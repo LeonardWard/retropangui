@@ -9,11 +9,16 @@
 # .gitmodules는 retro_arena/nanogui-sdl(GUI 데모 도구) 전용 서브모듈이라
 # libretro 코어 빌드와 무관 - 서브모듈 없이 클론.
 #
-# HAVE_SSE=0 필수: 상류 Makefile의 platform=unix가 x86_64 데스크톱을
-# 가정해서 HAVE_SSE 기본값이 1(-mfpmath=sse 강제) - aarch64엔 SSE가
-# 없어서 "unrecognized command-line option" 빌드 실패(2026-07-16 실측).
-# 다른 mednafen 계열 코어(pce/supergrafx/bsnes/saturn)는 이 문제가 없음
-# - yabasanshiro(Yabause 계열)만의 Makefile 특이사항.
+# platform=unix는 x86_64 데스크톱을 가정해서 HAVE_SSE=1(-mfpmath=sse,
+# aarch64엔 없는 옵션)에 desktop GL(GL/gl.h, 이 sysroot엔 GLES만 있고
+# 없음) 조합이라 크로스빌드가 통째로 실패함(2026-07-16 실측, 두 에러
+# 순서대로 재현). 같은 저장소(libretro/yabause)의 kronos 코어가 이미
+# platform=odroid-c4로 이 문제를 풀어놨음(libretro-core-kronos.mk 참고) -
+# 이 분기가 HAVE_SSE=0 + FORCE_GLES=1 + C5와 정확히 맞는
+# -mcpu=cortex-a55를 전부 자동 설정해줘서 그대로 재사용. kronos가 겪은
+# "-lGL 무조건 링크" 문제는 이 브랜치(yabasanshiro) Makefile엔 없음
+# (상류 소스 확인, odroid-c4 분기 LDFLAGS에 -lpthread만 있음) - sed
+# 패치 불필요.
 #
 ################################################################################
 
@@ -34,10 +39,10 @@ define LIBRETRO_CORE_YABASANSHIRO_BUILD_CMDS
 	test -d $(@D)/yabause/.git || \
 		git clone --filter=blob:none $(LIBRETRO_CORE_YABASANSHIRO_SITE) $(@D)/yabause
 	git -C $(@D)/yabause checkout $(LIBRETRO_CORE_YABASANSHIRO_VERSION)
-	$(TARGET_MAKE_ENV) $(MAKE) -C $(@D)/yabause/yabause/src/libretro \
-		$(LIBRETRO_CORE_YABASANSHIRO_CROSS_OPTS) \
-		platform=unix \
-		HAVE_SSE=0
+	$(MAKE) -C $(@D)/yabause/yabause/src/libretro -f Makefile generate-files
+	$(TARGET_MAKE_ENV) $(MAKE) $(LIBRETRO_CORE_YABASANSHIRO_CROSS_OPTS) -C $(@D)/yabause/yabause/src/libretro \
+		-f Makefile \
+		platform=odroid-c4
 endef
 
 define LIBRETRO_CORE_YABASANSHIRO_INSTALL_TARGET_CMDS
