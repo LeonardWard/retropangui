@@ -9,6 +9,12 @@
 # .gitmodules는 retro_arena/nanogui-sdl(GUI 데모 도구) 전용 서브모듈이라
 # libretro 코어 빌드와 무관 - 서브모듈 없이 클론.
 #
+# HAVE_SSE=0 필수: 상류 Makefile의 platform=unix가 x86_64 데스크톱을
+# 가정해서 HAVE_SSE 기본값이 1(-mfpmath=sse 강제) - aarch64엔 SSE가
+# 없어서 "unrecognized command-line option" 빌드 실패(2026-07-16 실측).
+# 다른 mednafen 계열 코어(pce/supergrafx/bsnes/saturn)는 이 문제가 없음
+# - yabasanshiro(Yabause 계열)만의 Makefile 특이사항.
+#
 ################################################################################
 
 LIBRETRO_CORE_YABASANSHIRO_VERSION = f448097b69a6037246a08e9dc09eabaa420d7893
@@ -30,7 +36,8 @@ define LIBRETRO_CORE_YABASANSHIRO_BUILD_CMDS
 	git -C $(@D)/yabause checkout $(LIBRETRO_CORE_YABASANSHIRO_VERSION)
 	$(TARGET_MAKE_ENV) $(MAKE) -C $(@D)/yabause/yabause/src/libretro \
 		$(LIBRETRO_CORE_YABASANSHIRO_CROSS_OPTS) \
-		platform=unix
+		platform=unix \
+		HAVE_SSE=0
 endef
 
 define LIBRETRO_CORE_YABASANSHIRO_INSTALL_TARGET_CMDS
