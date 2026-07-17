@@ -26,7 +26,6 @@ RETROARCH_CONF_OPTS = \
 	--disable-cg \
 	--disable-jack \
 	--disable-oss \
-	--disable-pulse \
 	--disable-coreaudio \
 	--disable-dsound \
 	--disable-rsound \
@@ -71,6 +70,17 @@ RETROARCH_CONF_ENV = \
 	PKG_CONFIG="$(PKG_CONFIG_HOST_BINARY)" \
 	PKG_CONFIG_LIBDIR="$(STAGING_DIR)/usr/lib/pkgconfig:$(STAGING_DIR)/usr/share/pkgconfig" \
 	PKG_CONFIG_SYSROOT_DIR="$(STAGING_DIR)"
+
+# 2026-07-17 PulseAudio 전환: alsa-plugins pulse 경유(alsathread→pcm pulse)로는
+# RA의 자체 오디오 타이밍과 플러그인 버퍼 협상이 어긋나 찌그러진 소리가 남
+# (실기기 2개 코어 확인). PA 활성 시 네이티브 pulse 드라이버를 빌드에 포함하고
+# retroarch.cfg의 audio_driver=pulse로 직결한다.
+ifeq ($(BR2_PACKAGE_PULSEAUDIO),y)
+RETROARCH_CONF_OPTS += --enable-pulse
+RETROARCH_DEPENDENCIES += pulseaudio
+else
+RETROARCH_CONF_OPTS += --disable-pulse
+endif
 
 define RETROARCH_CONFIGURE_CMDS
 	(cd $(@D) && \

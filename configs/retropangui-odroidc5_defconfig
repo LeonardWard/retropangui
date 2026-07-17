@@ -157,6 +157,9 @@ BR2_PACKAGE_VLC_ALSA=y
 # 주의: 기존 빌드에 추가할 때는 make vlc-dirclean 후 재빌드해야 플러그인이 생김
 # 2026-07-14: archive.org발 MT32.sf2(라이선스 불명확)를 폐기하고 이걸로 교체
 BR2_PACKAGE_FLUIDSYNTH=y
+# 2026-07-17 PA 전환: alsa 백엔드는 alsa-plugins pulse 경유에서 걸리적거리는
+# 소리(실기기) - 네이티브 pulseaudio 드라이버로 직결(S62midisynth -a pulseaudio)
+BR2_PACKAGE_FLUIDSYNTH_PULSEAUDIO=y
 BR2_PACKAGE_FLUID_SOUNDFONT=y
 BR2_PACKAGE_FREEIMAGE=y
 BR2_PACKAGE_FREETYPE=y

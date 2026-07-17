@@ -17,6 +17,10 @@
 # MusicManager::stop() 참조) 상시 데몬이 게임 오디오와 충돌했을 것.
 # dmix 도입 후 실기기에서 fluidsynth + aplay 동시 재생 확인함.
 #
+# 2026-07-17 PA 전환: 오디오 출력을 -a alsa(→alsa-plugins pulse 경유)에서
+# -a pulseaudio 직결로 변경 - 플러그인 경유는 걸리적거리는 소리가 남(실기기).
+# 믹싱은 PA가 전담하므로 위 dmix 서술은 이력 설명으로만 유효.
+#
 # S62audio 이후 실행 - modprobe snd_seq_midi(ALSA 시퀀서 브릿지)가 거기서
 # 먼저 로드돼야 fluidsynth의 alsa_seq 미디 드라이버가 포트를 만들 수 있음.
 
@@ -34,7 +38,7 @@ case "$1" in
         start-stop-daemon --start --quiet --background \
             --make-pidfile --pidfile "${PIDFILE}" \
             --exec "${DAEMON}" -- \
-            -a alsa -m alsa_seq -is -r 48000 -g 0.5 \
+            -a pulseaudio -m alsa_seq -is -r 48000 -g 0.5 \
             -p "${PORTNAME}" "${SOUNDFONT}" 2>&1 | logger -t "${TAG}"
         ;;
     stop)
