@@ -339,3 +339,16 @@ menus:
         conf_key: emulationstation.MenuRumble
         default: "true"
         restart: none
+
+      # 세기 슬라이더 - 조절 중 즉시 그 세기로 진동 피드백(GuiMenu.cpp 특례).
+      # PS2 패드류는 모터 특성상 저세기 단펄스가 무감각해 사용자별 튜닝 필요
+      # (2026-07-17 사용자 요청).
+      - id: rp.menu_rumble_strength
+        label: "MENU RUMBLE STRENGTH"
+        type: slider
+        conf_key: emulationstation.MenuRumbleStrength
+        min: 10
+        max: 100
+        step: 10
+        unit: "%"
+        restart: none

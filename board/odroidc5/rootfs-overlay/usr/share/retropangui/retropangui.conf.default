@@ -134,6 +134,9 @@ emulationstation.BackgroundMusic=true
 # ES 메뉴 이동/선택 시 패드 진동 피드백 (진동 지원 컨트롤러만 해당)
 emulationstation.MenuRumble=true
 
+# 메뉴 진동 세기(%) - 컨트롤러 설정의 슬라이더로 조절, 조절 중 즉시 체감 가능
+emulationstation.MenuRumbleStrength=80
+
 # 게임 실행 전 세이브 스테이트 목록+썸네일 미리보기 화면 (스테이트가 있는
 # 게임에서만 뜸). 실행 흐름에 끼어드는 기능이라 기본 꺼짐.
 emulationstation.SaveStatePreview=false
