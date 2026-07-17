@@ -9,9 +9,14 @@
 # 잠금을 쥐어 ES 볼륨 쓰기가 EPERM 나던 회귀)가 구조적으로 사라짐.
 
 ### 장치 자동 감지 - eudev 동작 중이라 udev-detect 사용(카드가 부팅 후
-### 늦게 뜨거나 USB 오디오를 꽂아도 자동 등록됨). tsched=0: Amlogic i2s
-### 드라이버류에서 타이머 스케줄링 글리치를 피하는 임베디드 관례.
-load-module module-udev-detect tsched=0
+### 늦게 뜨거나 USB 오디오를 꽂아도 자동 등록됨).
+### tsched(타이머 스케줄링, 기본값)를 그대로 쓴다 - 처음엔 임베디드 관례로
+### tsched=0(IRQ 기반)을 줬는데, Amlogic TDM 드라이버의 poll 동작이 깨져
+### 있어서("POLLOUT인데 snd_pcm_avail()=0 - ALSA driver 'amlogic_snd_soc'
+### 버그" PA 로그) 스트림이 underrun 루프에 빠지고 스플래시 mpv가 영영 안
+### 끝나는 부팅 행이 재현됨(2026-07-17 공장초기화 후 실기기). 타이머
+### 스케줄링은 드라이버 poll/IRQ 정확성에 의존하지 않아 이를 회피한다.
+load-module module-udev-detect
 
 ### 블루투스 (PA 네이티브 - bluealsa 대체. bluealsa 데몬과 동시에 띄우면
 ### BlueZ 프로파일 등록이 충돌하므로 S41bluealsa는 no-op 처리돼 있음)
