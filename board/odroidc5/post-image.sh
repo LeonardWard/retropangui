@@ -19,6 +19,12 @@ cp "${BOARD_DIR}/u-boot.bin.sd.bin" "${BINARIES_DIR}/"
 # 코드블록 위젯 탭 이름이었음(오독 확인됨).
 cp "${BOARD_DIR}/config.ini" "${BINARIES_DIR}/"
 
+# 공장 초기화용 boot.conf 원본 - initramfs가 공장 초기화 때 이 파일을
+# /boot/retropangui-boot.conf 위에 그대로 복사해 sharedevice=INTERNAL 기본값
+# 포함 완전 초기화함(2026-07-17 사용자 지시 - sharenetwork_*만 지우던 기존
+# 방식은 NAS 설정 흔적/커스텀 잔재가 남는 문제).
+cp "${BOARD_DIR}/retropangui-boot.conf.init" "${BINARIES_DIR}/"
+
 # boot.scr 생성 (boot.cmd 소스에서 mkimage로 컴파일)
 MKIMAGE=$(find "${HOST_DIR}" -name mkimage -type f 2>/dev/null | head -1)
 if [ -z "${MKIMAGE}" ]; then

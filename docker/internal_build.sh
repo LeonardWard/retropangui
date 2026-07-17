@@ -393,6 +393,16 @@ if [ "$BUILD_OTA" = "1" ]; then
             > /home/builder/output/${OUTPUT_SQ}.sha256
         echo "  squashfs: ${OUTPUT_SQ} ($(du -h /home/builder/output/${OUTPUT_SQ} | cut -f1))"
         echo "  SHA256:   $(cat /home/builder/output/${OUTPUT_SQ}.sha256)"
+        # initramfs도 항상 함께 산출 - 이 복사가 OTA 전용 경로(--ota)에만 있고
+        # 전체 빌드 경로엔 빠져 있어서, ota.sh push가 output/의 낡은 initramfs를
+        # 계속 서빙 → init 스크립트 수정(공장초기화 정리 등)이 기기에 영영 안
+        # 가는 문제가 있었음(2026-07-17 실기기 확인: /boot의 initramfs가 7/16
+        # 빌드본에 멈춰 있었음).
+        OUTPUT_INITRAMFS="retropangui-${DEVICE}-${VERSION}.initramfs.cpio.gz"
+        cp output/images/initramfs.cpio.gz /home/builder/output/${OUTPUT_INITRAMFS}
+        sha256sum /home/builder/output/${OUTPUT_INITRAMFS} | awk '{print $1}' \
+            > /home/builder/output/${OUTPUT_INITRAMFS}.sha256
+        echo "  initramfs: ${OUTPUT_INITRAMFS} ($(du -h /home/builder/output/${OUTPUT_INITRAMFS} | cut -f1))"
     else
         echo "ERROR: rootfs.squashfs 생성 실패!"
         exit 1

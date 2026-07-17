@@ -155,12 +155,20 @@ if [ -f /boot/.factory-reset ]; then
     mkdir -p /overlay/upper /overlay/work
 
     # retropangui-boot.conf는 /boot(FAT32, p1)에 있어 upper 삭제로는 안
-    # 지워짐 - sharenetwork_*/sharewait(NAS 계정정보 포함 가능)는 남아있으면
-    # 안 되는 사용자 데이터라 여기서 별도로 제거. sharedevice=는 물리적
-    # 저장장치 배선 설정이라 건드리지 않음(2026-07-16, 실기기에서 공장
-    # 초기화 후에도 NFS 마운트가 계속 살아있는 현상 발견 후 수정).
-    if [ -f /boot/retropangui-boot.conf ]; then
-        sed -i '/^sharenetwork_/d; /^sharewait=/d' /boot/retropangui-boot.conf
+    # 지워짐. 2026-07-17 사용자 지시로 완전 초기화 방식으로 변경 - 빌드에
+    # 포함된 원본(retropangui-boot.conf.init, sharedevice=INTERNAL)을 그대로
+    # 복사해 덮어씀. 예전 sed 방식(sharenetwork_*만 삭제)은 sharedevice
+    # 커스텀 등 잔재가 남았고, 애초에 initramfs가 OTA로 갱신 안 되던 별도
+    # 버그(internal_build.sh 전체빌드 경로의 initramfs 산출 누락) 때문에
+    # 실기기에 반영조차 안 돼 NFS 마운트가 살아남았음(실기기 확인).
+    if [ -f /boot/retropangui-boot.conf.init ]; then
+        cp /boot/retropangui-boot.conf.init /boot/retropangui-boot.conf
+    else
+        # .init가 없는 구형 boot 파티션(OTA로만 업데이트된 기기) 폴백:
+        # NAS 설정 제거 + sharedevice 기본값 강제
+        if [ -f /boot/retropangui-boot.conf ]; then
+            sed -i '/^sharenetwork_/d; /^sharewait=/d; s/^sharedevice=.*/sharedevice=INTERNAL/' /boot/retropangui-boot.conf
+        fi
     fi
 
     # share/system(retropangui.conf, es_settings.cfg, es_input.cfg, retroarch.cfg
