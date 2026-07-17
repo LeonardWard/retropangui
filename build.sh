@@ -148,6 +148,16 @@ fi
 [ -f "${SCRIPT_DIR}/board/odroidc5/fetch-blobs.sh" ] || _pf_err "board/odroidc5/fetch-blobs.sh 없음"
 [ -f "${SCRIPT_DIR}/board/odroidc5/fetch-fonts.sh" ] || _pf_err "board/odroidc5/fetch-fonts.sh 없음"
 
+# 코어 등록 일관성 1단 검사(빠른 사전 경고) - defconfig↔systems.json↔패키지 디렉토리
+# 3자 대조. 여기서는 패키지 존재 여부만으로 판정 가능해 몇 초 안에 끝남 - 실제
+# 설치된 .so 기준의 권위 있는 검사는 post-build.sh(2단)가 빌드 중에 수행하고
+# 그쪽이 불일치 시 빌드를 중단시킨다(todo-20260716-core-registration-check.html).
+if [ -f "${SCRIPT_DIR}/scripts/check-core-registration.sh" ]; then
+    echo "  - 코어 등록 일관성 사전 점검 중..."
+    bash "${SCRIPT_DIR}/scripts/check-core-registration.sh" "${SCRIPT_DIR}" || \
+        _pf_warn "코어 등록 불일치 발견 (위 [ERROR] 참고) - post-build.sh에서 다시 검사되며 실물 기준 불일치면 빌드가 중단됩니다"
+fi
+
 # buildroot (gitignore 제외 대상 — Docker 내부에서 자동 다운로드됨)
 [ -f "${SCRIPT_DIR}/buildroot/Makefile" ] || \
     echo "  [INFO]  buildroot 소스 없음 — 첫 빌드 시 Docker 내부에서 자동 다운로드됩니다."

@@ -220,6 +220,67 @@ print(f">>> priorities.conf 완료: {out_file}")
 PYEOF
 
 # es_systems.xml 생성
+# 코어 등록 일관성 2단 검사(권위 있는 검사, todo-20260716-core-registration-check.html) -
+# 실제로 타겟에 설치된 코어(.so)와 systems.json의 module_id를 양방향 대조.
+# 여기서 실패하면 es_systems.xml을 만들기 전에 빌드를 중단시켜 "빌드 성공 =
+# 정상"이라는 착각을 원천 차단한다(lr-beetle-psx-hw가 defconfig엔 켜져
+# 빌드는 됐지만 systems.json에 미등록이라 ES 메뉴에 안 뜨던 사고 재발 방지).
+#
+# 주의(2026-07-18 설계 중 발견): TARGET_DIR/usr/lib/libretro/는 buildroot
+# 증분 빌드 특성상 defconfig에서 나중에 끈 코어의 .so가 계속 남아있을 수
+# 있음(실측: mupen64plus-next/kronos/beetle-saturn/beetle-psx-hw가 코어
+# 버그로 defconfig에서 비활성화됐는데도 output/target엔 여전히 설치돼
+# 있었음 - 지금은 의도적으로 미등록 상태가 맞는 정상 상황). "설치는 됐는데
+# 미등록"(방향 A) 판정을 실물 존재만으로 하면 이런 정상적인 비활성 코어를
+# 전부 오탐하므로, .config(BR2_CONFIG)의 현재 활성 심볼과 교차해 "지금
+# 실제로 켜진" 코어만 대상으로 삼는다. "등록은 됐는데 미설치"(방향 B)는
+# 이런 위험이 없어 항상 무조건 검사.
+echo ">>> 코어 등록 일관성 검사 (실물 설치 기준)..."
+CORE_CHECK_FAIL=0
+INSTALLED_CORES=$(ls "${TARGET_DIR}/usr/lib/libretro/" 2>/dev/null)
+JSON_MODIDS=$(python3 - "${BOARD_DIR}/systems.json" <<'PYEOF'
+import json, sys
+with open(sys.argv[1], encoding='utf-8') as f:
+    data = json.load(f)
+systems = data if isinstance(data, list) else data.get('systems', data)
+mids = sorted({c['module_id'] for s in systems for c in s.get('cores', []) if 'module_id' in c})
+print('\n'.join(mids))
+PYEOF
+)
+
+# 현재 .config에서 활성화된 코어 심볼 → module_id (BR2_PACKAGE_LIBRETRO_CORE_XXX=y → lr-xxx)
+_CFG="${BR2_CONFIG:-.config}"
+if [ -f "${_CFG}" ]; then
+    ENABLED_MODIDS=$(grep -oE '^BR2_PACKAGE_LIBRETRO_CORE_[A-Z0-9_]+=y' "${_CFG}" \
+        | sed -E 's/^BR2_PACKAGE_LIBRETRO_CORE_(.*)=y$/\1/' \
+        | tr 'A-Z_' 'a-z-' | sed 's/^/lr-/')
+else
+    echo "  [WARN] .config를 찾지 못함(${_CFG}) - 방향 A(설치됐는데 미등록) 검사는 스킵, 방향 B만 검사"
+    ENABLED_MODIDS=""
+fi
+
+if [ -n "${ENABLED_MODIDS}" ]; then
+    for m in ${INSTALLED_CORES}; do
+        echo "${ENABLED_MODIDS}" | grep -qx "${m}" || continue  # 지금 꺼진 코어의 잔존 .so는 정상 상태 - 스킵
+        echo "${JSON_MODIDS}" | grep -qx "${m}" || {
+            echo "  [ERROR] ${m}: defconfig에서 켜져 설치됐는데 systems.json 미등록 - ES 코어 선택 메뉴에 안 뜸"
+            CORE_CHECK_FAIL=1
+        }
+    done
+fi
+while IFS= read -r m; do
+    [ -z "${m}" ] && continue
+    echo "${INSTALLED_CORES}" | grep -qx "${m}" || {
+        echo "  [ERROR] ${m}: systems.json에 등록됐는데 타겟에 설치 안 됨 - 게임 실행 시 dlopen 실패"
+        CORE_CHECK_FAIL=1
+    }
+done <<< "${JSON_MODIDS}"
+if [ "${CORE_CHECK_FAIL}" = "1" ]; then
+    echo ">>> ERROR: 코어 등록 불일치 - 빌드 중단"
+    exit 1
+fi
+echo "  코어 등록 일관성 OK ($(echo "${INSTALLED_CORES}" | wc -w)개 설치됨)"
+
 echo ">>> es_systems.xml 생성 중..."
 python3 "${BOARD_DIR}/generate_es_systems.py" \
     --systems   "${BOARD_DIR}/systems.json" \
