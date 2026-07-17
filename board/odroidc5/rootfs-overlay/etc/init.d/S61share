@@ -469,6 +469,12 @@ init_share_dirs() {
         cp -n "${bgmusic}"/* "${SHARE_MOUNT}/music/" 2>/dev/null || true
     fi
 
+    # 2026-07-18: 번들 게임 cp 방식 폐기(migrate 참고) - 이미 sentinel이
+    # 찍힌 기존 기기는 아래 init 블록이 다시 안 돌아서 예전에 물리 복사해둔
+    # 파일들이 영원히 안 지워지는 문제가 생김. bundled-bios/bgmusic과 같은
+    # 이유로 sentinel 밖에서 매 부팅 시도(idempotent - 정리할 게 없으면 그냥 종료).
+    command -v rpui-bundlegame >/dev/null 2>&1 && rpui-bundlegame migrate
+
     local sentinel="${SHARE_MOUNT}/.bundled_initialized"
     if [ ! -f "${sentinel}" ]; then
         command -v rpui-bundlegame >/dev/null 2>&1 && rpui-bundlegame init
