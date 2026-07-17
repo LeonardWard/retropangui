@@ -36,6 +36,22 @@ start() {
     amixer -c ${CARD} sset "TDMOUT_B Lane1 Mute"        0       2>/dev/null || true
     amixer -c ${CARD} sset "TDMOUT_B GAIN"              255     2>/dev/null || true
     amixer -c ${CARD} sset "TDMOUT_B Software Gain"     100     2>/dev/null || true
+    # 2026-07-18: PA(S50)가 이 스크립트보다 먼저 떠서 TDM PCM을 여는 순서라,
+    # hdmitx가 위 라우팅 설정 "이전" 상태(aud_src_if=0, SPDIF)로 래치된 채
+    # 굳는 무음이 실기기에서 규명됨 - 컨트롤은 나중에 바꿔도 PCM re-prepare가
+    # 없으면 hdmitx에 반영되지 않는다(suspend/resume 재래치로 소리 복귀 실증,
+    # todo-20260716-pulseaudio-migration.html). 라우팅 확정 직후 sink를 한 번
+    # suspend→resume해서 올바른 컨트롤 상태로 강제 재프리페어한다.
+    if command -v pactl >/dev/null 2>&1; then
+        SINK=$(pactl list sinks short 2>/dev/null | awk 'NR==1{print $2}')
+        if [ -n "${SINK}" ]; then
+            pactl suspend-sink "${SINK}" 1 2>/dev/null || true
+            sleep 0.3
+            pactl suspend-sink "${SINK}" 0 2>/dev/null || true
+            logger -t "${TAG}" "PA sink 재래치 완료 (${SINK})"
+        fi
+    fi
+
     logger -t "${TAG}" "Audio ready (HDMI)"
 }
 
