@@ -1,0 +1,9 @@
+# RetroPangUI: AMLAUGESOUND 카드에 전용 PA 프로파일 연결 (2026-07-17)
+# module-udev-detect가 이 속성을 읽어 폴백 프로브 대신
+# /usr/share/pulseaudio/alsa-mixer/profile-sets/amlogic-hdmi.conf를 쓴다 -
+# SPDIF 디바이스 프로브가 hdmitx 오디오 소스를 뒤집는 무음 버그 차단.
+ACTION!="add|change", GOTO="pa_amlogic_end"
+SUBSYSTEM!="sound", GOTO="pa_amlogic_end"
+KERNEL!="card*", GOTO="pa_amlogic_end"
+ATTR{id}=="AMLAUGESOUND", ENV{PULSE_PROFILE_SET}="amlogic-hdmi.conf"
+LABEL="pa_amlogic_end"
