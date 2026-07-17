@@ -306,6 +306,16 @@ menus:
         conf_key: global.savestate_auto_load
         restart: none
 
+      # 2026-07-17: 게임 실행 전 세이브 스테이트 목록+썸네일 화면
+      # (todo-20260706-savestate-preview.html). 실행 흐름을 가로채는 기능이라
+      # 설계 문서대로 기본 꺼짐 - 켜면 스테이트 있는 게임에서만 화면이 뜸.
+      - id: rp.savestate_preview
+        label: "SHOW SAVE STATES BEFORE LAUNCH"
+        type: toggle
+        conf_key: emulationstation.SaveStatePreview
+        default: "false"
+        restart: none
+
   - id: advanced_settings
     label: "ADVANCED SETTINGS"
     parent: controller
@@ -319,4 +329,13 @@ menus:
         label: "UNIFIED CONTROLS"
         type: toggle
         conf_key: global.menu_unified_controls
+        restart: none
+
+      # 2026-07-17: ES 메뉴 이동/선택 시 짧은 진동 피드백
+      # (todo-20260716-es-menu-rumble.html)
+      - id: rp.menu_rumble
+        label: "MENU RUMBLE"
+        type: toggle
+        conf_key: emulationstation.MenuRumble
+        default: "true"
         restart: none

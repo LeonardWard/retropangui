@@ -308,7 +308,7 @@ def build_appendconfig_chain(rom_path, roms_root, system):
 def main():
     if len(sys.argv) < 5:
         print(
-            "Usage: rpui-launcher <system> <rom> <emulator> <core>",
+            "Usage: rpui-launcher <system> <rom> <emulator> <core> [entry_slot]",
             file=sys.stderr,
         )
         sys.exit(1)
@@ -317,6 +317,14 @@ def main():
     rom      = sys.argv[2]
     emulator = sys.argv[3]  # 현재 미사용, 미래 확장용 (standalone 에뮬레이터 지원)
     core_arg = sys.argv[4]
+    # 세이브 스테이트 미리보기(GuiSaveStates)에서 고른 슬롯 - ES가 슬롯을 골랐을
+    # 때만 5번째 인자로 붙임. 슬롯 스캔/선택 UI는 ES 몫이고 여기선 결과 번호를
+    # RetroArch --entryslot(시작 시 그 슬롯 스테이트 로드)로 넘기기만 한다
+    # (todo-20260706-savestate-preview.html).
+    entry_slot = sys.argv[5] if len(sys.argv) > 5 else None
+    if entry_slot is not None and not entry_slot.isdigit():
+        log(f"Warning: entry_slot '{entry_slot}' 무시(숫자 아님)")
+        entry_slot = None
 
     cores_path  = os.getenv("LIBRETRO_CORES_PATH", "/usr/lib/libretro")
     share_root  = os.getenv("RETROPANGUI_SHARE",   "/retropangui/share")
@@ -378,6 +386,8 @@ def main():
     argv = [ra, "-L", core_path]
     if append_chain:
         argv += ["--appendconfig", append_chain]
+    if entry_slot is not None:
+        argv += ["--entryslot", entry_slot]
     argv.append(rom)
 
     log(f"exec: {' '.join(argv)}")

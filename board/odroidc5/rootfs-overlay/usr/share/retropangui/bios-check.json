@@ -1,0 +1,62 @@
+{
+  "_comment": "ES 바이오스 체크(GuiBiosCheck) 정의. path는 share/bios/ 기준 상대 경로. md5가 빈 배열이면 존재만 확인(롬 리비전이 여러 개라 해시 고정이 무의미한 경우). mandatory=false는 없어도 코어가 도는 항목(HLE 폴백 등). 파일명은 전부 코어 소스에서 직접 대조함(2026-07-17, todo-20260714-bios-check-menu.html): pcsx_rearmed frontend/libretro.c:3722, picodrive platform/libretro/libretro.c:1266-1272, yabasanshiro src/libretro/libretro.c:1048-1056(saturn_bios→sega_101→mpr-17933 순서 탐색), quasi88/np2kai는 각 코어 문서의 실기기 검증 결과.",
+  "psx": {
+    "name": "PlayStation",
+    "bios": [
+      { "path": "scph5500.bin", "md5": ["8dd7d5296a650fac7319bce665a6a53c"], "mandatory": false, "hashMandatory": false, "note": "일본(J) - 없으면 HLE 폴백, 호환성 위해 권장" },
+      { "path": "scph5501.bin", "md5": ["490f666e1afb15b7362b406ed1cea246"], "mandatory": false, "hashMandatory": false, "note": "북미(U) - 없으면 HLE 폴백, 호환성 위해 권장" },
+      { "path": "scph5502.bin", "md5": ["32736f17079d0b2b7024407c39bd3050"], "mandatory": false, "hashMandatory": false, "note": "유럽(E) - 없으면 HLE 폴백, 호환성 위해 권장" }
+    ]
+  },
+  "segacd": {
+    "name": "Sega CD",
+    "bios": [
+      { "path": "bios_CD_U.bin", "md5": ["854b9150240a198070150e4566ae1290"], "mandatory": true, "hashMandatory": false, "note": "북미(U) 타이틀 실행에 필수" },
+      { "path": "bios_CD_E.bin", "md5": ["e66fa1dc5820d254611fdcdba0662372"], "mandatory": true, "hashMandatory": false, "note": "유럽(E) 타이틀 실행에 필수" },
+      { "path": "bios_CD_J.bin", "md5": ["278a9397d192149e84e820ac621a8edd"], "mandatory": true, "hashMandatory": false, "note": "일본(J) 타이틀 실행에 필수" }
+    ]
+  },
+  "sega32x": {
+    "name": "Sega 32X",
+    "bios": [
+      { "path": "32X_G_BIOS.BIN", "md5": [], "mandatory": false, "hashMandatory": false, "note": "picodrive는 내장 구현 사용 - 없어도 무방" },
+      { "path": "32X_M_BIOS.BIN", "md5": [], "mandatory": false, "hashMandatory": false, "note": "picodrive는 내장 구현 사용 - 없어도 무방" },
+      { "path": "32X_S_BIOS.BIN", "md5": [], "mandatory": false, "hashMandatory": false, "note": "picodrive는 내장 구현 사용 - 없어도 무방" }
+    ]
+  },
+  "saturn": {
+    "name": "Sega Saturn",
+    "bios": [
+      { "path": "saturn_bios.bin", "md5": [], "mandatory": false, "hashMandatory": false, "note": "셋 중 하나 필요 - 코어 탐색 1순위" },
+      { "path": "sega_101.bin", "md5": ["85ec9ca47d8f6807718151cbcca8b964"], "mandatory": false, "hashMandatory": false, "note": "셋 중 하나 필요 - 탐색 2순위 (일본)" },
+      { "path": "mpr-17933.bin", "md5": ["3240872c70984b6cbfda1586cab68dbe"], "mandatory": false, "hashMandatory": false, "note": "셋 중 하나 필요 - 탐색 3순위 (북미/유럽)" }
+    ]
+  },
+  "pc88": {
+    "name": "NEC PC-8801 (quasi88)",
+    "bios": [
+      { "path": "quasi88/n88.rom", "md5": [], "mandatory": true, "hashMandatory": false, "note": "기본 롬 - 리비전별 해시 상이(존재만 확인)" },
+      { "path": "quasi88/n88_0.rom", "md5": [], "mandatory": true, "hashMandatory": false, "note": "확장 롬 0" },
+      { "path": "quasi88/n88_1.rom", "md5": [], "mandatory": true, "hashMandatory": false, "note": "확장 롬 1" },
+      { "path": "quasi88/n88_2.rom", "md5": [], "mandatory": true, "hashMandatory": false, "note": "확장 롬 2" },
+      { "path": "quasi88/n88_3.rom", "md5": [], "mandatory": true, "hashMandatory": false, "note": "확장 롬 3" },
+      { "path": "quasi88/disk.rom", "md5": [], "mandatory": true, "hashMandatory": false, "note": "디스크 이미지 로드에 필수" },
+      { "path": "quasi88/n88knj1.rom", "md5": [], "mandatory": true, "hashMandatory": false, "note": "한자 표시(1수준)에 필수" },
+      { "path": "quasi88/n88knj2.rom", "md5": [], "mandatory": false, "hashMandatory": false, "note": "한자 2수준 - 선택" },
+      { "path": "quasi88/n88n.rom", "md5": [], "mandatory": false, "hashMandatory": false, "note": "PC-8000 계열용 - PC-8801 게임엔 불필요" },
+      { "path": "quasi88/n88jisho.rom", "md5": [], "mandatory": false, "hashMandatory": false, "note": "국어사전 롬 - 선택" }
+    ]
+  },
+  "pc98": {
+    "name": "NEC PC-9801 (np2kai)",
+    "bios": [
+      { "path": "np2kai/bios.rom", "md5": [], "mandatory": true, "hashMandatory": false, "note": "기본 BIOS - 실기에서만 추출 가능(GETBIOS)" },
+      { "path": "np2kai/font.rom", "md5": [], "mandatory": true, "hashMandatory": false, "note": "폰트 롬 (font.bmp로 대체 가능)" },
+      { "path": "np2kai/itf.rom", "md5": [], "mandatory": true, "hashMandatory": false, "note": "하드웨어 초기화 롬" },
+      { "path": "np2kai/sound.rom", "md5": [], "mandatory": true, "hashMandatory": false, "note": "사운드 롬" },
+      { "path": "np2kai/font.bmp", "md5": [], "mandatory": false, "hashMandatory": false, "note": "대체 폰트 - font.rom 없을 때 텍스트 표시용" },
+      { "path": "np2kai/bios9821.rom", "md5": [], "mandatory": false, "hashMandatory": false, "note": "PC-9821 모델용 - 선택" },
+      { "path": "np2kai/d8000.rom", "md5": [], "mandatory": false, "hashMandatory": false, "note": "D8000 확장 롬 - 선택" }
+    ]
+  }
+}
