@@ -201,6 +201,43 @@ else
     echo "[1b/6] git 다운로더 패치 이미 적용됨 (스킵)"
 fi
 
+# [패치] alsa-plugins에 pulse 플러그인 조건부 활성화 (2026-07-17, PulseAudio 전환)
+# 상류 buildroot는 --disable-pulseaudio 하드코딩 - PULSEAUDIO 활성 시
+# pcm/ctl pulse 플러그인이 있어야 ALSA 앱(VLC/RetroArch/fluidsynth/amixer)이
+# asound.conf의 default를 통해 PA로 라우팅됨(todo-20260716-pulseaudio-migration.html).
+# buildroot/는 gitignore(자동 다운로드) 대상이라 여기서 멱등 패치로 재현.
+_ALSA_PLUGINS_MK="package/alsa-plugins/alsa-plugins.mk"
+if grep -q -- "--disable-pulseaudio" "${_ALSA_PLUGINS_MK}" 2>/dev/null && \
+   ! grep -q "BR2_PACKAGE_PULSEAUDIO" "${_ALSA_PLUGINS_MK}" 2>/dev/null; then
+    echo "[1c/6] alsa-plugins pulse 플러그인 조건부 활성화 패치 적용 중..."
+    python3 - "${_ALSA_PLUGINS_MK}" <<'PYEOF'
+import sys
+
+path = sys.argv[1]
+with open(path) as f:
+    src = f.read()
+
+src = src.replace("\t--disable-pulseaudio \\\n", "", 1)
+old = "\t--with-speex=no\n"
+new = ("\t--with-speex=no\n"
+       "\n"
+       "# RetroPangUI: PULSEAUDIO 활성 시 pulse 플러그인 켬 (internal_build.sh가 적용)\n"
+       "ifeq ($(BR2_PACKAGE_PULSEAUDIO),y)\n"
+       "ALSA_PLUGINS_CONF_OPTS += --enable-pulseaudio\n"
+       "ALSA_PLUGINS_DEPENDENCIES += pulseaudio\n"
+       "else\n"
+       "ALSA_PLUGINS_CONF_OPTS += --disable-pulseaudio\n"
+       "endif\n")
+src = src.replace(old, new, 1)
+
+with open(path, 'w') as f:
+    f.write(src)
+print("패치 완료")
+PYEOF
+else
+    echo "[1c/6] alsa-plugins 패치 이미 적용됨 (스킵)"
+fi
+
 # 다운로드 캐시 디렉토리 연결
 echo "[2/6] 다운로드 캐시 디렉토리 설정..."
 mkdir -p /home/builder/dl

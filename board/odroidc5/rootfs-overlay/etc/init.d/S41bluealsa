@@ -2,19 +2,35 @@
 # S41bluealsa - 블루투스 오디오(A2DP) ALSA 브릿지 데몬
 #
 # S40bluetoothd 다음 실행 - bluetoothd의 D-Bus 서비스가 먼저 떠 있어야 함.
-# a2dp-sink 프로파일만 사용(이 기기가 스피커로 소리를 "보내는" 쪽이라
-# source/hfp는 불필요). asound.conf의 "type bluealsa" pcm이 이 데몬을
-# 통해 실제 블루투스 오디오 장치와 통신한다.
-# 2026-07-11: bt-audio-autoswitch.py(S66btaudio)와 세트로 도입.
+# 2026-07-16: a2dp-sink → a2dp-source로 정정. bluealsa 용어에서 sink/source는
+# "이 기기 기준"이 아니라 "오디오가 흐르는 방향" 기준 - a2dp-sink는 이 기기가
+# 오디오를 받는(다른 기기가 스피커처럼 여기로 스트리밍하는) 프로파일이고,
+# a2dp-source가 이 기기가 오디오를 내보내는(외부 블루투스 스피커로 전송하는)
+# 프로파일이다. 예전 주석이 반대로 착각해서 a2dp-sink로 설정돼 있었고, 그
+# 결과 실기기에서 블루투스 스피커 연결 시 "br-connection-profile-unavailable"
+# 에러가 났음(로컬에 SOURCE 역할을 처리할 프로파일 핸들러가 없었기 때문) -
+# a2dp-source로 바꾸니 정상적으로 연결 성공(page-timeout류 순수 RF 에러만
+# 남음, 스피커가 꺼져있거나 범위 밖일 때 나는 정상적인 에러).
+# asound.conf의 "type bluealsa" pcm이 이 데몬을 통해 실제 블루투스 오디오
+# 장치와 통신한다. 2026-07-11: bt-audio-autoswitch.py(S66btaudio)와 세트로 도입.
+#
+# 2026-07-17: PulseAudio 전환으로 비활성화(no-op). PA의 module-bluetooth-
+# discover가 A2DP source 역할(위 2026-07-16 정정과 같은 방향)을 네이티브로
+# 담당하는데, bluealsa 데몬을 같이 띄우면 둘 다 bluetoothd에 같은 프로파일을
+# 등록하려다 충돌한다. 스크립트/패키지는 롤백 대비로 남겨둠 - 되살리려면
+# 아래 start의 exit 0 블록을 지우고 defconfig의 PULSEAUDIO 두 줄을 끄면 됨.
+# (todo-20260716-pulseaudio-migration.html)
 
 DAEMON="bluealsa"
 PIDFILE="/var/run/${DAEMON}.pid"
 
 case "$1" in
     start)
+        echo "bluealsa: PulseAudio 전환으로 비활성화됨 (S50pulseaudio가 담당)"
+        exit 0
         printf 'Starting %s: ' "${DAEMON}"
         start-stop-daemon -S -q -m -b -p "${PIDFILE}" -x "/usr/bin/${DAEMON}" \
-            -- -p a2dp-sink
+            -- -p a2dp-source
         [ $? -eq 0 ] && echo "OK" || echo "FAIL"
         ;;
     stop)

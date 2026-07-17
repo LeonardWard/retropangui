@@ -1,0 +1,53 @@
+#!/bin/sh
+#
+# S50pulseaudio - PulseAudio 시스템 모드 데몬 (RetroPangUI, 2026-07-17)
+#
+# buildroot 패키지가 설치하는 동명 스크립트를 rootfs-overlay로 덮어씀.
+# 원본과의 차이: --disallow-module-loading 제거 - 이 옵션이 있으면 기동
+# 이후의 모든 모듈 로딩이 막혀서 module-bluetooth-discover가 기기 연결
+# 시점에 module-bluez5-device를 못 올리고(블루투스 오디오 핫플러그 불가),
+# module-udev-detect의 USB 오디오 핫플러그(module-alsa-card 동적 로드)도
+# 막힘. 단일 사용자 게임기라 로컬 클라이언트의 모듈 로딩을 막을 보안상
+# 이유도 없음. 나머지(--system/--disable-shm 등)는 buildroot 원본 유지.
+#
+# 카드가 아직 안 떠 있어도 됨 - module-udev-detect가 나중에 등장하는
+# 카드도 자동 등록하므로 S62audio(modprobe)보다 먼저 시작해도 안전.
+
+start() {
+	printf "Starting pulseaudio: "
+	umask 077
+	/usr/bin/pulseaudio \
+		--system \
+		--daemonize \
+		--disallow-exit \
+		--exit-idle-time=-1 \
+		--use-pid-file \
+		--disable-shm
+	echo "OK"
+}
+stop() {
+	printf "Stopping pulseaudio: "
+	PULSE_RUNTIME_PATH=/var/run/pulse /usr/bin/pulseaudio --kill
+	echo "OK"
+}
+restart() {
+	stop
+	start
+}
+
+case "$1" in
+	start)
+		start
+		;;
+	stop)
+		stop
+		;;
+	restart|reload)
+		restart
+		;;
+	*)
+		echo "Usage: $0 {start|stop|restart}"
+		exit 1
+esac
+
+exit $?

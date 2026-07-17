@@ -271,6 +271,15 @@ BR2_PACKAGE_BLUEZ5_UTILS_PLUGINS_SIXAXIS=y
 # 필요(2026-07-11, todo-bluetooth-audio.html).
 BR2_PACKAGE_BLUEZ_ALSA=y
 BR2_PACKAGE_ALSA_PLUGINS=y
+# PulseAudio 전환(2026-07-17, todo-20260716-pulseaudio-migration.html):
+# raw ALSA(softvol/dmix)+bluealsa+asound.conf 재작성 방식의 두 한계 때문 -
+# ① 이미 열린 스트림은 default 재작성으로 못 옮김(BT 자동전환 실패)
+# ② softvol 유저컨트롤을 최초 생성한 프로세스(fluidsynth 데몬)가 잠금을
+#    쥐어 ES 볼륨 쓰기가 전부 EPERM(mp3 볼륨 미반영 회귀, 실기기 실증).
+# bluez5 지원은 BLUEZ5_UTILS+SBC(bluez-alsa가 select)로 자동 활성화됨.
+# ALSA 앱들은 alsa-plugins의 pulse 플러그인(asound.conf pcm.!default)으로 경유.
+BR2_PACKAGE_PULSEAUDIO=y
+BR2_PACKAGE_PULSEAUDIO_DAEMON=y
 BR2_PACKAGE_NSS_MDNS=y
 
 # Python3

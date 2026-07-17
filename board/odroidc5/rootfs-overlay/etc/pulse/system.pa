@@ -1,0 +1,44 @@
+#!/usr/bin/pulseaudio -nF
+#
+# RetroPangUI PulseAudio 시스템 모드 설정 (2026-07-17, PulseAudio 전환)
+# todo-20260716-pulseaudio-migration.html
+#
+# ALSA 앱(VLC/RetroArch/fluidsynth/amixer)은 /etc/asound.conf의
+# pcm/ctl.!default(type pulse)로 여기 붙는다. 볼륨은 PA 기본 sink 볼륨
+# 하나로 통일 - softvol 유저컨트롤 잠금 문제(fluidsynth가 최초 생성자로
+# 잠금을 쥐어 ES 볼륨 쓰기가 EPERM 나던 회귀)가 구조적으로 사라짐.
+
+### 장치 자동 감지 - eudev 동작 중이라 udev-detect 사용(카드가 부팅 후
+### 늦게 뜨거나 USB 오디오를 꽂아도 자동 등록됨). tsched=0: Amlogic i2s
+### 드라이버류에서 타이머 스케줄링 글리치를 피하는 임베디드 관례.
+load-module module-udev-detect tsched=0
+
+### 블루투스 (PA 네이티브 - bluealsa 대체. bluealsa 데몬과 동시에 띄우면
+### BlueZ 프로파일 등록이 충돌하므로 S41bluealsa는 no-op 처리돼 있음)
+.ifexists module-bluetooth-policy.so
+load-module module-bluetooth-policy
+.endif
+.ifexists module-bluetooth-discover.so
+load-module module-bluetooth-discover
+.endif
+
+### 로컬 클라이언트 소켓 - 시스템 모드라 익명 접속 허용(단일 사용자 게임기)
+load-module module-native-protocol-unix auth-anonymous=1
+
+### 상태 복원 (볼륨/기본 장치 - /var/lib/pulse, overlay라 재부팅 유지)
+load-module module-device-restore
+load-module module-stream-restore
+load-module module-card-restore
+load-module module-default-device-restore
+
+### 새 sink(블루투스 스피커 등) 등장 시 재생 중 스트림까지 끊김 없이 이동.
+### 진동/스피커 겸용으로 오인될 수 있는 패드류는 제외(Recalbox 패턴 참고).
+load-module module-switch-on-connect blacklist="8BitDo|SHANWAN|Wireless_Controller|DualSense|Sony_Interactive_Entertainment"
+
+### sink가 하나도 없어도 null-sink를 유지 - 현재 출력 기기가 꺼지면 PA가
+### 스트림을 남은 sink(최종적으로 온보드 HDMI)로 재할당하는 폴백 동작의
+### 안전망(사용자 요구: 무음 방치 금지)
+load-module module-always-sink
+
+# module-suspend-on-idle은 일부러 안 씀 - HDMI 오디오가 유휴 서스펜드에서
+# 깨어날 때 첫 소리 잘림/팝이 생길 수 있어 sink를 항상 돌림.
