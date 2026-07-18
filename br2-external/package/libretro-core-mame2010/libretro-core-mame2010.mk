@@ -4,8 +4,12 @@
 #
 # 2026-07-19: arcade 시스템 3번째 코어로 추가 (fbneo -> mame2003-plus ->
 # mame2010 순, 구형 롬셋 호환 범위를 넓히는 목적).
-# platform=unix + VRENDER=soft PTR64=1 ARM_ENABLED=1 - recalbox의
-# libretro-mame2010.mk가 aarch64를 이 옵션 조합으로 명시적으로 처리함.
+# platform=unix VRENDER=soft PTR64=1 ARM_ENABLED=0 - recalbox 원본은
+# aarch64에도 ARM_ENABLED=1을 썼는데, 실제로 켜보니 ARM(32bit) 전용
+# 어셈블리 CPU 코어가 aarch64 오브젝트와 링크 시 "Relocations in
+# generic ELF" / "file in wrong format"으로 실패함(2026-07-19 확인) -
+# recalbox 소스의 aarch64 분기가 실제로는 검증 안 된 죽은 코드였을
+# 가능성. ARM_ENABLED=0(순수 C 코드 경로)으로 정정.
 #
 ################################################################################
 
@@ -27,7 +31,7 @@ define LIBRETRO_CORE_MAME2010_BUILD_CMDS
 		$(MAKE) -C $(@D)/mame2010 \
 		-f Makefile \
 		$(LIBRETRO_CORE_MAME2010_CROSS_OPTS) \
-		platform=unix VRENDER=soft PTR64=1 ARM_ENABLED=1
+		platform=unix VRENDER=soft PTR64=1 ARM_ENABLED=0
 endef
 
 define LIBRETRO_CORE_MAME2010_INSTALL_TARGET_CMDS
