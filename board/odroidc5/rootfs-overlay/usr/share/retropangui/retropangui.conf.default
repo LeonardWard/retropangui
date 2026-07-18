@@ -1,7 +1,8 @@
 # retropangui.conf - RetroPangui Unified Configuration
 # =====================================================
 # 이 파일은 /share/system/retropangui.conf 의 기본값 템플릿입니다.
-# 첫 부팅 시 /share/system/retropangui.conf 가 없으면 이 파일에서 복사됩니다.
+# 첫 부팅 시 /share/system/retropangui.conf 가 없으면
+# /usr/share/retropangui/retropangui.conf.default 에서 복사됩니다.
 #
 # 적용 방식:
 #   global.*         → /retropangui/share/system/retroarch/retroarch.cfg 에 반영
@@ -23,14 +24,20 @@ system.timezone=Asia/Seoul
 
 # HDMI 출력 해상도 - auto면 부팅 시 연결된 모니터 EDID 네이티브 타이밍을
 # 자동 감지(hdmi-set-resolution.py). 실패하면 1080p60hz로 폴백.
+#
+# auto 대신 수동으로 고정 CEA 모드 이름을 직접 지정할 수도 있음(연결이
+# 불안정한 모니터, 특정 해상도로 못박고 싶은 경우 등). 자주 쓰는 값 예:
+#   1080p60hz, 1080p50hz, 720p60hz, 720p50hz, 480p60hz, 576p50hz,
+#   2160p60hz, 2160p30hz (4K 지원 모니터)
+# 실제 이 모니터가 지원하는 정확한 목록은 기기별 EDID에 따라 다르므로
+# 접속해서 `odroid-drm-fbset -showmodes` 로 확인할 것 - 여기 없는 이름을
+# 넣으면 인식 실패 후 1080p60hz로 자동 폴백됨(부팅 자체는 안 막힘).
 system.hdmi_resolution=auto
 
-# 호스트명 - defconfig의 BR2_TARGET_GENERIC_HOSTNAME과 반드시 일치시킬 것.
-# 2026-07-11: 여기가 "retropangui"로 어긋나 있었는데, 지금까지는 이 값이
-# 실제로 적용된 적이 없어서(APPLY_NEEDED가 한 번도 안 걸림) 안 드러났다가,
-# 다른 기능(TICKER SETTINGS) 추가로 새 기본값 병합이 처음 발생하면서
-# apply_retropangui_conf.sh가 이 오래된 값을 실기기에 적용해버려 실제
-# 호스트명이 조용히 retropangui-c5 → retropangui로 바뀌는 사고가 있었음.
+# 호스트명 - defconfig의 BR2_TARGET_GENERIC_HOSTNAME과 반드시 일치시킬 것
+# (두 값이 어긋나 있으면 새 기본값이 병합되는 시점에 실기기 호스트명이
+# 조용히 바뀌는 사고로 이어질 수 있음 - 2026-07-11 실제 발생, 원인/경위는
+# todo-20260628-env.html 참고).
 system.hostname=retropangui-c5
 
 # 자동 업데이트 여부 (0=비활성, 1=활성)

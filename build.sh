@@ -94,6 +94,7 @@ _tool_hint() {
                 git)    echo "       설치: sudo apt install -y git" ;;
                 awk)    echo "       설치: sudo apt install -y gawk" ;;
                 nproc)  echo "       설치: sudo apt install -y coreutils" ;;
+                unzip)  echo "       설치: sudo apt install -y unzip" ;;
             esac ;;
         dnf)
             case "$tool" in
@@ -101,6 +102,7 @@ _tool_hint() {
                 git)    echo "       설치: sudo dnf install -y git" ;;
                 awk)    echo "       설치: sudo dnf install -y gawk" ;;
                 nproc)  echo "       설치: sudo dnf install -y coreutils" ;;
+                unzip)  echo "       설치: sudo dnf install -y unzip" ;;
             esac ;;
         pacman)
             case "$tool" in
@@ -108,6 +110,7 @@ _tool_hint() {
                 git)    echo "       설치: sudo pacman -S git" ;;
                 awk)    echo "       설치: sudo pacman -S gawk" ;;
                 nproc)  echo "       설치: sudo pacman -S coreutils" ;;
+                unzip)  echo "       설치: sudo pacman -S unzip" ;;
             esac ;;
         brew)
             case "$tool" in
@@ -115,6 +118,7 @@ _tool_hint() {
                 git)    echo "       설치: brew install git" ;;
                 awk)    echo "       설치: brew install gawk" ;;
                 nproc)  echo "       설치: brew install coreutils" ;;
+                unzip)  echo "       설치: brew install unzip" ;;
             esac ;;
         *)
             case "$tool" in
@@ -123,7 +127,10 @@ _tool_hint() {
             esac ;;
     esac
 }
-for _tool in git awk nproc docker; do
+# unzip: fetch-fonts.sh가 호스트에서(Docker 진입 전) 직접 압축을 풀 때 씀 -
+# 없으면 사전 조건 확인은 통과하고 한참 지나서야 실패하는 문제가 있었음
+# (2026-07-18, 다른 호스트에서 실측).
+for _tool in git awk nproc docker unzip; do
     if ! command -v "$_tool" &>/dev/null; then
         _pf_err "$_tool 가 설치되어 있지 않습니다."
         _tool_hint "$_tool"
