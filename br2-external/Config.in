@@ -34,6 +34,7 @@ source "$BR2_EXTERNAL_C5_PANGUI_PATH/package/libretro-core-beetle-supergrafx/Con
 source "$BR2_EXTERNAL_C5_PANGUI_PATH/package/libretro-core-beetle-bsnes/Config.in"
 source "$BR2_EXTERNAL_C5_PANGUI_PATH/package/libretro-core-yabasanshiro/Config.in"
 source "$BR2_EXTERNAL_C5_PANGUI_PATH/package/libretro-core-fbneo/Config.in"
+source "$BR2_EXTERNAL_C5_PANGUI_PATH/package/libretro-core-mame2003-plus/Config.in"
 source "$BR2_EXTERNAL_C5_PANGUI_PATH/package/kodi-pangui-texturepacker/Config.in"
 source "$BR2_EXTERNAL_C5_PANGUI_PATH/package/kodi-pangui/Config.in"
 source "$BR2_EXTERNAL_C5_PANGUI_PATH/package/kodi-peripheral-joystick-pangui/Config.in"

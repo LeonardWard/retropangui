@@ -1,0 +1,7 @@
+config BR2_PACKAGE_LIBRETRO_CORE_MAME2003_PLUS
+	bool "libretro-core-mame2003-plus"
+	help
+	  MAME 2003-Plus libretro core - 구형(2003년 MAME 기준) 아케이드
+	  롬셋 호환. FBNeo가 지원하지 않는 구형/저사양 아케이드 게임용.
+
+	  https://github.com/libretro/mame2003-plus-libretro

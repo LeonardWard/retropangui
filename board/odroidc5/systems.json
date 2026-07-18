@@ -169,7 +169,8 @@
     "platform": "arcade",
     "theme": "arcade",
     "cores": [
-      { "name": "fbneo", "fullname": "FinalBurn Neo", "module_id": "lr-fbneo", "priority": 1 }
+      { "name": "fbneo", "fullname": "FinalBurn Neo", "module_id": "lr-fbneo", "priority": 1 },
+      { "name": "mame2003_plus", "fullname": "MAME 2003-Plus", "module_id": "lr-mame2003-plus", "priority": 2 }
     ]
   },
   {
