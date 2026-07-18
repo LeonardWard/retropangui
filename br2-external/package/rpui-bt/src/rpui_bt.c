@@ -51,6 +51,8 @@ static int  g_nadapter = 0;
 static GDBusConnection *g_conn = NULL;
 static GMainLoop       *g_loop = NULL;
 static char g_pair_filter[32] = ""; /* "input-gaming" / "audio-" — 비어있으면 페어링 탐색 중 아님 */
+static gboolean g_pair_auto = TRUE; /* FALSE면 필터 일치 기기를 발견해도 자동 pair/trust/connect 안 함 —
+                                      * 목록만 채우고 PAIR_MAC(사용자가 직접 고른 기기)만 진행. 오디오 스캔용. */
 
 /* ── 유틸 ──────────────────────────────────────────────── */
 
@@ -684,6 +686,12 @@ static void maybe_pair_device(const char *obj_path)
      * 고른 기기(PAIR_MAC)이므로 아이콘 필터링을 건너뛴다. */
     if (g_pair_filter[0] != '*' && (!dp.icon[0] || strncmp(dp.icon, g_pair_filter, strlen(g_pair_filter)) != 0)) return;
 
+    /* 오디오 스캔 등 g_pair_auto=FALSE인 세션은 필터에 걸리는 기기가 나와도
+     * 자동으로 pair/trust/connect 진행하지 않는다 — write_discovery_list()로
+     * 목록에만 올리고, 사용자가 GUI에서 직접 골라 PAIR_MAC을 보내야 진행됨
+     * (그 경우 g_pair_filter="*"로 바뀌어 위 필터를 우회하므로 이 return과 무관). */
+    if (g_pair_filter[0] != '*' && !g_pair_auto) return;
+
     if (!g_pairing_target[0]) {
         snprintf(g_pairing_target, sizeof(g_pairing_target), "%s", obj_path);
         g_connect_retries = 0;
@@ -754,7 +762,13 @@ static void on_interfaces_added(GDBusConnection *conn, const gchar *sender, cons
     if (dev) {
         g_variant_unref(dev);
         maybe_pair_device(path);
-        if (g_pair_filter[0]) write_discovery_list();
+        // 2026-07-16: g_pair_filter[0] 조건 제거 - bt-audio-autoswitch.py가
+        // discovery.json의 connected 필드만 보고 폴링하는데, 이 조건 때문에
+        // GUI 페어링 화면이 열려있을 때만 파일이 갱신되고 있었음. 즉 평상시
+        // 백그라운드 자동 재연결이나 CLI로 직접 연결한 경우는 파일이 그대로
+        // 멈춰있어서 오디오 자동전환이 절대 못 감지했음(실기기로 확인한 버그 -
+        // "블루투스 오디오 자동전환 구현 완료, 실제 재생 미검증"의 실제 원인).
+        write_discovery_list();
     }
     g_variant_unref(interfaces);
 }
@@ -764,7 +778,7 @@ static void on_properties_changed(GDBusConnection *conn, const gchar *sender, co
 {
     (void)conn; (void)sender; (void)interface; (void)signal; (void)user_data; (void)params;
     maybe_pair_device(object_path);
-    if (g_pair_filter[0]) write_discovery_list();
+    write_discovery_list(); // 항상 갱신 - 위 on_interfaces_added 주석 참고
 }
 
 /* ── 데몬: netlink 핫플러그 감지 (기존과 동일, 어댑터 설정만 D-Bus로) ── */
@@ -952,12 +966,13 @@ static void kickstart_known_devices(void)
     g_free(prefix);
 }
 
-static void begin_pairing_search(const char *icon_filter)
+static void begin_pairing_search(const char *icon_filter, gboolean auto_connect)
 {
     const char *primary = primary_adapter();
     if (!primary) { write_pairing_status("실패: 사용 가능한 BT 어댑터 없음"); return; }
 
     snprintf(g_pair_filter, sizeof(g_pair_filter), "%s", icon_filter);
+    g_pair_auto = auto_connect;
     g_pairing_target[0] = '\0';
     write_pairing_status("SCANNING");
     write_discovery_list(); /* 빈 목록(또는 이미 알려진 기기)으로 초기화 */
@@ -974,11 +989,16 @@ static gboolean on_cmd_file_tick(gpointer user_data)
     unlink(BT_CMD_FILE);
 
     if (strcmp(line, "TRUST_PAD") == 0)
-        begin_pairing_search("input-gaming");
+        begin_pairing_search("input-gaming", TRUE);
     else if (strcmp(line, "TRUST_AUDIO") == 0)
-        begin_pairing_search("audio-");
+        begin_pairing_search("audio-", TRUE);
+    else if (strcmp(line, "SCAN_AUDIO") == 0)
+        /* GUI 오디오 페어링 화면 전용 — 목록만 채우고 자동 연결 안 함,
+         * 사용자가 직접 골라야 PAIR_MAC으로 진행됨. */
+        begin_pairing_search("audio-", FALSE);
     else if (strcmp(line, "STOP") == 0) {
         g_pair_filter[0] = '\0';
+        g_pair_auto = TRUE;
         g_pairing_target[0] = '\0';
         stop_discovery_all();
         write_discovery_list();
@@ -1127,7 +1147,7 @@ int main(int argc, char **argv)
     /* GUI 전용 non-blocking 트리거 — trust-pad/trust-audio는 블로킹 폴링이라
      * GUI 스레드에서 쓰기 부적합, 이건 명령만 전달하고 즉시 리턴한다. */
     else if (strcmp(argv[1], "scan-start-pad") == 0)   cli_write_cmd("TRUST_PAD");
-    else if (strcmp(argv[1], "scan-start-audio") == 0) cli_write_cmd("TRUST_AUDIO");
+    else if (strcmp(argv[1], "scan-start-audio") == 0) cli_write_cmd("SCAN_AUDIO"); /* 목록만, 자동연결 안 함 */
     else if (strcmp(argv[1], "scan-stop") == 0)        cli_write_cmd("STOP");
     else if (strcmp(argv[1], "pair") == 0 && argc >= 3) {
         char cmd[64];
