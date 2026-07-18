@@ -1,0 +1,8 @@
+config BR2_PACKAGE_LIBRETRO_CORE_MAME2016
+	bool "libretro-core-mame2016"
+	help
+	  MAME 2016(0.174 기준) libretro core. genie/premake 기반 대형
+	  빌드 시스템이라 다른 아케이드 코어보다 빌드 실패 가능성이 높음 -
+	  실패 시 defconfig에서 비활성화하고 원인을 todo-core 문서에 기록.
+
+	  https://github.com/libretro/mame2016-libretro

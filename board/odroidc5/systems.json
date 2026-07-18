@@ -170,7 +170,9 @@
     "theme": "arcade",
     "cores": [
       { "name": "fbneo", "fullname": "FinalBurn Neo", "module_id": "lr-fbneo", "priority": 1 },
-      { "name": "mame2003_plus", "fullname": "MAME 2003-Plus", "module_id": "lr-mame2003-plus", "priority": 2 }
+      { "name": "mame2003_plus", "fullname": "MAME 2003-Plus", "module_id": "lr-mame2003-plus", "priority": 2 },
+      { "name": "mame2010", "fullname": "MAME 2010", "module_id": "lr-mame2010", "priority": 3 },
+      { "name": "mame2016", "fullname": "MAME 2016", "module_id": "lr-mame2016", "priority": 4 }
     ]
   },
   {
