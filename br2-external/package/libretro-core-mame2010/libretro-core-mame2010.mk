@@ -4,12 +4,14 @@
 #
 # 2026-07-19: arcade 시스템 3번째 코어로 추가 (fbneo -> mame2003-plus ->
 # mame2010 순, 구형 롬셋 호환 범위를 넓히는 목적).
-# platform=unix VRENDER=soft PTR64=1 ARM_ENABLED=0 - recalbox 원본은
-# aarch64에도 ARM_ENABLED=1을 썼는데, 실제로 켜보니 ARM(32bit) 전용
-# 어셈블리 CPU 코어가 aarch64 오브젝트와 링크 시 "Relocations in
-# generic ELF" / "file in wrong format"으로 실패함(2026-07-19 확인) -
-# recalbox 소스의 aarch64 분기가 실제로는 검증 안 된 죽은 코드였을
-# 가능성. ARM_ENABLED=0(순수 C 코드 경로)으로 정정.
+# platform=unix VRENDER=soft PTR64=1 ARM_ENABLED=0
+# 2026-07-19 진짜 원인 확정: "Relocations in generic ELF"/"file in wrong
+# format" 링크 에러는 ARM_ENABLED와 무관했음 - mame2010 Makefile의 unix
+# 블록이 `AR ?= @ar`(AR을 안 넘기면 시스템 기본 ar, 즉 호스트 x86_64용
+# ar을 그대로 씀)라서, 크로스 오브젝트를 호스트 ar로 아카이빙한 게 진짜
+# 원인. CC/LD만 넘기고 AR/RANLIB을 빠뜨렸던 게 문제 - 다른 패키지
+# (fbneo 등)는 picodrive 패턴을 따라 AR/RANLIB을 처음부터 넣었어서
+# 이 문제가 없었음. ARM_ENABLED=0으로 되돌린 건 그대로 유지(안전한 쪽).
 #
 ################################################################################
 
@@ -19,7 +21,9 @@ LIBRETRO_CORE_MAME2010_SOURCE =
 
 LIBRETRO_CORE_MAME2010_CROSS_OPTS = \
 	CC="$(TARGET_CC)" \
-	LD="$(TARGET_CXX)"
+	LD="$(TARGET_CXX)" \
+	AR="$(TARGET_AR)" \
+	RANLIB="$(TARGET_RANLIB)"
 
 define LIBRETRO_CORE_MAME2010_BUILD_CMDS
 	test -d $(@D)/mame2010/.git || \
