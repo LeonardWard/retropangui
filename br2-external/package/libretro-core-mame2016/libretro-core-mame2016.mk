@@ -10,6 +10,10 @@
 # 자체가 python2 패키지를 지원 안 함) - 최신 업스트림 makefile을 직접 확인해
 # python3도 지원됨을 확인하고 python3로 지정.
 # PTR64=1(aarch64=64bit), LIBRETRO_CPU/OS는 buildroot 표준 변수 그대로 전달.
+# FORCE_DRC_C_BACKEND=1: mame2010에서 이 옵션 없이 PTR64=1만 넘겼다가
+# x86 전용 동적 리컴파일러(drcbex64.o)가 무조건 끼어들어 "Relocations in
+# generic ELF"/"file in wrong format" 링크 에러가 난 것을 미리 겪어서
+# (todo-core-lr-mame2010.html 참고) mame2016도 선제적으로 추가.
 #
 ################################################################################
 
@@ -24,6 +28,7 @@ LIBRETRO_CORE_MAME2016_OPTS = \
 	CONFIG="libretro" \
 	OSD="retro" \
 	PTR64=1 \
+	FORCE_DRC_C_BACKEND=1 \
 	PYTHON_EXECUTABLE=python3 \
 	NOWERROR=1 \
 	VERBOSE=1 \

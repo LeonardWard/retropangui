@@ -4,14 +4,21 @@
 #
 # 2026-07-19: arcade 시스템 3번째 코어로 추가 (fbneo -> mame2003-plus ->
 # mame2010 순, 구형 롬셋 호환 범위를 넓히는 목적).
-# platform=unix VRENDER=soft PTR64=1 ARM_ENABLED=0
-# 2026-07-19 진짜 원인 확정: "Relocations in generic ELF"/"file in wrong
-# format" 링크 에러는 ARM_ENABLED와 무관했음 - mame2010 Makefile의 unix
-# 블록이 `AR ?= @ar`(AR을 안 넘기면 시스템 기본 ar, 즉 호스트 x86_64용
-# ar을 그대로 씀)라서, 크로스 오브젝트를 호스트 ar로 아카이빙한 게 진짜
-# 원인. CC/LD만 넘기고 AR/RANLIB을 빠뜨렸던 게 문제 - 다른 패키지
-# (fbneo 등)는 picodrive 패턴을 따라 AR/RANLIB을 처음부터 넣었어서
-# 이 문제가 없었음. ARM_ENABLED=0으로 되돌린 건 그대로 유지(안전한 쪽).
+# platform=unix VRENDER=soft PTR64=1 ARM_ENABLED=0 FORCE_DRC_C_BACKEND=1
+# 2026-07-19 시행착오 기록:
+# 1차: ARM_ENABLED=1이 원인이라 추정 -> 0으로 바꿔도 동일 에러 재발.
+# 2차: AR 미지정(unix 블록의 AR ?= @ar가 호스트 ar을 씀)이라 추정해서
+#      AR/RANLIB 추가 -> 여전히 동일 에러("Relocations in generic ELF"/
+#      "file in wrong format"). ar 자체는 aarch64-*-gcc-ar로 정상 호출됨
+#      을 로그로 확인, AR 문제가 아니었음.
+# 진짜 원인(Makefile.common 확인): m68kcpu.o가 걸리는 링크 에러는 DRC
+# (동적 리컴파일러) 오브젝트 때문 - `ifndef FORCE_DRC_C_BACKEND` 블록이
+# PTR64 값과 무관하게 무조건 x86 전용 DRC 백엔드(drcbex64.o, x86 어셈블리
+# 포함)를 링크에 끼워넣고 NATIVE_DRC=drcbe_x64_be_interface를 정의함 -
+# 소스 주석에 "fixme - need to make this work for other target
+# architectures (PPC)"라고 명시돼 있어 x86 이외 아키텍처를 원래 지원 안
+# 함. wiiu/classic_armv8_a35 등 비x86 플랫폼은 전부 FORCE_DRC_C_BACKEND=1
+# (아키텍처 무관 순수 C DRC 백엔드)을 씀 - 같은 방식으로 정정.
 #
 ################################################################################
 
@@ -35,7 +42,7 @@ define LIBRETRO_CORE_MAME2010_BUILD_CMDS
 		$(MAKE) -C $(@D)/mame2010 \
 		-f Makefile \
 		$(LIBRETRO_CORE_MAME2010_CROSS_OPTS) \
-		platform=unix VRENDER=soft PTR64=1 ARM_ENABLED=0
+		platform=unix VRENDER=soft PTR64=1 ARM_ENABLED=0 FORCE_DRC_C_BACKEND=1
 endef
 
 define LIBRETRO_CORE_MAME2010_INSTALL_TARGET_CMDS
