@@ -268,6 +268,14 @@ BR2_PACKAGE_BLUEZ5_UTILS_PLUGINS_HOG=y
 # 직접 처리(별도 sixpair 툴 불필요, udev 필요 - 이미 다른 곳에서 씀).
 # 2026-07-10 밤, todo-20260705-ds3.html "MAC 각인 절차" 조사 결과로 추가.
 BR2_PACKAGE_BLUEZ5_UTILS_PLUGINS_SIXAXIS=y
+# 2026-07-18: 위 sixaxis가 로드 시 "undefined symbol: udev_device_get_syspath"로
+# 죽는 버그를 실기기에서 발견(todo-20260705-ds3.html) - BlueZ configure.ac:232가
+# libudev pkg-config 체크(UDEV_LIBS)를 --enable-udev가 아니라 --enable-tools
+# 조건 안에 넣어놔서, tools를 꺼둔 이 프로젝트 조합에서는 UDEV_LIBS가 항상
+# 빈 문자열로 남아 sixaxis.so가 심볼 미해결 상태로 빌드됐음(config.log로 확인).
+# tools를 켜서 이 조건을 충족시켜 우회 - 부작용은 진단용 CLI 도구 몇 개
+# (btattach/l2ping 등) 추가뿐, 상시 데몬 아님.
+BR2_PACKAGE_BLUEZ5_UTILS_TOOLS=y
 # 블루투스 오디오(A2DP) 재생 - bluez-alsa가 bluetoothd의 오디오 프로파일
 # 플러그인(BLUEZ5_UTILS_PLUGINS_AUDIO)까지 자동으로 켜줌. alsa-plugins는
 # 블루투스 기기별로 다른 샘플레이트를 변환해주는 samplerate 플러그인 때문에
