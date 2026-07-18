@@ -1,0 +1,7 @@
+config BR2_PACKAGE_LIBRETRO_CORE_FBNEO
+	bool "libretro-core-fbneo"
+	help
+	  FBNeo (FinalBurn Neo) libretro core - CPS1/CPS2/CPS3, Neo Geo,
+	  Neo Geo CD 등 아케이드 시스템.
+
+	  https://github.com/libretro/FBNeo

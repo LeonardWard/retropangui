@@ -163,6 +163,36 @@
     ]
   },
   {
+    "name": "arcade",
+    "fullname": "Arcade",
+    "extensions": ".zip .7z",
+    "platform": "arcade",
+    "theme": "arcade",
+    "cores": [
+      { "name": "fbneo", "fullname": "FinalBurn Neo", "module_id": "lr-fbneo", "priority": 1 }
+    ]
+  },
+  {
+    "name": "neogeo",
+    "fullname": "SNK Neo Geo",
+    "extensions": ".zip .7z",
+    "platform": "neogeo",
+    "theme": "neogeo",
+    "cores": [
+      { "name": "fbneo", "fullname": "FinalBurn Neo", "module_id": "lr-fbneo", "priority": 1 }
+    ]
+  },
+  {
+    "name": "neogeocd",
+    "fullname": "SNK Neo Geo CD",
+    "extensions": ".cue .chd .zip .7z",
+    "platform": "neogeocd",
+    "theme": "neogeocd",
+    "cores": [
+      { "name": "fbneo", "fullname": "FinalBurn Neo", "module_id": "lr-fbneo", "priority": 1 }
+    ]
+  },
+  {
     "name": "utility",
     "fullname": "유틸리티",
     "extensions": ".py",
