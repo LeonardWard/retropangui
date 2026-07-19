@@ -10,8 +10,11 @@
 # 비용이 발생해서 빌드 시간이 누적으로 늘어나는 원인이었음
 # (todo-20260720-build-force-clean-audit.html 참고).
 #
-# 이 스크립트는 "마지막으로 성공한 빌드의 커밋"과 "지금 워킹트리"를 git diff로
-# 비교해서, 실제로 바뀐 파일에 해당하는 패키지의 output/build/ 캐시만 지운다.
+# 이 스크립트는 "마지막으로 성공한 빌드 시점의 소스 상태"와 "지금 워킹트리"를
+# git diff로 비교해서, 실제로 바뀐 파일에 해당하는 패키지의 output/build/ 캐시만
+# 지운다. 기준점은 build.sh가 빌드 성공 직후 기록하는데, 커밋 안 한 수정까지
+# 포함하기 위해 HEAD가 아니라 stash 임시 커밋(git stash create)일 수 있음 -
+# git diff <커밋>은 stash 커밋에도 똑같이 동작하므로 여기선 구분할 필요 없다.
 #
 # 사용법: scripts/detect-stale-package-caches.sh [DEVICE]
 # (반드시 저장소 루트에서 실행 — build.sh가 여기서 호출함)

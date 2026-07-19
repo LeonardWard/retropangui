@@ -311,9 +311,17 @@ docker run --rm \
     retropangui-builder \
     bash /home/builder/docker/internal_build.sh
 
-# 빌드 성공 시점의 커밋을 기록 - 다음 빌드의 stale-cache 감지 기준점
+# 빌드 성공 시점의 소스 상태를 기록 - 다음 빌드의 stale-cache 감지 기준점.
+# HEAD 커밋이 아니라 stash 임시 커밋을 기록하는 이유: 커밋 안 한 수정을 둔 채
+# 빌드한 뒤 그 수정을 되돌리면, HEAD 기준 diff로는 "변경 없음"이라 수정본으로
+# 만들어진 캐시가 감지 안 되는 구멍이 있음. stash create는 워킹트리 상태
+# 그대로를 임시 커밋으로 만들어줌(변경 없으면 빈 문자열 -> HEAD 사용).
+# gc가 dangling 커밋을 지워버리지 않도록 ref로도 고정해둔다.
 if [ $PARTIAL -eq 0 ]; then
-    git -C "${SCRIPT_DIR}" rev-parse HEAD > "${SCRIPT_DIR}/buildroot/output/.last_built_commit"
+    BUILT_STATE="$(git -C "${SCRIPT_DIR}" stash create 2>/dev/null || true)"
+    [ -z "${BUILT_STATE}" ] && BUILT_STATE="$(git -C "${SCRIPT_DIR}" rev-parse HEAD)"
+    git -C "${SCRIPT_DIR}" update-ref refs/retropangui/last-built "${BUILT_STATE}"
+    echo "${BUILT_STATE}" > "${SCRIPT_DIR}/buildroot/output/.last_built_commit"
 fi
 
 echo "[3/3] 빌드 완료!"
