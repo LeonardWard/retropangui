@@ -278,6 +278,13 @@ _shallow_clone retroarch         https://github.com/libretro/RetroArch          
 _shallow_clone retroarch-assets  https://github.com/libretro/retroarch-assets.git              master
 _shallow_clone emulationstation  https://github.com/LeonardWard/retropangui-emulationstation    main
 
+# 2026-07-20: git 커밋 비교로 실제 변경된 패키지만 캐시 정리
+# (todo-20260720-build-force-clean-audit.html) - --partial은 targeted
+# 재빌드라 별개 로직이므로 대상에서 제외.
+if [ $PARTIAL -eq 0 ]; then
+    bash "${SCRIPT_DIR}/scripts/detect-stale-package-caches.sh" "${DEVICE}"
+fi
+
 # Docker 이미지 빌드
 echo "[1/3] Docker 빌드 환경 이미지 생성 중..."
 docker build -t retropangui-builder "${SCRIPT_DIR}"
@@ -304,6 +311,10 @@ docker run --rm \
     retropangui-builder \
     bash /home/builder/docker/internal_build.sh
 
+# 빌드 성공 시점의 커밋을 기록 - 다음 빌드의 stale-cache 감지 기준점
+if [ $PARTIAL -eq 0 ]; then
+    git -C "${SCRIPT_DIR}" rev-parse HEAD > "${SCRIPT_DIR}/buildroot/output/.last_built_commit"
+fi
 
 echo "[3/3] 빌드 완료!"
 echo "============================================"
