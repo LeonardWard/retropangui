@@ -196,11 +196,16 @@ case "$1" in
         SYSTEMS_XML="/etc/emulationstation/es_systems.xml"
         ROMS_ROOT="/retropangui/share/roms"
         SCREENSHOTS_ROOT="/retropangui/share/screenshots"
+        SAVES_ROOT="/retropangui/share/saves"
         if [ -f "${SYSTEMS_XML}" ]; then
             grep '<name>' "${SYSTEMS_XML}" | sed 's/.*<name>\(.*\)<\/name>.*/\1/' | \
             while read -r sys; do
                 [ -z "$sys" ] && continue
-                mkdir -p "${SCREENSHOTS_ROOT}/${sys}" "${ROMS_ROOT}/${sys}"
+                # 2026-07-19: saves/<시스템>/ 디렉토리가 여기 없어서 write_system_override()가
+                # savestate_directory/savefile_directory를 saves/<시스템>/으로 정확히
+                # 지정해도 RetroArch가 없는 디렉토리엔 저장 자체를 조용히 실패하던 버그.
+                # roms/screenshots와 동일하게 시스템별로 미리 만들어둠.
+                mkdir -p "${SCREENSHOTS_ROOT}/${sys}" "${ROMS_ROOT}/${sys}" "${SAVES_ROOT}/${sys}"
             done
         fi
 
