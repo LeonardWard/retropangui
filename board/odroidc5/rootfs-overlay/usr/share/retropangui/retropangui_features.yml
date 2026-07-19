@@ -308,12 +308,12 @@ menus:
 
       # 2026-07-17: 게임 실행 전 세이브 스테이트 목록+썸네일 화면
       # (todo-20260706-savestate-preview.html). 실행 흐름을 가로채는 기능이라
-      # 설계 문서대로 기본 꺼짐 - 켜면 스테이트 있는 게임에서만 화면이 뜸.
+      # 설계 문서대로 기본 꺼짐이었으나, 2026-07-20 기본값을 켜짐으로 변경.
       - id: rp.savestate_preview
         label: "SHOW SAVE STATES BEFORE LAUNCH"
         type: toggle
         conf_key: emulationstation.SaveStatePreview
-        default: "false"
+        default: "true"
         restart: none
 
   - id: advanced_settings

@@ -145,8 +145,8 @@ emulationstation.MenuRumble=true
 emulationstation.MenuRumbleStrength=80
 
 # 게임 실행 전 세이브 스테이트 목록+썸네일 미리보기 화면 (스테이트가 있는
-# 게임에서만 뜸). 실행 흐름에 끼어드는 기능이라 기본 꺼짐.
-emulationstation.SaveStatePreview=false
+# 게임에서만 뜸). 2026-07-20 기본값을 켜짐으로 변경.
+emulationstation.SaveStatePreview=true
 
 # 즐겨찾기 컬렉션 표시 여부
 # emulationstation.FavoritesFirst=1
