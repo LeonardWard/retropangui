@@ -4,6 +4,13 @@
 # 다운로드 미러 — savannah.gnu.org 등 불안정한 서버 우회
 BR2_PRIMARY_SITE="https://sources.buildroot.net"
 
+# 컴파일러 캐시(ccache) - ES처럼 매 빌드 재컴파일되는 패키지와 stale-cache
+# 감지로 디렉토리째 지워지는 패키지의 재빌드를 컴파일러 수준에서 가속.
+# 캐시 위치는 --rm 컨테이너에서도 살아남도록 호스트 바인드 마운트 경로(dl/)
+# 하위로 지정 - output/ 클린 시에도 보존됨. 상한은 ccache 기본값 5GB.
+BR2_CCACHE=y
+BR2_CCACHE_DIR="/home/builder/dl/ccache"
+
 # 타겟 아키텍처
 BR2_aarch64=y
 BR2_cortex_a55=y
