@@ -3,6 +3,7 @@
 import os
 import sys
 import shutil
+import xml.etree.ElementTree as ET
 from pathlib import Path
 
 
@@ -15,6 +16,9 @@ ETC_RA_CFG      = "/etc/retroarch.cfg"
 # 때부터 있던 누락, Python 이관 때 생긴 문제 아님).
 USER_RA_CFG     = "/retropangui/share/system/retroarch/retroarch.cfg"
 AUTOCONFIG_DIR  = "/etc/retroarch/autoconfig"
+# ES 마법사로 잡은 사용자 매핑 전용 파일(시스템 기본 es_input.cfg와 분리,
+# 메이저 OTA 리셋에서 제외되는 영구 보존 파일 - 2026-07-20 도입)
+ES_INPUT_USER_CFG = "/retropangui/share/system/emulationstation/es_input_rpui_user.cfg"
 HOTKEY_OVERRIDE_CFG = "/tmp/retropangui-hotkey-override.retroarch.cfg"
 SYSTEM_OVERRIDE_CFG = "/tmp/retropangui-system-override.retroarch.cfg"
 REMAP_DIR       = "/root/.config/retroarch/config/remaps"
@@ -178,26 +182,67 @@ def find_pad_keys_for_device(name):
     return {}
 
 
+# ES es_input 사용자 매핑의 input name -> 전역 retroarch.cfg 필드.
+# 물리 위치 조합 관례는 _PAD_FIELD_TO_GLOBAL_OVERRIDE와 동일한 의미 체계
+# (ES의 a/b/x/y도 물리 위치 기준: b=South, a=East, y=West, x=North).
+_ES_INPUT_TO_GLOBAL_OVERRIDE = {
+    "hotkeyenable": "input_enable_hotkey_btn",
+    "start":        "input_exit_emulator_btn",
+    "b":            "input_menu_toggle_btn",
+    "a":            "input_reset_btn",
+    "y":            "input_save_state_btn",
+    "x":            "input_load_state_btn",
+}
+
+
+def find_es_user_overrides(name):
+    """ES 마법사로 잡은 사용자 매핑(es_input_rpui_user.cfg)에서 이 장치 이름의
+    항목을 찾아 전역 핫키 필드 오버라이드 dict를 반환.
+
+    사용자가 ES에서 직접 지정한 값(특히 HotKeyEnable)은 autoconfig(libretro
+    공식 DB 기본값)보다 우선해야 함 - "ES에서 잡은 대로 게임에서도 동작"해야
+    OS가 하나로 이어지는 사용자 경험이 됨(2026-07-20 사용자 지시). ES(SDL)와
+    RA(udev)의 버튼 인덱스는 동일 evdev 열거 순서라 값 변환 없이 그대로 사용
+    가능함(DS4 실기기 전 버튼 대조로 확인). type="button" 항목만 사용
+    (전역 *_btn 필드에는 축/햇 표현이 안 실림)."""
+    try:
+        root = ET.parse(ES_INPUT_USER_CFG).getroot()
+    except (OSError, ET.ParseError):
+        return {}
+    for cfgnode in root.findall("inputConfig"):
+        if cfgnode.get("deviceName") != name:
+            continue
+        found = {}
+        for inp in cfgnode.findall("input"):
+            es_name = (inp.get("name") or "").lower()
+            if es_name in _ES_INPUT_TO_GLOBAL_OVERRIDE and inp.get("type") == "button":
+                found[_ES_INPUT_TO_GLOBAL_OVERRIDE[es_name]] = inp.get("id")
+        return found
+    return {}
+
+
 def write_hotkey_override():
-    """연결된 패드 중 autoconfig에 핫키 관련 필드가 있는 첫 번째 것을 찾아
+    """연결된 패드 중 매핑 정보가 있는 첫 번째 것을 찾아
     input_enable_hotkey_btn/input_exit_emulator_btn/input_menu_toggle_btn/
     input_reset_btn/input_save_state_btn/input_load_state_btn 오버라이드
-    파일을 써서 경로를 반환. 없으면 None."""
+    파일을 써서 경로를 반환. 없으면 None.
+    우선순위: ES 사용자 매핑(es_input_rpui_user.cfg) > autoconfig(libretro DB)."""
     for jp_name in detect_joypad_names():
         found = find_pad_keys_for_device(jp_name)
-        if not found:
+        overrides = {_PAD_FIELD_TO_GLOBAL_OVERRIDE[k]: v for k, v in found.items()}
+        es_user = find_es_user_overrides(jp_name)
+        overrides.update(es_user)  # 사용자가 ES에서 잡은 값이 최우선
+        if not overrides:
             continue
-        lines = [
-            f'{_PAD_FIELD_TO_GLOBAL_OVERRIDE[pad_key]} = "{val}"\n'
-            for pad_key, val in found.items()
-        ]
+        lines = [f'{field} = "{val}"\n' for field, val in overrides.items()]
         try:
             Path(HOTKEY_OVERRIDE_CFG).write_text("".join(lines))
         except OSError as e:
             log(f"Warning: 핫키 오버라이드 파일 작성 실패 — {e}")
             return None
-        overrides_str = ", ".join(f"{_PAD_FIELD_TO_GLOBAL_OVERRIDE[k]}={v}" for k, v in found.items())
-        log(f"핫키 오버라이드: '{jp_name}' → {overrides_str}")
+        overrides_str = ", ".join(f"{k}={v}" for k, v in overrides.items())
+        src = "ES사용자+autoconfig" if es_user else "autoconfig"
+        log(f"핫키 오버라이드({src}): '{jp_name}' → {overrides_str}")
         return HOTKEY_OVERRIDE_CFG
     return None
 
