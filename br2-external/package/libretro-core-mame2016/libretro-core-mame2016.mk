@@ -36,6 +36,14 @@
 # 이김) 최종 타겟이 linux(아키텍처 접미사 없는 기본 config)가 되어 문제
 # 회피.
 #
+# NOASM=1 (2026-07-19 확인): ARCHITECTURE와 정확히 같은 뿌리의 문제 -
+# NOASM도 같은 UNAME(호스트) 기반 aarch64 감지 블록 안에서만 자동
+# 설정되는데 크로스컴파일 환경에서는 그 블록이 안 타서 NOASM이 꺼진
+# 채로 남음. 그 결과 eminline.h가 x86/ARM32용 인라인 어셈 매크로를
+# 찾다가 "no matching assembler implementations found - please compile
+# with NOASM=1" 컴파일 에러. 명시적으로 NOASM=1을 넘겨 순수 C 폴백
+# 경로를 쓰도록 강제.
+#
 ################################################################################
 
 LIBRETRO_CORE_MAME2016_VERSION = 3529f4e2cb8e74c88d83bc9fc9d695f78dc9a975
@@ -50,6 +58,7 @@ LIBRETRO_CORE_MAME2016_OPTS = \
 	OSD="retro" \
 	PTR64=1 \
 	ARCHITECTURE= \
+	NOASM=1 \
 	FORCE_DRC_C_BACKEND=1 \
 	PYTHON_EXECUTABLE=python3 \
 	NOWERROR=1 \
