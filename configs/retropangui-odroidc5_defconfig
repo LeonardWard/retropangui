@@ -8,8 +8,10 @@ BR2_PRIMARY_SITE="https://sources.buildroot.net"
 # 감지로 디렉토리째 지워지는 패키지의 재빌드를 컴파일러 수준에서 가속.
 # 캐시 위치는 --rm 컨테이너에서도 살아남도록 호스트 바인드 마운트 경로(dl/)
 # 하위로 지정 - output/ 클린 시에도 보존됨. 상한은 ccache 기본값 5GB.
+# 주의: dl/<패키지명>은 buildroot 다운로드 디렉토리라 dl/ccache는 ccache
+# 패키지 tarball 위치와 충돌함 - 점(.) 접두사 이름으로 회피.
 BR2_CCACHE=y
-BR2_CCACHE_DIR="/home/builder/dl/ccache"
+BR2_CCACHE_DIR="/home/builder/dl/.buildroot-ccache"
 
 # 타겟 아키텍처
 BR2_aarch64=y
