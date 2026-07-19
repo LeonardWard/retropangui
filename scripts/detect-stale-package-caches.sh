@@ -78,6 +78,8 @@ find_package_dir() {
 }
 
 TO_CLEAR=()
+REFETCH_BLOBS=0
+REFETCH_FONTS=0
 
 while IFS= read -r f; do
     [ -z "$f" ] && continue
@@ -85,6 +87,14 @@ while IFS= read -r f; do
     case "$f" in
         board/${DEVICE}/patches/linux/*)
             TO_CLEAR+=("linux-custom")
+            ;;
+        board/${DEVICE}/fetch-blobs.sh)
+            REFETCH_BLOBS=1
+            TO_CLEAR+=("mali-ddk")        # 블롭 소비 패키지도 같이 재빌드
+            ;;
+        board/${DEVICE}/fetch-fonts.sh)
+            REFETCH_FONTS=1
+            TO_CLEAR+=("bundled-fonts")   # 폰트 소비 패키지도 같이 재빌드
             ;;
         br2-external/package/*/*)
             pkg="${f#br2-external/package/}"
@@ -107,6 +117,20 @@ while IFS= read -r f; do
             ;;
     esac
 done <<< "${CHANGED_FILES}"
+
+# fetch 스크립트 자체가 바뀌면(버전 올림, URL 교체 등) "파일 있으니 스킵"에
+# 걸려 낡은 다운로드를 계속 쓰게 되므로, 지우고 그 자리에서 바로 다시 받는다.
+# (build.sh의 fetch 단계는 이 스크립트보다 먼저 돌기 때문에 여기서 직접 재실행)
+if [ "${REFETCH_BLOBS}" -eq 1 ]; then
+    echo "[stale-cache] fetch-blobs.sh 변경 감지 - Mali 블롭 삭제 후 재다운로드"
+    rm -rf "board/${DEVICE}/blobs/mali"
+    bash "board/${DEVICE}/fetch-blobs.sh"
+fi
+if [ "${REFETCH_FONTS}" -eq 1 ]; then
+    echo "[stale-cache] fetch-fonts.sh 변경 감지 - 번들 폰트 삭제 후 재다운로드"
+    rm -rf "board/${DEVICE}/blobs/fonts"
+    bash "board/${DEVICE}/fetch-fonts.sh"
+fi
 
 if [ ${#TO_CLEAR[@]} -eq 0 ]; then
     echo "[stale-cache] 캐시 정리 대상 패키지 없음"
