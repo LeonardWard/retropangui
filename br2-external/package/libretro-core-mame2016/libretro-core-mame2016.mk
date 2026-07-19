@@ -38,12 +38,29 @@
 # 안 붙어서 "static assertion failed: PTR64 flag not enabled" 에러로
 # 이어짐(emu.make 848번째 줄 config=libretro64 블록에 PTR64=1은 있지만
 # -m64도 같이 하드코딩돼 있음 - genie/premake가 "64bit=x86_64"를
-# 전제하는 게 진짜 근본 원인). 그래서 ARCHITECTURE는 자동 로직(PTR64=1
-# 이면 _x64)에 맡겨 config=libretro64가 매치되게 두고, genie가 그
-# config을 만들어낸 직후 -m64 문자열만 모든 .make 파일에서 제거하는
-# 방식으로 전환. genie가 만드는 산출물(빌드 시점 생성 파일)을 조정하는
-# 것이라 업스트림 소스 패치가 아님([[feedback_no_core_patching]] 저촉
-# 아님) - 매 빌드마다 재생성되고 우리 .mk 안에서만 처리됨.
+# 전제하는 게 진짜 근본 원인). genie가 그 config을 만들어낸 직후 -m64
+# 문자열만 모든 .make 파일에서 제거하는 방식으로 전환. genie가 만드는
+# 산출물(빌드 시점 생성 파일)을 조정하는 것이라 업스트림 소스 패치가
+# 아님([[feedback_no_core_patching]] 저촉 아님) - 매 빌드마다 재생성
+# 되고 우리 .mk 안에서만 처리됨.
+#
+# PTR64는 명시적으로 넘기지 않음 (2026-07-19, 공식 자료 확인 후 정정):
+# 여러 라운드 시행착오 끝에 libretro/mame2016-libretro의 공식
+# Makefile.libretro(래퍼)를 직접 확인함 - 주석에 "You probably
+# shouldn't need to set this anymore"라고 명시돼 있고 PLATFLAGS 로직도
+# PTR64가 비어있으면 아예 안 넘김. 우리가 강제로 PTR64=1을 넘긴 게
+# 오히려 config=libretro(접미사 없음, genie 목록에 없음) 매치 실패의
+# 원인이었을 가능성. PTR64를 안 넘기면 UNAME 기반 자동감지가 "빌드
+# 호스트가 x86_64"라는 사실을 그대로 반영해 ARCHITECTURE=_x64로
+# 자동 설정되고, 이게 config=libretro64(존재하는 config, PTR64=1
+# 매크로 포함)와 정확히 매치됨 - 크로스컴파일 환경에서 결과적으로
+# "우연히" 맞아떨어지는 것이지만 재현 가능한 동작.
+# ARCH="" 추가: Makefile.libretro가 명시하는 패턴(ARCH는 Apple 전용
+# 변수라 libretro 쪽 의미와 충돌 - 항상 빈 값으로 지정해야 함).
+#
+# 참고로 이 코어 저장소의 공식 CI(.travis.yml)는 x86_64 Linux/OSX만
+# 검증하고 있어(2016년 Travis 설정, gcc-5) aarch64 크로스컴파일은
+# 업스트림이 한 번도 공식 검증한 적 없는 영역 - 시행착오가 많았던 이유.
 #
 ################################################################################
 
@@ -53,11 +70,11 @@ LIBRETRO_CORE_MAME2016_SOURCE =
 
 LIBRETRO_CORE_MAME2016_OPTS = \
 	platform="unix" \
+	ARCH="" \
 	LIBRETRO_CPU="$(BR2_ARCH)" \
 	LIBRETRO_OS="unix" \
 	CONFIG="libretro" \
 	OSD="retro" \
-	PTR64=1 \
 	NOASM=1 \
 	FORCE_DRC_C_BACKEND=1 \
 	PYTHON_EXECUTABLE=python3 \
