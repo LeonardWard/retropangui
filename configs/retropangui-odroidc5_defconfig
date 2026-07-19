@@ -213,7 +213,10 @@ BR2_PACKAGE_LIBRETRO_CORE_YABASANSHIRO=y
 BR2_PACKAGE_LIBRETRO_CORE_FBNEO=y
 BR2_PACKAGE_LIBRETRO_CORE_MAME2003_PLUS=y
 BR2_PACKAGE_LIBRETRO_CORE_MAME2010=y
-BR2_PACKAGE_LIBRETRO_CORE_MAME2016=y
+# 2026-07-19: genie/premake 빌드 시스템이 x86_64 전용으로 설계돼 있어
+# aarch64 크로스컴파일이 근본적으로 안 맞음(6라운드 시행착오,
+# todo-core-lr-mame2016.html 참고) - x86 빌드 때 기본 옵션으로 켤 예정.
+# BR2_PACKAGE_LIBRETRO_CORE_MAME2016=y
 # 2026-07-16: PCE/SuperGrafx는 이 프로젝트에 시스템 자체가 아직 없음
 # (롬 폴더·테마 온보딩 별도 필요) - 코어 패키지만 준비, 이번엔 비활성화.
 # BR2_PACKAGE_LIBRETRO_CORE_BEETLE_PCE=y
