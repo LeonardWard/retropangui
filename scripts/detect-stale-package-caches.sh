@@ -96,6 +96,23 @@ while IFS= read -r f; do
             REFETCH_FONTS=1
             TO_CLEAR+=("bundled-fonts")   # 폰트 소비 패키지도 같이 재빌드
             ;;
+        board/${DEVICE}/rootfs-overlay/*)
+            # rootfs-overlay는 매 빌드 rootfs 조립 때 자동 반영 - 패키지 캐시와 무관
+            ;;
+        board/*)
+            # 패키지 .mk가 board/ 밑의 소스를 직접 참조하는 경우(예: rpui-launcher가
+            # board/odroidc5/rpui-launcher.py를 install). br2-external/package/ 밖에
+            # 소스가 있으면 위 경로 규칙에 안 걸리는 사각지대가 있었음(2026-07-20,
+            # launcher 수정이 빌드에 반영 안 된 실사례). basename 참조 검색이라
+            # 과잉 매칭 가능성이 있지만 방향이 "추가 재빌드"라 안전.
+            hits=$(grep -l -F "$(basename "$f")" br2-external/package/*/*.mk 2>/dev/null || true)
+            for mk in $hits; do
+                pkg="${mk#br2-external/package/}"
+                pkg="${pkg%%/*}"
+                echo "  board 소스 '$f' -> 패키지 '${pkg}' (.mk 참조 매칭)"
+                TO_CLEAR+=("${pkg}")
+            done
+            ;;
         br2-external/package/*/*)
             pkg="${f#br2-external/package/}"
             pkg="${pkg%%/*}"
