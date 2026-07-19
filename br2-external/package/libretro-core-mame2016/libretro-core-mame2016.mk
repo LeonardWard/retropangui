@@ -15,6 +15,16 @@
 # generic ELF"/"file in wrong format" 링크 에러가 난 것을 미리 겪어서
 # (todo-core-lr-mame2010.html 참고) mame2016도 선제적으로 추가.
 #
+# host 전용 빌드 도구를 먼저 host 네이티브로 만들어야 함 (2026-07-19 확인):
+# genie(빌드 프로젝트 생성기)와 m68kops.cpp(옵코드 테이블, m68kmake로 생성)
+# 둘 다 makefile이 재귀 서브메이크에 부모의 CC/CXX를 그대로 넘기도록
+# 하드코딩돼 있어서, 상위에서 크로스 CC를 지정하면 이 host 도구들까지
+# aarch64로 컴파일되어 실행 자체가 안 됨("Syntax error" - 셸이 ELF를
+# 텍스트로 읽으려다 실패). 크로스 CC 없이 이 두 타겟만 먼저 만들어두면
+# (host x86_64로 정상 생성) 본 빌드에서는 mtime이 최신이라 재생성 안
+# 되고 그대로 쓰임 - genie는 실행파일, m68kops.cpp는 텍스트 소스라
+# 아키텍처 무관하게 안전.
+#
 ################################################################################
 
 LIBRETRO_CORE_MAME2016_VERSION = 3529f4e2cb8e74c88d83bc9fc9d695f78dc9a975
@@ -40,6 +50,10 @@ define LIBRETRO_CORE_MAME2016_BUILD_CMDS
 	git -C $(@D)/mame2016 checkout $(LIBRETRO_CORE_MAME2016_VERSION)
 	mkdir -p $(@D)/mame2016/build/gmake/libretro/obj/x64/libretro/src/osd/retro
 	mkdir -p $(@D)/mame2016/3rdparty/genie/build/gmake.linux/obj/Release/src/host
+	$(MAKE) -C $(@D)/mame2016 -f makefile $(LIBRETRO_CORE_MAME2016_OPTS) \
+		3rdparty/genie/bin/linux/genie
+	$(MAKE) -C $(@D)/mame2016 -f makefile $(LIBRETRO_CORE_MAME2016_OPTS) \
+		src/devices/cpu/m68000/m68kops.cpp
 	$(MAKE) CXX="$(TARGET_CXX)" CC="$(TARGET_CC)" LD="$(TARGET_LD)" \
 		RANLIB="$(TARGET_RANLIB)" AR="$(TARGET_CC)-ar" \
 		-C $(@D)/mame2016 -f makefile $(LIBRETRO_CORE_MAME2016_OPTS)
