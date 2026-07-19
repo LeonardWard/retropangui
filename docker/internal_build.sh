@@ -271,8 +271,29 @@ make BR2_EXTERNAL="${BR2_EXTERNAL_PATH}" ${DEFCONFIG}
 # extract 전에 소스 트리 자체를 지워서 완전히 새로 추출+서브모듈클론+패치
 # 되게 함(2026-07-11: 추출 이후에 지우면 서브모듈 클론이 스킵되고 빈
 # common_drivers 디렉토리에 패치를 대려다 "can't find file to patch" 발생 확인).
-echo "  - linux 소스 재추출 강제 (커널 패치 변경 반영)..."
-rm -rf output/build/linux-custom
+#
+# 2026-07-20: 이 강제 재추출이 "매 빌드마다 무조건" 실행돼서 커널 풀빌드가
+# 매번 반복되는 게 전체 빌드시간의 가장 큰 원인이었음(patch 파일은 거의 안
+# 바뀌는데도). 패치 파일들의 해시를 output/에 저장해뒀다가, 실제로 바뀐
+# 경우에만 강제 재추출하도록 조건부로 변경 - 정확성은 그대로 유지하면서
+# 대부분의 빌드에서 이 단계를 건너뛰어 시간을 절약.
+LINUX_PATCHES_DIR="/home/builder/board/${DEVICE}/patches/linux"
+LINUX_PATCHES_HASH_FILE="output/.linux_patches_hash"
+if [ -d "${LINUX_PATCHES_DIR}" ] && ls "${LINUX_PATCHES_DIR}"/*.patch >/dev/null 2>&1; then
+    CURRENT_PATCHES_HASH=$(cat "${LINUX_PATCHES_DIR}"/*.patch | sha256sum | cut -d' ' -f1)
+else
+    CURRENT_PATCHES_HASH="none"
+fi
+PREV_PATCHES_HASH=""
+[ -f "${LINUX_PATCHES_HASH_FILE}" ] && PREV_PATCHES_HASH=$(cat "${LINUX_PATCHES_HASH_FILE}")
+
+if [ "${CURRENT_PATCHES_HASH}" = "${PREV_PATCHES_HASH}" ] && [ -d "output/build/linux-custom" ]; then
+    echo "  - linux 패치 변경 없음, 재추출 스킵 (해시: ${CURRENT_PATCHES_HASH:0:12})"
+else
+    echo "  - linux 소스 재추출 강제 (커널 패치 변경 반영, 해시: ${PREV_PATCHES_HASH:0:12} -> ${CURRENT_PATCHES_HASH:0:12})..."
+    rm -rf output/build/linux-custom
+fi
+echo "${CURRENT_PATCHES_HASH}" > "${LINUX_PATCHES_HASH_FILE}"
 
 # common_drivers 서브모듈 준비 (커널 추출 후, 빌드 전)
 echo "  - 커널 소스 추출 중..."
