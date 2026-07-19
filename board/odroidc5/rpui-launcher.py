@@ -232,8 +232,28 @@ def write_system_override(system, share_root):
     예전엔 S95retropangui가 최초 부팅 시 이 파일을 정적으로 생성했는데,
     이미 프로비저닝된 기기는 이후 수정된 기본값이 반영 안 되는 문제와,
     기기별 값이 share(향후 NAS 공유 대상) 트리에 섞이는 문제가 있었음
-    (2026-07-10) - 핫키/패드타입과 동일하게 매 실행마다 동적으로 주입."""
-    lines = [f'screenshot_directory = "{share_root}/screenshots/{system}"\n']
+    (2026-07-10) - 핫키/패드타입과 동일하게 매 실행마다 동적으로 주입.
+
+    savestate/savefile_directory도 여기서 시스템 기준으로 고정한다
+    (2026-07-19 버그 수정). /etc/retroarch.cfg의 sort_savestates_by_content_
+    enable/sort_savefiles_by_content_enable=true는 "롬 파일이 위치한
+    디렉토리 이름"으로 세이브를 분류하는데, 롬이 시스템 폴더 바로 아래
+    있지 않고 하위 폴더(번들 게임의 게임별 폴더, 또는 사용자가 직접
+    만든 컬렉션/시리즈 하위 폴더 등)에 있으면 그 하위 폴더 이름으로
+    분류돼버려 saves/<시스템>/이 아니라 saves/<하위폴더명>/에 저장됨 -
+    GuiSaveStates.cpp의 scanSaveStates()는 항상 saves/<시스템>/만 찾으므로
+    세이브가 있어도 "안 보이는" 버그가 됨. screenshot_directory와 동일하게
+    시스템 기준 절대경로를 강제로 못박고, sort는 명시적으로 꺼서 RetroArch가
+    그 위에 또 하위 폴더 이름을 덧붙이는 걸 차단한다(2026-07-06
+    sort_screenshots_by_content_enable에서 이미 겪은 중첩 함정과 같은
+    부류 - sort 옵션과 명시적 디렉토리 지정을 같이 쓰면 안 됨)."""
+    lines = [
+        f'screenshot_directory = "{share_root}/screenshots/{system}"\n',
+        f'savestate_directory = "{share_root}/saves/{system}"\n',
+        f'savefile_directory = "{share_root}/saves/{system}"\n',
+        'sort_savestates_by_content_enable = "false"\n',
+        'sort_savefiles_by_content_enable = "false"\n',
+    ]
     if system in _ANALOG_DPAD_MODE_OFF_SYSTEMS:
         lines.append('input_player1_analog_dpad_mode = "0"\n')
     try:
@@ -294,9 +314,10 @@ def build_appendconfig_chain(rom_path, roms_root, system):
         insert_at = 1 if (chain and chain[0] == ETC_RA_CFG) else 0
         chain.insert(insert_at, hotkey_override)
 
-    # 시스템 기본값(screenshot_directory, analog_dpad_mode) — 같은 이유로
-    # 앞쪽에 삽입. 사용자가 roms/시스템/.retroarch.cfg를 직접 만들어두면
-    # (체인 뒤쪽, 더 구체적) 그쪽이 항상 우선함.
+    # 시스템 기본값(screenshot_directory, savestate/savefile_directory,
+    # analog_dpad_mode) — 같은 이유로 앞쪽에 삽입. 사용자가
+    # roms/시스템/.retroarch.cfg를 직접 만들어두면(체인 뒤쪽, 더 구체적)
+    # 그쪽이 항상 우선함.
     system_override = write_system_override(system, roms_root.parent)
     if system_override:
         insert_at = 1 if (chain and chain[0] == ETC_RA_CFG) else 0
