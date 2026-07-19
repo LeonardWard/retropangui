@@ -324,6 +324,16 @@ BR2_PACKAGE_UTIL_LINUX_LIBMOUNT=y
 # 시간 동기화 (NTP)
 BR2_PACKAGE_OPENNTPD=y
 
+# 디버깅 도구 - 2026-07-19: 실기기 크래시 아닌 "값이 이상하게 읽힘" 류
+# 버그를 로그 줄 추가+재빌드+재부팅 사이클로 파던 중, gdb/gdbserver가
+# 아예 없어서 못 쓰고 있었음이 재확인됨(과거 mupen64plus 세그폴트 조사
+# 때도 동일 문제로 LD_PRELOAD 트랩을 대신 만든 적 있음, todo-core-lr-
+# mupen64plus-next.html 참고). gdbserver를 기기에 심어두면 다음부터는
+# 재빌드 없이 실행 중인 프로세스에 호스트 cross-gdb로 바로 붙어서 확인
+# 가능 - host-gdb는 WSL2(빌드 데스크탑)에 만들어짐, 기기엔 gdbserver만.
+BR2_PACKAGE_GDB_SERVER=y
+BR2_PACKAGE_HOST_GDB=y
+
 # 유틸리티
 BR2_PACKAGE_HTOP=y
 BR2_PACKAGE_NANO=y

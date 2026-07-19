@@ -22,7 +22,7 @@ ID=retropangui
 ID_LIKE=buildroot
 VERSION_ID=${VERSION}
 PRETTY_NAME="RetroPangui ${VERSION} (${DEVICE})"
-HOME_URL="https://github.com/pangui/retropangui"
+HOME_URL="https://github.com/LeonardWard/retropangui"
 EOF
 ln -sf ../usr/lib/os-release "${TARGET_DIR}/etc/os-release"
 

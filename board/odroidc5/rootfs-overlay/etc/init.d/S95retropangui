@@ -94,12 +94,29 @@ case "$1" in
             touch "${RA_CFG_USER}"
         fi
 
-        # 첫 부팅: es_settings.cfg 없으면 최소 XML 골격 생성
+        # 첫 부팅: es_settings.cfg 없으면 번들 기본값에서 복사
         # (빈 파일이면 EmulationStation이 "No document element found" 에러 발생)
         # 주의: 파일이 이미 존재하면 덮어쓰지 않는다. ES가 saveFile()로 직접 관리한다.
+        #
+        # 2026-07-19: 빈 <config></config> 골격만 만들던 방식은 Language 키가
+        # apply_retropangui_conf.sh(아래, 이 스크립트 뒤쪽에서 실행)가 다 쓸
+        # 때까지 비어있어서, 그 사이에 ES가 먼저 시작해버리면 기본값(영어)으로
+        # 뜨는 문제가 실기기에서 실측됨(정확한 타이밍 원인은 미특정). es_input.cfg/
+        # themes와 동일한 "빌드 시 번들 → 첫 부팅에 복사" 패턴으로 바꿔서, 이
+        # 파일이 만들어지는 순간부터 이미 Language=ko_KR이 박혀있게 함 -
+        # apply_retropangui_conf.sh의 es_set()은 이미 있는 키를 찾으면 그 값을
+        # retropangui.conf 기준으로 갱신(sed -i)하므로 사용자 conf가 여전히
+        # 최종 우선순위를 가짐 - 이 번들 파일은 어디까지나 "빈 파일보다 나은
+        # 초기값"일 뿐, 진짜 설정 소스는 여전히 retropangui.conf.
+        ES_SETTINGS_SRC="/usr/share/retropangui/es_settings.cfg.default"
         if [ ! -f "${ES_CFG_USER}" ]; then
-            logger -t "${TAG}" "es_settings.cfg XML 골격 생성"
-            printf '<?xml version="1.0"?>\n<config>\n</config>\n' > "${ES_CFG_USER}"
+            if [ -f "${ES_SETTINGS_SRC}" ]; then
+                logger -t "${TAG}" "첫 부팅: es_settings.cfg 번들 기본값에서 복사"
+                cp "${ES_SETTINGS_SRC}" "${ES_CFG_USER}"
+            else
+                logger -t "${TAG}" "es_settings.cfg XML 골격 생성 (번들 기본값 없음)"
+                printf '<?xml version="1.0"?>\n<config>\n</config>\n' > "${ES_CFG_USER}"
+            fi
         fi
 
         # 첫 부팅: retroarch-core-options.cfg 없으면 기본값에서 복사

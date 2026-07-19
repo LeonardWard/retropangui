@@ -54,7 +54,11 @@ es_set() {
     local type="$1"   # string, bool, int, float
     local key="$2"
     local val="$3"
-    local line="\t<${type} name=\"${key}\" value=\"${val}\" />"
+    # POSIX/busybox 셸의 "\t"는 이스케이프되지 않고 백슬래시+t 두 글자 그대로
+    # 남는다(실기기 hex dump로 확인, 2026-07-19) - printf로 진짜 탭 문자를 만든다.
+    local tab
+    tab="$(printf '\t')"
+    local line="${tab}<${type} name=\"${key}\" value=\"${val}\" />"
 
     # 파일 없거나 XML 골격 없으면 새로 생성
     if [ ! -f "${ES_SETTINGS_CFG}" ] || ! grep -q "<config" "${ES_SETTINGS_CFG}" 2>/dev/null; then
@@ -63,7 +67,7 @@ es_set() {
     fi
 
     if grep -q "name=\"${key}\"" "${ES_SETTINGS_CFG}" 2>/dev/null; then
-        sed -i "s|.*name=\"${key}\".*|\t<${type} name=\"${key}\" value=\"${val}\" />|" "${ES_SETTINGS_CFG}"
+        sed -i "s|.*name=\"${key}\".*|${line}|" "${ES_SETTINGS_CFG}"
     else
         # </config> 바로 앞에 삽입
         sed -i "s|</config>|${line}\n</config>|" "${ES_SETTINGS_CFG}"
