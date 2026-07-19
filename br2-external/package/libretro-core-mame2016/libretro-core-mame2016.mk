@@ -25,6 +25,17 @@
 # 되고 그대로 쓰임 - genie는 실행파일, m68kops.cpp는 텍스트 소스라
 # 아키텍처 무관하게 안전.
 #
+# ARCHITECTURE= (빈 값, 2026-07-19 확인): 이 makefile은 PTR64=1이면
+# 무조건 ARCHITECTURE := _x64(x86_64)로 단정함("64bit=x86_64"라는 잘못된
+# 가정) - aarch64 예외 처리가 있긴 하지만 UNAME=$(shell uname -a)로
+# "빌드를 실행하는 호스트"를 감지하는 방식이라 크로스컴파일 환경(x86_64
+# 컨테이너 위에서 aarch64를 타겟팅)에서는 항상 빗나감. 그 결과 최종 make
+# 타겟이 linux_x64가 되어 -m64(x86 전용 GCC 옵션)를 aarch64 GCC에 넘겨
+# "unrecognized command-line option" 실패. ARCHITECTURE를 커맨드라인에서
+# 빈 값으로 강제하면(커맨드라인 변수가 makefile 내부 := 할당을 항상
+# 이김) 최종 타겟이 linux(아키텍처 접미사 없는 기본 config)가 되어 문제
+# 회피.
+#
 ################################################################################
 
 LIBRETRO_CORE_MAME2016_VERSION = 3529f4e2cb8e74c88d83bc9fc9d695f78dc9a975
@@ -38,6 +49,7 @@ LIBRETRO_CORE_MAME2016_OPTS = \
 	CONFIG="libretro" \
 	OSD="retro" \
 	PTR64=1 \
+	ARCHITECTURE= \
 	FORCE_DRC_C_BACKEND=1 \
 	PYTHON_EXECUTABLE=python3 \
 	NOWERROR=1 \
