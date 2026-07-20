@@ -185,6 +185,23 @@ case "$1" in
             done
         fi
 
+        # RA autoconfig를 share로 동기화(2026-07-20, ES↔RA 입력 매핑 연동 2단계) -
+        # joypad_autoconfig_dir가 이제 이 share 경로를 가리키므로(retroarch.cfg),
+        # controls-changed 훅(위 es-scripts로 복사됨)이 사용자 매핑 기반 autoconfig를
+        # 이 디렉토리에 써야 함. 번들 기본값을 파일 단위로 복사(디렉토리 존재
+        # 체크가 아님 - 위 ES_SCRIPTS_SRC와 같은 이유로 안전) - 사용자가 생성한
+        # 파일과 이름이 겹치면 절대 덮어쓰지 않음.
+        RA_AUTOCONFIG_SRC="/etc/retroarch/autoconfig"
+        RA_AUTOCONFIG_DST="/retropangui/share/system/retroarch/autoconfig"
+        if [ -d "${RA_AUTOCONFIG_SRC}" ]; then
+            mkdir -p "${RA_AUTOCONFIG_DST}"
+            find "${RA_AUTOCONFIG_SRC}" -maxdepth 1 -type f -name "*.cfg" | while IFS= read -r src; do
+                dst="${RA_AUTOCONFIG_DST}/$(basename "${src}")"
+                [ -f "${dst}" ] && continue
+                cp "${src}" "${dst}"
+            done
+        fi
+
         # 시스템별 스크린샷/롬 디렉토리 생성만 - 설정값(screenshot_directory,
         # analog_dpad_mode)은 여기서 파일로 안 씀. 이유:
         # 1) 이 파일들이 share(공유/향후 NAS 마운트 대상) 트리 안에 있으면
