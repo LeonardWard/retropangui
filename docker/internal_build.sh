@@ -57,12 +57,18 @@ if [ "$BUILD_OTA" = "1" ] && [ "$BUILD_IMG" = "0" ]; then
     rm -f .config
     make BR2_EXTERNAL="${BR2_EXTERNAL_PATH}" ${DEFCONFIG}
 
-    echo "[OTA 빌드] emulationstation 소스 최신화 중..."
-    if [ -d "output/build/emulationstation-main/.git" ]; then
-        git -C output/build/emulationstation-main fetch --depth=1 origin main 2>&1 || true
-        git -C output/build/emulationstation-main reset --hard origin/main 2>&1 || true
+    # 2026-07-20: 호스트 build.sh가 로컬 ES 클론 커밋 비교로 이미 변경 여부를
+    # 판단(ES_SKIP_REFETCH) - 변경 없으면 fetch/reset/스탬프 삭제 전부 스킵.
+    if [ "${ES_SKIP_REFETCH:-0}" = "1" ]; then
+        echo "[OTA 빌드] emulationstation 변경 없음 - 소스 최신화 스킵"
+    else
+        echo "[OTA 빌드] emulationstation 소스 최신화 중..."
+        if [ -d "output/build/emulationstation-main/.git" ]; then
+            git -C output/build/emulationstation-main fetch --depth=1 origin main 2>&1 || true
+            git -C output/build/emulationstation-main reset --hard origin/main 2>&1 || true
+        fi
+        rm -f output/build/emulationstation-main/.stamp_built           output/build/emulationstation-main/.stamp_target_installed
     fi
-    rm -f output/build/emulationstation-main/.stamp_built           output/build/emulationstation-main/.stamp_target_installed
 
     # 2026-07-20: freeimage/mali-ddk/retropangui-initramfs/bundled-bgmusic
     # 강제 재빌드는 host의 scripts/detect-stale-package-caches.sh(git 커밋
@@ -333,8 +339,12 @@ rm -f  "output/target/etc/retroarch/autoconfig/RetroPangUI P4.cfg"
 rm -f  output/target/etc/modprobe.d/xpad.conf
 rm -rf output/build/gamepad-mgr-*/
 
-echo "  - emulationstation 소스 최신화 중..."
-if [ -d "output/build/emulationstation-main/.git" ]; then
+# 2026-07-20: 호스트 build.sh가 로컬 ES 클론 커밋 비교로 이미 변경 여부를
+# 판단(ES_SKIP_REFETCH) - 변경 없으면 fetch/reset/스탬프 삭제 전부 스킵.
+if [ "${ES_SKIP_REFETCH:-0}" = "1" ]; then
+    echo "  - emulationstation 변경 없음 - 소스 최신화 스킵"
+elif [ -d "output/build/emulationstation-main/.git" ]; then
+    echo "  - emulationstation 소스 최신화 중..."
     git -C output/build/emulationstation-main fetch --depth=1 origin main 2>&1 || true
     git -C output/build/emulationstation-main reset --hard origin/main 2>&1 || true
     rm -f output/build/emulationstation-main/.stamp_built \

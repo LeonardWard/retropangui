@@ -259,17 +259,41 @@ _shallow_clone() {
 # 서브모듈 포함 대형 패키지는 반드시 여기서 미리 clone
 # (git SITE_METHOD이고 서브모듈 있는 것들)
 # emulationstation은 버전이 브랜치(main)라서 dl 캐시가 한 번 생기면
-# GitHub에 새 커밋을 push해도 재빌드에 반영되지 않음.
-# 주의: tarball만 지우면 buildroot가 같은 폴더의 git 캐시에서 fetch 없이
-# tarball을 재생성하므로 (낡은 커밋 그대로) git 캐시까지 통째로 삭제해야 함.
-# 실제 buildroot 캐시는 buildroot/dl/ 임 (호스트 dl/은 사전 clone 전용).
+# GitHub에 새 커밋을 push해도 재빌드에 반영되지 않음 - 예전엔 이걸 매번
+# 무조건 통째로 삭제해서 매 전체빌드마다 ES를 처음부터 다시 컴파일했음
+# (todo-20260720-build-force-clean-audit.html B분류).
+#
+# 2026-07-20 조건부화: ES는 이 프로젝트와 별개 저장소(포크)라 오늘 도입한
+# git-diff 기반 통합 감지 스크립트(이 프로젝트 자체 커밋만 비교)로는 변경
+# 여부를 알 수 없음. 대신 "로컬 편집 클론(../retropangui-emulationstation)의
+# 현재 커밋"을 기준으로 삼음 - ES 수정은 항상 이 클론에서 커밋 후 push하는
+# 방식이라(이 세션 내내 지켜온 방식), 로컬 HEAD가 곧 GitHub main의 최신
+# 상태와 같음. 그래서 매번 fetch로 원격에 물어볼 필요 없이 로컬 파일 하나만
+# 비교하면 됨.
+ES_LOCAL_REPO="${SCRIPT_DIR}/../retropangui-emulationstation"
+ES_LAST_BUILT_FILE="${SCRIPT_DIR}/buildroot/output/.last_built_es_commit"
+ES_SKIP_REFETCH=0
 if [ $PARTIAL -eq 0 ]; then
-    echo "[pre] emulationstation 캐시 제거 (최신 main 반영)"
-    rm -rf "${SCRIPT_DIR}/dl/emulationstation" \
-           "${SCRIPT_DIR}/buildroot/dl/emulationstation" \
-           "${SCRIPT_DIR}/buildroot/output/build/emulationstation-main"
-    # target에 설치된 바이너리도 삭제해야 재설치됨 (build만 지우면 target은 그대로)
-    rm -f  "${SCRIPT_DIR}/buildroot/output/target/usr/bin/emulationstation"
+    ES_LOCAL_COMMIT=""
+    if [ -d "${ES_LOCAL_REPO}/.git" ]; then
+        ES_LOCAL_COMMIT="$(git -C "${ES_LOCAL_REPO}" rev-parse HEAD 2>/dev/null || true)"
+    fi
+    ES_PREV_COMMIT=""
+    [ -f "${ES_LAST_BUILT_FILE}" ] && ES_PREV_COMMIT="$(cat "${ES_LAST_BUILT_FILE}")"
+
+    if [ -n "${ES_LOCAL_COMMIT}" ] && [ "${ES_LOCAL_COMMIT}" = "${ES_PREV_COMMIT}" ] \
+        && [ -d "${SCRIPT_DIR}/dl/emulationstation" ] \
+        && [ -d "${SCRIPT_DIR}/buildroot/output/build/emulationstation-main" ]; then
+        echo "[pre] emulationstation 변경 없음(${ES_LOCAL_COMMIT:0:7}) - 캐시 유지, 재빌드 스킵"
+        ES_SKIP_REFETCH=1
+    else
+        echo "[pre] emulationstation 캐시 제거 (최신 main 반영)"
+        rm -rf "${SCRIPT_DIR}/dl/emulationstation" \
+               "${SCRIPT_DIR}/buildroot/dl/emulationstation" \
+               "${SCRIPT_DIR}/buildroot/output/build/emulationstation-main"
+        # target에 설치된 바이너리도 삭제해야 재설치됨 (build만 지우면 target은 그대로)
+        rm -f  "${SCRIPT_DIR}/buildroot/output/target/usr/bin/emulationstation"
+    fi
 fi
 
 _shallow_clone uboot             https://git.odroid.com/yocto/uboot                             odroidc5-v2023.01
@@ -301,6 +325,7 @@ docker run --rm \
     -e PARTIAL="${PARTIAL}" \
     -e BUILD_IMG="${BUILD_IMG}" \
     -e BUILD_OTA="${BUILD_OTA}" \
+    -e ES_SKIP_REFETCH="${ES_SKIP_REFETCH}" \
     -v "${SCRIPT_DIR}/buildroot:/home/builder/buildroot" \
     -v "${SCRIPT_DIR}/configs:/home/builder/configs" \
     -v "${SCRIPT_DIR}/board:/home/builder/board" \
@@ -322,6 +347,9 @@ if [ $PARTIAL -eq 0 ]; then
     [ -z "${BUILT_STATE}" ] && BUILT_STATE="$(git -C "${SCRIPT_DIR}" rev-parse HEAD)"
     git -C "${SCRIPT_DIR}" update-ref refs/retropangui/last-built "${BUILT_STATE}"
     echo "${BUILT_STATE}" > "${SCRIPT_DIR}/buildroot/output/.last_built_commit"
+
+    # emulationstation 조건부 재빌드(위 [pre] 단계)의 다음번 기준점 기록
+    [ -n "${ES_LOCAL_COMMIT:-}" ] && echo "${ES_LOCAL_COMMIT}" > "${ES_LAST_BUILT_FILE}"
 fi
 
 echo "[3/3] 빌드 완료!"
