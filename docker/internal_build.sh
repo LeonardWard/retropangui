@@ -88,16 +88,6 @@ if [ "$BUILD_OTA" = "1" ] && [ "$BUILD_IMG" = "0" ]; then
     JOBS="${BUILD_JOBS:-$(nproc)}"
     make BR2_EXTERNAL="${BR2_EXTERNAL_PATH}" -j${JOBS} 2>&1 | tee /home/builder/output/build-ota.log
 
-    echo "[OTA 빌드] gamepad-mgr 잔여 파일 정리 중..."
-    rm -f  output/target/etc/init.d/S58gamepad
-    rm -f  output/target/usr/bin/gamepad-daemon
-    rm -rf output/target/etc/gamepad/
-    rm -f  "output/target/etc/retroarch/autoconfig/RetroPangUI P1.cfg"
-    rm -f  "output/target/etc/retroarch/autoconfig/RetroPangUI P2.cfg"
-    rm -f  "output/target/etc/retroarch/autoconfig/RetroPangUI P3.cfg"
-    rm -f  "output/target/etc/retroarch/autoconfig/RetroPangUI P4.cfg"
-    rm -f  output/target/etc/modprobe.d/xpad.conf
-
     # 위 정리 작업이 target/ 안의 파일을 직접 지우므로, squashfs를
     # 다시 봉인해서 정리 결과를 반영 (전체 make가 이미 한 번 만들어
     # 둔 squashfs는 정리 전 상태라 그대로 쓰면 안 됨)
@@ -127,7 +117,7 @@ if [ "$BUILD_OTA" = "1" ] && [ "$BUILD_IMG" = "0" ]; then
     exit 0
 fi
 
-# 부분 빌드: board 파일 복사 + gamepad-mgr 재빌드 + 이미지 재패킹만 수행
+# 부분 빌드: board 파일 복사 + 증분 빌드 + 이미지 재패킹만 수행
 if [ "$PARTIAL" = "1" ]; then
     BR2_EXTERNAL_PATH=/home/builder/br2-external
     echo "[부분 빌드] board 파일 복사 중..."
@@ -327,17 +317,6 @@ fi
 # 캐시 정리)가 docker 실행 전에 이미 처리함 - alsa-utils는 defconfig의
 # BR2_PACKAGE_ALSA_UTILS_* 옵션이 바뀔 때만, mali-ddk는 br2-external/package/
 # mali-ddk/ 아래 파일이 바뀔 때만 정리됨. todo-20260720-build-force-clean-audit.html 참고.
-
-# gamepad-mgr 제거에 따른 잔여 파일 정리 (이전 빌드 캐시에 남아 있을 수 있음)
-rm -f  output/target/etc/init.d/S58gamepad
-rm -f  output/target/usr/bin/gamepad-daemon
-rm -rf output/target/etc/gamepad/
-rm -f  "output/target/etc/retroarch/autoconfig/RetroPangUI P1.cfg"
-rm -f  "output/target/etc/retroarch/autoconfig/RetroPangUI P2.cfg"
-rm -f  "output/target/etc/retroarch/autoconfig/RetroPangUI P3.cfg"
-rm -f  "output/target/etc/retroarch/autoconfig/RetroPangUI P4.cfg"
-rm -f  output/target/etc/modprobe.d/xpad.conf
-rm -rf output/build/gamepad-mgr-*/
 
 # 2026-07-20: 호스트 build.sh가 로컬 ES 클론 커밋 비교로 이미 변경 여부를
 # 판단(ES_SKIP_REFETCH) - 변경 없으면 fetch/reset/스탬프 삭제 전부 스킵.
