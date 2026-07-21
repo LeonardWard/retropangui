@@ -67,7 +67,7 @@ define LIBRETRO_CORE_PPSSPP_BUILD_CMDS
 	find $(@D)/ppsspp/ext/libpng17 -name '*.o' -delete 2>/dev/null || true
 	$(TARGET_MAKE_ENV) $(MAKE) -C $(@D)/ppsspp/libretro \
 		$(LIBRETRO_CORE_PPSSPP_CROSS_OPTS) \
-		platform=arm64-gles
+		platform=$(LIBRETRO_CORE_PPSSPP_PLATFORM)
 endef
 
 define LIBRETRO_CORE_PPSSPP_INSTALL_TARGET_CMDS

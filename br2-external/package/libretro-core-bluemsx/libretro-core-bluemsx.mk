@@ -25,7 +25,7 @@ define LIBRETRO_CORE_BLUEMSX_BUILD_CMDS
 	$(TARGET_MAKE_ENV) $(MAKE) -C $(@D)/bluemsx-libretro \
 		-f Makefile.libretro \
 		$(LIBRETRO_CORE_BLUEMSX_CROSS_OPTS) \
-		platform=unix
+		platform=$(LIBRETRO_CORE_BLUEMSX_PLATFORM)
 endef
 
 define LIBRETRO_CORE_BLUEMSX_INSTALL_TARGET_CMDS

@@ -23,7 +23,7 @@ define LIBRETRO_CORE_BEETLE_PCE_BUILD_CMDS
 	git -C $(@D)/beetle-pce-libretro checkout $(LIBRETRO_CORE_BEETLE_PCE_VERSION)
 	$(TARGET_MAKE_ENV) $(MAKE) -C $(@D)/beetle-pce-libretro \
 		$(LIBRETRO_CORE_BEETLE_PCE_CROSS_OPTS) \
-		platform=unix
+		platform=$(LIBRETRO_CORE_BEETLE_PCE_PLATFORM)
 endef
 
 define LIBRETRO_CORE_BEETLE_PCE_INSTALL_TARGET_CMDS

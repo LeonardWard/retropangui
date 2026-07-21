@@ -23,7 +23,7 @@ define LIBRETRO_CORE_BEETLE_BSNES_BUILD_CMDS
 	git -C $(@D)/beetle-bsnes-libretro checkout $(LIBRETRO_CORE_BEETLE_BSNES_VERSION)
 	$(TARGET_MAKE_ENV) $(MAKE) -C $(@D)/beetle-bsnes-libretro \
 		$(LIBRETRO_CORE_BEETLE_BSNES_CROSS_OPTS) \
-		platform=unix
+		platform=$(LIBRETRO_CORE_BEETLE_BSNES_PLATFORM)
 endef
 
 define LIBRETRO_CORE_BEETLE_BSNES_INSTALL_TARGET_CMDS

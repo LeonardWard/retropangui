@@ -53,7 +53,7 @@ define LIBRETRO_CORE_KRONOS_BUILD_CMDS
 	# 못 이김).
 	$(TARGET_CONFIGURE_OPTS) $(MAKE) $(LIBRETRO_CORE_KRONOS_CROSS_OPTS) -C $(@D)/yabause/yabause/src/libretro \
 		-f Makefile \
-		platform=odroid-c4 \
+		platform=$(LIBRETRO_CORE_KRONOS_PLATFORM) \
 		FORCE_GLES=1 \
 		HAVE_SSE=0
 endef

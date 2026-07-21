@@ -25,7 +25,7 @@ define LIBRETRO_CORE_NP2KAI_BUILD_CMDS
 	$(TARGET_MAKE_ENV) $(MAKE) -C $(@D)/np2kai/sdl \
 		-f Makefile.libretro \
 		$(LIBRETRO_CORE_NP2KAI_CROSS_OPTS) \
-		platform=unix
+		platform=$(LIBRETRO_CORE_NP2KAI_PLATFORM)
 endef
 
 define LIBRETRO_CORE_NP2KAI_INSTALL_TARGET_CMDS

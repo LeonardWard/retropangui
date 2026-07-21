@@ -40,7 +40,7 @@ define LIBRETRO_CORE_YABASANSHIRO_BUILD_CMDS
 	$(MAKE) -C $(@D)/yabause/yabause/src/libretro -f Makefile generate-files
 	$(TARGET_MAKE_ENV) $(MAKE) $(LIBRETRO_CORE_YABASANSHIRO_CROSS_OPTS) -C $(@D)/yabause/yabause/src/libretro \
 		-f Makefile \
-		platform=odroid-c4
+		platform=$(LIBRETRO_CORE_YABASANSHIRO_PLATFORM)
 endef
 
 define LIBRETRO_CORE_YABASANSHIRO_INSTALL_TARGET_CMDS

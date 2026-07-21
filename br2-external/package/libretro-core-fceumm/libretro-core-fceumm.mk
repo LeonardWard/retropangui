@@ -26,7 +26,7 @@ define LIBRETRO_CORE_FCEUMM_BUILD_CMDS
 	$(TARGET_MAKE_ENV) $(MAKE) -C $(@D)/libretro-fceumm \
 		-f Makefile.libretro \
 		$(LIBRETRO_CORE_FCEUMM_CROSS_OPTS) \
-		platform=unix
+		platform=$(LIBRETRO_CORE_FCEUMM_PLATFORM)
 endef
 
 define LIBRETRO_CORE_FCEUMM_INSTALL_TARGET_CMDS

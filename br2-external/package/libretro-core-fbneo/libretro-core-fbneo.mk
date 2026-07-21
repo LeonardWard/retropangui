@@ -36,7 +36,7 @@ define LIBRETRO_CORE_FBNEO_BUILD_CMDS
 	$(TARGET_MAKE_ENV) $(MAKE) -C $(@D)/fbneo/src/burner/libretro \
 		-f Makefile \
 		$(LIBRETRO_CORE_FBNEO_CROSS_OPTS) \
-		platform=unix HAVE_NEON=0
+		platform=$(LIBRETRO_CORE_FBNEO_PLATFORM) HAVE_NEON=0
 endef
 
 define LIBRETRO_CORE_FBNEO_INSTALL_TARGET_CMDS

@@ -25,7 +25,7 @@ define LIBRETRO_CORE_DOSBOX_PURE_BUILD_CMDS
 	git -C $(@D)/dosbox-pure checkout $(LIBRETRO_CORE_DOSBOX_PURE_VERSION)
 	$(TARGET_MAKE_ENV) $(MAKE) -C $(@D)/dosbox-pure \
 		$(LIBRETRO_CORE_DOSBOX_PURE_CROSS_OPTS) \
-		platform=unix \
+		platform=$(LIBRETRO_CORE_DOSBOX_PURE_PLATFORM) \
 		CPUFLAGS="-DPAGESIZE=4096"
 endef
 

@@ -24,7 +24,7 @@ define LIBRETRO_CORE_QUASI88_BUILD_CMDS
 	git -C $(@D)/quasi88-libretro checkout $(LIBRETRO_CORE_QUASI88_VERSION)
 	$(TARGET_MAKE_ENV) $(MAKE) -C $(@D)/quasi88-libretro \
 		$(LIBRETRO_CORE_QUASI88_CROSS_OPTS) \
-		platform=unix
+		platform=$(LIBRETRO_CORE_QUASI88_PLATFORM)
 endef
 
 define LIBRETRO_CORE_QUASI88_INSTALL_TARGET_CMDS

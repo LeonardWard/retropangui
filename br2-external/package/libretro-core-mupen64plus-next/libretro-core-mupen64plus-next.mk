@@ -38,7 +38,7 @@ define LIBRETRO_CORE_MUPEN64PLUS_NEXT_BUILD_CMDS
 	git -C $(@D)/mupen64plus-libretro-nx checkout $(LIBRETRO_CORE_MUPEN64PLUS_NEXT_VERSION)
 	$(TARGET_MAKE_ENV) $(MAKE) -C $(@D)/mupen64plus-libretro-nx \
 		$(LIBRETRO_CORE_MUPEN64PLUS_NEXT_CROSS_OPTS) \
-		platform=unix \
+		platform=$(LIBRETRO_CORE_MUPEN64PLUS_NEXT_PLATFORM) \
 		ARCH=aarch64 \
 		FORCE_GLES=1
 endef

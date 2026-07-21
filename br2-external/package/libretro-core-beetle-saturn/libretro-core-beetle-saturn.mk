@@ -24,7 +24,7 @@ define LIBRETRO_CORE_BEETLE_SATURN_BUILD_CMDS
 	git -C $(@D)/beetle-saturn-libretro checkout $(LIBRETRO_CORE_BEETLE_SATURN_VERSION)
 	$(TARGET_MAKE_ENV) $(MAKE) -C $(@D)/beetle-saturn-libretro \
 		$(LIBRETRO_CORE_BEETLE_SATURN_CROSS_OPTS) \
-		platform=unix
+		platform=$(LIBRETRO_CORE_BEETLE_SATURN_PLATFORM)
 endef
 
 define LIBRETRO_CORE_BEETLE_SATURN_INSTALL_TARGET_CMDS
