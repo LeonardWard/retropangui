@@ -11,6 +11,19 @@ LIBRETRO_CORE_SCUMMVM_SOURCE =
 LIBRETRO_CORE_SCUMMVM_DEPENDENCIES = mesa3d
 LIBRETRO_CORE_SCUMMVM_LICENSE = GPL-2.0
 
+# 2026-07-21: sky.cpt/lure.dat - 게임 배포 파일이 아니라 ScummVM 자체 "엔진
+# 추가 데이터"(engines/sky, engines/lure 코드가 런타임에 읽는 리소스, 공식
+# scummvm/scummvm 저장소 dists/engine-data/). 예전엔 S61share의
+# download_extra_roms()(첫 부팅 네트워크 다운로드)가 받았는데, 그 함수를
+# bundled-roms.mk 이전 작업 때 통째로 지우면서 이 부분을 놓쳤음(사용자 지적:
+# "sky.cpt 같은 부가 파일 받아주는 작업이 빠졌다") - 다른 코어 데이터처럼
+# scummvm 코어 자체 빌드 시점에 받아서 bundled-bios/scummvm/extra/에 두고,
+# S61share가 매 부팅 share/bios/scummvm/extra/로 idempotent 복사(기존
+# bundled-bios 메커니즘 그대로 재사용). extrapath 설정(scummvm.ini)이
+# 이 경로를 봄 - share/bios/scummvm/ 루트에 두면 코어가 못 찾음(실기기로
+# 확인된 과거 실수, extra/ 하위여야 함).
+LIBRETRO_CORE_SCUMMVM_ENGINE_DATA_URL = https://raw.githubusercontent.com/scummvm/scummvm/master/dists/engine-data
+
 # configure_submodules.sh가 의존하는 두 서브레포
 LIBRETRO_CORE_SCUMMVM_DEPS_PATH = $(@D)/scummvm/backends/platform/libretro/deps
 LIBRETRO_CORE_SCUMMVM_DEPS_URL    = https://github.com/libretro/libretro-deps
@@ -53,6 +66,10 @@ define LIBRETRO_CORE_SCUMMVM_BUILD_CMDS
 		OBJCOPY="$(TARGET_OBJCOPY)" \
 		platform=$(LIBRETRO_CORE_SCUMMVM_PLATFORM) \
 		BUILD_64BIT=1
+
+	# 엔진 추가 데이터 (캐시 있으면 스킵)
+	test -f $(@D)/sky.cpt  || wget -q -O $(@D)/sky.cpt  $(LIBRETRO_CORE_SCUMMVM_ENGINE_DATA_URL)/sky.cpt
+	test -f $(@D)/lure.dat || wget -q -O $(@D)/lure.dat $(LIBRETRO_CORE_SCUMMVM_ENGINE_DATA_URL)/lure.dat
 endef
 
 define LIBRETRO_CORE_SCUMMVM_INSTALL_TARGET_CMDS
@@ -71,6 +88,10 @@ define LIBRETRO_CORE_SCUMMVM_INSTALL_TARGET_CMDS
 		$(TARGET_DIR)/usr/share/retropangui/bundled-bios/scummvm/theme/
 	$(INSTALL) -m 0644 $(@D)/scummvm/gui/themes/scummmodern.zip \
 		$(TARGET_DIR)/usr/share/retropangui/bundled-bios/scummvm/theme/
+
+	mkdir -p $(TARGET_DIR)/usr/share/retropangui/bundled-bios/scummvm/extra
+	$(INSTALL) -m 0644 $(@D)/sky.cpt  $(TARGET_DIR)/usr/share/retropangui/bundled-bios/scummvm/extra/
+	$(INSTALL) -m 0644 $(@D)/lure.dat $(TARGET_DIR)/usr/share/retropangui/bundled-bios/scummvm/extra/
 endef
 
 $(eval $(generic-package))
