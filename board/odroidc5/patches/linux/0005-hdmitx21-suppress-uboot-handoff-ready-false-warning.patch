@@ -1,0 +1,94 @@
+From: retropangui-c5 build <build@retropangui-c5>
+Date: Mon, 1 Jan 2024 00:00:00 +0000
+Subject: [PATCH] media: hdmitx21: don't warn on first real enable after
+ uboot handoff
+
+amhdmitx_probe() sets tx_comm->ready = 1 when it detects u-boot has
+already enabled HDMI with a valid VIC (uboot console/splash/boot
+logo already driving the display before Linux boots - confirmed via
+"[hdmitx:] uboot already enabled hdmitx" at probe time). Later, when
+DRM does the real first modeset of the boot (e.g. our S60display /
+odroid-drm-fbset call), hdmitx_common_pre_enable_mode() sees
+tx_comm->ready already 1 and logs "Should run disable_mode before
+enable new mode." - even though no real prior enable/disable cycle
+ever happened; it's purely an artifact of the uboot-handoff
+bookkeeping. Confirmed on real hardware: this fires exactly once per
+boot, always on the very first am_meson_crtc_atomic_enable call
+(old[] i.e. no previous mode), never on subsequent real mode
+transitions (which correctly have no warning).
+
+Add a ready_from_uboot flag that's only set alongside ready=1 in the
+uboot-handoff probe path, and consumed (cleared, without warning) the
+first time pre_enable_mode sees it - any genuine subsequent
+enable-without-disable still warns normally.
+
+---
+ .../vout/hdmitx_common/hdmitx_common.h            |  9 +++++++++
+ drivers/media/vout/hdmitx21/hdmi_tx_main.c        |  7 ++++++-
+ drivers/media/vout/hdmitx_common/hdmitx_mode_set.c| 14 ++++++++++++--
+ 3 files changed, 27 insertions(+), 3 deletions(-)
+
+diff --git a/common_drivers/include/linux/amlogic/media/vout/hdmitx_common/hdmitx_common.h b/common_drivers/include/linux/amlogic/media/vout/hdmitx_common/hdmitx_common.h
+index 1111111..2222222 100644
+--- a/common_drivers/include/linux/amlogic/media/vout/hdmitx_common/hdmitx_common.h
++++ b/common_drivers/include/linux/amlogic/media/vout/hdmitx_common/hdmitx_common.h
+@@ -109,6 +109,15 @@
+ 	/* indicate hdmitx output ready, sw/hw mode setting done */
+ 	bool ready;
+ 	/*
++	 * RetroPangui(2026-07-21): amhdmitx_probe()가 uboot가 이미 켜둔
++	 * 화면을 인계받으며 ready=1로 세팅할 때만 같이 켜짐(hdmi_tx_main.c).
++	 * 이후 첫 실제 DRM enable(hdmitx_common_pre_enable_mode)이 이
++	 * 플래그를 보고 "disable_mode 없이 enable" 오경보를 내지 않도록
++	 * 구분한 뒤 스스로 끔 - 이후의 진짜 중복 enable은 계속 정상적으로
++	 * 경고됨.
++	 */
++	bool ready_from_uboot;
++	/*
+ 	 * 1 :HWC to enable hdcp flow in SNPS chip
+ 	 * 0 :IVCX chip don't need
+ 	 */
+diff --git a/common_drivers/drivers/media/vout/hdmitx21/hdmi_tx_main.c b/common_drivers/drivers/media/vout/hdmitx21/hdmi_tx_main.c
+index 1111111..2222222 100644
+--- a/common_drivers/drivers/media/vout/hdmitx21/hdmi_tx_main.c
++++ b/common_drivers/drivers/media/vout/hdmitx21/hdmi_tx_main.c
+@@ -5059,8 +5059,13 @@
+ 	 */
+ 	hdmitx_common_init_bootup_format_para(tx_comm, &tx_comm->fmt_para);
+ 	/* TODO: not consider VESA mode witch HW VIC = 0 */
+-	if (tx_comm->fmt_para.vic != HDMI_0_UNKNOWN)
++	if (tx_comm->fmt_para.vic != HDMI_0_UNKNOWN) {
+ 		hdev->tx_comm.ready = 1;
++		/* RetroPangui(2026-07-21): uboot 인계로 세팅된 ready라고 표시 -
++		 * hdmitx_common_pre_enable_mode()가 이 케이스에선 "disable_mode
++		 * 없이 enable" 오경보를 내지 않도록 함 */
++		hdev->tx_comm.ready_from_uboot = 1;
++	}
+ 	/*
+ 	 * update fmt_attr string from fmt_para, note that fmt_attr is already
+ 	 * set by hdmitx_common_init() with boot arg, and below is un-necessary,
+diff --git a/common_drivers/drivers/media/vout/hdmitx_common/hdmitx_mode_set.c b/common_drivers/drivers/media/vout/hdmitx_common/hdmitx_mode_set.c
+index 1111111..2222222 100644
+--- a/common_drivers/drivers/media/vout/hdmitx_common/hdmitx_mode_set.c
++++ b/common_drivers/drivers/media/vout/hdmitx_common/hdmitx_mode_set.c
+@@ -173,8 +173,18 @@
+ 					 struct hdmi_format_para *para)
+ {
+ 	mutex_lock(&tx_comm->valid_mutex);
+-	if (tx_comm->ready)
+-		HDMITX_ERROR("Should run disable_mode before enable new mode.\n");
++	if (tx_comm->ready) {
++		/* RetroPangui(2026-07-21): amhdmitx_probe()가 uboot(부트로고
++		 * 등)로 이미 켜진 화면을 인계받으며 ready=1을 세팅해두는
++		 * 케이스는 진짜 "disable_mode 없이 중복 enable"이 아니라 이번
++		 * 부팅의 첫 실제 DRM enable이므로 오경보를 내지 않음 - 이
++		 * 시점에 소비하고 플래그는 끔(다음부턴 진짜 중복 enable만
++		 * 정상적으로 경고됨). */
++		if (tx_comm->ready_from_uboot)
++			tx_comm->ready_from_uboot = 0;
++		else
++			HDMITX_ERROR("Should run disable_mode before enable new mode.\n");
++	}
+
+ 	if (tx_comm->hpd_state == 0 || tx_comm->suspend_flag) {
+ 		HDMITX_ERROR("%s current hpd_state/suspend (%d,%d), exit\n",

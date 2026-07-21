@@ -1,0 +1,20 @@
+--- a/hal/halmac/halmac_88xx/halmac_efuse_88xx.c	2026-07-21 21:52:23.337686598 +0900
++++ b/hal/halmac/halmac_88xx/halmac_efuse_88xx.c	2026-07-21 21:52:23.345687140 +0900
+@@ -121,7 +121,7 @@
+ 	}
+
+ 	if (adapter->halmac_state.mac_pwr == HALMAC_MAC_POWER_OFF)
+-		PLTFM_MSG_ERR("[ERR]Dump efuse in suspend\n");
++		PLTFM_MSG_TRACE("[TRACE]Dump efuse while MAC power off (normal during init, not necessarily suspend)\n");
+
+ 	*proc_status = HALMAC_CMD_PROCESS_IDLE;
+ 	adapter->evnt.phy_efuse_map = 1;
+@@ -483,7 +483,7 @@
+ 	}
+
+ 	if (adapter->halmac_state.mac_pwr == HALMAC_MAC_POWER_OFF)
+-		PLTFM_MSG_ERR("[ERR]Dump efuse in suspend\n");
++		PLTFM_MSG_TRACE("[TRACE]Dump efuse while MAC power off (normal during init, not necessarily suspend)\n");
+
+ 	*proc_status = HALMAC_CMD_PROCESS_IDLE;
+ 	adapter->evnt.log_efuse_map = 1;
