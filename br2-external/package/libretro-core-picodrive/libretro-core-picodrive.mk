@@ -7,8 +7,7 @@
 #
 ################################################################################
 
-LIBRETRO_CORE_PICODRIVE_VERSION = f0d4a0118a9733a1f10bce5a4ac772c474f9300d
-LIBRETRO_CORE_PICODRIVE_SITE = https://github.com/libretro/picodrive
+include $(BR2_EXTERNAL_C5_PANGUI_PATH)/package/libretro-core-organizer.mk
 LIBRETRO_CORE_PICODRIVE_SOURCE =
 LIBRETRO_CORE_PICODRIVE_DEPENDENCIES = mesa3d
 

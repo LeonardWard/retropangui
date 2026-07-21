@@ -7,8 +7,7 @@
 #
 ################################################################################
 
-LIBRETRO_CORE_SNES9X_VERSION = e755ae51b61f49e4ac48bdeaa16e3c72e70db0e5
-LIBRETRO_CORE_SNES9X_SITE = https://github.com/libretro/snes9x
+include $(BR2_EXTERNAL_C5_PANGUI_PATH)/package/libretro-core-organizer.mk
 LIBRETRO_CORE_SNES9X_SOURCE =
 LIBRETRO_CORE_SNES9X_DEPENDENCIES = mesa3d
 LIBRETRO_CORE_SNES9X_LICENSE = GPL-2.0

@@ -7,8 +7,7 @@
 #
 ################################################################################
 
-LIBRETRO_CORE_NP2KAI_VERSION = 54ec39f50d197cc02909cd4fd2a8591bb38651b0
-LIBRETRO_CORE_NP2KAI_SITE = https://github.com/libretro/np2kai
+include $(BR2_EXTERNAL_C5_PANGUI_PATH)/package/libretro-core-organizer.mk
 LIBRETRO_CORE_NP2KAI_SOURCE =
 LIBRETRO_CORE_NP2KAI_DEPENDENCIES = mesa3d
 

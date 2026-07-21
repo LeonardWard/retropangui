@@ -20,8 +20,7 @@
 #
 ################################################################################
 
-LIBRETRO_CORE_FBNEO_VERSION = 808243ba2a95061e6bd2a86829dc54b46dfded99
-LIBRETRO_CORE_FBNEO_SITE = https://github.com/libretro/FBNeo
+include $(BR2_EXTERNAL_C5_PANGUI_PATH)/package/libretro-core-organizer.mk
 LIBRETRO_CORE_FBNEO_SOURCE =
 
 LIBRETRO_CORE_FBNEO_CROSS_OPTS = \

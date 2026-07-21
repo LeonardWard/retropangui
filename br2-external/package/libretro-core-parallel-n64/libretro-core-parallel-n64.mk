@@ -13,8 +13,7 @@
 #
 ################################################################################
 
-LIBRETRO_CORE_PARALLEL_N64_VERSION = 1a68b3bdebdd28936c7c74ac4365a097b44b1fe5
-LIBRETRO_CORE_PARALLEL_N64_SITE = https://github.com/libretro/parallel-n64
+include $(BR2_EXTERNAL_C5_PANGUI_PATH)/package/libretro-core-organizer.mk
 LIBRETRO_CORE_PARALLEL_N64_SOURCE =
 LIBRETRO_CORE_PARALLEL_N64_DEPENDENCIES = mesa3d vulkan-loader vulkan-headers
 

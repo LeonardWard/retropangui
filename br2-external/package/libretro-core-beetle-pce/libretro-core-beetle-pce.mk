@@ -7,8 +7,7 @@
 #
 ################################################################################
 
-LIBRETRO_CORE_BEETLE_PCE_VERSION = ae99235c2139c176c1a8d0fde2957bf701d3cab0
-LIBRETRO_CORE_BEETLE_PCE_SITE = https://github.com/libretro/beetle-pce-libretro
+include $(BR2_EXTERNAL_C5_PANGUI_PATH)/package/libretro-core-organizer.mk
 LIBRETRO_CORE_BEETLE_PCE_SOURCE =
 
 LIBRETRO_CORE_BEETLE_PCE_CROSS_OPTS = \

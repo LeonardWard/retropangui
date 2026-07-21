@@ -9,8 +9,7 @@
 #
 ################################################################################
 
-LIBRETRO_CORE_BEETLE_PSX_HW_VERSION = d460f8342060526678e7fd8222048324c2a80d86
-LIBRETRO_CORE_BEETLE_PSX_HW_SITE = https://github.com/libretro/beetle-psx-libretro
+include $(BR2_EXTERNAL_C5_PANGUI_PATH)/package/libretro-core-organizer.mk
 LIBRETRO_CORE_BEETLE_PSX_HW_SOURCE =
 LIBRETRO_CORE_BEETLE_PSX_HW_DEPENDENCIES = mesa3d
 

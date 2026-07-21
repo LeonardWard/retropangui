@@ -12,8 +12,7 @@
 #
 ################################################################################
 
-LIBRETRO_CORE_MAME2003_PLUS_VERSION = 2cca4441706b952c2eaf8264713b53fd5452e0bd
-LIBRETRO_CORE_MAME2003_PLUS_SITE = https://github.com/libretro/mame2003-plus-libretro
+include $(BR2_EXTERNAL_C5_PANGUI_PATH)/package/libretro-core-organizer.mk
 LIBRETRO_CORE_MAME2003_PLUS_SOURCE =
 
 LIBRETRO_CORE_MAME2003_PLUS_CROSS_OPTS = \

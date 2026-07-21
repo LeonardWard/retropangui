@@ -7,8 +7,7 @@
 #
 ################################################################################
 
-LIBRETRO_CORE_BEETLE_BSNES_VERSION = e2b7694d12c44a2842cf4640844287f622026d9a
-LIBRETRO_CORE_BEETLE_BSNES_SITE = https://github.com/libretro/beetle-bsnes-libretro
+include $(BR2_EXTERNAL_C5_PANGUI_PATH)/package/libretro-core-organizer.mk
 LIBRETRO_CORE_BEETLE_BSNES_SOURCE =
 
 LIBRETRO_CORE_BEETLE_BSNES_CROSS_OPTS = \

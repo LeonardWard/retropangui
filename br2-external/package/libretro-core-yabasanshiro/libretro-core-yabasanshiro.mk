@@ -22,8 +22,7 @@
 #
 ################################################################################
 
-LIBRETRO_CORE_YABASANSHIRO_VERSION = f448097b69a6037246a08e9dc09eabaa420d7893
-LIBRETRO_CORE_YABASANSHIRO_SITE = https://github.com/libretro/yabause
+include $(BR2_EXTERNAL_C5_PANGUI_PATH)/package/libretro-core-organizer.mk
 LIBRETRO_CORE_YABASANSHIRO_SOURCE =
 LIBRETRO_CORE_YABASANSHIRO_DEPENDENCIES = mesa3d
 

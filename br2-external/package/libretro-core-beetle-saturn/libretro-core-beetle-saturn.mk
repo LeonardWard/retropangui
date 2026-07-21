@@ -7,8 +7,7 @@
 #
 ################################################################################
 
-LIBRETRO_CORE_BEETLE_SATURN_VERSION = 6f0cb9d1b9689601cd7dbf08e992d232304f50f7
-LIBRETRO_CORE_BEETLE_SATURN_SITE = https://github.com/libretro/beetle-saturn-libretro
+include $(BR2_EXTERNAL_C5_PANGUI_PATH)/package/libretro-core-organizer.mk
 LIBRETRO_CORE_BEETLE_SATURN_SOURCE =
 LIBRETRO_CORE_BEETLE_SATURN_DEPENDENCIES = mesa3d
 

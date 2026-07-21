@@ -6,8 +6,7 @@
 #
 ################################################################################
 
-LIBRETRO_CORE_BEETLE_SUPERGRAFX_VERSION = 3c6fcd3deded54ebecd69408f108407ac03d11b5
-LIBRETRO_CORE_BEETLE_SUPERGRAFX_SITE = https://github.com/libretro/beetle-supergrafx-libretro
+include $(BR2_EXTERNAL_C5_PANGUI_PATH)/package/libretro-core-organizer.mk
 LIBRETRO_CORE_BEETLE_SUPERGRAFX_SOURCE =
 
 LIBRETRO_CORE_BEETLE_SUPERGRAFX_CROSS_OPTS = \

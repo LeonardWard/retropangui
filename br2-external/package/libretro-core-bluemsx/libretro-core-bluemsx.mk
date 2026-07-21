@@ -7,8 +7,7 @@
 #
 ################################################################################
 
-LIBRETRO_CORE_BLUEMSX_VERSION = b76f27959a32e18aa04c619273152178fd0cf03b
-LIBRETRO_CORE_BLUEMSX_SITE = https://github.com/libretro/bluemsx-libretro
+include $(BR2_EXTERNAL_C5_PANGUI_PATH)/package/libretro-core-organizer.mk
 LIBRETRO_CORE_BLUEMSX_SOURCE =
 LIBRETRO_CORE_BLUEMSX_DEPENDENCIES = mesa3d
 

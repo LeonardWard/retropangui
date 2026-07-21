@@ -7,8 +7,7 @@
 #
 ################################################################################
 
-LIBRETRO_CORE_SCUMMVM_VERSION = libretro-v3.1.0.1
-LIBRETRO_CORE_SCUMMVM_SITE = https://github.com/libretro/scummvm
+include $(BR2_EXTERNAL_C5_PANGUI_PATH)/package/libretro-core-organizer.mk
 LIBRETRO_CORE_SCUMMVM_SOURCE =
 LIBRETRO_CORE_SCUMMVM_DEPENDENCIES = mesa3d
 LIBRETRO_CORE_SCUMMVM_LICENSE = GPL-2.0

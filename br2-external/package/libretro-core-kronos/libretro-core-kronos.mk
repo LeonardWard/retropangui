@@ -9,8 +9,7 @@
 #
 ################################################################################
 
-LIBRETRO_CORE_KRONOS_VERSION = 146f4295eb7f5f76a2e6e6c84518c9bdf6a8398f
-LIBRETRO_CORE_KRONOS_SITE = https://github.com/libretro/yabause
+include $(BR2_EXTERNAL_C5_PANGUI_PATH)/package/libretro-core-organizer.mk
 LIBRETRO_CORE_KRONOS_SOURCE =
 LIBRETRO_CORE_KRONOS_DEPENDENCIES = mesa3d
 

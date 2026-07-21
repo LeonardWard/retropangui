@@ -27,8 +27,7 @@
 #
 ################################################################################
 
-LIBRETRO_CORE_MAME2016_VERSION = 3529f4e2cb8e74c88d83bc9fc9d695f78dc9a975
-LIBRETRO_CORE_MAME2016_SITE = https://github.com/libretro/mame2016-libretro
+include $(BR2_EXTERNAL_C5_PANGUI_PATH)/package/libretro-core-organizer.mk
 LIBRETRO_CORE_MAME2016_SOURCE =
 
 LIBRETRO_CORE_MAME2016_OPTS = \

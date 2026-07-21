@@ -26,8 +26,7 @@
 #
 ################################################################################
 
-LIBRETRO_CORE_MAME2010_VERSION = 484456818393505dd4367e6e4c116c573c04a1ec
-LIBRETRO_CORE_MAME2010_SITE = https://github.com/libretro/mame2010-libretro
+include $(BR2_EXTERNAL_C5_PANGUI_PATH)/package/libretro-core-organizer.mk
 LIBRETRO_CORE_MAME2010_SOURCE =
 
 LIBRETRO_CORE_MAME2010_CROSS_OPTS = \

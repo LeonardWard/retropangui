@@ -7,8 +7,7 @@
 #
 ################################################################################
 
-LIBRETRO_CORE_QUASI88_VERSION = 520e0a37ac0e9cf8b0536fe83fda3aacc9ba73bb
-LIBRETRO_CORE_QUASI88_SITE = https://github.com/libretro/quasi88-libretro
+include $(BR2_EXTERNAL_C5_PANGUI_PATH)/package/libretro-core-organizer.mk
 LIBRETRO_CORE_QUASI88_SOURCE =
 LIBRETRO_CORE_QUASI88_DEPENDENCIES = mesa3d
 

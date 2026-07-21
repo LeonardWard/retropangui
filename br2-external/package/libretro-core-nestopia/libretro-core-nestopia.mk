@@ -7,8 +7,7 @@
 #
 ################################################################################
 
-LIBRETRO_CORE_NESTOPIA_VERSION = b0fd87dd07e3c52903435d302b04e5e97796f127
-LIBRETRO_CORE_NESTOPIA_SITE = https://github.com/libretro/nestopia
+include $(BR2_EXTERNAL_C5_PANGUI_PATH)/package/libretro-core-organizer.mk
 LIBRETRO_CORE_NESTOPIA_SOURCE =
 LIBRETRO_CORE_NESTOPIA_DEPENDENCIES = mesa3d
 LIBRETRO_CORE_NESTOPIA_LICENSE = GPL-2.0

@@ -7,8 +7,7 @@
 #
 ################################################################################
 
-LIBRETRO_CORE_PCSX_REARMED_VERSION = r26l
-LIBRETRO_CORE_PCSX_REARMED_SITE = https://github.com/libretro/pcsx_rearmed
+include $(BR2_EXTERNAL_C5_PANGUI_PATH)/package/libretro-core-organizer.mk
 LIBRETRO_CORE_PCSX_REARMED_SOURCE =
 LIBRETRO_CORE_PCSX_REARMED_DEPENDENCIES = mesa3d
 LIBRETRO_CORE_PCSX_REARMED_LICENSE = GPL-2.0

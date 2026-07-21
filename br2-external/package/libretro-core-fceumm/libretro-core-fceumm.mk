@@ -8,8 +8,7 @@
 #
 ################################################################################
 
-LIBRETRO_CORE_FCEUMM_VERSION = c0c52ad0eb36cdbfc66e9bdb72efc83103e85e22
-LIBRETRO_CORE_FCEUMM_SITE = https://github.com/libretro/libretro-fceumm
+include $(BR2_EXTERNAL_C5_PANGUI_PATH)/package/libretro-core-organizer.mk
 LIBRETRO_CORE_FCEUMM_SOURCE =
 LIBRETRO_CORE_FCEUMM_DEPENDENCIES = mesa3d
 

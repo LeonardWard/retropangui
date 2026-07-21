@@ -15,8 +15,7 @@
 #
 ################################################################################
 
-LIBRETRO_CORE_PPSSPP_VERSION = f0baf3ade7bcb6c86f0835962b36eb4e51559d8f
-LIBRETRO_CORE_PPSSPP_SITE = https://github.com/hrydgard/ppsspp
+include $(BR2_EXTERNAL_C5_PANGUI_PATH)/package/libretro-core-organizer.mk
 LIBRETRO_CORE_PPSSPP_SOURCE =
 LIBRETRO_CORE_PPSSPP_DEPENDENCIES = mesa3d
 
