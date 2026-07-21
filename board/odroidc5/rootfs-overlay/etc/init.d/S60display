@@ -16,12 +16,28 @@ case "$1" in
             # 모드를 씀. 실패해도 항상 1080p60hz로 폴백 - apply-resolution.sh
             # (S60display/S99emulationstation/ES 공용, 2026-07-21 통합) 참고.
             FBSET_OUT="$(/usr/share/retropangui/apply-resolution.sh)"
-            # S99emulationstation의 첫 루프 회차가 방금 적용한 걸 EDID
-            # 해시로 확인 후 재적용을 건너뛸 수 있도록 결과를 남겨둠
-            # (부팅 직후 odroid-drm-fbset -outputmode 두 번 연속 atomic
-            # commit으로 인한 화면 이중 깜빡임 방지 - 사용자 지적,
-            # todo-20260713-display-followups.html 2번 항목).
-            echo "${FBSET_OUT}" > /var/run/hdmi-boot-mode
+            # 2026-07-21 버그 수정: S60display는 S61share(share 파티션 마운트)
+            # "보다 먼저" 실행됨(S60 < S61) - 즉 위 apply-resolution.sh가
+            # retropangui.conf를 읽은 시점엔 share가 아직 마운트 전이라
+            # system.hdmi_resolution 사용자 설정을 못 읽고 auto로 폴백해버림
+            # (실기기 확인: conf엔 fallback_1280x800p60hz가 있는데 S60는
+            # "EDID 네이티브 감지"로 적용해버림). 예전엔 S99emulationstation이
+            # 매 회차 무조건 재적용해서 이 오적용을 조용히 덮어썼는데, 아래
+            # S99의 "S60 결과 신뢰 후 재적용 스킵" 최적화가 이 자가복구를
+            # 없애버려서 겉으로 드러남(사용자 지적) - S60 시점엔 share가
+            # 마운트되기 전이었는지 확인해서, 안 됐었다면(=이 값이 conf가
+            # 아니라 auto 기본값으로 나온 것일 수 있음) 마커를 쓰지 않아
+            # S99가 항상 정상적으로(공유 마운트 이후) 재적용하게 함.
+            if [ -f /retropangui/share/system/retropangui.conf ]; then
+                # S99emulationstation의 첫 루프 회차가 방금 적용한 걸 EDID
+                # 해시로 확인 후 재적용을 건너뛸 수 있도록 결과를 남겨둠
+                # (부팅 직후 odroid-drm-fbset -outputmode 두 번 연속 atomic
+                # commit으로 인한 화면 이중 깜빡임 방지 - 사용자 지적,
+                # todo-20260713-display-followups.html 2번 항목).
+                echo "${FBSET_OUT}" > /var/run/hdmi-boot-mode
+            else
+                logger -t "${TAG}" "retropangui.conf 아직 마운트 전 - S99가 재적용하도록 마커 생략"
+            fi
             logger -t "${TAG}" "Display initialized"
         else
             logger -t "${TAG}" "odroid-drm-fbset not found"
