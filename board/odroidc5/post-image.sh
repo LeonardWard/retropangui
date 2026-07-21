@@ -38,8 +38,15 @@ BOOTLOGO_BMP="${BINARIES_DIR}/boot-logo.bmp"
 BOOTLOGO_DST="${BINARIES_DIR}/boot-logo.bmp.gz"
 if [ -f "${SPLASH_SRC}" ] && command -v ffmpeg >/dev/null 2>&1; then
     echo ">>> U-Boot 부팅 로고(BMP.GZ) 생성 중..."
+    # 2026-07-21: splash-src.png(2000x2000)는 실제 로고+텍스트가 캔버스 중앙
+    # 위쪽 좁은 띠(대략 296,314 ~ 1702,1198 - 픽셀 분석으로 확인)에만 있고
+    # 아래 절반 이상이 완전히 빈 흰 여백임(스플래시 "비디오"용 여유 공간으로
+    # 추정). 크롭 없이 그대로 1280x720에 맞추면 실제 로고가 화면의 작은
+    # 일부에만 찍혀서 부팅 화면이 거의 흰색으로만 보이는 문제가 있었음
+    # (사용자 지적, 실기기 확인) - 내용 바운딩 박스 기준 여백 포함 크롭
+    # 후 스케일하도록 수정.
     ffmpeg -y -i "${SPLASH_SRC}" \
-        -vf "scale=1280:720:force_original_aspect_ratio=decrease,pad=1280:720:(ow-iw)/2:(oh-ih)/2:color=white" \
+        -vf "crop=1630:1026:184:243,scale=1280:720:force_original_aspect_ratio=decrease,pad=1280:720:(ow-iw)/2:(oh-ih)/2:color=white" \
         -pix_fmt bgr24 -frames:v 1 \
         "${BOOTLOGO_BMP}" 2>/dev/null
     gzip -f -9 "${BOOTLOGO_BMP}"
