@@ -43,8 +43,14 @@ BR2_ENABLE_LOCALE_WHITELIST="C en_US en_US.UTF-8 ko_KR ko_KR.UTF-8"
 # 썼는데, buildroot 표준 옵션으로 전환(2026-07-13, 바이너리 전수 목록 후속).
 # LIST는 .so 확장자 없는 모듈 이름 - buildroot가 gconv-modules 설정도
 # 알아서 걸러 생성해줌.
+# IBM437(=CP437, 표준 zip의 기본 파일명 인코딩)이 빠져 있으면 Kodi가 zip
+# 애드온 패키지의 파일명을 iconv_open()으로 UTF-8 변환하다 실패해서
+# "invalid package"로 설치가 죄다 깨진다(2026-07-21 실기기: 한국어 언어팩
+# 설치 실패로 발견, resource.language.ko_kr-11.0.96.zip 다운로드/해시/무결성
+# 전부 정상이었는데도 실패 - customConvert: iconv_open() for "CP437" ->
+# "UTF-8" failed, errno=22 로 원인 확정).
 BR2_TOOLCHAIN_GLIBC_GCONV_LIBS_COPY=y
-BR2_TOOLCHAIN_GLIBC_GCONV_LIBS_LIST="UNICODE UTF-16 UTF-32"
+BR2_TOOLCHAIN_GLIBC_GCONV_LIBS_LIST="UNICODE UTF-16 UTF-32 IBM437"
 BR2_KERNEL_HEADERS_5_15=y
 
 # U-Boot (Hardkernel 공식 브랜치)
@@ -263,7 +269,7 @@ BR2_PACKAGE_RPUI_BT=y
 
 # Kodi Media Center (GBM/GLES2, KMS/DRM)
 BR2_PACKAGE_KODI_PANGUI=y
-# BR2_PACKAGE_KODI_PERIPHERAL_JOYSTICK_PANGUI is not set
+BR2_PACKAGE_KODI_PERIPHERAL_JOYSTICK_PANGUI=y
 BR2_PACKAGE_XKEYBOARD_CONFIG=y
 
 # mDNS (hostname.local 접속)

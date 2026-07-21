@@ -84,7 +84,7 @@ case "$1" in
                 # 실패 → ES가 아예 안 뜨고 스플래시만 무한 반복하는 회귀 발생(실기기
                 # 확인). -f로 강제해서 기존 busybox 동작과 동일하게 복원.
                 openvt -f -c 1 -s -w -- sh -c "
-                    emulationstation --no-splash --no-exit --debug >> /var/log/es-launcher.log 2>&1 &
+                    emulationstation --no-exit --debug >> /var/log/es-launcher.log 2>&1 &
                     echo \$! > /tmp/es.pid
                     wait \$!
                     rm -f /tmp/es.pid
@@ -132,6 +132,29 @@ case "$1" in
                                 -e "s|<setting id=\"videoscreen.screenmode\"[^>]*>[^<]*</setting>|<setting id=\"videoscreen.screenmode\">${KSCREENMODE}</setting>|" \
                                 "$KODI_GUI"
                         fi
+                        # 디버그 로그 기본 활성화 - 최초 생성 시에만(사용자가 나중에
+                        # 설정 메뉴에서 끄면 그 선택을 존중, 매번 덮어쓰지 않음).
+                        mkdir -p /root/.kodi/userdata
+                        [ -f /root/.kodi/userdata/advancedsettings.xml ] || \
+                            cp /usr/share/retropangui/kodi-advancedsettings.xml.default \
+                               /root/.kodi/userdata/advancedsettings.xml
+                        # 오른쪽 스틱 볼륨 오작동 버그 수정 - Kodi 기본 keymap
+                        # (system/keymaps/joystick.xml, gamepad.xml)이 rightstick을
+                        # VolumeUp/Down에 바인딩해둬서, 축 값이 조금만 흔들려도
+                        # 볼륨이 0으로 떨어짐(Batocera/Recalbox/일반 Kodi 공통 이슈,
+                        # 2026-07-21 사용자 보고). 사용자 keymap 오버레이로 해당
+                        # 바인딩만 빈 액션으로 제거 - 최초 생성 시에만, 나중에
+                        # 사용자가 재매핑하면 그 선택을 존중.
+                        mkdir -p /root/.kodi/userdata/keymaps
+                        [ -f /root/.kodi/userdata/keymaps/kodi-keymap-volume-fix.xml ] || \
+                            cp /usr/share/retropangui/kodi-keymap-volume-fix.xml.default \
+                               /root/.kodi/userdata/keymaps/kodi-keymap-volume-fix.xml
+                        # 조이패드 buttonmap 준비: peripheral.joystick 애드온은 자체
+                        # buttonmap이 없으면 조이패드를 인식하지 못한다(조이패드로
+                        # Kodi 내부 마법사 메뉴에 진입할 수도 없어 사실상 먹통이 됨).
+                        # ES가 이미 아는 es_input.cfg 매핑을 Kodi 실행마다 buttonmap
+                        # XML로 변환해 심어준다(Batocera/Recalbox와 동일 방식).
+                        python3 /usr/share/retropangui/kodi-pad-mapping.py 2>/dev/null || true
                         env -u SDL_VIDEODRIVER -u MESA_LOADER_DRIVER_OVERRIDE \
                             LD_PRELOAD=/usr/lib64/libEGL.so.1 \
                             kodi --standalone >> /var/log/kodi.log 2>&1 || true

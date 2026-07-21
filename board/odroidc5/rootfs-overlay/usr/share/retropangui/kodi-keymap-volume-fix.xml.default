@@ -1,0 +1,14 @@
+<keymap>
+  <global>
+    <joystick profile="game.controller.default">
+      <rightstick direction="left"/>
+      <rightstick direction="right"/>
+      <rightstick direction="up"/>
+      <rightstick direction="down"/>
+    </joystick>
+    <gamepad>
+      <rightthumbstickup/>
+      <rightthumbstickdown/>
+    </gamepad>
+  </global>
+</keymap>
