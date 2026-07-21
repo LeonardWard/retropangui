@@ -25,22 +25,25 @@ cp "${BOARD_DIR}/config.ini" "${BINARIES_DIR}/"
 # 방식은 NAS 설정 흔적/커스텀 잔재가 남는 문제).
 cp "${BOARD_DIR}/retropangui-boot.conf.init" "${BINARIES_DIR}/"
 
-# U-Boot 부팅 로고(boot-logo.bmp) 생성 — showlogo.c의 do_showlogo()가 부팅
+# U-Boot 부팅 로고(boot-logo.bmp.gz) 생성 — showlogo.c의 do_showlogo()가 부팅
 # 시 config.ini의 displaymode(720p60hz)로 로고를 띄울 때 자동으로 찾는 파일
 # (board_late_init() → load_boot_config → showlogo, 파티션1 루트에서
-# "boot-logo.bmp.gz" → "boot-logo.bmp" 순으로 시도). 이 U-Boot 빌드는 BMP만
-# 지원(CONFIG_CMD_BMP, 24bpp만 - PNG/JPEG 지원 없음, CONFIG_BMP_16/32BPP도
-# 꺼져있음). 스플래시 비디오(post-build.sh)와 같은 원본 PNG를 재사용해서
-# 720p60hz(config.ini 부팅 기본값) 해상도로 변환.
+# "boot-logo.bmp.gz" → "boot-logo.bmp" 순으로 시도 - CONFIG_VIDEO_BMP_GZIP=y라
+# gzip 압축본을 우선 찾음, 2026-07-21 용량 절감을 위해 gz만 제공). 이 U-Boot
+# 빌드는 BMP만 지원(CONFIG_CMD_BMP, 24bpp만 - PNG/JPEG 지원 없음,
+# CONFIG_BMP_16/32BPP도 꺼져있음). 스플래시 비디오(post-build.sh)와 같은
+# 원본 PNG를 재사용해서 720p60hz(config.ini 부팅 기본값) 해상도로 변환.
 SPLASH_SRC="${BOARD_DIR}/splash/splash-src.png"
-BOOTLOGO_DST="${BINARIES_DIR}/boot-logo.bmp"
+BOOTLOGO_BMP="${BINARIES_DIR}/boot-logo.bmp"
+BOOTLOGO_DST="${BINARIES_DIR}/boot-logo.bmp.gz"
 if [ -f "${SPLASH_SRC}" ] && command -v ffmpeg >/dev/null 2>&1; then
-    echo ">>> U-Boot 부팅 로고(BMP) 생성 중..."
+    echo ">>> U-Boot 부팅 로고(BMP.GZ) 생성 중..."
     ffmpeg -y -i "${SPLASH_SRC}" \
         -vf "scale=1280:720:force_original_aspect_ratio=decrease,pad=1280:720:(ow-iw)/2:(oh-ih)/2:color=white" \
         -pix_fmt bgr24 -frames:v 1 \
-        "${BOOTLOGO_DST}" 2>/dev/null
-    echo ">>> U-Boot 부팅 로고 완료: ${BOOTLOGO_DST}"
+        "${BOOTLOGO_BMP}" 2>/dev/null
+    gzip -f -9 "${BOOTLOGO_BMP}"
+    echo ">>> U-Boot 부팅 로고 완료: ${BOOTLOGO_DST} ($(du -h "${BOOTLOGO_DST}" | cut -f1))"
 else
     echo ">>> WARNING: 부팅 로고 생성 스킵 (소스 이미지 또는 ffmpeg 없음)"
 fi
