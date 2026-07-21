@@ -14,6 +14,16 @@
 # 이 매핑은 실제 설치 경로(/usr/lib/libretro/<module_id>)와 정의상 일치하므로
 # allowlist가 필요 없다.
 #
+# 2026-07-21(후속 작업 3, Kconfig depends 도입): defconfig 텍스트만 grep하면
+# "depends on으로 실제로는 꺼지는 코어인데 defconfig엔 =y가 남아있는" 경우를
+# 놓칠 수 있음(todo-20260712-libretro-cores-package-split.html 참고 - 다른
+# 기기 defconfig에서는 켜질 수 있는 심볼이라 defconfig 자체에서 지우진 않으므로
+# 원천적으로 발생 가능). buildroot/.config(직전 syncconfig의 실제 해석 결과)가
+# 있으면 그걸 우선 신뢰 - Kconfig가 depends를 이미 반영해서 만든 최종 진실이라
+# 별도 파서 없이 정확함. .config가 없으면(빌드 이력 없는 클린 체크아웃) 기존
+# defconfig 텍스트 방식으로 폴백 - 이 경우 후속 빌드의 post-build.sh 2단
+# 검사(실제 설치된 .so 기준)가 최종 안전망.
+#
 # 사용: check-core-registration.sh <repo_root>
 # 종료코드: 0=일관, 1=불일치(빌드 중단 권장)
 
@@ -21,8 +31,16 @@ set -u
 
 ROOT="${1:?사용법: check-core-registration.sh <repo_root>}"
 DEFCONFIG="${ROOT}/configs/retropangui-odroidc5_defconfig"
+RESOLVED_CONFIG="${ROOT}/buildroot/.config"
 SYSTEMS_JSON="${ROOT}/board/odroidc5/systems.json"
 PKG_DIR="${ROOT}/br2-external/package"
+
+if [ -f "$RESOLVED_CONFIG" ]; then
+    CONFIG_SOURCE="$RESOLVED_CONFIG"
+    echo "  (참고: 직전 빌드의 buildroot/.config 기준 - Kconfig depends 반영된 실제 값)"
+else
+    CONFIG_SOURCE="$DEFCONFIG"
+fi
 
 FAIL=0
 
@@ -43,7 +61,7 @@ for pkg in "${PKG_DIR}"/libretro-core-*/; do
     symbol=$(grep -m1 -o 'BR2_PACKAGE_LIBRETRO_CORE_[A-Z0-9_]*' "${pkg}/Config.in" 2>/dev/null || true)
     [ -z "$symbol" ] && continue
 
-    if grep -q "^${symbol}=y" "$DEFCONFIG"; then enabled=1; else enabled=0; fi
+    if grep -q "^${symbol}=y" "$CONFIG_SOURCE"; then enabled=1; else enabled=0; fi
     if echo "$JSON_MODIDS" | grep -qx "$modid"; then registered=1; else registered=0; fi
 
     if [ "$enabled" = "1" ] && [ "$registered" = "0" ]; then

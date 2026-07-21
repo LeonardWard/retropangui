@@ -1,6 +1,12 @@
 config BR2_PACKAGE_LIBRETRO_CORE_MUPEN64PLUS_NEXT
 	bool "libretro-core-mupen64plus-next"
+	depends on !BR2_PACKAGE_C5_PANGUI_GPU_MALI_VALHALL
 	help
 	  mupen64plus-next libretro core - Nintendo 64.
 
 	  https://github.com/libretro/mupen64plus-libretro-nx
+
+	  모든 CPU/RDP 렌더러 조합에서 100% 크래시(2026-07-19 실측) - 원인은
+	  GLideN64의 glMapBufferRange() NULL 미체크(Mali-G310 드라이버가 매핑
+	  실패). 코어 소스는 패치하지 않는 방침이라 이 GPU 계열 기기에서는
+	  자동으로 비활성화됨. n64는 parallel-n64가 1순위 대안.

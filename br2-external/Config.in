@@ -1,3 +1,8 @@
+# 2026-07-21: 기기/GPU별 코어 자동 제외 구조(후속 작업 3)의 최상위 지점 -
+# 다른 어떤 패키지보다도 먼저 source해서 하부의 depends on이 항상 이 심볼을
+# 참조할 수 있게 함(Kconfig는 선언 순서 무관하게 참조 가능하지만 가독성 목적).
+source "$BR2_EXTERNAL_C5_PANGUI_PATH/package/c5-pangui-target/Config.in"
+
 source "$BR2_EXTERNAL_C5_PANGUI_PATH/package/retropangui-initramfs/Config.in"
 source "$BR2_EXTERNAL_C5_PANGUI_PATH/package/storage-mgr/Config.in"
 source "$BR2_EXTERNAL_C5_PANGUI_PATH/package/mali-ddk/Config.in"

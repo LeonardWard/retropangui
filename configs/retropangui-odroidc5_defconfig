@@ -202,21 +202,17 @@ BR2_PACKAGE_LIBRETRO_CORE_NP2KAI=y
 # 이 프로젝트가 하지 않으므로([[feedback_no_core_patching]]) 비활성화.
 # 소스/패키지 정의는 유지. saturn은 이제 yabasanshiro만 남음(미검증).
 # BR2_PACKAGE_LIBRETRO_CORE_BEETLE_SATURN=y
-# 2026-07-16: 모든 CPU코어/RDP렌더러 조합에서 100% 크래시 확정
-# (todo-core-lr-mupen64plus-next.html) - 원인은 상류 GLideN64 소스의
-# glMapBufferRange() NULL 미체크 버그(Mali-G310 드라이버가 이 매핑에
-# 실패), 코어 패치는 이 프로젝트가 하지 않으므로([[feedback_no_core_patching]])
-# 비활성화. 소스/패키지 정의는 유지, n64는 parallel-n64가 1순위.
-# BR2_PACKAGE_LIBRETRO_CORE_MUPEN64PLUS_NEXT=y
+# 2026-07-21: Mali Valhall GPU 확정적 미지원으로 Kconfig depends on 자동
+# 제외로 전환(br2-external/package/libretro-core-mupen64plus-next/Config.in
+# 참고, 원인은 todo-core-lr-mupen64plus-next.html) - defconfig에 =y를 켜도
+# 이 기기에서는 자동으로 꺼짐. n64는 parallel-n64가 1순위.
 BR2_PACKAGE_LIBRETRO_CORE_PARALLEL_N64=y
 BR2_PACKAGE_LIBRETRO_CORE_PPSSPP=y
-# 2026-07-16: VDP2 블릿 셰이더가 GLSL ES 스펙 위반("Global variable
-# initializer must be a constant expression")으로 Mali 컴파일러가 거부 →
-# abort() 100% 재현 확정(todo-core-lr-kronos.html). 코어 패치는 이
-# 프로젝트가 하지 않으므로([[feedback_no_core_patching]]) 비활성화.
-# 소스/패키지 정의는 유지. saturn은 이제 yabasanshiro만 남음(미검증,
-# beetle-saturn도 같은 날 성능 문제로 비활성화됨 - 위 참고).
-# BR2_PACKAGE_LIBRETRO_CORE_KRONOS=y
+# 2026-07-21: Mali Valhall GPU 확정적 미지원으로 Kconfig depends on 자동
+# 제외로 전환(br2-external/package/libretro-core-kronos/Config.in 참고,
+# 원인은 todo-core-lr-kronos.html) - defconfig에 =y를 켜도 이 기기에서는
+# 자동으로 꺼짐. saturn은 이제 yabasanshiro만 남음(미검증, beetle-saturn도
+# 같은 날 성능 문제로 비활성화됨 - 위 참고).
 BR2_PACKAGE_LIBRETRO_CORE_BEETLE_BSNES=y
 BR2_PACKAGE_LIBRETRO_CORE_YABASANSHIRO=y
 BR2_PACKAGE_LIBRETRO_CORE_FBNEO=y

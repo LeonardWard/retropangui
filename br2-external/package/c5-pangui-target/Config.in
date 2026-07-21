@@ -1,0 +1,34 @@
+# c5-pangui-target/Config.in - 실제 빌드 산출물이 없는 순수 설정 심볼 모음.
+# .mk 파일 없음(설치할 것이 없음) - Config.in만 존재하는 "가상 패키지" 디렉토리.
+#
+# 목적(todo-20260712-libretro-cores-package-split.html 후속 작업 3, 2026-07-19
+# 설계 / 2026-07-21 구현): "이 코어는 이 기기/GPU에서 지원 안 됨"을 defconfig
+# 수동 주석이 아니라 구조적으로 선언하기 위한 최상위 지점. 최상위에서 타겟
+# 기기를 하나 고르면 그 기기의 하드웨어 특성 심볼이 select되고, 각 코어의
+# Config.in이 그 특성 심볼에 depends on을 걸어서 자동으로 켜지고 꺼진다.
+#
+# 지금은 기기가 odroidc5 하나뿐이라 choice가 사실상 고정 선택이지만, 새 기기가
+# 추가되면 여기에 config 항목만 하나 더 추가하면 되고 하부(각 코어의
+# depends on) 코드는 그대로 유지된다.
+#
+# 적용 범위: 하드웨어 특성으로 인한 "확정적 미지원"에만 사용
+# (kronos/mupen64plus-next - GPU 드라이버·컴파일러 레벨 크래시, 코어 패치
+# 안 하는 방침상 회피 불가). 성능/정책적 이유로 "지금은 안 씀"인 코어
+# (beetle-psx-hw/beetle-saturn/beetle-pce/beetle-supergrafx)는 여기 안 걸고
+# defconfig 주석으로 그대로 유지 - "절대 못 씀"과 "지금은 안 씀"을 같은
+# 메커니즘으로 섞으면 나중에 정책이 바뀔 때 구분이 안 됨(문서 참고).
+
+choice
+	prompt "RetroPangUI 타겟 기기"
+	default BR2_PACKAGE_C5_PANGUI_TARGET_ODROIDC5
+
+config BR2_PACKAGE_C5_PANGUI_TARGET_ODROIDC5
+	bool "Odroid C5 (Amlogic S905X5M)"
+	select BR2_PACKAGE_C5_PANGUI_GPU_MALI_VALHALL
+
+endchoice
+
+# 하드웨어 특성 심볼 - 코어 Config.in이 이 심볼에 depends on을 걸어서 참조.
+# 프롬프트 없음(choice가 자동으로 select) - 사용자가 직접 켜고 끄는 심볼이 아님.
+config BR2_PACKAGE_C5_PANGUI_GPU_MALI_VALHALL
+	bool

@@ -1,6 +1,12 @@
 config BR2_PACKAGE_LIBRETRO_CORE_KRONOS
 	bool "libretro-core-kronos"
+	depends on !BR2_PACKAGE_C5_PANGUI_GPU_MALI_VALHALL
 	help
 	  kronos libretro core - Sega Saturn (GL 가속, beetle_saturn과 별개 코어).
 
 	  https://github.com/libretro/yabause
+
+	  Mali-G310(Valhall) GPU에서 GLSL ES 스펙 위반("Global variable
+	  initializer must be a constant expression")으로 컴파일러가 VDP2 블릿
+	  셰이더를 거부, abort() 100% 재현(2026-07-19 실측) - 코어 소스는
+	  패치하지 않는 방침이라 이 GPU 계열 기기에서는 자동으로 비활성화됨.
