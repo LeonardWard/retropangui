@@ -17,6 +17,11 @@ case "$1" in
             export HOME=/root
             # shutdown 신호 시 루프 종료 — stop 섹션이 SIGTERM을 보내면 클린 exit
             trap "exit 0" TERM INT
+            # 2026-07-21: 부팅 직후 첫 회차는 S60display가 이미 해상도를
+            # 적용했으므로(같은 모니터인 한) 아래 루프에서 재적용을 건너뛴다
+            # - apply-resolution.sh 도입 배경 및 이중 깜빡임 문제는
+            # todo-20260713-display-followups.html 2번 항목 참고.
+            FIRST_ITER=1
             while true; do
                 # locale.conf는 루프 안에서 매번 다시 읽음 — ES 재시작만으로 언어 변경이 반영되게 함
                 # (루프 밖에서 한 번만 읽으면 언어 변경 시 전체 재부팅이 있어야만 적용되는 문제 있었음)
@@ -42,13 +47,36 @@ case "$1" in
                 # 주의: 이 블록은 바깥 sh -c '...'가 홑따옴표로 감싸고 있으므로
                 # 여기 안에서는 절대 홑따옴표를 쓰지 말 것(중첩되면 스크립트가
                 # 깨짐 - 실기기에서 실제로 겪은 문제, S60display도 동일 주의).
-                HDMI_MODE="$(python3 /usr/share/retropangui/hdmi-set-resolution.py 2>>/var/log/hdmi-resolution.log)"
-                [ -z "${HDMI_MODE}" ] && HDMI_MODE="1080p60hz"
-                # 폴백 3단: 지정 모드 → 1080p → 720p(사실상 모든 HDMI 기기가
-                # 받는 기본 CEA 모드). 모니터 교체 직후엔 화면이 안 보여서
-                # 사람이 개입할 수 없으므로 어떤 모니터든 반드시 화면이
-                # 나오는 데까지 자동으로 내려가야 함(2026-07-13 사용자 지적).
-                FBSET_OUT="$(odroid-drm-fbset -outputmode "${HDMI_MODE}" || odroid-drm-fbset -outputmode 1080p60hz || odroid-drm-fbset -outputmode 720p60hz)"
+                #
+                # 2026-07-21: 첫 회차(FIRST_ITER=1)면서 S60display가 방금 남긴
+                # 결과(/var/run/hdmi-boot-mode)가 있고 지금 EDID 해시가 S60이
+                # 적용할 때 기록한 기준선(/var/run/hdmi-edid.sha)과 같으면(그
+                # 사이 모니터가 안 바뀜) 재적용을 건너뛰고 그 결과를 그대로
+                # 쓴다 - 부팅 직후 odroid-drm-fbset을 연달아 두 번 atomic
+                # commit해서 생기던 화면 이중 깜빡임 제거(사용자 지적,
+                # todo-20260713-display-followups.html 2번 항목). 마커가
+                # 없거나(S60 실패) 해시가 다르면(그 사이 모니터 교체) 평소대로
+                # apply-resolution.sh로 재감지+재적용한다.
+                SKIP_APPLY=0
+                if [ "${FIRST_ITER}" = "1" ] && [ -f /var/run/hdmi-boot-mode ]; then
+                    CUR_EDID_HASH="$(sha256sum /sys/class/amhdmitx/amhdmitx0/rawedid 2>/dev/null | cut -d" " -f1)"
+                    BASE_EDID_HASH="$(cat /var/run/hdmi-edid.sha 2>/dev/null)"
+                    if [ -n "${CUR_EDID_HASH}" ] && [ "${CUR_EDID_HASH}" = "${BASE_EDID_HASH}" ]; then
+                        SKIP_APPLY=1
+                    fi
+                fi
+                FIRST_ITER=0
+                if [ "${SKIP_APPLY}" = "1" ]; then
+                    FBSET_OUT="$(cat /var/run/hdmi-boot-mode)"
+                    logger -t "${TAG}" "skip redundant resolution re-apply - S60display already applied, same EDID"
+                else
+                    # 폴백 3단: 지정 모드 → 1080p → 720p(사실상 모든 HDMI 기기가
+                    # 받는 기본 CEA 모드). 모니터 교체 직후엔 화면이 안 보여서
+                    # 사람이 개입할 수 없으므로 어떤 모니터든 반드시 화면이
+                    # 나오는 데까지 자동으로 내려가야 함(2026-07-13 사용자 지적).
+                    FBSET_OUT="$(/usr/share/retropangui/apply-resolution.sh)"
+                fi
+                rm -f /var/run/hdmi-boot-mode
                 echo "${FBSET_OUT}"
                 # 스플래시 비디오 재생 — ALSA softvol "Master" 컨트롤 초기화 목적
                 # mpv가 오디오 디바이스를 열면 softvol 컨트롤이 등록되어 ES VolumeControl이 정상 작동함
