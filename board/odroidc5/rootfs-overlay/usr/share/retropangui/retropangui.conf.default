@@ -118,7 +118,8 @@ emulationstation.ThemeSet=retropangui-slate
 emulationstation.TransitionStyle=instant
 
 # 버튼 방식 (xbox: A=확인/B=취소, nintendo: B=확인/A=취소, sony)
-emulationstation.ButtonLayout=xbox
+# 2026-07-21: 기본값을 nintendo(SWAP BUTTONS A/B 기본 on)로 변경(사용자 지시)
+emulationstation.ButtonLayout=nintendo
 
 # 스크린세이버 딜레이 (초, 0=비활성)
 emulationstation.ScreenSaverTime=300
