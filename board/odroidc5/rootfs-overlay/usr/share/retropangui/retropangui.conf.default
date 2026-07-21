@@ -15,8 +15,13 @@
 
 ## Section A - System Settings ##
 
-# 시스템 언어 (ko_KR, en_US, ja_JP, ...)
-system.language=ko_KR
+# 시스템 언어 (ko_KR, en_US, ja_JP, ...) - 2026-07-21: emulationstation.*
+# 접두로 이름을 바꿔서(다른 emulationstation.* 키들과 동일), ES가 매 시작마다
+# Settings::loadRetropanguiConf()로 직접 읽게 함(apply_retropangui_conf.sh의
+# 비동기 es_settings.cfg 동기화에 더 이상 의존 안 함 - 그 타이밍 사이에 ES가
+# 먼저 뜨면 영어로 뜨던 레이스 수정). OS 로케일(/etc/locale.conf)/RetroArch
+# 언어도 이 키에서 여전히 파생됨 - apply_retropangui_conf.sh 참고.
+emulationstation.Language=ko_KR
 
 # 시스템 시간대
 # 예: Asia/Seoul, America/New_York, Europe/Paris

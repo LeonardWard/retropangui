@@ -105,6 +105,44 @@ while IFS='=' read -r raw_key raw_val; do
             ;;
 
         # ---------------------------------------------------------------
+        # emulationstation.Language → es_settings.cfg + OS 로케일 + RA 언어
+        # (아래 emulationstation.* 범용 분기보다 먼저 와야 함 - case문은
+        # 처음 매칭된 패턴만 실행하므로, 이 특수 케이스가 범용 와일드카드를
+        # 가로챔. 2026-07-21: 예전엔 이 값이 system.language였는데,
+        # apply_retropangui_conf.sh 자체가 "최초 부팅/키 병합 시에만" 또는
+        # ES 설정 메뉴 저장 이벤트로만 실행되는 스크립트라, 그 사이에 ES가
+        # 먼저 뜨면 es_settings.cfg가 stale해서 영어로 뜨는 레이스가 있었음
+        # (사용자가 2번 겪음). emulationstation.* 이름으로 바꿔서 ES 자신이
+        # Settings::loadRetropanguiConf()로 매 시작마다 직접 읽게 해 이
+        # 레이스를 근본적으로 없앰 - 이 스크립트의 es_set 호출은 그대로 두되
+        # (es_settings.cfg도 계속 동기화해서 일관성 유지), OS 로케일/RA 언어
+        # 부수효과는 여기서 계속 처리.
+        # ---------------------------------------------------------------
+        emulationstation.Language)
+            echo "LANG=${val}.UTF-8" > /etc/locale.conf
+            es_set "string" "Language" "${val}"
+            case "${val}" in
+                ko*) ra_lang=10 ;;
+                ja*) ra_lang=1  ;;
+                fr*) ra_lang=2  ;;
+                es*) ra_lang=3  ;;
+                de*) ra_lang=4  ;;
+                it*) ra_lang=5  ;;
+                nl*) ra_lang=6  ;;
+                pt_BR*) ra_lang=7 ;;
+                pt*) ra_lang=8  ;;
+                ru*) ra_lang=9  ;;
+                zh_TW*|zh_HK*) ra_lang=11 ;;
+                zh*) ra_lang=12 ;;
+                pl*) ra_lang=14 ;;
+                tr*) ra_lang=18 ;;
+                uk*) ra_lang=26 ;;
+                *)   ra_lang=0  ;;
+            esac
+            ra_set "user_language" "${ra_lang}"
+            ;;
+
+        # ---------------------------------------------------------------
         # emulationstation.* → es_settings.cfg
         # ---------------------------------------------------------------
         emulationstation.*)
@@ -137,29 +175,6 @@ while IFS='=' read -r raw_key raw_val; do
             else
                 echo "[retropangui] 알 수 없는 시간대: ${val}"
             fi
-            ;;
-        system.language)
-            echo "LANG=${val}.UTF-8" > /etc/locale.conf
-            es_set "string" "Language" "${val}"
-            case "${val}" in
-                ko*) ra_lang=10 ;;
-                ja*) ra_lang=1  ;;
-                fr*) ra_lang=2  ;;
-                es*) ra_lang=3  ;;
-                de*) ra_lang=4  ;;
-                it*) ra_lang=5  ;;
-                nl*) ra_lang=6  ;;
-                pt_BR*) ra_lang=7 ;;
-                pt*) ra_lang=8  ;;
-                ru*) ra_lang=9  ;;
-                zh_TW*|zh_HK*) ra_lang=11 ;;
-                zh*) ra_lang=12 ;;
-                pl*) ra_lang=14 ;;
-                tr*) ra_lang=18 ;;
-                uk*) ra_lang=26 ;;
-                *)   ra_lang=0  ;;
-            esac
-            ra_set "user_language" "${ra_lang}"
             ;;
         system.ssh)
             case "${val}" in

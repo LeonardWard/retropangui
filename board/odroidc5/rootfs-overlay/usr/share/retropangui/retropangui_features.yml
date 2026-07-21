@@ -145,7 +145,16 @@ menus:
       - id: rp.language
         label: "LANGUAGE"
         type: list
-        conf_key: system.language
+        # 2026-07-21: system.language → emulationstation.Language로 개명.
+        # 예전엔 apply_retropangui_conf.sh(첫 부팅/키 병합 시에만, 또는 ES
+        # 설정 메뉴 저장 이벤트로만 트리거)가 es_settings.cfg에 비동기로
+        # 동기화해야만 ES가 이 값을 읽었음 - 그 사이 시점에 ES가 먼저
+        # 뜨면(예: 공장 초기화 직후 몇 차례 재부팅) es_settings.cfg가
+        # stale해서 영어로 뜨는 레이스가 있었음(사용자가 2번 겪음). 다른
+        # emulationstation.* 항목들과 동일한 이름으로 바꿔서
+        # Settings::loadRetropanguiConf()가 "매 ES 시작마다" 직접
+        # 읽도록 함 - 비동기 동기화 의존성 제거.
+        conf_key: emulationstation.Language
         restart: es
         options:
           - value: en_US
