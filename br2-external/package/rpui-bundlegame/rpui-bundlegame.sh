@@ -22,12 +22,34 @@
 # 번들 게임의 메타데이터(설명/이미지 등)는 bundled-roms/{sys}/gamelist.xml
 # (빌드 시 큐레이션돼 스쿼시fs에 박힘)을 그대로 원본으로 삼는다 - 매니페스트가
 # 더 이상 필요 없음(절대경로 prefix 자체가 "번들 게임"의 식별자).
+#
+# 2026-07-21 통합(사용자 지적: "같이 넣지 않은 이유가 있을 것 같은데 왜
+# 안 넣었지?"): megadrive/msx1/msx2/scummvm이 SHOW BUNDLED GAMES 토글
+# 대상에서 빠져있던 게 의도적 설계가 아니라 개발 순서 문제였음을 git
+# 히스토리로 확인(download_extra_roms()가 2026-06-27에 먼저 생겼고,
+# "번들 게임 + hide/show 토글" 개념 자체는 rpui-bundlegame이 도입된
+# 2026-07-02 이후에 생김 - 나중에 만든 토글을 먼저 있던 기능으로
+# 소급 적용하는 작업을 아무도 안 한 것뿐, 제외할 근거 있는 커밋 없음).
+#
+# 이 4개 시스템은 nes/snes/psx와 분배 방식 자체가 다름 - S61share의
+# download_extra_roms()가 첫 부팅 때 네트워크에서 share/roms/{sys}/에
+# 직접 내려받음(squashfs에 안 구움, 이미지 용량 때문으로 추정). 그래서
+# nes/snes/psx처럼 "squashfs 절대경로를 gamelist.xml에 추가/제거"하는
+# 방식을 그대로 못 씀 - 참조할 squashfs 사본이 없고, share에 있는 게
+# 유일한 실물 사본이라 hide한다고 지웠다간 재다운로드 없이는 복구 불가.
+# 대신 ES가 이미 네이티브로 지원하는 <hidden>true/false</hidden> 플래그를
+# 씀(파일 삭제 없음, 노드 유지) - bundled-roms/{sys}/gamelist.xml(다운로드
+# 때 시딩용으로 쓰는 그 템플릿)의 <path> 목록을 "이건 번들 게임이다"
+# 식별용 매니페스트로 그대로 재사용(중복 하드코딩 없음).
 
 SHARE="/retropangui/share"
 BUNDLED="/usr/share/retropangui/bundled-roms"
 # utility: 게임이 아니라 터미널 유틸리티 스크립트(2026-07-05) - 이건 계속
 # 물리 복사 유지(실행 스크립트라 이 문서의 "번들 게임" 정리 범위 밖).
 SYSTEMS="nes snes psx"
+# 2026-07-21: squashfs 절대경로 방식이 아니라 <hidden> 플래그로 관리하는
+# 시스템(download_extra_roms로 share에 직접 받아지는 것들).
+SYSTEMS_DOWNLOADED="megadrive msx1 msx2 scummvm"
 INIT_ONLY_SYSTEMS="utility"
 # 예전(~2026-07-18) cp 방식이 남긴 흔적 정리용
 MANIFEST_NAME=".bundled-manifest"
@@ -93,6 +115,20 @@ _migrate_legacy_copies() {
             *) for sys in ${SYSTEMS}; do _gamelist_sync_bundled "${sys}" "add"; done ;;
         esac
     fi
+
+    # 2026-07-21: SYSTEMS_DOWNLOADED(megadrive/msx1/msx2/scummvm)는 이번에
+    # 처음 토글 대상에 편입돼서, 이미 부팅된 적 있는 기기는 예전 상태(항상
+    # 표시)로 남아있을 수 있음 - migrated 여부와 무관하게 매 부팅 현재
+    # bundlegame_show 값을 그대로 적용해 동기화(idempotent, 변경 없으면
+    # 파일도 안 건드림 - _gamelist_set_hidden_downloaded의 changed 체크).
+    local show_now
+    case "$(_read_bundlegame_show)" in
+        false|0|no) show_now="true" ;;   # hidden=true
+        *)          show_now="false" ;;  # hidden=false
+    esac
+    for sys in ${SYSTEMS_DOWNLOADED}; do
+        _gamelist_set_hidden_downloaded "${sys}" "${show_now}"
+    done
 }
 
 # gamelist.xml에 번들 게임 <game> 노드를 추가(action=add)하거나 제거
@@ -157,6 +193,53 @@ dst_tree.write(dst_gamelist, encoding='unicode', xml_declaration=True)
 EOF
 }
 
+# SYSTEMS_DOWNLOADED(download_extra_roms로 share에 직접 받아지는 시스템)용 -
+# squashfs 절대경로 참조가 없으므로 노드를 지우고 다시 만드는 대신 ES
+# 네이티브 <hidden> 플래그만 토글한다(파일은 항상 share에 그대로 있음).
+# "번들 게임"으로 볼 상대경로 목록은 bundled-roms/{sys}/gamelist.xml(다운로드
+# 시딩에도 쓰는 그 템플릿)의 <path>에서 그대로 읽어옴 - 사용자가 직접 추가한
+# 같은 시스템의 다른 게임은 이 목록에 없으니 건드리지 않음.
+_gamelist_set_hidden_downloaded() {
+    local sys="$1"
+    local hidden="$2"  # "true" | "false"
+    local bundled_src="${BUNDLED}/${sys}/gamelist.xml"
+    local dst_gamelist="${SHARE}/roms/${sys}/gamelist.xml"
+
+    [ -f "${bundled_src}" ] || return 0
+    [ -f "${dst_gamelist}" ] || return 0
+
+    python3 - "${bundled_src}" "${dst_gamelist}" "${hidden}" <<'EOF'
+import sys
+import xml.etree.ElementTree as ET
+
+bundled_src, dst_gamelist, hidden = sys.argv[1:4]
+
+bundled_paths = set()
+for g in ET.parse(bundled_src).getroot().findall('game'):
+    p = g.find('path')
+    if p is not None and p.text:
+        bundled_paths.add(p.text)
+
+tree = ET.parse(dst_gamelist)
+root = tree.getroot()
+changed = False
+for g in root.findall('game'):
+    p = g.find('path')
+    if p is None or p.text not in bundled_paths:
+        continue
+    h = g.find('hidden')
+    if h is None:
+        h = ET.SubElement(g, 'hidden')
+    if h.text != hidden:
+        h.text = hidden
+        changed = True
+
+if changed:
+    ET.indent(tree, space='  ')
+    tree.write(dst_gamelist, encoding='unicode', xml_declaration=True)
+EOF
+}
+
 cmd_init() {
     _migrate_legacy_copies
 
@@ -187,6 +270,12 @@ cmd_hide() {
     for sys in ${SYSTEMS}; do
         _gamelist_sync_bundled "${sys}" "remove"
     done
+    # 2026-07-21: SYSTEMS_DOWNLOADED는 squashfs 사본이 없어 노드를 지우는
+    # 대신 <hidden>true</hidden>만 세움(파일은 share에 그대로 유지) - 위
+    # 헤더 주석 참고.
+    for sys in ${SYSTEMS_DOWNLOADED}; do
+        _gamelist_set_hidden_downloaded "${sys}" "true"
+    done
     # 2026-07-12: killall emulationstation 제거 - 외부 SIGTERM은 타이밍에
     # 따라 ES가 GPU/DRM 작업 도중 끊겨서 다음 실행 때 화면이 안 나오는
     # 문제가 실기기에서 확인됨(DRM plane 없음). 재시작은 호출부(ES 자신의
@@ -196,6 +285,9 @@ cmd_hide() {
 cmd_show() {
     for sys in ${SYSTEMS}; do
         _gamelist_sync_bundled "${sys}" "add"
+    done
+    for sys in ${SYSTEMS_DOWNLOADED}; do
+        _gamelist_set_hidden_downloaded "${sys}" "false"
     done
     # 2026-07-12: killall emulationstation 제거 - cmd_hide 주석 참고.
 }
@@ -239,6 +331,42 @@ EOF
             shown=$((shown + m))
         fi
     done
+
+    # 2026-07-21: SYSTEMS_DOWNLOADED - <hidden> 플래그 기준으로 카운트.
+    for sys in ${SYSTEMS_DOWNLOADED}; do
+        bundled_src="${BUNDLED}/${sys}/gamelist.xml"
+        dst_gamelist="${SHARE}/roms/${sys}/gamelist.xml"
+        [ -f "${bundled_src}" ] || continue
+        n=$(grep -c "<path>" "${bundled_src}" 2>/dev/null || echo 0)
+        count=$((count + n))
+        if [ -f "${dst_gamelist}" ]; then
+            m=$(python3 - "${bundled_src}" "${dst_gamelist}" <<'EOF'
+import sys
+import xml.etree.ElementTree as ET
+
+bundled_src, dst_gamelist = sys.argv[1:3]
+
+bpaths = set()
+for g in ET.parse(bundled_src).getroot().findall('game'):
+    p = g.find('path')
+    if p is not None and p.text:
+        bpaths.add(p.text)
+
+visible = 0
+for g in ET.parse(dst_gamelist).getroot().findall('game'):
+    p = g.find('path')
+    if p is None or p.text not in bpaths:
+        continue
+    h = g.find('hidden')
+    if h is None or h.text not in ('true', '1'):
+        visible += 1
+print(visible)
+EOF
+)
+            shown=$((shown + m))
+        fi
+    done
+
     echo "번들 게임: ${count}개 / 표시: ${shown}개"
 }
 
