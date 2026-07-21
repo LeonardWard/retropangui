@@ -9,7 +9,6 @@
 #
 ################################################################################
 
-include $(BR2_EXTERNAL_C5_PANGUI_PATH)/package/libretro-core-organizer.mk
 LIBRETRO_CORE_KRONOS_SOURCE =
 LIBRETRO_CORE_KRONOS_DEPENDENCIES = mesa3d
 

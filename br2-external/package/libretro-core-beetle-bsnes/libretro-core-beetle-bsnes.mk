@@ -7,7 +7,6 @@
 #
 ################################################################################
 
-include $(BR2_EXTERNAL_C5_PANGUI_PATH)/package/libretro-core-organizer.mk
 LIBRETRO_CORE_BEETLE_BSNES_SOURCE =
 
 LIBRETRO_CORE_BEETLE_BSNES_CROSS_OPTS = \

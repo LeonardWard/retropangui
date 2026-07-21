@@ -7,7 +7,6 @@
 #
 ################################################################################
 
-include $(BR2_EXTERNAL_C5_PANGUI_PATH)/package/libretro-core-organizer.mk
 LIBRETRO_CORE_SNES9X_SOURCE =
 LIBRETRO_CORE_SNES9X_DEPENDENCIES = mesa3d
 LIBRETRO_CORE_SNES9X_LICENSE = GPL-2.0

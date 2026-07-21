@@ -3,13 +3,18 @@
 # libretro-core-organizer.mk
 #
 # 24개 libretro 코어 패키지의 _VERSION(git 커밋 해시/태그)과 _SITE(저장소 URL)를
-# 한곳에 모아두는 중앙 관리 파일 - 각 libretro-core-<name>.mk는 이 파일을
-# include해서 값을 받아쓰고, _SOURCE/_DEPENDENCIES/CROSS_OPTS/BUILD_CMDS/
-# INSTALL_CMDS처럼 그 코어 고유 로직만 자기 파일에 남긴다.
+# 한곳에 모아두는 중앙 관리 파일. 각 libretro-core-<name>.mk는 이 값을 받아쓰고
+# _SOURCE/_DEPENDENCIES/CROSS_OPTS/BUILD_CMDS/INSTALL_CMDS처럼 그 코어 고유
+# 로직만 자기 파일에 남긴다.
 #
 # 목적(2026-07-19 사용자 지시, todo-20260712-libretro-cores-package-split.html
 # 후속 작업 1): 코어가 24개로 늘면서 버전/사이트 값이 파일마다 흩어져 있어
 # 한눈에 보거나 일괄 관리하기 어려웠음 - 이 파일이 그 정리 창구(organizer) 역할.
+#
+# ⚠ include는 br2-external/external.mk에서 1회만 - 개별 패키지 .mk 안에서
+# include하면 Buildroot의 패키지명 추론(pkg-utils.mk의
+# $(dir $(lastword $(MAKEFILE_LIST))))이 깨져서 모든 코어가 "package"라는
+# 같은 이름으로 등록되려다 충돌함(2026-07-21 실빌드로 실측, external.mk 참고).
 #
 # 2026-07-14 코어별 패키지 분해(총괄 .mk 폐기 -> 완전 독립)의 목적과 충돌하지
 # 않음 - Buildroot 캐시 미감지 문제는 각 코어의 빌드 커맨드가 한 패키지 안에
