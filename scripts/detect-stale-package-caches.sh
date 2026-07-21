@@ -118,6 +118,25 @@ while IFS= read -r f; do
             pkg="${pkg%%/*}"
             TO_CLEAR+=("${pkg}")
             ;;
+        br2-external/package/libretro-core-organizer.mk)
+            # 2026-07-20 후속 작업 1(_VERSION/_SITE 중앙화): 이 파일은
+            # br2-external/package/<pkg>/ 하위가 아니라 패키지 디렉토리 바로 위에
+            # 있어서 위 br2-external/package/*/* 규칙에 안 걸리는 사각지대 -
+            # 착수 전에 미리 문서에 기록해둔 주의사항(todo-20260712-libretro-cores-
+            # package-split.html). 바뀐 <PREFIX>_VERSION 라인만 추출해 해당 코어
+            # 패키지로 매핑(defconfig 처리와 동일 패턴, find_package_dir 재사용).
+            while IFS= read -r prefix; do
+                [ -z "$prefix" ] && continue
+                base="$(echo "${prefix}" | tr 'A-Z' 'a-z')"
+                pkgdir="$(find_package_dir "${base}")" || true
+                if [ -n "${pkgdir}" ]; then
+                    echo "  libretro-core-organizer.mk: ${prefix}_VERSION 변경 -> 패키지 '${pkgdir}'로 매칭"
+                    TO_CLEAR+=("${pkgdir}")
+                else
+                    echo "  libretro-core-organizer.mk: ${prefix}_VERSION 변경했지만 대응 패키지 디렉토리를 못 찾음 - 수동 확인 필요"
+                fi
+            done < <(git diff "${PREV_COMMIT}" -- "$f" 2>/dev/null | grep -oE '^[+-][A-Z0-9_]+_VERSION' | sed -E 's/^[+-]//; s/_VERSION$//' | sort -u)
+            ;;
         configs/retropangui-${DEVICE}_defconfig)
             # 라인 단위로 diff해서 바뀐 BR2_PACKAGE_* 심볼만 추출
             while IFS= read -r sym; do
