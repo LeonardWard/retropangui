@@ -298,121 +298,6 @@ _rp_dl() {
     fi
 }
 
-# 추가 ROM 백그라운드 다운로드 — 최초 부팅 1회, 실패 시 묵묵히 스킵
-# 소스: 리콜박스 GitLab raw (CC BY-NC-SA / GPL / 공식 freeware)
-download_extra_roms() {
-    # 네트워크 대기 (최대 60초)
-    local i=0
-    while [ $i -lt 60 ]; do
-        ping -c1 -W2 8.8.8.8 >/dev/null 2>&1 && break
-        sleep 2
-        i=$((i+2))
-    done
-    ping -c1 -W2 8.8.8.8 >/dev/null 2>&1 || return 0
-
-    local roms="${SHARE_MOUNT}/roms"
-    local base="https://gitlab.com/recalbox/recalbox/-/raw/master/package/recalbox-romfs2/systems"
-
-    # 2026-07-15: 게임별 폴더로 배치(todo-20260714-bundled-game-curation) -
-    # 큐레이션 단계에서 같은 폴더에 gamelist.xml/이미지를 동봉하기 위한 준비.
-
-    # Mega Drive — Retrosouls (CC BY-NC-SA 4.0)
-    local md="${roms}/megadrive"
-    _rp_dl "${md}/Yazzie (Retrosouls)/Yazzie (Retrosouls).bin" \
-        "${base}/megadrive/init/roms/Yazzie%20(Retrosouls).bin"
-    _rp_dl "${md}/Gluf (Retrosouls)/Gluf (Retrosouls).bin" \
-        "${base}/megadrive/init/roms/Gluf%20(Retrosouls).bin"
-    _rp_dl "${md}/Old Towers (Retrosouls)/Old Towers (Retrosouls).bin" \
-        "${base}/megadrive/init/roms/Old%20Towers%20(Retrosouls).bin"
-    _rp_dl "${md}/Misplaced (Retrosouls)/Misplaced (Retrosouls).bin" \
-        "${base}/megadrive/init/roms/Misplaced%20(Retrosouls).bin"
-
-    # MSX1 — GPL + CC BY-NC-SA
-    local m1="${roms}/msx1"
-    _rp_dl "${m1}/xracing/xracing.rom"               "${base}/msx1/init/roms/xracing.rom"
-    _rp_dl "${m1}/xspelunker-en/xspelunker-en.rom"   "${base}/msx1/init/roms/xspelunker-en.rom"
-    _rp_dl "${m1}/Yazzie/Yazzie.rom"                 "${base}/msx1/init/roms/Yazzie.rom"
-
-    # MSX2 — Retroworks (비상업 재배포 가능)
-    local m2="${roms}/msx2"
-    _rp_dl "${m2}/Brunilda [v1.1] (Retroworks)/Brunilda [v1.1] (Retroworks).rom" \
-        "${base}/msx2/init/roms/Brunilda%20%5Bv1.1%5D%20(Retroworks).rom"
-    _rp_dl "${m2}/The Sword of Ianna (Retroworks)/The Sword of Ianna (Retroworks).rom" \
-        "${base}/msx2/init/roms/The%20Sword%20of%20Ianna%20(Retroworks).rom"
-
-    # ScummVM — 공식 freeware. Recalbox 소스가 이미 "게임명.scummvm/" 폴더 안에
-    # raw 게임 데이터를 담고 있어서 그대로 받으면 코어의 폴더 자동 감지
-    # (todo-core-lr-scummvm 문서의 "게임 배치법" 참조)가 그대로 먹힘 -
-    # 예전처럼 게임ID 텍스트 파일을 별도로 만들 필요 없음.
-    local sc="${roms}/scummvm"
-
-    # Beneath a Steel Sky
-    local sky="${sc}/Beneath a Steel Sky (English).scummvm"
-    _rp_dl "${sky}/sky.dnr" \
-        "${base}/scummvm/init/roms/Beneath%20a%20Steel%20Sky%20(English).scummvm/sky.dnr"
-    _rp_dl "${sky}/sky.dsk" \
-        "${base}/scummvm/init/roms/Beneath%20a%20Steel%20Sky%20(English).scummvm/sky.dsk"
-
-    # Flight of the Amazon Queen
-    local queen="${sc}/Flight of the Amazon Queen (English).scummvm"
-    _rp_dl "${queen}/queen.1" \
-        "${base}/scummvm/init/roms/Flight%20of%20the%20Amazon%20Queen%20(English).scummvm/queen.1"
-
-    # Soltys
-    local soltys="${sc}/Soltys (English).scummvm"
-    _rp_dl "${soltys}/vol.cat" \
-        "${base}/scummvm/init/roms/Soltys%20(English).scummvm/vol.cat"
-    _rp_dl "${soltys}/vol.dat" \
-        "${base}/scummvm/init/roms/Soltys%20(English).scummvm/vol.dat"
-
-    # Lure of the Temptress
-    local lure="${sc}/Lure of the Tempress (English).scummvm"
-    for f in Disk1.vga Disk2.vga Disk3.vga Disk4.vga Lure.exe; do
-        _rp_dl "${lure}/${f}" \
-            "${base}/scummvm/init/roms/Lure%20of%20the%20Tempress%20(English).scummvm/${f}"
-    done
-
-    # 2026-07-16: sky.cpt/lure.dat - 게임 배포 파일이 아니라 ScummVM 자체
-    # "엔진 추가 데이터"(engines/sky, engines/lure 코드가 런타임에 읽는
-    # 리소스). 공식 scummvm/scummvm 저장소 dists/engine-data/에 있음 -
-    # scummvm.ini의 extrapath=share/bios/scummvm/extra (MT32 ROM과 같은
-    # 폴더) - share/bios/scummvm/ 루트에 넣으면 코어가 못 찾음(실기기로
-    # 확인된 실수 - 처음엔 루트에 넣었다가 안 돼서 extra/로 옮김).
-    local scbios="${SHARE_MOUNT}/bios/scummvm/extra"
-    _rp_dl "${scbios}/sky.cpt" \
-        "https://raw.githubusercontent.com/scummvm/scummvm/master/dists/engine-data/sky.cpt"
-    _rp_dl "${scbios}/lure.dat" \
-        "https://raw.githubusercontent.com/scummvm/scummvm/master/dists/engine-data/lure.dat"
-
-    # 2026-07-15: 박스아트/스크린샷 - 저장소에 이미지 바이너리를 커밋하지
-    # 않고 원 배포처에서 받아온다("임시로" 코드 다운로드 방식, 이미지 검토
-    # 후 URL이 교체될 수 있음 - todo-20260714-bundled-game-curation).
-    local rbase="https://gitlab.com/recalbox/recalbox/-/raw/master/package/recalbox-romfs2/systems"
-    _rp_dl "${md}/Yazzie (Retrosouls)/image.png"       "${rbase}/megadrive/init/roms/media/images/Yazzie%20(Retrosouls).png"
-    _rp_dl "${md}/Gluf (Retrosouls)/image.png"         "${rbase}/megadrive/init/roms/media/images/Gluf%20(Retrosouls).png"
-    _rp_dl "${md}/Old Towers (Retrosouls)/image.png"   "${rbase}/megadrive/init/roms/media/images/Old%20Towers%20(Retrosouls).png"
-    _rp_dl "${md}/Misplaced (Retrosouls)/image.png"    "${rbase}/megadrive/init/roms/media/images/Misplaced%20(Retrosouls).png"
-    _rp_dl "${m1}/xracing/image.png"                   "${rbase}/msx1/init/roms/media/images/xracing.png"
-    _rp_dl "${m1}/xspelunker-en/image.png"              "${rbase}/msx1/init/roms/media/images/xspelunker-en.png"
-    _rp_dl "${m1}/Yazzie/image.png"                     "${rbase}/msx1/init/roms/media/images/Yazzie.png"
-    _rp_dl "${m2}/Brunilda [v1.1] (Retroworks)/image.png" \
-        "${rbase}/msx2/init/roms/media/images/Brunilda%20%5Bv1.1%5D%20(Retroworks).png"
-    _rp_dl "${m2}/The Sword of Ianna (Retroworks)/image.png" \
-        "${rbase}/msx2/init/roms/media/images/The%20Sword%20of%20Ianna%20(Retroworks).png"
-    _rp_dl "${sky}/image.png"   "${rbase}/scummvm/init/roms/media/images/Beneath%20a%20Steel%20Sky%20(English).png"
-    _rp_dl "${queen}/image.png" "${rbase}/scummvm/init/roms/media/images/Flight%20of%20the%20Amazon%20Queen%20(Fran%C3%A7ais).png"
-    _rp_dl "${soltys}/image.png" "${rbase}/scummvm/init/roms/media/images/Soltys%20(English).png"
-    _rp_dl "${lure}/image.png"  "${rbase}/scummvm/init/roms/media/images/Lure%20of%20the%20Tempress%20(Fran%C3%A7ais).png"
-
-    # 큐레이션한 gamelist.xml(전체 필드) 최초 1회만 배치 - 이미 있으면
-    # 건드리지 않음(사용자가 직접 스크랩/수정한 내용 보존).
-    for sys in megadrive msx1 msx2 scummvm; do
-        tmpl="/usr/share/retropangui/bundled-roms/${sys}/gamelist.xml"
-        dst="${roms}/${sys}/gamelist.xml"
-        [ -f "${tmpl}" ] && [ ! -f "${dst}" ] && cp "${tmpl}" "${dst}"
-    done
-}
-
 # 폴더 구조 초기화 + bundled 파일 복사 (sentinel로 최초 1회만)
 init_share_dirs() {
     mkdir -p \
@@ -479,7 +364,6 @@ init_share_dirs() {
     if [ ! -f "${sentinel}" ]; then
         command -v rpui-bundlegame >/dev/null 2>&1 && rpui-bundlegame init
         touch "${sentinel}"
-        download_extra_roms &
     fi
 }
 
@@ -564,8 +448,8 @@ case "$1" in
 
         # NAS 네트워크 마운트 — sharedevice 값과 무관하게 sharenetwork_* 디렉티브가
         # 있으면 항상 처리 (없으면 mount_network_shares가 바로 리턴, 지연 없음).
-        # download_extra_roms()와 달리 백그라운드로 안 돌림 - ES(S99)가 스캔을
-        # 시작하기 전에 NAS 콘텐츠가 자리에 있어야 하므로 동기적으로 대기
+        # 백그라운드로 안 돌림 - ES(S99)가 스캔을 시작하기 전에 NAS 콘텐츠가
+        # 자리에 있어야 하므로 동기적으로 대기
         # (Recalbox의 mountNetwork() 호출도 동일하게 블로킹) - sharenetwork_*
         # 디렉티브를 안 쓰는 사용자는 위에서 바로 리턴되니 부팅 지연 없음.
         mount_network_shares

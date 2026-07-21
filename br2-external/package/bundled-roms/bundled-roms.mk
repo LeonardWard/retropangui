@@ -5,6 +5,16 @@
 # NES : retrobrews/nes-games (~83종) + 2048 (retrobrews 미포함)
 # SNES: retrobrews/snes-games (~14종) + Super-Apocalux (retrobrews 미포함)
 # PSX : 240p Test Suite (filipalac fork, GPL-2.0) - EMU 버전
+# Mega Drive/MSX1/MSX2/ScummVM: Recalbox romfs2 (CC BY-NC-SA/GPL/공식 freeware)
+#
+# 2026-07-21: Mega Drive/MSX1/MSX2/ScummVM을 S61share의 download_extra_roms()
+# (첫 부팅 시 네트워크 다운로드)에서 이 패키지로 이전 - nes/snes/psx와 동일하게
+# 빌드 시점에 받아서 squashfs에 굽는 방식으로 통일(사용자 지시,
+# todo-20260704-es-multi-path-roms.html). URL은 download_extra_roms()가 쓰던
+# 것을 그대로 재사용. 게임별 폴더명/gamelist.xml은 board/odroidc5/rootfs-overlay/
+# usr/share/retropangui/bundled-roms/{sys}/에 이미 있는 걸 그대로 씀(이 패키지는
+# 실제 ROM 파일과 이미지만 그 폴더 구조에 맞춰 채워넣음) - rootfs-overlay가
+# 패키지 설치 이후에 합쳐지므로 gamelist.xml은 항상 rootfs-overlay 쪽이 최종본.
 #
 ################################################################################
 
@@ -30,6 +40,15 @@ BUNDLED_NES_ROMS = 2048.nes croom.nes driar.nes fff.nes indivisibleonnes.nes lal
 
 # SNES 번들 목록 (retrobrews에서 선별)
 BUNDLED_SNES_ROMS = jetpilotrising.sfc saf.smc superbossgaiden.sfc
+
+# Mega Drive/MSX1/MSX2/ScummVM - Recalbox romfs2 raw (기존 download_extra_roms()와 동일 출처)
+RECALBOX_ROMFS_BASE = https://gitlab.com/recalbox/recalbox/-/raw/master/package/recalbox-romfs2/systems
+
+# $(call bundled-roms-dl,상대경로(=(@D) 기준),RECALBOX_ROMFS_BASE 이후 경로)
+# 이미 받아둔 파일은 다시 안 받음(증분 빌드 캐시).
+define bundled-roms-dl
+	test -f "$(@D)/$(1)" || wget -q -O "$(@D)/$(1)" "$(RECALBOX_ROMFS_BASE)/$(2)"
+endef
 
 BUNDLED_ROMS_TARGET_DIR = $(TARGET_DIR)/usr/share/retropangui/bundled-roms
 
@@ -75,6 +94,57 @@ define BUNDLED_ROMS_BUILD_CMDS
 		unzip -q -o $(@D)/240pTestSuitePS1-EMU.zip -d $(@D)/psx && \
 		rm -f $(@D)/240pTestSuitePS1-EMU.zip; \
 	fi
+
+	# Mega Drive/MSX1/MSX2/ScummVM - 게임별 폴더 그대로 받아서 $(@D)/extra/에
+	# 최종 설치 구조와 동일하게 쌓음(캐시 있으면 파일별로 스킵). URL은
+	# download_extra_roms()(구 S61share, 2026-06-27)가 쓰던 것과 동일.
+	mkdir -p "$(@D)/extra/megadrive/Yazzie (Retrosouls)" \
+	         "$(@D)/extra/megadrive/Gluf (Retrosouls)" \
+	         "$(@D)/extra/megadrive/Old Towers (Retrosouls)" \
+	         "$(@D)/extra/megadrive/Misplaced (Retrosouls)" \
+	         "$(@D)/extra/msx1/xracing" "$(@D)/extra/msx1/xspelunker-en" "$(@D)/extra/msx1/Yazzie" \
+	         "$(@D)/extra/msx2/Brunilda [v1.1] (Retroworks)" \
+	         "$(@D)/extra/msx2/The Sword of Ianna (Retroworks)" \
+	         "$(@D)/extra/scummvm/Beneath a Steel Sky (English).scummvm" \
+	         "$(@D)/extra/scummvm/Flight of the Amazon Queen (English).scummvm" \
+	         "$(@D)/extra/scummvm/Soltys (English).scummvm" \
+	         "$(@D)/extra/scummvm/Lure of the Tempress (English).scummvm"
+
+	$(call bundled-roms-dl,extra/megadrive/Yazzie (Retrosouls)/Yazzie (Retrosouls).bin,megadrive/init/roms/Yazzie%20(Retrosouls).bin)
+	$(call bundled-roms-dl,extra/megadrive/Yazzie (Retrosouls)/image.png,megadrive/init/roms/media/images/Yazzie%20(Retrosouls).png)
+	$(call bundled-roms-dl,extra/megadrive/Gluf (Retrosouls)/Gluf (Retrosouls).bin,megadrive/init/roms/Gluf%20(Retrosouls).bin)
+	$(call bundled-roms-dl,extra/megadrive/Gluf (Retrosouls)/image.png,megadrive/init/roms/media/images/Gluf%20(Retrosouls).png)
+	$(call bundled-roms-dl,extra/megadrive/Old Towers (Retrosouls)/Old Towers (Retrosouls).bin,megadrive/init/roms/Old%20Towers%20(Retrosouls).bin)
+	$(call bundled-roms-dl,extra/megadrive/Old Towers (Retrosouls)/image.png,megadrive/init/roms/media/images/Old%20Towers%20(Retrosouls).png)
+	$(call bundled-roms-dl,extra/megadrive/Misplaced (Retrosouls)/Misplaced (Retrosouls).bin,megadrive/init/roms/Misplaced%20(Retrosouls).bin)
+	$(call bundled-roms-dl,extra/megadrive/Misplaced (Retrosouls)/image.png,megadrive/init/roms/media/images/Misplaced%20(Retrosouls).png)
+
+	$(call bundled-roms-dl,extra/msx1/xracing/xracing.rom,msx1/init/roms/xracing.rom)
+	$(call bundled-roms-dl,extra/msx1/xracing/image.png,msx1/init/roms/media/images/xracing.png)
+	$(call bundled-roms-dl,extra/msx1/xspelunker-en/xspelunker-en.rom,msx1/init/roms/xspelunker-en.rom)
+	$(call bundled-roms-dl,extra/msx1/xspelunker-en/image.png,msx1/init/roms/media/images/xspelunker-en.png)
+	$(call bundled-roms-dl,extra/msx1/Yazzie/Yazzie.rom,msx1/init/roms/Yazzie.rom)
+	$(call bundled-roms-dl,extra/msx1/Yazzie/image.png,msx1/init/roms/media/images/Yazzie.png)
+
+	$(call bundled-roms-dl,extra/msx2/Brunilda [v1.1] (Retroworks)/Brunilda [v1.1] (Retroworks).rom,msx2/init/roms/Brunilda%20%5Bv1.1%5D%20(Retroworks).rom)
+	$(call bundled-roms-dl,extra/msx2/Brunilda [v1.1] (Retroworks)/image.png,msx2/init/roms/media/images/Brunilda%20%5Bv1.1%5D%20(Retroworks).png)
+	$(call bundled-roms-dl,extra/msx2/The Sword of Ianna (Retroworks)/The Sword of Ianna (Retroworks).rom,msx2/init/roms/The%20Sword%20of%20Ianna%20(Retroworks).rom)
+	$(call bundled-roms-dl,extra/msx2/The Sword of Ianna (Retroworks)/image.png,msx2/init/roms/media/images/The%20Sword%20of%20Ianna%20(Retroworks).png)
+
+	$(call bundled-roms-dl,extra/scummvm/Beneath a Steel Sky (English).scummvm/sky.dnr,scummvm/init/roms/Beneath%20a%20Steel%20Sky%20(English).scummvm/sky.dnr)
+	$(call bundled-roms-dl,extra/scummvm/Beneath a Steel Sky (English).scummvm/sky.dsk,scummvm/init/roms/Beneath%20a%20Steel%20Sky%20(English).scummvm/sky.dsk)
+	$(call bundled-roms-dl,extra/scummvm/Beneath a Steel Sky (English).scummvm/image.png,scummvm/init/roms/media/images/Beneath%20a%20Steel%20Sky%20(English).png)
+	$(call bundled-roms-dl,extra/scummvm/Flight of the Amazon Queen (English).scummvm/queen.1,scummvm/init/roms/Flight%20of%20the%20Amazon%20Queen%20(English).scummvm/queen.1)
+	$(call bundled-roms-dl,extra/scummvm/Flight of the Amazon Queen (English).scummvm/image.png,scummvm/init/roms/media/images/Flight%20of%20the%20Amazon%20Queen%20(Fran%C3%A7ais).png)
+	$(call bundled-roms-dl,extra/scummvm/Soltys (English).scummvm/vol.cat,scummvm/init/roms/Soltys%20(English).scummvm/vol.cat)
+	$(call bundled-roms-dl,extra/scummvm/Soltys (English).scummvm/vol.dat,scummvm/init/roms/Soltys%20(English).scummvm/vol.dat)
+	$(call bundled-roms-dl,extra/scummvm/Soltys (English).scummvm/image.png,scummvm/init/roms/media/images/Soltys%20(English).png)
+	$(call bundled-roms-dl,extra/scummvm/Lure of the Tempress (English).scummvm/Disk1.vga,scummvm/init/roms/Lure%20of%20the%20Tempress%20(English).scummvm/Disk1.vga)
+	$(call bundled-roms-dl,extra/scummvm/Lure of the Tempress (English).scummvm/Disk2.vga,scummvm/init/roms/Lure%20of%20the%20Tempress%20(English).scummvm/Disk2.vga)
+	$(call bundled-roms-dl,extra/scummvm/Lure of the Tempress (English).scummvm/Disk3.vga,scummvm/init/roms/Lure%20of%20the%20Tempress%20(English).scummvm/Disk3.vga)
+	$(call bundled-roms-dl,extra/scummvm/Lure of the Tempress (English).scummvm/Disk4.vga,scummvm/init/roms/Lure%20of%20the%20Tempress%20(English).scummvm/Disk4.vga)
+	$(call bundled-roms-dl,extra/scummvm/Lure of the Tempress (English).scummvm/Lure.exe,scummvm/init/roms/Lure%20of%20the%20Tempress%20(English).scummvm/Lure.exe)
+	$(call bundled-roms-dl,extra/scummvm/Lure of the Tempress (English).scummvm/image.png,scummvm/init/roms/media/images/Lure%20of%20the%20Tempress%20(Fran%C3%A7ais).png)
 endef
 
 define BUNDLED_ROMS_INSTALL_TARGET_CMDS
@@ -111,6 +181,18 @@ define BUNDLED_ROMS_INSTALL_TARGET_CMDS
 	$(INSTALL) -m 0644 $(BUNDLED_ROMS_PKGDIR)/gamelist-nes.xml "$(BUNDLED_ROMS_TARGET_DIR)/nes/gamelist.xml"
 	$(INSTALL) -m 0644 $(BUNDLED_ROMS_PKGDIR)/gamelist-snes.xml "$(BUNDLED_ROMS_TARGET_DIR)/snes/gamelist.xml"
 	$(INSTALL) -m 0644 $(BUNDLED_ROMS_PKGDIR)/gamelist-psx.xml "$(BUNDLED_ROMS_TARGET_DIR)/psx/gamelist.xml"
+
+	# 2026-07-21: Mega Drive/MSX1/MSX2/ScummVM 실물 파일 설치 - 폴더 구조는
+	# $(@D)/extra/{sys}/에 이미 최종 형태로 받아둔 걸 그대로 복사. gamelist.xml은
+	# 여기서 안 씀 - board/odroidc5/rootfs-overlay/usr/share/retropangui/
+	# bundled-roms/{sys}/gamelist.xml(이 패키지 설치 "이후"에 합쳐지는
+	# rootfs-overlay 쪽)이 최종본이라 중복 설치할 필요 없음.
+	mkdir -p $(BUNDLED_ROMS_TARGET_DIR)/megadrive $(BUNDLED_ROMS_TARGET_DIR)/msx1 \
+	         $(BUNDLED_ROMS_TARGET_DIR)/msx2 $(BUNDLED_ROMS_TARGET_DIR)/scummvm
+	cp -r "$(@D)/extra/megadrive/." "$(BUNDLED_ROMS_TARGET_DIR)/megadrive/"
+	cp -r "$(@D)/extra/msx1/." "$(BUNDLED_ROMS_TARGET_DIR)/msx1/"
+	cp -r "$(@D)/extra/msx2/." "$(BUNDLED_ROMS_TARGET_DIR)/msx2/"
+	cp -r "$(@D)/extra/scummvm/." "$(BUNDLED_ROMS_TARGET_DIR)/scummvm/"
 endef
 
 $(eval $(generic-package))
