@@ -9,10 +9,11 @@
 # 이 스크립트를 부르기 전에 ES가 window/input/audio를 deinit해서 DRM
 # master를 완전히 내줘야 함(SystemScreenSaver.cpp 참고).
 #
-# 아무 입력(키보드/패드)이나 들어오면 즉시 종료 - /dev/input/eventN을
-# 전부 병렬로 읽어서(각 이벤트 구조체 크기만큼) 하나라도 이벤트가 오면
-# 리턴되는 걸로 감지. Busybox ash에는 bash의 "wait -n"이 없어서 대신
-# 센티넬 파일 폴링 방식 사용.
+# 아무 입력(키보드/패드)이나 들어오면 즉시 종료 - wait-for-input.py가
+# 진짜 키 눌림(EV_KEY, value=1)만 골라서 감지함. 처음엔 dd로 32바이트만
+# 읽는 방식이었는데, 장치를 열자마자 커널이 보내는 초기 상태 리포트에
+# 바로 반응해버려서 mpv가 뜨자마자 즉시 종료되는 버그가 있었음
+# (2026-07-23 실기기 확인 - screensaver-start와 재init 로그가 같은 초에 찍힘).
 
 URL="$1"
 if [ -z "$URL" ]; then
@@ -20,26 +21,28 @@ if [ -z "$URL" ]; then
     exit 1
 fi
 
-SENTINEL="/tmp/.web-stream-input-detected"
-rm -f "$SENTINEL"
-
 mpv --vo=drm --drm-device=/dev/dri/card0 --loop=inf --no-input-terminal \
     --no-osc --really-quiet "$URL" &
 MPV_PID=$!
 
-for dev in /dev/input/event*; do
-    [ -c "$dev" ] || continue
-    ( dd if="$dev" of=/dev/null bs=32 count=1 2>/dev/null; touch "$SENTINEL" ) &
+# mpv가 DRM 모드셋을 완전히 끝내기 전에 죽이면(입력 오탐 등) DRM이 불완전한
+# 상태로 남아 ES가 재init해도 화면이 안 살아나는 문제가 있었음(2026-07-23
+# 실기기 확인 - 화면이 커널 콘솔에 완전히 멈춤). 최소 2초는 무조건 기다린
+# 뒤에야 입력 감지를 시작해서 이 경합을 원천 차단.
+sleep 2
+
+python3 /usr/share/retropangui/wait-for-input.py &
+WAITER_PID=$!
+
+# 둘 중 하나라도 죽으면 리턴 - mpv가 스트림 문제 등으로 먼저 죽어도
+# 입력 대기만 하다가 무한정 멈춰있지 않게 함
+while kill -0 "$MPV_PID" 2>/dev/null && kill -0 "$WAITER_PID" 2>/dev/null; do
+    sleep 0.3
 done
 
-while [ ! -f "$SENTINEL" ] && kill -0 "$MPV_PID" 2>/dev/null; do
-    sleep 0.2
-done
-
-kill "$MPV_PID" 2>/dev/null
-# 아직 이벤트 안 들어온 나머지 dd들도 정리 (device open 상태로 남지 않게)
-pkill -f "dd if=/dev/input/event" 2>/dev/null
-rm -f "$SENTINEL"
-
+kill "$MPV_PID" "$WAITER_PID" 2>/dev/null
 wait 2>/dev/null
+# mpv가 DRM master를 완전히 내려놓을 시간을 조금 더 줌(ES window->init()이
+# 곧바로 이어서 DRM을 다시 잡으려 할 때 경합 방지)
+sleep 0.5
 exit 0
