@@ -22,7 +22,7 @@ if [ -z "$URL" ]; then
 fi
 
 mpv --vo=drm --drm-device=/dev/dri/card0 --loop=inf --no-input-terminal \
-    --no-osc --really-quiet "$URL" &
+    --really-quiet "$URL" &
 MPV_PID=$!
 
 # mpv가 DRM 모드셋을 완전히 끝내기 전에 죽이면(입력 오탐 등) DRM이 불완전한
