@@ -226,6 +226,21 @@ else
     echo "[1c/6] alsa-plugins 패치 이미 적용됨 (스킵)"
 fi
 
+# [패치] host-ruby에 host-libyaml 의존성 추가 (2026-07-23, 온디바이스 웹
+# 스크린세이버용 wpewebkit 도입 시 발견) - 이 buildroot 버전(2024.02.1)의
+# 상류 ruby.mk가 HOST_RUBY_DEPENDENCIES에 host-libyaml을 빠뜨려서, host-ruby가
+# psych(YAML) 확장 없이 빌드됨. wpewebkit 빌드 스크립트(GenerateSettings.rb 등)가
+# 'require yaml'을 하는데 host-ruby에 psych가 없어 LoadError로 빌드 실패함.
+# psych는 ruby 소스에 이미 번들된 확장이라 별도 CONF_OPTS 없이 host-libyaml만
+# 먼저 설치돼 있으면 configure가 자동 감지해서 빌드함.
+_RUBY_MK="package/ruby/ruby.mk"
+if grep -q "^HOST_RUBY_DEPENDENCIES = host-pkgconf host-openssl$" "${_RUBY_MK}" 2>/dev/null; then
+    echo "[1d/6] host-ruby host-libyaml 의존성 패치 적용 중..."
+    sed -i 's/^HOST_RUBY_DEPENDENCIES = host-pkgconf host-openssl$/HOST_RUBY_DEPENDENCIES = host-pkgconf host-openssl host-libyaml/' "${_RUBY_MK}"
+else
+    echo "[1d/6] host-ruby host-libyaml 의존성 패치 이미 적용됨 (스킵)"
+fi
+
 # 다운로드 캐시 디렉토리 연결
 echo "[2/6] 다운로드 캐시 디렉토리 설정..."
 mkdir -p /home/builder/dl
