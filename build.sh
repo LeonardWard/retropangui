@@ -315,13 +315,20 @@ docker build -t retropangui-builder "${SCRIPT_DIR}"
 
 # Docker 컨테이너에서 빌드 실행
 echo "[2/3] Buildroot 빌드 시작..."
+# RetroPangui: wpewebkit(WebKit) 도입 후(2026-07-23) --memory-swap=-1(무제한
+# 스왑) + BUILD_JOBS=nproc 고정 조합이 호스트 전체를 OOM으로 몰아넣는 걸
+# 실측(빌드 컨테이너뿐 아니라 무관한 tmux 세션까지 같이 죽음 - 커널
+# OOM killer가 컨테이너 cgroup에 국한되지 않고 전역에서 희생양을 고른 것으로
+# 추정). 스왑을 물리메모리+4GB로 캡 걸고, BUILD_JOBS는 환경변수로 낮출 수
+# 있게 열어둠(예: BUILD_JOBS=4 ./build.sh - 메모리 무거운 패키지 빌드 시).
+_MEM_MB="$(awk '/MemTotal/{printf "%d", $2/1024}' /proc/meminfo)"
 docker run --rm \
     --cpus="$(nproc)" \
-    --memory="$(awk '/MemTotal/{printf "%dm", $2/1024}' /proc/meminfo)" \
-    --memory-swap=-1 \
+    --memory="${_MEM_MB}m" \
+    --memory-swap="$((_MEM_MB + 4096))m" \
     -e DEVICE="${DEVICE}" \
     -e VERSION="${VERSION}" \
-    -e BUILD_JOBS="$(nproc)" \
+    -e BUILD_JOBS="${BUILD_JOBS:-$(nproc)}" \
     -e PARTIAL="${PARTIAL}" \
     -e BUILD_IMG="${BUILD_IMG}" \
     -e BUILD_OTA="${BUILD_OTA}" \
