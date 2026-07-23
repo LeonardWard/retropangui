@@ -319,13 +319,17 @@ echo "[2/3] Buildroot 빌드 시작..."
 # 스왑) + BUILD_JOBS=nproc 고정 조합이 호스트 전체를 OOM으로 몰아넣는 걸
 # 실측(빌드 컨테이너뿐 아니라 무관한 tmux 세션까지 같이 죽음 - 커널
 # OOM killer가 컨테이너 cgroup에 국한되지 않고 전역에서 희생양을 고른 것으로
-# 추정). 스왑을 물리메모리+4GB로 캡 걸고, BUILD_JOBS는 환경변수로 낮출 수
-# 있게 열어둠(예: BUILD_JOBS=4 ./build.sh - 메모리 무거운 패키지 빌드 시).
+# 추정). 스왑을 캡 걸어 컨테이너 안에서만 OOM이 끝나도록 격리하고, BUILD_JOBS는
+# 환경변수로 낮출 수 있게 열어둠(예: BUILD_JOBS=4 ./build.sh). 이 빌드
+# 데스크탑은 스왑 파티션이 8GB뿐이라 WebKit unified-source 컴파일(파일당
+# 순간 2~3GB) 병렬 12개를 감당 못 해 컨테이너 안에서도 cc1plus가 OOM킬됨 -
+# /swapfile-build(20GB, 재부팅하면 사라지는 임시 스왑파일) 추가해서 호스트
+# 스왑을 27GB로 늘린 뒤 캡을 16GB로 올림(호스트에 최소 ~7GB 스왑 여유는 남김).
 _MEM_MB="$(awk '/MemTotal/{printf "%d", $2/1024}' /proc/meminfo)"
 docker run --rm \
     --cpus="$(nproc)" \
     --memory="${_MEM_MB}m" \
-    --memory-swap="$((_MEM_MB + 4096))m" \
+    --memory-swap="$((_MEM_MB + 16384))m" \
     -e DEVICE="${DEVICE}" \
     -e VERSION="${VERSION}" \
     -e BUILD_JOBS="${BUILD_JOBS:-$(nproc)}" \
