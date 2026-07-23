@@ -381,21 +381,18 @@ BR2_PACKAGE_LIBXKBCOMMON=y
 # 포함, 실제 AI CLI는 rpui-wifi로 기기에서 직접 npm install -g로 설치.
 BR2_PACKAGE_RPUI_NODEJS=y
 
-# 웹 스트림 스크린세이버 온디바이스 렌더링(2026-07-23) - 클라우드 서버의
-# Xvfb+Chromium+ffmpeg 파이프라인을 걷어내고 C5가 직접 웹페이지를 렌더링.
-# Mali-G310 Valhall용 libMali.so가 이미 EGL/GLES/GBM/Wayland-EGL을 전부
-# 제공하므로(mali-ddk 패키지 참고) wpewebkit/cog의 Kconfig 의존성
-# (HAS_LIBEGL_WAYLAND, HAS_LIBGBM+DMA_BUF/FORMAT_MODIFIER_PLANE_COUNT)은
-# 이미 켜져있는 BR2_PACKAGE_MESA3D_OPENGL_EGL(빌드타임 링킹용)이 select로
-# 자동 충족함 - 별도 설정 불필요. cog --platform=drm으로 컴포지터 없이
-# DRM에 직접 모드셋(ES/mpv 스플래시와 동일 패턴) - Wayland 백엔드(FDO)는
-# 안 쓰므로 꺼서 빌드 시간/의존성 절약. 샌드박스도 단일 목적 임베디드
-# 기기라 불필요해서 끔.
-BR2_PACKAGE_WPEWEBKIT=y
-BR2_PACKAGE_COG=y
-BR2_PACKAGE_COG_PROGRAMS_HOME_URI=""
-# BR2_PACKAGE_COG_PLATFORM_FDO is not set
-BR2_PACKAGE_COG_PLATFORM_DRM=y
+# 웹 스트림 스크린세이버 온디바이스 렌더링(wpewebkit/cog) - 2026-07-23에
+# 도입 시도했으나 실기기에서 WPEWebProcess가 mali_buffer_sharing 프로토콜
+# 협상 실패로 어떤 페이지든 즉시 크래시함(Mali-G310 Valhall + cog의 GPU
+# 버퍼공유는 Igalia 상류에서도 여러 Mali 세대에 걸쳐 수년째 미해결).
+# C5에서는 절대 못 쓰는 게 확정이라 빌드 자체를 뺌(WebKit 컴파일이 무겁고
+# OOM 위험도 커서 빌드 시간/안정성 이득도 큼) - ES 쪽 "web stream ondevice"
+# 화면보호 옵션은 /usr/bin/cog 존재 여부로 조건부 노출되므로, 나중에
+# x86 등 GPU 궁합이 맞는 다른 보드가 이 두 패키지를 켜면 ES 소스 수정 없이
+# 자동으로 메뉴에 다시 나타남. 자세한 경위는
+# docs/retropangui/todo-20260723-news-ticker.html 참고.
+# BR2_PACKAGE_WPEWEBKIT is not set
+# BR2_PACKAGE_COG is not set
 
 # 압축 도구
 BR2_PACKAGE_UNZIP=y
