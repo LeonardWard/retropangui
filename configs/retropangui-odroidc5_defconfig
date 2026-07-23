@@ -316,6 +316,11 @@ BR2_PACKAGE_PYTHON3=y
 # xml 모듈 — rpui-bundlegame.sh가 gamelist.xml 조작에 xml.etree.ElementTree 사용
 # (2026-07-04: 빠져있어서 hide/show가 매번 ModuleNotFoundError로 조용히 실패하던 문제 확인)
 BR2_PACKAGE_PYTHON3_PYEXPAT=y
+# news-ticker.py(뉴스 티커 유틸리티)가 코스피/코스닥/날씨/뉴스 데이터를 PNG로
+# 렌더링해서 mpv --vo=drm으로 띄우는 데 씀(2026-07-23) - rpui-imgview.sh와
+# 동일한 "이미지 생성 후 mpv로 DRM 표시" 패턴. freetype은 이미 활성화돼있어
+# Pillow가 빌드 시 자동 감지해서 텍스트 렌더링 지원까지 포함됨.
+BR2_PACKAGE_PYTHON_PILLOW=y
 
 # SMB 네트워크 파일 공유 (ksmbd: 커널 내장 SMB3 서버, Samba4보다 의존성 없음)
 BR2_PACKAGE_KSMBD_TOOLS=y

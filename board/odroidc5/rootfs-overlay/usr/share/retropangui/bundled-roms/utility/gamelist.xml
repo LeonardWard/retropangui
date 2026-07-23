@@ -4,4 +4,16 @@
 		<path>./terminal.py</path>
 		<name>터미널</name>
 	</game>
+	<game>
+		<path>./web-stream-external.py</path>
+		<name>웹 스트림 (외부 서버)</name>
+	</game>
+	<game>
+		<path>./web-stream-ondevice.py</path>
+		<name>웹 스트림 (온디바이스, 보류)</name>
+	</game>
+	<game>
+		<path>./news-ticker.py</path>
+		<name>뉴스 티커</name>
+	</game>
 </gameList>

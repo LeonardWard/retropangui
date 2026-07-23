@@ -1,17 +1,23 @@
 #!/usr/bin/env python3
-"""웹 스트림 스크린세이버 - cog(wpewebkit)로 C5가 웹페이지를 직접 DRM에 렌더링.
+"""웹 스트림(온디바이스 브라우징) - Utility 시스템 항목 + 스크린세이버 공용 스크립트.
 
-2026-07-23: 기존엔 클라우드 서버(Xvfb+Chromium+ffmpeg)가 화면을 캡처해서
-HTTP 스트림으로 보내고 C5는 mpv로 그 스트림만 재생하는 구조였는데, 사용자
-지시로 외부 서버 의존을 걷어내고 C5가 직접 렌더링하도록 전환("c5내장").
-terminal.py/wait-for-input.py와 동일하게 - 실행 파일 하나 + 검증된
-wait-for-input.py 재사용 + ES 화면보호 항목과 매칭 호출이라는 심플한 패턴을
-그대로 따름.
+cog(wpewebkit)로 C5가 웹페이지를 직접 DRM에 렌더링(외부 서버 없이 "c5내장").
 
-SystemScreenSaver.cpp가 launchGame()과 동일한 패턴으로 window/input/audio를
-전부 deinit한 뒤 인자 없이 이 스크립트만 실행함 - URL 목록/순환 주기는
-여기서 retropangui.conf를 직접 읽는다(ES Settings를 거치지 않음, 별도 동기화
-서버도 불필요).
+⏸️ 2026-07-23 기준 보류 상태: 실기기에서 WPEWebProcess가 mali_buffer_sharing
+프로토콜 협상 실패로 어떤 페이지든(about:blank 포함) 즉시 크래시함. Mali GPU +
+cog의 GPU 버퍼공유는 Igalia(WPE 개발사) 상류에서도 여러 Mali 세대에 걸쳐
+수년째 미해결인 구조적 문제로 확인됨 - 자세한 내용/재개 조건은
+docs/retropangui/todo-20260723-news-ticker.html의 "온디바이스 전환 시도"
+섹션 참고. 코드/유틸리티 등록은 상류 이슈 해결 시 바로 재검증할 수 있도록
+그대로 보존.
+
+터미널 실행 방식(terminal.py)과 동일 패턴 - 실행 파일 하나 + 검증된
+wait-for-input.py 재사용 + ES 화면보호 항목과 매칭 호출.
+
+URL 목록/순환 주기는 retropangui.conf를 직접 읽는다(ES Settings를 거치지
+않음, 별도 동기화 서버도 불필요). ES의 launchGame()/SystemScreenSaver 양쪽
+다 이 스크립트 실행 전후로 window/input/audio deinit/init을 처리해주므로
+이 스크립트는 재생과 종료 감지만 담당하면 된다.
 """
 import os
 import subprocess
