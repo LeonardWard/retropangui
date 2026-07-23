@@ -329,7 +329,7 @@ _MEM_MB="$(awk '/MemTotal/{printf "%d", $2/1024}' /proc/meminfo)"
 docker run --rm \
     --cpus="$(nproc)" \
     --memory="${_MEM_MB}m" \
-    --memory-swap="$((_MEM_MB + 16384))m" \
+    --memory-swap="$((_MEM_MB + 20480))m" \
     -e DEVICE="${DEVICE}" \
     -e VERSION="${VERSION}" \
     -e BUILD_JOBS="${BUILD_JOBS:-$(nproc)}" \
